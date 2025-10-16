@@ -31,6 +31,9 @@ using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<PrivatekonomyContext>();
     context.Database.EnsureCreated();
+    
+    // Seed test data
+    TestDataSeeder.SeedTestData(context);
 }
 
 // Configure the HTTP request pipeline.
