@@ -1,0 +1,231 @@
+@page "/investments"
+@rendermode InteractiveServer
+@inject IInvestmentService InvestmentService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+<PageTitle>Aktier & Fonder - Privatekonomi</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-4">Aktier & Fonder</MudText>
+
+@if (_loading)
+{
+    <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+}
+else
+{
+    <!-- Summary Cards -->
+    <MudGrid Class="mb-4">
+        <MudItem xs="12" md="6" lg="3">
+            <MudCard Elevation="2" Class="pa-4">
+                <MudCardContent>
+                    <MudText Typo="Typo.h6">Totalt Värde</MudText>
+                    <MudText Typo="Typo.h4" Color="Color.Info">@_totalValue.ToString("C", new System.Globalization.CultureInfo("sv-SE"))</MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+        
+        <MudItem xs="12" md="6" lg="3">
+            <MudCard Elevation="2" Class="pa-4">
+                <MudCardContent>
+                    <MudText Typo="Typo.h6">Total Kostnad</MudText>
+                    <MudText Typo="Typo.h4">@_totalCost.ToString("C", new System.Globalization.CultureInfo("sv-SE"))</MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+        
+        <MudItem xs="12" md="6" lg="3">
+            <MudCard Elevation="2" Class="pa-4">
+                <MudCardContent>
+                    <MudText Typo="Typo.h6">Vinst/Förlust</MudText>
+                    <MudText Typo="Typo.h4" Color="@(_totalProfitLoss >= 0 ? Color.Success : Color.Error)">
+                        @(_totalProfitLoss >= 0 ? "+" : "")@_totalProfitLoss.ToString("C", new System.Globalization.CultureInfo("sv-SE"))
+                    </MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+        
+        <MudItem xs="12" md="6" lg="3">
+            <MudCard Elevation="2" Class="pa-4">
+                <MudCardContent>
+                    <MudText Typo="Typo.h6">Avkastning</MudText>
+                    <MudText Typo="Typo.h4" Color="@(_totalProfitLossPercentage >= 0 ? Color.Success : Color.Error)">
+                        @(_totalProfitLossPercentage >= 0 ? "+" : "")@_totalProfitLossPercentage.ToString("F2")%
+                    </MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+
+    <!-- Investments Table -->
+    <MudPaper Class="pa-4">
+        <MudGrid>
+            <MudItem xs="12" Class="d-flex justify-space-between align-center mb-4">
+                <MudText Typo="Typo.h6">Mina Investeringar</MudText>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" 
+                           OnClick="OpenAddDialog">
+                    Lägg till
+                </MudButton>
+            </MudItem>
+        </MudGrid>
+
+        @if (!_investments.Any())
+        {
+            <MudText>Inga investeringar ännu. Lägg till din första aktie eller fond!</MudText>
+        }
+        else
+        {
+            <MudTable Items="@_investments" Hover="true" Striped="true" Filter="new Func<Investment,bool>(FilterFunc)">
+                <ToolBarContent>
+                    <MudTextField @bind-Value="_searchString" Placeholder="Sök" Adornment="Adornment.Start" 
+                                  AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+                </ToolBarContent>
+                <HeaderContent>
+                    <MudTh>Namn</MudTh>
+                    <MudTh>Typ</MudTh>
+                    <MudTh Style="text-align: right">Antal</MudTh>
+                    <MudTh Style="text-align: right">Köpkurs</MudTh>
+                    <MudTh Style="text-align: right">Aktuell kurs</MudTh>
+                    <MudTh Style="text-align: right">Värde</MudTh>
+                    <MudTh Style="text-align: right">Vinst/Förlust</MudTh>
+                    <MudTh Style="text-align: right">%</MudTh>
+                    <MudTh>Åtgärder</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Namn">@context.Name</MudTd>
+                    <MudTd DataLabel="Typ">
+                        <MudChip T="string" Size="Size.Small" Color="@(context.Type == "Aktie" ? Color.Primary : Color.Secondary)">
+                            @context.Type
+                        </MudChip>
+                    </MudTd>
+                    <MudTd DataLabel="Antal" Style="text-align: right">@context.Quantity.ToString("N2")</MudTd>
+                    <MudTd DataLabel="Köpkurs" Style="text-align: right">@context.PurchasePrice.ToString("C", new System.Globalization.CultureInfo("sv-SE"))</MudTd>
+                    <MudTd DataLabel="Aktuell kurs" Style="text-align: right">@context.CurrentPrice.ToString("C", new System.Globalization.CultureInfo("sv-SE"))</MudTd>
+                    <MudTd DataLabel="Värde" Style="text-align: right">@context.TotalValue.ToString("C", new System.Globalization.CultureInfo("sv-SE"))</MudTd>
+                    <MudTd DataLabel="Vinst/Förlust" Style="text-align: right">
+                        <MudText Color="@(context.ProfitLoss >= 0 ? Color.Success : Color.Error)">
+                            @(context.ProfitLoss >= 0 ? "+" : "")@context.ProfitLoss.ToString("C", new System.Globalization.CultureInfo("sv-SE"))
+                        </MudText>
+                    </MudTd>
+                    <MudTd DataLabel="%" Style="text-align: right">
+                        <MudText Color="@(context.ProfitLossPercentage >= 0 ? Color.Success : Color.Error)">
+                            @(context.ProfitLossPercentage >= 0 ? "+" : "")@context.ProfitLossPercentage.ToString("F2")%
+                        </MudText>
+                    </MudTd>
+                    <MudTd DataLabel="Åtgärder">
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Default" Size="Size.Small"
+                                       OnClick="@(() => OpenEditDialog(context))" />
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small"
+                                       OnClick="@(() => DeleteInvestment(context.InvestmentId))" />
+                    </MudTd>
+                </RowTemplate>
+            </MudTable>
+        }
+    </MudPaper>
+}
+
+@code {
+    private bool _loading = true;
+    private IEnumerable<Investment> _investments = new List<Investment>();
+    private string _searchString = "";
+    
+    private decimal _totalValue = 0;
+    private decimal _totalCost = 0;
+    private decimal _totalProfitLoss = 0;
+    private decimal _totalProfitLossPercentage = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        _loading = true;
+        _investments = await InvestmentService.GetAllInvestmentsAsync();
+        CalculateTotals();
+        _loading = false;
+    }
+
+    private void CalculateTotals()
+    {
+        _totalValue = _investments.Sum(i => i.TotalValue);
+        _totalCost = _investments.Sum(i => i.TotalCost);
+        _totalProfitLoss = _totalValue - _totalCost;
+        _totalProfitLossPercentage = _totalCost > 0 ? (_totalProfitLoss / _totalCost) * 100 : 0;
+    }
+
+    private bool FilterFunc(Investment investment)
+    {
+        if (string.IsNullOrWhiteSpace(_searchString))
+            return true;
+        if (investment.Name.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+        if (investment.Type.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+        return false;
+    }
+
+    private async Task OpenAddDialog()
+    {
+        var parameters = new DialogParameters<InvestmentDialog>
+        {
+            { x => x.Investment, new Investment { PurchaseDate = DateTime.Now, LastUpdated = DateTime.Now } }
+        };
+
+        var dialog = await DialogService.ShowAsync<InvestmentDialog>("Lägg till investering", parameters);
+        var result = await dialog.Result;
+
+        if (!result.Canceled && result.Data is Investment investment)
+        {
+            await InvestmentService.AddInvestmentAsync(investment);
+            Snackbar.Add("Investering tillagd", Severity.Success);
+            await LoadData();
+        }
+    }
+
+    private async Task OpenEditDialog(Investment investment)
+    {
+        var parameters = new DialogParameters<InvestmentDialog>
+        {
+            { x => x.Investment, new Investment
+                {
+                    InvestmentId = investment.InvestmentId,
+                    Name = investment.Name,
+                    Type = investment.Type,
+                    Quantity = investment.Quantity,
+                    PurchasePrice = investment.PurchasePrice,
+                    CurrentPrice = investment.CurrentPrice,
+                    PurchaseDate = investment.PurchaseDate,
+                    LastUpdated = investment.LastUpdated
+                }
+            },
+            { x => x.IsEdit, true }
+        };
+
+        var dialog = await DialogService.ShowAsync<InvestmentDialog>("Redigera investering", parameters);
+        var result = await dialog.Result;
+
+        if (!result.Canceled && result.Data is Investment updatedInvestment)
+        {
+            await InvestmentService.UpdateInvestmentAsync(updatedInvestment);
+            Snackbar.Add("Investering uppdaterad", Severity.Success);
+            await LoadData();
+        }
+    }
+
+    private async Task DeleteInvestment(int id)
+    {
+        var result = await DialogService.ShowMessageBox(
+            "Bekräfta borttagning",
+            "Är du säker på att du vill ta bort denna investering?",
+            yesText: "Ja", cancelText: "Avbryt");
+
+        if (result == true)
+        {
+            await InvestmentService.DeleteInvestmentAsync(id);
+            Snackbar.Add("Investering borttagen", Severity.Success);
+            await LoadData();
+        }
+    }
+}

@@ -12,6 +12,13 @@ public static class TestDataSeeder
             return;
         }
 
+        SeedTransactions(context);
+        SeedInvestments(context);
+    }
+
+    private static void SeedTransactions(PrivatekonomyContext context)
+    {
+
         var random = new Random(42); // Fixed seed for reproducible data
         var startDate = DateTime.Now.AddMonths(-3); // Start from 3 months ago
 
@@ -31,6 +38,9 @@ public static class TestDataSeeder
             { 8, new[] { "Sparande sparkonto", "Månadsspar aktier", "ISK insättning" } }, // Sparande
             { 9, new[] { "Swish betalning", "Gåva", "Okategoriserad", "Diverse", "Kontantuttag" } } // Övrigt
         };
+
+        // Bank sources to simulate transactions from different banks
+        var bankSources = new[] { "Swedbank", "SEB", "Nordea", "Handelsbanken", "Danske Bank" };
 
         // Amount ranges for different categories (min, max)
         var amountRanges = new Dictionary<int, (decimal min, decimal max)>
@@ -77,7 +87,8 @@ public static class TestDataSeeder
                 Amount = amount,
                 Description = description,
                 Date = date,
-                IsIncome = isIncome
+                IsIncome = isIncome,
+                BankSource = bankSources[random.Next(bankSources.Length)]
             };
 
             transactions.Add(transaction);
@@ -100,6 +111,104 @@ public static class TestDataSeeder
         // Add all transactions and categories to context
         context.Transactions.AddRange(transactions);
         context.TransactionCategories.AddRange(transactionCategories);
+        context.SaveChanges();
+    }
+
+    private static void SeedInvestments(PrivatekonomyContext context)
+    {
+        var investments = new List<Investment>
+        {
+            new Investment
+            {
+                InvestmentId = 1,
+                Name = "Volvo B",
+                Type = "Aktie",
+                Quantity = 100,
+                PurchasePrice = 245.50m,
+                CurrentPrice = 268.75m,
+                PurchaseDate = DateTime.Now.AddMonths(-6),
+                LastUpdated = DateTime.Now.AddDays(-1)
+            },
+            new Investment
+            {
+                InvestmentId = 2,
+                Name = "SEB A",
+                Type = "Aktie",
+                Quantity = 50,
+                PurchasePrice = 152.30m,
+                CurrentPrice = 165.20m,
+                PurchaseDate = DateTime.Now.AddMonths(-8),
+                LastUpdated = DateTime.Now.AddDays(-2)
+            },
+            new Investment
+            {
+                InvestmentId = 3,
+                Name = "Investor B",
+                Type = "Aktie",
+                Quantity = 75,
+                PurchasePrice = 289.00m,
+                CurrentPrice = 312.50m,
+                PurchaseDate = DateTime.Now.AddMonths(-4),
+                LastUpdated = DateTime.Now.AddDays(-1)
+            },
+            new Investment
+            {
+                InvestmentId = 4,
+                Name = "SPP Aktiefond Global",
+                Type = "Fond",
+                Quantity = 150,
+                PurchasePrice = 125.75m,
+                CurrentPrice = 138.40m,
+                PurchaseDate = DateTime.Now.AddMonths(-12),
+                LastUpdated = DateTime.Now.AddDays(-3)
+            },
+            new Investment
+            {
+                InvestmentId = 5,
+                Name = "Länsförsäkringar Sverige",
+                Type = "Fond",
+                Quantity = 200,
+                PurchasePrice = 98.50m,
+                CurrentPrice = 104.80m,
+                PurchaseDate = DateTime.Now.AddMonths(-10),
+                LastUpdated = DateTime.Now.AddDays(-1)
+            },
+            new Investment
+            {
+                InvestmentId = 6,
+                Name = "Avanza Global",
+                Type = "Fond",
+                Quantity = 120,
+                PurchasePrice = 215.30m,
+                CurrentPrice = 232.90m,
+                PurchaseDate = DateTime.Now.AddMonths(-9),
+                LastUpdated = DateTime.Now.AddDays(-2)
+            },
+            new Investment
+            {
+                InvestmentId = 7,
+                Name = "Ericsson B",
+                Type = "Aktie",
+                Quantity = 250,
+                PurchasePrice = 58.20m,
+                CurrentPrice = 62.15m,
+                PurchaseDate = DateTime.Now.AddMonths(-5),
+                LastUpdated = DateTime.Now
+            },
+            new Investment
+            {
+                InvestmentId = 8,
+                Name = "Nordea",
+                Type = "Aktie",
+                Quantity = 80,
+                PurchasePrice = 125.40m,
+                CurrentPrice = 118.90m,
+                PurchaseDate = DateTime.Now.AddMonths(-3),
+                LastUpdated = DateTime.Now.AddDays(-1)
+            }
+        };
+
+        context.Investments.AddRange(investments);
         context.SaveChanges();
     }
 }

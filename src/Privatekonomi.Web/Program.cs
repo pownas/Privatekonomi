@@ -24,6 +24,7 @@ builder.Services.AddDbContext<PrivatekonomyContext>(options =>
 builder.Services.AddScoped<ITransactionService, TransactionService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<ILoanService, LoanService>();
+builder.Services.AddScoped<IInvestmentService, InvestmentService>();
 
 // Add HttpClient for API calls (if needed later)
 builder.Services.AddHttpClient();
