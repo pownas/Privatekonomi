@@ -11,6 +11,7 @@ En privatekonomi-applikation byggd med .NET 9, Blazor Server och MudBlazor för 
 - **Automatisk kategorisering**: Systemet föreslår kategorier baserat på tidigare transaktioner
 - **Responsiv design**: Fungerar på desktop och mobila enheter
 - **In-memory databas**: Använder Entity Framework Core InMemory för snabb utveckling
+- **CSV-import** *(under utveckling)*: Import av transaktioner från ICA-banken och Swedbank
 
 ## 🏗️ Arkitektur
 
@@ -123,11 +124,18 @@ builder.Services.AddDbContext<PrivatekonomyContext>(options =>
 }
 ```
 
+## 📋 Dokumentation
+
+- **[ProgramSpecifikation.md](ProgramSpecifikation.md)**: Övergripande programspecifikation för applikationen
+- **[Kravspecifikation_CSV_Import.md](Kravspecifikation_CSV_Import.md)**: Detaljerad kravspecifikation för CSV-import från ICA-banken och Swedbank
+
 ## 🎯 Förbättringsförslag
 
 - [ ] Fixa formulär-bindning i NewTransaction-sidan
 - [ ] Lägga till användare och autentisering
 - [ ] Implementera budget-funktionalitet
+- [x] Kravspecifikation för CSV-import från banker
+- [ ] Implementera CSV-import från ICA-banken och Swedbank
 - [ ] Exportera data till Excel/CSV
 - [ ] Lägg till diagram och grafer på Dashboard
 - [ ] Integration med bank-API:er
