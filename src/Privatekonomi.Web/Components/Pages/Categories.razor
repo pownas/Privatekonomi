@@ -2,10 +2,41 @@
 @rendermode InteractiveServer
 @inject ICategoryService CategoryService
 @inject ISnackbar Snackbar
+@inject IDialogService DialogService
 
 <PageTitle>Kategorier - Privatekonomi</PageTitle>
 
-<MudText Typo="Typo.h4" Class="mb-4">Kategorier</MudText>
+<div class="d-flex justify-space-between align-center mb-4">
+    <MudText Typo="Typo.h4">Kategorier</MudText>
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="ToggleCreateForm">
+        Ny Kategori
+    </MudButton>
+</div>
+
+@if (_showCreateForm)
+{
+    <MudPaper Class="pa-4 mb-4">
+        <MudText Typo="Typo.h6" Class="mb-3">Skapa Ny Kategori</MudText>
+        <MudTextField @bind-Value="_newCategoryName" 
+                     Label="Kategorinamn" 
+                     Variant="Variant.Outlined" 
+                     Required="true"
+                     MaxLength="100"
+                     Class="mb-3" />
+        <div class="d-flex align-center gap-2 mb-3">
+            <MudTextField @bind-Value="_newCategoryColorHex" 
+                         Label="Färg (hex, t.ex. #FF6B6B)" 
+                         Variant="Variant.Outlined"
+                         Placeholder="#4ECDC4"
+                         Style="flex: 1;" />
+            <div style="@($"width: 50px; height: 50px; background-color: {_newCategoryColorHex}; border: 2px solid #ccc; border-radius: 4px;")"></div>
+        </div>
+        <div class="d-flex gap-2">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="CreateCategory">Skapa</MudButton>
+            <MudButton Variant="Variant.Outlined" OnClick="ToggleCreateForm">Avbryt</MudButton>
+        </div>
+    </MudPaper>
+}
 
 <MudPaper Class="pa-4">
     @if (_loading)
@@ -20,9 +51,15 @@
                 <MudItem xs="12" sm="6" md="4" lg="3">
                     <MudCard Elevation="2">
                         <MudCardContent>
-                            <MudChip T="string" Style="@($"background-color: {category.Color}; color: white;")" Size="Size.Large">
-                                @category.Name
-                            </MudChip>
+                            <div class="d-flex justify-space-between align-center">
+                                <MudChip T="string" Style="@($"background-color: {category.Color}; color: white;")" Size="Size.Large">
+                                    @category.Name
+                                </MudChip>
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" 
+                                             Color="Color.Error" 
+                                             Size="Size.Small"
+                                             OnClick="@(() => DeleteCategory(category))" />
+                            </div>
                         </MudCardContent>
                     </MudCard>
                 </MudItem>
@@ -38,7 +75,10 @@
 
 @code {
     private bool _loading = true;
+    private bool _showCreateForm = false;
     private IEnumerable<Category> _categories = new List<Category>();
+    private string _newCategoryName = string.Empty;
+    private string _newCategoryColorHex = "#4ECDC4";
 
     protected override async Task OnInitializedAsync()
     {
@@ -50,5 +90,71 @@
         _loading = true;
         _categories = await CategoryService.GetAllCategoriesAsync();
         _loading = false;
+    }
+
+    private void ToggleCreateForm()
+    {
+        _showCreateForm = !_showCreateForm;
+        if (_showCreateForm)
+        {
+            _newCategoryName = string.Empty;
+            _newCategoryColorHex = "#4ECDC4";
+        }
+    }
+
+    private async Task CreateCategory()
+    {
+        if (string.IsNullOrWhiteSpace(_newCategoryName))
+        {
+            Snackbar.Add("Kategorinamn är obligatoriskt", Severity.Error);
+            return;
+        }
+
+        // Validate color format
+        if (string.IsNullOrWhiteSpace(_newCategoryColorHex) || !_newCategoryColorHex.StartsWith("#") || (_newCategoryColorHex.Length != 7 && _newCategoryColorHex.Length != 4))
+        {
+            Snackbar.Add("Färgkoden måste vara i formatet #RRGGBB eller #RGB", Severity.Error);
+            return;
+        }
+
+        try
+        {
+            var category = new Category
+            {
+                Name = _newCategoryName,
+                Color = _newCategoryColorHex
+            };
+
+            await CategoryService.CreateCategoryAsync(category);
+            Snackbar.Add("Kategori skapad!", Severity.Success);
+            _showCreateForm = false;
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Fel vid skapande av kategori: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task DeleteCategory(Category category)
+    {
+        var result = await DialogService.ShowMessageBox(
+            "Bekräfta borttagning",
+            $"Är du säker på att du vill ta bort kategorin '{category.Name}'?",
+            yesText: "Ta bort", cancelText: "Avbryt");
+
+        if (result == true)
+        {
+            try
+            {
+                await CategoryService.DeleteCategoryAsync(category.CategoryId);
+                Snackbar.Add("Kategori borttagen!", Severity.Success);
+                await LoadData();
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Fel vid borttagning av kategori: {ex.Message}", Severity.Error);
+            }
+        }
     }
 }
