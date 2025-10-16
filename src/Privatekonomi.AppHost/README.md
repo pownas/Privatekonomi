@@ -52,4 +52,4 @@ För att lägga till en ny tjänst:
 
 ## Mer information
 
-Se [ASPIRE_GUIDE.md](../../ASPIRE_GUIDE.md) i projektets rotkatalog för detaljerad dokumentation.
+Se [ASPIRE_GUIDE.md](../../wiki/ASPIRE_GUIDE.md) i projektets rotkatalog för detaljerad dokumentation.
