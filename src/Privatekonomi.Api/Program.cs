@@ -16,6 +16,7 @@ builder.Services.AddDbContext<PrivatekonomyContext>(options =>
 // Register services
 builder.Services.AddScoped<ITransactionService, TransactionService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
+builder.Services.AddScoped<ICsvImportService, CsvImportService>();
 
 // Configure CORS for Blazor Web
 builder.Services.AddCors(options =>

@@ -11,7 +11,7 @@ En privatekonomi-applikation byggd med .NET 9, Blazor Server och MudBlazor för 
 - **Automatisk kategorisering**: Systemet föreslår kategorier baserat på tidigare transaktioner
 - **Responsiv design**: Fungerar på desktop och mobila enheter
 - **In-memory databas**: Använder Entity Framework Core InMemory för snabb utveckling
-- **CSV-import** *(under utveckling)*: Import av transaktioner från ICA-banken och Swedbank
+- **CSV-import**: Import av transaktioner från ICA-banken och Swedbank med dubbletthantering och validering
 
 ## 🏗️ Arkitektur
 
@@ -67,6 +67,25 @@ Applikationen seedas automatiskt med ca **50 testransaktioner** vid start för u
 - Belopp som varierar realistiskt per kategori
 
 För att inaktivera testdata, kommentera bort `TestDataSeeder.SeedTestData(context);` i `Program.cs`.
+
+### CSV-Import
+
+Applikationen stöder import av transaktioner från CSV-filer från ICA-banken och Swedbank:
+
+1. Navigera till **Importera** i menyn
+2. Välj bank (ICA-banken eller Swedbank)
+3. Ladda upp CSV-fil (max 10 MB)
+4. Granska förhandsvisningen
+5. Bekräfta importen
+
+**Funktioner:**
+- Automatisk dubblettdetektion
+- Validering av datum, belopp och beskrivning
+- Stöd för olika CSV-format per bank
+- Förhandsvisning innan import
+- Detaljerad sammanfattning efter import
+
+Se [CSV_IMPORT_GUIDE.md](CSV_IMPORT_GUIDE.md) för detaljerad guide och exempel.
 
 ## 📊 Skärmdumpar
 
@@ -140,6 +159,7 @@ builder.Services.AddDbContext<PrivatekonomyContext>(options =>
 
 - **[ProgramSpecifikation.md](ProgramSpecifikation.md)**: Övergripande programspecifikation för applikationen
 - **[Kravspecifikation_CSV_Import.md](Kravspecifikation_CSV_Import.md)**: Detaljerad kravspecifikation för CSV-import från ICA-banken och Swedbank
+- **[CSV_IMPORT_GUIDE.md](CSV_IMPORT_GUIDE.md)**: Användarguide för CSV-import med exempel och felsökning
 
 ## 🧪 Testning
 
@@ -173,7 +193,7 @@ Se [tests/playwright/README.md](tests/playwright/README.md) för detaljerad doku
 - [ ] Lägga till användare och autentisering
 - [ ] Implementera budget-funktionalitet
 - [x] Kravspecifikation för CSV-import från banker
-- [ ] Implementera CSV-import från ICA-banken och Swedbank
+- [x] Implementera CSV-import från ICA-banken och Swedbank
 - [ ] Exportera data till Excel/CSV
 - [ ] Lägg till diagram och grafer på Dashboard
 - [ ] Integration med bank-API:er
