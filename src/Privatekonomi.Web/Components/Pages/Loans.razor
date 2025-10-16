@@ -25,16 +25,14 @@
                       MaxLength="200"
                       Class="mb-3" />
         
-        <MudSelect @bind-Value="_formLoan.Type" 
-                   Label="Typ" 
-                   Variant="Variant.Outlined"
-                   Required="true"
-                   Class="mb-3">
-            <MudSelectItem Value="@("Bolån")">Bolån</MudSelectItem>
-            <MudSelectItem Value="@("CSN-lån")">CSN-lån</MudSelectItem>
-            <MudSelectItem Value="@("Privatlån")">Privatlån</MudSelectItem>
-            <MudSelectItem Value="@("Kreditkort")">Kreditkort</MudSelectItem>
-        </MudSelect>
+        <MudRadioGroup @bind-Value="_formLoan.Type" Required="true">
+            <MudText Typo="Typo.subtitle2" Class="mb-2">Typ</MudText>
+            <MudRadio Value="@("Bolån")" Color="Color.Primary">Bolån</MudRadio>
+            <MudRadio Value="@("CSN-lån")" Color="Color.Primary">CSN-lån</MudRadio>
+            <MudRadio Value="@("Privatlån")" Color="Color.Primary">Privatlån</MudRadio>
+            <MudRadio Value="@("Kreditkort")" Color="Color.Primary">Kreditkort</MudRadio>
+        </MudRadioGroup>
+        <MudDivider Class="mb-3 mt-3" />
 
         <MudNumericField @bind-Value="_formLoan.Amount" 
                          Label="Belopp (kr)" 
