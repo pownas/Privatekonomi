@@ -32,7 +32,7 @@ Projektet använder .NET Aspire för förbättrad utvecklarupplevelse:
 - **Health checks** för övervaking av tjänsters hälsa
 - **Resilience patterns** (retry, circuit breaker, timeout)
 
-Se [ASPIRE_GUIDE.md](ASPIRE_GUIDE.md) för mer information.
+Se [ASPIRE_GUIDE.md](wiki/ASPIRE_GUIDE.md) för mer information.
 
 ## 🚀 Komma igång
 
@@ -67,7 +67,7 @@ dotnet run
 
 4. Aspire Dashboard öppnas automatiskt och visar alla tjänster, logs, traces och metrics.
 
-Se [ASPIRE_GUIDE.md](ASPIRE_GUIDE.md) för detaljerad information om Aspire-funktionalitet.
+Se [ASPIRE_GUIDE.md](wiki/ASPIRE_GUIDE.md) för detaljerad information om Aspire-funktionalitet.
 
 #### Alternativ 2: Kör tjänster individuellt
 
@@ -136,7 +136,7 @@ Applikationen stöder import av transaktioner från CSV-filer från ICA-banken o
 - Förhandsvisning innan import
 - Detaljerad sammanfattning efter import
 
-Se [CSV_IMPORT_GUIDE.md](CSV_IMPORT_GUIDE.md) för detaljerad guide och exempel.
+Se [CSV_IMPORT_GUIDE.md](wiki/CSV_IMPORT_GUIDE.md) för detaljerad guide och exempel.
 
 ## 📊 Skärmdumpar
 
@@ -210,9 +210,9 @@ builder.Services.AddDbContext<PrivatekonomyContext>(options =>
 
 ## 📋 Dokumentation
 
-- **[ProgramSpecifikation.md](ProgramSpecifikation.md)**: Övergripande programspecifikation för applikationen
-- **[Kravspecifikation_CSV_Import.md](Kravspecifikation_CSV_Import.md)**: Detaljerad kravspecifikation för CSV-import från ICA-banken och Swedbank
-- **[CSV_IMPORT_GUIDE.md](CSV_IMPORT_GUIDE.md)**: Användarguide för CSV-import med exempel och felsökning
+- **[ProgramSpecifikation.md](wiki/ProgramSpecifikation.md)**: Övergripande programspecifikation för applikationen
+- **[Kravspecifikation_CSV_Import.md](wiki/Kravspecifikation_CSV_Import.md)**: Detaljerad kravspecifikation för CSV-import från ICA-banken och Swedbank
+- **[CSV_IMPORT_GUIDE.md](wiki/CSV_IMPORT_GUIDE.md)**: Användarguide för CSV-import med exempel och felsökning
 
 ## 🧪 Testning
 
@@ -259,10 +259,10 @@ Detta projekt är skapat som ett AI-genererat exempel.
 
 ## 📚 Dokumentation
 
-- **[ASPIRE_GUIDE.md](ASPIRE_GUIDE.md)**: Guide för .NET Aspire Orchestrator
-- **[ProgramSpecifikation.md](ProgramSpecifikation.md)**: Övergripande programspecifikation för applikationen
-- **[Kravspecifikation_CSV_Import.md](Kravspecifikation_CSV_Import.md)**: Detaljerad kravspecifikation för CSV-import från ICA-banken och Swedbank
-- **[CSV_IMPORT_GUIDE.md](CSV_IMPORT_GUIDE.md)**: Användarguide för CSV-import med exempel och felsökning
+- **[ASPIRE_GUIDE.md](wiki/ASPIRE_GUIDE.md)**: Guide för .NET Aspire Orchestrator
+- **[ProgramSpecifikation.md](wiki/ProgramSpecifikation.md)**: Övergripande programspecifikation för applikationen
+- **[Kravspecifikation_CSV_Import.md](wiki/Kravspecifikation_CSV_Import.md)**: Detaljerad kravspecifikation för CSV-import från ICA-banken och Swedbank
+- **[CSV_IMPORT_GUIDE.md](wiki/CSV_IMPORT_GUIDE.md)**: Användarguide för CSV-import med exempel och felsökning
 
 ## 🤝 Bidra
 
