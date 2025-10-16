@@ -32,6 +32,7 @@ public class PrivatekonomyContext : DbContext
             entity.Property(e => e.Amount).HasPrecision(18, 2);
             entity.Property(e => e.Description).IsRequired().HasMaxLength(500);
             entity.Property(e => e.Date).IsRequired();
+            entity.Property(e => e.BankSource).HasMaxLength(50);
         });
 
         modelBuilder.Entity<TransactionCategory>(entity =>
