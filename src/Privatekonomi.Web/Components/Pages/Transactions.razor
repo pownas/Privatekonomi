@@ -1,0 +1,114 @@
+@page "/transactions"
+@rendermode InteractiveServer
+@inject ITransactionService TransactionService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+@inject NavigationManager Navigation
+
+<PageTitle>Transaktioner - Privatekonomi</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-4">Transaktioner</MudText>
+
+<MudPaper Class="pa-4">
+    <MudGrid>
+        <MudItem xs="12" Class="d-flex justify-space-between align-center mb-4">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" 
+                       OnClick="@(() => Navigation.NavigateTo("/transactions/new"))">
+                Ny Transaktion
+            </MudButton>
+        </MudItem>
+    </MudGrid>
+
+    @if (_loading)
+    {
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+    }
+    else if (!_transactions.Any())
+    {
+        <MudText>Inga transaktioner ännu.</MudText>
+    }
+    else
+    {
+        <MudTable Items="@_transactions" Hover="true" Striped="true" Filter="new Func<Transaction,bool>(FilterFunc)">
+            <ToolBarContent>
+                <MudTextField @bind-Value="_searchString" Placeholder="Sök" Adornment="Adornment.Start" 
+                              AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+            </ToolBarContent>
+            <HeaderContent>
+                <MudTh>Datum</MudTh>
+                <MudTh>Beskrivning</MudTh>
+                <MudTh>Kategori</MudTh>
+                <MudTh Style="text-align: right">Belopp</MudTh>
+                <MudTh>Åtgärder</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Datum">@context.Date.ToString("yyyy-MM-dd")</MudTd>
+                <MudTd DataLabel="Beskrivning">@context.Description</MudTd>
+                <MudTd DataLabel="Kategori">
+                    @if (context.TransactionCategories.Any())
+                    {
+                        @foreach (var tc in context.TransactionCategories)
+                        {
+                            <MudChip T="string" Size="Size.Small" Style="@($"background-color: {tc.Category.Color}; color: white;")">
+                                @tc.Category.Name
+                            </MudChip>
+                        }
+                    }
+                </MudTd>
+                <MudTd DataLabel="Belopp" Style="text-align: right">
+                    <MudText Color="@(context.IsIncome ? Color.Success : Color.Error)">
+                        @(context.IsIncome ? "+" : "-")@context.Amount.ToString("C", new System.Globalization.CultureInfo("sv-SE"))
+                    </MudText>
+                </MudTd>
+                <MudTd DataLabel="Åtgärder">
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small"
+                                   OnClick="@(() => DeleteTransaction(context.TransactionId))" />
+                </MudTd>
+            </RowTemplate>
+        </MudTable>
+    }
+</MudPaper>
+
+@code {
+    private bool _loading = true;
+    private IEnumerable<Transaction> _transactions = new List<Transaction>();
+    private string _searchString = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        _loading = true;
+        _transactions = await TransactionService.GetAllTransactionsAsync();
+        _loading = false;
+    }
+
+    private bool FilterFunc(Transaction transaction)
+    {
+        if (string.IsNullOrWhiteSpace(_searchString))
+            return true;
+        if (transaction.Description.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+        if (transaction.TransactionCategories.Any(tc => tc.Category.Name.Contains(_searchString, StringComparison.OrdinalIgnoreCase)))
+            return true;
+        return false;
+    }
+
+    private async Task DeleteTransaction(int id)
+    {
+        var result = await DialogService.ShowMessageBox(
+            "Bekräfta borttagning",
+            "Är du säker på att du vill ta bort denna transaktion?",
+            yesText: "Ja", cancelText: "Avbryt");
+
+        if (result == true)
+        {
+            await TransactionService.DeleteTransactionAsync(id);
+            Snackbar.Add("Transaktion borttagen", Severity.Success);
+            await LoadData();
+        }
+    }
+}

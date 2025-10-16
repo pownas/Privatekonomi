@@ -1,0 +1,108 @@
+﻿@page "/"
+@rendermode InteractiveServer
+@inject ITransactionService TransactionService
+@inject ICategoryService CategoryService
+
+<PageTitle>Dashboard - Privatekonomi</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-4">Dashboard</MudText>
+
+@if (_loading)
+{
+    <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+}
+else
+{
+    <MudGrid>
+        <MudItem xs="12" md="6" lg="3">
+            <MudCard Elevation="2" Class="pa-4">
+                <MudCardContent>
+                    <MudText Typo="Typo.h6" Color="Color.Success">Totala Inkomster</MudText>
+                    <MudText Typo="Typo.h4">@_totalIncome.ToString("C", new System.Globalization.CultureInfo("sv-SE"))</MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+        
+        <MudItem xs="12" md="6" lg="3">
+            <MudCard Elevation="2" Class="pa-4">
+                <MudCardContent>
+                    <MudText Typo="Typo.h6" Color="Color.Error">Totala Utgifter</MudText>
+                    <MudText Typo="Typo.h4">@_totalExpenses.ToString("C", new System.Globalization.CultureInfo("sv-SE"))</MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+        
+        <MudItem xs="12" md="6" lg="3">
+            <MudCard Elevation="2" Class="pa-4">
+                <MudCardContent>
+                    <MudText Typo="Typo.h6" Color="Color.Info">Nettoresultat</MudText>
+                    <MudText Typo="Typo.h4">@((_totalIncome - _totalExpenses).ToString("C", new System.Globalization.CultureInfo("sv-SE")))</MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+        
+        <MudItem xs="12" md="6" lg="3">
+            <MudCard Elevation="2" Class="pa-4">
+                <MudCardContent>
+                    <MudText Typo="Typo.h6">Antal Transaktioner</MudText>
+                    <MudText Typo="Typo.h4">@_transactions.Count()</MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+
+    <MudPaper Class="pa-4 mt-4">
+        <MudText Typo="Typo.h6" Class="mb-4">Senaste Transaktioner</MudText>
+        @if (!_transactions.Any())
+        {
+            <MudText>Inga transaktioner ännu. Skapa din första transaktion!</MudText>
+        }
+        else
+        {
+            <MudTable Items="@_transactions.Take(5)" Hover="true" Striped="true">
+                <HeaderContent>
+                    <MudTh>Datum</MudTh>
+                    <MudTh>Beskrivning</MudTh>
+                    <MudTh>Kategori</MudTh>
+                    <MudTh Style="text-align: right">Belopp</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Datum">@context.Date.ToString("yyyy-MM-dd")</MudTd>
+                    <MudTd DataLabel="Beskrivning">@context.Description</MudTd>
+                    <MudTd DataLabel="Kategori">
+                        @if (context.TransactionCategories.Any())
+                        {
+                            @string.Join(", ", context.TransactionCategories.Select(tc => tc.Category.Name))
+                        }
+                    </MudTd>
+                    <MudTd DataLabel="Belopp" Style="text-align: right">
+                        <MudText Color="@(context.IsIncome ? Color.Success : Color.Error)">
+                            @(context.IsIncome ? "+" : "-")@context.Amount.ToString("C", new System.Globalization.CultureInfo("sv-SE"))
+                        </MudText>
+                    </MudTd>
+                </RowTemplate>
+            </MudTable>
+        }
+    </MudPaper>
+}
+
+@code {
+    private bool _loading = true;
+    private IEnumerable<Transaction> _transactions = new List<Transaction>();
+    private decimal _totalIncome = 0;
+    private decimal _totalExpenses = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        _loading = true;
+        _transactions = await TransactionService.GetAllTransactionsAsync();
+        _totalIncome = _transactions.Where(t => t.IsIncome).Sum(t => t.Amount);
+        _totalExpenses = _transactions.Where(t => !t.IsIncome).Sum(t => t.Amount);
+        _loading = false;
+    }
+}

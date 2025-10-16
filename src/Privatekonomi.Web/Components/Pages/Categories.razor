@@ -1,0 +1,54 @@
+@page "/categories"
+@rendermode InteractiveServer
+@inject ICategoryService CategoryService
+@inject ISnackbar Snackbar
+
+<PageTitle>Kategorier - Privatekonomi</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-4">Kategorier</MudText>
+
+<MudPaper Class="pa-4">
+    @if (_loading)
+    {
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+    }
+    else
+    {
+        <MudGrid>
+            @foreach (var category in _categories)
+            {
+                <MudItem xs="12" sm="6" md="4" lg="3">
+                    <MudCard Elevation="2">
+                        <MudCardContent>
+                            <MudChip T="string" Style="@($"background-color: {category.Color}; color: white;")" Size="Size.Large">
+                                @category.Name
+                            </MudChip>
+                        </MudCardContent>
+                    </MudCard>
+                </MudItem>
+            }
+        </MudGrid>
+        
+        @if (!_categories.Any())
+        {
+            <MudText>Inga kategorier tillgängliga.</MudText>
+        }
+    }
+</MudPaper>
+
+@code {
+    private bool _loading = true;
+    private IEnumerable<Category> _categories = new List<Category>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        _loading = true;
+        _categories = await CategoryService.GetAllCategoriesAsync();
+        _loading = false;
+    }
+}
