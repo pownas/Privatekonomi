@@ -23,6 +23,7 @@ public class PrivatekonomyContext : DbContext
             entity.HasKey(e => e.CategoryId);
             entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
             entity.Property(e => e.Color).IsRequired().HasMaxLength(7);
+            entity.Property(e => e.BankSource).HasMaxLength(50);
         });
 
         modelBuilder.Entity<Transaction>(entity =>
@@ -51,15 +52,15 @@ public class PrivatekonomyContext : DbContext
 
         // Seed initial categories
         modelBuilder.Entity<Category>().HasData(
-            new Category { CategoryId = 1, Name = "Mat & Dryck", Color = "#FF6B6B" },
-            new Category { CategoryId = 2, Name = "Transport", Color = "#4ECDC4" },
-            new Category { CategoryId = 3, Name = "Boende", Color = "#45B7D1" },
-            new Category { CategoryId = 4, Name = "Nöje", Color = "#FFA07A" },
-            new Category { CategoryId = 5, Name = "Shopping", Color = "#98D8C8" },
-            new Category { CategoryId = 6, Name = "Hälsa", Color = "#6BCF7F" },
-            new Category { CategoryId = 7, Name = "Lön", Color = "#4CAF50" },
-            new Category { CategoryId = 8, Name = "Sparande", Color = "#2196F3" },
-            new Category { CategoryId = 9, Name = "Övrigt", Color = "#9E9E9E" }
+            new Category { CategoryId = 1, Name = "Mat & Dryck", Color = "#FF6B6B", BankSource = "Swedbank" },
+            new Category { CategoryId = 2, Name = "Transport", Color = "#4ECDC4", BankSource = "Swedbank" },
+            new Category { CategoryId = 3, Name = "Boende", Color = "#45B7D1", BankSource = "SEB" },
+            new Category { CategoryId = 4, Name = "Nöje", Color = "#FFA07A", BankSource = "Nordea" },
+            new Category { CategoryId = 5, Name = "Shopping", Color = "#98D8C8", BankSource = "SEB" },
+            new Category { CategoryId = 6, Name = "Hälsa", Color = "#6BCF7F", BankSource = "Handelsbanken" },
+            new Category { CategoryId = 7, Name = "Lön", Color = "#4CAF50", BankSource = "Swedbank" },
+            new Category { CategoryId = 8, Name = "Sparande", Color = "#2196F3", BankSource = "Nordea" },
+            new Category { CategoryId = 9, Name = "Övrigt", Color = "#9E9E9E", BankSource = null }
         );
     }
 }

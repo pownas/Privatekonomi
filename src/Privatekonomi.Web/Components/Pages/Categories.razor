@@ -23,6 +23,11 @@
                      Required="true"
                      MaxLength="100"
                      Class="mb-3" />
+        <MudTextField @bind-Value="_newCategoryBankSource" 
+                     Label="Bank (t.ex. Swedbank, SEB, Nordea)" 
+                     Variant="Variant.Outlined"
+                     MaxLength="50"
+                     Class="mb-3" />
         <div class="d-flex align-center gap-2 mb-3">
             <MudTextField @bind-Value="_newCategoryColorHex" 
                          Label="Färg (hex, t.ex. #FF6B6B)" 
@@ -51,7 +56,7 @@
                 <MudItem xs="12" sm="6" md="4" lg="3">
                     <MudCard Elevation="2">
                         <MudCardContent>
-                            <div class="d-flex justify-space-between align-center">
+                            <div class="d-flex justify-space-between align-center mb-2">
                                 <MudChip T="string" Style="@($"background-color: {category.Color}; color: white;")" Size="Size.Large">
                                     @category.Name
                                 </MudChip>
@@ -60,6 +65,12 @@
                                              Size="Size.Small"
                                              OnClick="@(() => DeleteCategory(category))" />
                             </div>
+                            @if (!string.IsNullOrWhiteSpace(category.BankSource))
+                            {
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                    <MudIcon Icon="@Icons.Material.Filled.AccountBalance" Size="Size.Small" /> @category.BankSource
+                                </MudText>
+                            }
                         </MudCardContent>
                     </MudCard>
                 </MudItem>
@@ -79,6 +90,7 @@
     private IEnumerable<Category> _categories = new List<Category>();
     private string _newCategoryName = string.Empty;
     private string _newCategoryColorHex = "#4ECDC4";
+    private string _newCategoryBankSource = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
@@ -99,6 +111,7 @@
         {
             _newCategoryName = string.Empty;
             _newCategoryColorHex = "#4ECDC4";
+            _newCategoryBankSource = string.Empty;
         }
     }
 
@@ -122,7 +135,8 @@
             var category = new Category
             {
                 Name = _newCategoryName,
-                Color = _newCategoryColorHex
+                Color = _newCategoryColorHex,
+                BankSource = string.IsNullOrWhiteSpace(_newCategoryBankSource) ? null : _newCategoryBankSource
             };
 
             await CategoryService.CreateCategoryAsync(category);

@@ -49,9 +49,17 @@
                     {
                         @foreach (var tc in context.TransactionCategories)
                         {
-                            <MudChip T="string" Size="Size.Small" Style="@($"background-color: {tc.Category.Color}; color: white;")">
-                                @tc.Category.Name
-                            </MudChip>
+                            <div class="d-flex flex-column gap-1 mb-1">
+                                <MudChip T="string" Size="Size.Small" Style="@($"background-color: {tc.Category.Color}; color: white;")">
+                                    @tc.Category.Name
+                                </MudChip>
+                                @if (!string.IsNullOrWhiteSpace(tc.Category.BankSource))
+                                {
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary" Style="margin-left: 4px;">
+                                        <MudIcon Icon="@Icons.Material.Filled.AccountBalance" Size="Size.Small" /> @tc.Category.BankSource
+                                    </MudText>
+                                }
+                            </div>
                         }
                     }
                 </MudTd>
