@@ -10,7 +10,7 @@
 <MudText Typo="Typo.h4" Class="mb-4">Ny Transaktion</MudText>
 
 <MudPaper Class="pa-4">
-    <EditForm Model="@_transaction" OnValidSubmit="OnValidSubmit">
+    <EditForm Model="@_transaction" OnValidSubmit="OnValidSubmit" FormName="NewTransactionForm">
         <MudGrid>
             <MudItem xs="12" md="6">
                 <MudDatePicker Label="Datum" @bind-Date="_date" Required="true" />
