@@ -51,6 +51,90 @@ else
         </MudItem>
     </MudGrid>
 
+    @if (_transactions.Any())
+    {
+        <MudPaper Class="pa-4 mt-4">
+            <MudGrid>
+                <MudItem xs="12">
+                    <MudText Typo="Typo.h6" Class="mb-2">Visualisering av Kategorier</MudText>
+                    <MudButtonGroup Color="Color.Primary" Variant="Variant.Outlined">
+                        <MudButton OnClick="@(() => ChangePeriod(6))" 
+                                   Variant="@(_selectedMonths == 6 ? Variant.Filled : Variant.Outlined)">
+                            6 månader
+                        </MudButton>
+                        <MudButton OnClick="@(() => ChangePeriod(12))" 
+                                   Variant="@(_selectedMonths == 12 ? Variant.Filled : Variant.Outlined)">
+                            12 månader
+                        </MudButton>
+                        <MudButton OnClick="@(() => ChangePeriod(24))" 
+                                   Variant="@(_selectedMonths == 24 ? Variant.Filled : Variant.Outlined)">
+                            24 månader
+                        </MudButton>
+                    </MudButtonGroup>
+                </MudItem>
+            </MudGrid>
+        </MudPaper>
+
+        <MudGrid Class="mt-4">
+            <MudItem xs="12" md="6">
+                <MudPaper Class="pa-4" Elevation="2">
+                    <MudText Typo="Typo.h6" Class="mb-4">Utgiftsfördelning per Kategori</MudText>
+                    @if (_expensePieData.Any())
+                    {
+                        <MudChart ChartType="ChartType.Pie" 
+                                  InputData="@_expensePieData" 
+                                  InputLabels="@_expensePieLabels"
+                                  Width="100%" 
+                                  Height="300px"
+                                  LegendPosition="Position.Bottom" />
+                    }
+                    else
+                    {
+                        <MudText>Inga utgifter för vald period.</MudText>
+                    }
+                </MudPaper>
+            </MudItem>
+
+            <MudItem xs="12" md="6">
+                <MudPaper Class="pa-4" Elevation="2">
+                    <MudText Typo="Typo.h6" Class="mb-4">Inkomstfördelning per Kategori</MudText>
+                    @if (_incomePieData.Any())
+                    {
+                        <MudChart ChartType="ChartType.Pie" 
+                                  InputData="@_incomePieData" 
+                                  InputLabels="@_incomePieLabels"
+                                  Width="100%" 
+                                  Height="300px"
+                                  LegendPosition="Position.Bottom" />
+                    }
+                    else
+                    {
+                        <MudText>Inga inkomster för vald period.</MudText>
+                    }
+                </MudPaper>
+            </MudItem>
+
+            <MudItem xs="12">
+                <MudPaper Class="pa-4" Elevation="2">
+                    <MudText Typo="Typo.h6" Class="mb-4">Utgifter per Kategori - Månadsvis Jämförelse</MudText>
+                    @if (_barChartSeries.Any())
+                    {
+                        <MudChart ChartType="ChartType.Bar" 
+                                  ChartSeries="@_barChartSeries" 
+                                  XAxisLabels="@_barChartLabels"
+                                  Width="100%" 
+                                  Height="400px"
+                                  ChartOptions="@_chartOptions" />
+                    }
+                    else
+                    {
+                        <MudText>Inga data att visa för vald period.</MudText>
+                    }
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+    }
+
     <MudPaper Class="pa-4 mt-4">
         <MudText Typo="Typo.h6" Class="mb-4">Senaste Transaktioner</MudText>
         @if (!_transactions.Any())
@@ -91,6 +175,20 @@ else
     private IEnumerable<Transaction> _transactions = new List<Transaction>();
     private decimal _totalIncome = 0;
     private decimal _totalExpenses = 0;
+    private int _selectedMonths = 12;
+
+    // Chart data
+    private double[] _expensePieData = Array.Empty<double>();
+    private string[] _expensePieLabels = Array.Empty<string>();
+    private double[] _incomePieData = Array.Empty<double>();
+    private string[] _incomePieLabels = Array.Empty<string>();
+    private List<ChartSeries> _barChartSeries = new();
+    private string[] _barChartLabels = Array.Empty<string>();
+    private ChartOptions _chartOptions = new ChartOptions
+    {
+        YAxisTicks = 1000,
+        YAxisFormat = "C0"
+    };
 
     protected override async Task OnInitializedAsync()
     {
@@ -103,6 +201,68 @@ else
         _transactions = await TransactionService.GetAllTransactionsAsync();
         _totalIncome = _transactions.Where(t => t.IsIncome).Sum(t => t.Amount);
         _totalExpenses = _transactions.Where(t => !t.IsIncome).Sum(t => t.Amount);
+        UpdateChartData();
         _loading = false;
+    }
+
+    private void ChangePeriod(int months)
+    {
+        _selectedMonths = months;
+        UpdateChartData();
+    }
+
+    private void UpdateChartData()
+    {
+        var cutoffDate = DateTime.Now.AddMonths(-_selectedMonths);
+        var filteredTransactions = _transactions.Where(t => t.Date >= cutoffDate).ToList();
+
+        // Pie chart for expenses by category
+        var expensesByCategory = filteredTransactions
+            .Where(t => !t.IsIncome)
+            .SelectMany(t => t.TransactionCategories.Select(tc => new { Category = tc.Category.Name, t.Amount }))
+            .GroupBy(x => x.Category)
+            .Select(g => new { Category = g.Key, Total = g.Sum(x => x.Amount) })
+            .OrderByDescending(x => x.Total)
+            .ToList();
+
+        _expensePieLabels = expensesByCategory.Select(x => x.Category).ToArray();
+        _expensePieData = expensesByCategory.Select(x => (double)x.Total).ToArray();
+
+        // Pie chart for income by category
+        var incomeByCategory = filteredTransactions
+            .Where(t => t.IsIncome)
+            .SelectMany(t => t.TransactionCategories.Select(tc => new { Category = tc.Category.Name, t.Amount }))
+            .GroupBy(x => x.Category)
+            .Select(g => new { Category = g.Key, Total = g.Sum(x => x.Amount) })
+            .OrderByDescending(x => x.Total)
+            .ToList();
+
+        _incomePieLabels = incomeByCategory.Select(x => x.Category).ToArray();
+        _incomePieData = incomeByCategory.Select(x => (double)x.Total).ToArray();
+
+        // Bar chart for monthly category comparison (expenses only)
+        var monthlyData = filteredTransactions
+            .Where(t => !t.IsIncome)
+            .GroupBy(t => new { t.Date.Year, t.Date.Month })
+            .OrderBy(g => g.Key.Year).ThenBy(g => g.Key.Month)
+            .Select(g => new
+            {
+                Month = new DateTime(g.Key.Year, g.Key.Month, 1),
+                Categories = g.SelectMany(t => t.TransactionCategories.Select(tc => new { tc.Category.Name, t.Amount }))
+                             .GroupBy(x => x.Name)
+                             .ToDictionary(cg => cg.Key, cg => cg.Sum(x => x.Amount))
+            })
+            .ToList();
+
+        _barChartLabels = monthlyData.Select(m => m.Month.ToString("MMM yyyy", new System.Globalization.CultureInfo("sv-SE"))).ToArray();
+
+        // Get top 5 categories by total amount
+        var topCategories = expensesByCategory.Take(5).Select(x => x.Category).ToList();
+
+        _barChartSeries = topCategories.Select(category => new ChartSeries
+        {
+            Name = category,
+            Data = monthlyData.Select(m => m.Categories.ContainsKey(category) ? (double)m.Categories[category] : 0).ToArray()
+        }).ToList();
     }
 }
