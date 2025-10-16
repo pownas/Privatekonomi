@@ -26,6 +26,11 @@
             </MudItem>
             
             <MudItem xs="12">
+                <MudTextField Label="Bank (t.ex. Swedbank, SEB, Nordea)" @bind-Value="_transaction.BankSource" 
+                              Placeholder="Välj bank" />
+            </MudItem>
+            
+            <MudItem xs="12">
                 <MudSwitch @bind-Value="_transaction.IsIncome" Color="Color.Success" 
                            Label="@(_transaction.IsIncome ? "Inkomst" : "Utgift")" />
             </MudItem>

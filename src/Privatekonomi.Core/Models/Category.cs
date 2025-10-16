@@ -5,7 +5,6 @@ public class Category
     public int CategoryId { get; set; }
     public string Name { get; set; } = string.Empty;
     public string Color { get; set; } = "#000000";
-    public string? BankSource { get; set; }
     
     public ICollection<TransactionCategory> TransactionCategories { get; set; } = new List<TransactionCategory>();
 }

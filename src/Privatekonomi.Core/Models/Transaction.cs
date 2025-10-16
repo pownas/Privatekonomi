@@ -7,6 +7,7 @@ public class Transaction
     public string Description { get; set; } = string.Empty;
     public DateTime Date { get; set; }
     public bool IsIncome { get; set; }
+    public string? BankSource { get; set; }
     
     public ICollection<TransactionCategory> TransactionCategories { get; set; } = new List<TransactionCategory>();
 }

@@ -32,6 +32,9 @@ public static class TestDataSeeder
             { 9, new[] { "Swish betalning", "Gåva", "Okategoriserad", "Diverse", "Kontantuttag" } } // Övrigt
         };
 
+        // Bank sources to simulate transactions from different banks
+        var bankSources = new[] { "Swedbank", "SEB", "Nordea", "Handelsbanken", "Danske Bank" };
+
         // Amount ranges for different categories (min, max)
         var amountRanges = new Dictionary<int, (decimal min, decimal max)>
         {
@@ -77,7 +80,8 @@ public static class TestDataSeeder
                 Amount = amount,
                 Description = description,
                 Date = date,
-                IsIncome = isIncome
+                IsIncome = isIncome,
+                BankSource = bankSources[random.Next(bankSources.Length)]
             };
 
             transactions.Add(transaction);

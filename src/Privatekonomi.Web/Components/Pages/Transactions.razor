@@ -37,6 +37,7 @@
             <HeaderContent>
                 <MudTh>Datum</MudTh>
                 <MudTh>Beskrivning</MudTh>
+                <MudTh>Bank</MudTh>
                 <MudTh>Kategori</MudTh>
                 <MudTh Style="text-align: right">Belopp</MudTh>
                 <MudTh>Åtgärder</MudTh>
@@ -44,22 +45,22 @@
             <RowTemplate>
                 <MudTd DataLabel="Datum">@context.Date.ToString("yyyy-MM-dd")</MudTd>
                 <MudTd DataLabel="Beskrivning">@context.Description</MudTd>
+                <MudTd DataLabel="Bank">
+                    @if (!string.IsNullOrWhiteSpace(context.BankSource))
+                    {
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">
+                            <MudIcon Icon="@Icons.Material.Filled.AccountBalance" Size="Size.Small" /> @context.BankSource
+                        </MudText>
+                    }
+                </MudTd>
                 <MudTd DataLabel="Kategori">
                     @if (context.TransactionCategories.Any())
                     {
                         @foreach (var tc in context.TransactionCategories)
                         {
-                            <div class="d-flex flex-column gap-1 mb-1">
-                                <MudChip T="string" Size="Size.Small" Style="@($"background-color: {tc.Category.Color}; color: white;")">
-                                    @tc.Category.Name
-                                </MudChip>
-                                @if (!string.IsNullOrWhiteSpace(tc.Category.BankSource))
-                                {
-                                    <MudText Typo="Typo.caption" Color="Color.Secondary" Style="margin-left: 4px;">
-                                        <MudIcon Icon="@Icons.Material.Filled.AccountBalance" Size="Size.Small" /> @tc.Category.BankSource
-                                    </MudText>
-                                }
-                            </div>
+                            <MudChip T="string" Size="Size.Small" Style="@($"background-color: {tc.Category.Color}; color: white;")">
+                                @tc.Category.Name
+                            </MudChip>
                         }
                     }
                 </MudTd>
@@ -101,6 +102,8 @@
         if (transaction.Description.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
             return true;
         if (transaction.TransactionCategories.Any(tc => tc.Category.Name.Contains(_searchString, StringComparison.OrdinalIgnoreCase)))
+            return true;
+        if (!string.IsNullOrWhiteSpace(transaction.BankSource) && transaction.BankSource.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
             return true;
         return false;
     }
