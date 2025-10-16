@@ -15,20 +15,61 @@ En privatekonomi-applikation byggd med .NET 9, Blazor Server och MudBlazor för 
 
 ## 🏗️ Arkitektur
 
-Projektet består av tre huvudkomponenter:
+Projektet består av fem huvudkomponenter:
 
+- **Privatekonomi.AppHost**: .NET Aspire orchestrator för att hantera och övervaka alla tjänster
+- **Privatekonomi.ServiceDefaults**: Gemensamt bibliotek för Aspire service defaults (telemetri, health checks, resilience)
 - **Privatekonomi.Web**: Blazor Server-applikation med MudBlazor UI
 - **Privatekonomi.Api**: ASP.NET Core Web API med REST endpoints
 - **Privatekonomi.Core**: Gemensamt klassbibliotek med modeller, services och dataåtkomst
+
+### .NET Aspire Integration
+
+Projektet använder .NET Aspire för förbättrad utvecklarupplevelse:
+- **Centraliserad orkestration** av alla tjänster
+- **Inbyggd observerbarhet** med OpenTelemetry (logs, traces, metrics)
+- **Service discovery** för enkel tjänst-till-tjänst kommunikation
+- **Health checks** för övervaking av tjänsters hälsa
+- **Resilience patterns** (retry, circuit breaker, timeout)
+
+Se [ASPIRE_GUIDE.md](ASPIRE_GUIDE.md) för mer information.
 
 ## 🚀 Komma igång
 
 ### Förutsättningar
 
 - [.NET 9 SDK](https://dotnet.microsoft.com/download/dotnet/9.0)
+- [Docker Desktop](https://www.docker.com/products/docker-desktop) (för Aspire Orchestrator)
 - [Node.js](https://nodejs.org/) (för Playwright-tester)
 
 ### Installation och körning
+
+#### Alternativ 1: Kör med .NET Aspire Orchestrator (Rekommenderat)
+
+.NET Aspire förenklar hanteringen av alla tjänster och ger inbyggd observerbarhet.
+
+1. Installera Aspire workload:
+```bash
+dotnet workload install aspire
+```
+
+2. Klona repositoriet:
+```bash
+git clone https://github.com/pownas/Privatekonomi.git
+cd Privatekonomi
+```
+
+3. Kör applikationen med Aspire:
+```bash
+cd src/Privatekonomi.AppHost
+dotnet run
+```
+
+4. Aspire Dashboard öppnas automatiskt och visar alla tjänster, logs, traces och metrics.
+
+Se [ASPIRE_GUIDE.md](ASPIRE_GUIDE.md) för detaljerad information om Aspire-funktionalitet.
+
+#### Alternativ 2: Kör tjänster individuellt
 
 1. Klona repositoriet:
 ```bash
@@ -114,18 +155,20 @@ Se [CSV_IMPORT_GUIDE.md](CSV_IMPORT_GUIDE.md) för detaljerad guide och exempel.
 ```
 Privatekonomi/
 ├── src/
-│   ├── Privatekonomi.Web/          # Blazor Server applikation
+│   ├── Privatekonomi.AppHost/        # Aspire orchestrator
+│   ├── Privatekonomi.ServiceDefaults/ # Aspire service defaults
+│   ├── Privatekonomi.Web/            # Blazor Server applikation
 │   │   ├── Components/
-│   │   │   ├── Layout/             # Layout-komponenter
-│   │   │   └── Pages/              # Sidor (Dashboard, Transactions, etc.)
+│   │   │   ├── Layout/               # Layout-komponenter
+│   │   │   └── Pages/                # Sidor (Dashboard, Transactions, etc.)
 │   │   └── Program.cs
-│   ├── Privatekonomi.Api/          # Web API
-│   │   ├── Controllers/            # API controllers
+│   ├── Privatekonomi.Api/            # Web API
+│   │   ├── Controllers/              # API controllers
 │   │   └── Program.cs
-│   └── Privatekonomi.Core/         # Gemensamt bibliotek
-│       ├── Data/                   # DbContext och dataåtkomst
-│       ├── Models/                 # Datamodeller
-│       └── Services/               # Business logic
+│   └── Privatekonomi.Core/           # Gemensamt bibliotek
+│       ├── Data/                     # DbContext och dataåtkomst
+│       ├── Models/                   # Datamodeller
+│       └── Services/                 # Business logic
 └── Privatekonomi.sln
 ```
 
@@ -203,6 +246,13 @@ Se [tests/playwright/README.md](tests/playwright/README.md) för detaljerad doku
 ## 📝 Licens
 
 Detta projekt är skapat som ett AI-genererat exempel.
+
+## 📚 Dokumentation
+
+- **[ASPIRE_GUIDE.md](ASPIRE_GUIDE.md)**: Guide för .NET Aspire Orchestrator
+- **[ProgramSpecifikation.md](ProgramSpecifikation.md)**: Övergripande programspecifikation för applikationen
+- **[Kravspecifikation_CSV_Import.md](Kravspecifikation_CSV_Import.md)**: Detaljerad kravspecifikation för CSV-import från ICA-banken och Swedbank
+- **[CSV_IMPORT_GUIDE.md](CSV_IMPORT_GUIDE.md)**: Användarguide för CSV-import med exempel och felsökning
 
 ## 🤝 Bidra
 

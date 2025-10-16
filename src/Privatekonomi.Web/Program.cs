@@ -6,6 +6,9 @@ using Privatekonomi.Web.Components;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Add Aspire service defaults
+builder.AddServiceDefaults();
+
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
@@ -48,6 +51,9 @@ app.UseHttpsRedirection();
 
 
 app.UseAntiforgery();
+
+// Map Aspire default endpoints (health checks, etc.)
+app.MapDefaultEndpoints();
 
 app.MapStaticAssets();
 app.MapRazorComponents<App>()
