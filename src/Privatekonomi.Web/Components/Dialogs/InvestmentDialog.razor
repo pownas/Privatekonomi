@@ -1,0 +1,66 @@
+@inject IDialogService DialogService
+
+<MudDialog>
+    <DialogContent>
+        <MudForm @ref="_form" @bind-IsValid="@_formValid">
+            <MudTextField @bind-Value="Investment.Name" Label="Namn" Required="true" 
+                          RequiredError="Namn är obligatoriskt" />
+            
+            <MudSelect @bind-Value="Investment.Type" Label="Typ" Required="true"
+                       RequiredError="Typ är obligatoriskt">
+                <MudSelectItem Value="@("Aktie")">Aktie</MudSelectItem>
+                <MudSelectItem Value="@("Fond")">Fond</MudSelectItem>
+            </MudSelect>
+            
+            <MudNumericField @bind-Value="Investment.Quantity" Label="Antal" Required="true" 
+                             RequiredError="Antal är obligatoriskt" Min="0.0001m" Step="0.01m" />
+            
+            <MudNumericField @bind-Value="Investment.PurchasePrice" Label="Köpkurs (kr)" Required="true" 
+                             RequiredError="Köpkurs är obligatoriskt" Min="0.01m" Step="0.01m" />
+            
+            <MudNumericField @bind-Value="Investment.CurrentPrice" Label="Aktuell kurs (kr)" Required="true" 
+                             RequiredError="Aktuell kurs är obligatoriskt" Min="0.01m" Step="0.01m" />
+            
+            <MudDatePicker @bind-Date="_purchaseDate" Label="Köpdatum" Required="true" 
+                           RequiredError="Köpdatum är obligatoriskt" />
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Avbryt</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit" Disabled="@(!_formValid)">
+            @(IsEdit ? "Uppdatera" : "Lägg till")
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    public required IMudDialogInstance MudDialog { get; set; }
+
+    [Parameter] 
+    public Investment Investment { get; set; } = new();
+
+    [Parameter]
+    public bool IsEdit { get; set; } = false;
+
+    private MudForm? _form;
+    private bool _formValid;
+    private DateTime? _purchaseDate;
+
+    protected override void OnInitialized()
+    {
+        _purchaseDate = Investment.PurchaseDate;
+    }
+
+    private void Submit()
+    {
+        if (_purchaseDate.HasValue)
+        {
+            Investment.PurchaseDate = _purchaseDate.Value;
+        }
+        
+        MudDialog.Close(DialogResult.Ok(Investment));
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+}
