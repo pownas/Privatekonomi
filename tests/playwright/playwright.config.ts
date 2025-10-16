@@ -26,7 +26,7 @@ export default defineConfig({
   webServer: {
     command: 'cd ../../src/Privatekonomi.Web && dotnet run',
     url: 'http://localhost:5274',
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: true,
     timeout: 120 * 1000,
   },
 });

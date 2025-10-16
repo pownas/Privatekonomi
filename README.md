@@ -25,6 +25,7 @@ Projektet består av tre huvudkomponenter:
 ### Förutsättningar
 
 - [.NET 9 SDK](https://dotnet.microsoft.com/download/dotnet/9.0)
+- [Node.js](https://nodejs.org/) (för Playwright-tester)
 
 ### Installation och körning
 
@@ -54,6 +55,17 @@ dotnet run
 ```
 
 API Swagger-dokumentation finns på: `http://localhost:5000/swagger`
+
+### Testdata
+
+Applikationen seedas automatiskt med ca **50 testransaktioner** vid start för utveckling och test. Testdata inkluderar:
+- Realistiska svenska transaktioner (ICA, SL-kort, Hyra, Netflix, etc.)
+- Spridda över de senaste 3 månaderna
+- Olika kategorier med färgkodning
+- Både inkomster och utgifter
+- Belopp som varierar realistiskt per kategori
+
+För att inaktivera testdata, kommentera bort `TestDataSeeder.SeedTestData(context);` i `Program.cs`.
 
 ## 📊 Skärmdumpar
 
@@ -122,6 +134,32 @@ builder.Services.AddDbContext<PrivatekonomyContext>(options =>
   }
 }
 ```
+
+## 🧪 Testning
+
+### End-to-End tester med Playwright
+
+Projektet inkluderar Playwright-tester för att verifiera användargränssnittet:
+
+```bash
+cd tests/playwright
+npm install
+npx playwright install chromium
+npm test
+```
+
+Testerna verifierar:
+- ✅ Att alla 50 testransaktioner visas korrekt
+- ✅ Korrekt formatering av datum, belopp och kategorier
+- ✅ Sökfunktionalitet fungerar
+- ✅ Kategorier visas med färgkodade chips
+- ✅ Både inkomster och utgifter presenteras
+
+Se [tests/playwright/README.md](tests/playwright/README.md) för detaljerad dokumentation.
+
+### Skärmdump av testdata
+
+![Transaktioner med testdata](https://github.com/user-attachments/assets/93e402c7-ee15-4984-8053-9fe84512a9b5)
 
 ## 🎯 Förbättringsförslag
 
