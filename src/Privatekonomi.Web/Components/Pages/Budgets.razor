@@ -28,24 +28,24 @@
                              Class="mb-3" />
             </MudItem>
             <MudItem xs="12" md="6">
-                <MudSelect @bind-Value="_newBudget.Period" 
-                          Label="Period" 
-                          Variant="Variant.Outlined"
-                          Class="mb-3">
-                    <MudSelectItem Value="@BudgetPeriod.Monthly">Månadsbudget</MudSelectItem>
-                    <MudSelectItem Value="@BudgetPeriod.Yearly">Årsbudget</MudSelectItem>
-                </MudSelect>
+                <MudRadioGroup @bind-Value="_newBudget.Period" Class="mb-3">
+                    <MudText Typo="Typo.body2" Class="mb-2">Period</MudText>
+                    <MudRadio Value="@BudgetPeriod.Monthly" Color="Color.Primary">Månadsbudget</MudRadio>
+                    <MudRadio Value="@BudgetPeriod.Yearly" Color="Color.Primary">Årsbudget</MudRadio>
+                </MudRadioGroup>
             </MudItem>
             <MudItem xs="12" md="6">
-                <MudDatePicker @bind-Date="_newBudgetStartDate" 
-                              Label="Startdatum" 
+                <MudTextField @bind-Value="_newBudgetStartDateString" 
+                              Label="Startdatum (ÅÅÅÅ-MM-DD)" 
                               Variant="Variant.Outlined"
+                              Placeholder="2025-01-01"
                               Class="mb-3" />
             </MudItem>
             <MudItem xs="12" md="6">
-                <MudDatePicker @bind-Date="_newBudgetEndDate" 
-                              Label="Slutdatum" 
+                <MudTextField @bind-Value="_newBudgetEndDateString" 
+                              Label="Slutdatum (ÅÅÅÅ-MM-DD)" 
                               Variant="Variant.Outlined"
+                              Placeholder="2025-01-31"
                               Class="mb-3" />
             </MudItem>
             <MudItem xs="12">
@@ -236,8 +236,8 @@
     private IEnumerable<Budget> _budgets = new List<Budget>();
     private IEnumerable<Category> _categories = new List<Category>();
     private Budget _newBudget = new();
-    private DateTime? _newBudgetStartDate = DateTime.Now.Date;
-    private DateTime? _newBudgetEndDate = DateTime.Now.AddMonths(1).Date;
+    private string _newBudgetStartDateString = DateTime.Now.ToString("yyyy-MM-dd");
+    private string _newBudgetEndDateString = DateTime.Now.AddMonths(1).ToString("yyyy-MM-dd");
     private Dictionary<int, decimal> _categoryBudgets = new();
     private Dictionary<int, Dictionary<int, decimal>> _budgetActualAmounts = new();
 
@@ -274,8 +274,8 @@
             {
                 Period = BudgetPeriod.Monthly
             };
-            _newBudgetStartDate = DateTime.Now.Date;
-            _newBudgetEndDate = DateTime.Now.AddMonths(1).Date;
+            _newBudgetStartDateString = DateTime.Now.ToString("yyyy-MM-dd");
+            _newBudgetEndDateString = DateTime.Now.AddMonths(1).ToString("yyyy-MM-dd");
             _categoryBudgets = _categories.ToDictionary(c => c.CategoryId, c => 0m);
         }
     }
@@ -288,13 +288,14 @@
             return;
         }
 
-        if (!_newBudgetStartDate.HasValue || !_newBudgetEndDate.HasValue)
+        if (!DateTime.TryParse(_newBudgetStartDateString, out var startDate) || 
+            !DateTime.TryParse(_newBudgetEndDateString, out var endDate))
         {
-            Snackbar.Add("Start- och slutdatum är obligatoriska", Severity.Error);
+            Snackbar.Add("Ogiltigt datumformat. Använd ÅÅÅÅ-MM-DD", Severity.Error);
             return;
         }
 
-        if (_newBudgetEndDate < _newBudgetStartDate)
+        if (endDate < startDate)
         {
             Snackbar.Add("Slutdatum måste vara efter startdatum", Severity.Error);
             return;
@@ -302,8 +303,8 @@
 
         try
         {
-            _newBudget.StartDate = _newBudgetStartDate.Value;
-            _newBudget.EndDate = _newBudgetEndDate.Value;
+            _newBudget.StartDate = startDate;
+            _newBudget.EndDate = endDate;
             
             // Add budget categories with non-zero amounts
             _newBudget.BudgetCategories = _categoryBudgets
