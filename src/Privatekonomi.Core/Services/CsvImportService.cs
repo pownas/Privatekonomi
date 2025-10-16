@@ -102,9 +102,14 @@ public class CsvImportService : ICsvImportService
 
         try
         {
+            // Get BankSource by name
+            var bankSource = await _context.BankSources
+                .FirstOrDefaultAsync(b => b.Name.Equals(bankName, StringComparison.OrdinalIgnoreCase));
+
             // Import transactions
             foreach (var transaction in result.Transactions)
             {
+                transaction.BankSourceId = bankSource?.BankSourceId;
                 _context.Transactions.Add(transaction);
             }
 
