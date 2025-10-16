@@ -4,6 +4,9 @@ using Privatekonomi.Core.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Add Aspire service defaults
+builder.AddServiceDefaults();
+
 // Add services to the container.
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -48,6 +51,10 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseCors("AllowBlazorWeb");
 app.UseAuthorization();
+
+// Map Aspire default endpoints (health checks, etc.)
+app.MapDefaultEndpoints();
+
 app.MapControllers();
 
 app.Run();

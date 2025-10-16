@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Privatekonomi.Core\Privatekonomi.Core.csproj" />
+    <ProjectReference Include="..\Privatekonomi.ServiceDefaults\Privatekonomi.ServiceDefaults.csproj" />
   </ItemGroup>
 
   <ItemGroup>
