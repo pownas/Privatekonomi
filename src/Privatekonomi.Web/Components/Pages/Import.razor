@@ -264,7 +264,7 @@ else if (_currentStep == ImportStep.Complete)
             content.Add(new StringContent(_selectedBank), "bankName");
 
             // Upload to API
-            var response = await Http.PostAsync("https://localhost:7001/api/import/upload", content);
+            var response = await Http.PostAsync("https://localhost:7023/api/import/upload", content);
             
             if (response.IsSuccessStatusCode)
             {
@@ -311,7 +311,7 @@ else if (_currentStep == ImportStep.Complete)
                 SkipDuplicates = true
             };
 
-            var response = await Http.PostAsJsonAsync("https://localhost:7001/api/import/confirm", request);
+            var response = await Http.PostAsJsonAsync("https://localhost:7023/api/import/confirm", request);
             
             if (response.IsSuccessStatusCode)
             {
