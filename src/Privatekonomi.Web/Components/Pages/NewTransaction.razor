@@ -1,0 +1,135 @@
+@page "/transactions/new"
+@rendermode InteractiveServer
+@inject ITransactionService TransactionService
+@inject ICategoryService CategoryService
+@inject ISnackbar Snackbar
+@inject NavigationManager Navigation
+
+<PageTitle>Ny Transaktion - Privatekonomi</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-4">Ny Transaktion</MudText>
+
+<MudPaper Class="pa-4">
+    <EditForm Model="@_transaction" OnValidSubmit="OnValidSubmit">
+        <MudGrid>
+            <MudItem xs="12" md="6">
+                <MudDatePicker Label="Datum" @bind-Date="_date" Required="true" />
+            </MudItem>
+            
+            <MudItem xs="12" md="6">
+                <MudNumericField Label="Belopp" @bind-Value="_transaction.Amount" Required="true" 
+                                 Format="N2" Adornment="Adornment.Start" AdornmentText="kr" />
+            </MudItem>
+            
+            <MudItem xs="12">
+                <MudTextField Label="Beskrivning" @bind-Value="_transaction.Description" Required="true" />
+            </MudItem>
+            
+            <MudItem xs="12">
+                <MudSwitch @bind-Value="_transaction.IsIncome" Color="Color.Success" 
+                           Label="@(_transaction.IsIncome ? "Inkomst" : "Utgift")" />
+            </MudItem>
+            
+            <MudItem xs="12">
+                <MudText Typo="Typo.h6" Class="mb-2">Kategorier</MudText>
+                @if (_loading)
+                {
+                    <MudProgressCircular Size="Size.Small" Indeterminate="true" />
+                }
+                else if (!_categories.Any())
+                {
+                    <MudText>Inga kategorier tillgängliga.</MudText>
+                }
+                else
+                {
+                    <MudGrid>
+                        @foreach (var category in _categories)
+                        {
+                            <MudItem xs="12" sm="6" md="4">
+                                <MudCheckBox @bind-Value="@_selectedCategories[category.CategoryId]" 
+                                             Color="Color.Primary">
+                                    <MudChip T="string" Size="Size.Small" Style="@($"background-color: {category.Color}; color: white;")">
+                                        @category.Name
+                                    </MudChip>
+                                </MudCheckBox>
+                            </MudItem>
+                        }
+                    </MudGrid>
+                }
+            </MudItem>
+            
+            <MudItem xs="12" Class="d-flex justify-space-between mt-4">
+                <MudButton Variant="Variant.Outlined" Color="Color.Default" OnClick="Cancel">Avbryt</MudButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" ButtonType="ButtonType.Submit">Spara</MudButton>
+            </MudItem>
+        </MudGrid>
+    </EditForm>
+</MudPaper>
+
+@code {
+    private bool _loading = true;
+    private Transaction _transaction = new Transaction { Date = DateTime.Today, Amount = 0 };
+    private DateTime? _date = DateTime.Today;
+    private IEnumerable<Category> _categories = new List<Category>();
+    private Dictionary<int, bool> _selectedCategories = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCategories();
+    }
+
+    private async Task LoadCategories()
+    {
+        _loading = true;
+        _categories = await CategoryService.GetAllCategoriesAsync();
+        
+        foreach (var category in _categories)
+        {
+            _selectedCategories[category.CategoryId] = false;
+        }
+        
+        _loading = false;
+    }
+
+    private async Task OnValidSubmit()
+    {
+        if (_date.HasValue)
+        {
+            _transaction.Date = _date.Value;
+        }
+
+        // Add selected categories
+        var selectedCategoryIds = _selectedCategories.Where(kvp => kvp.Value).Select(kvp => kvp.Key).ToList();
+        
+        if (selectedCategoryIds.Any())
+        {
+            // Split amount equally among selected categories
+            var amountPerCategory = _transaction.Amount / selectedCategoryIds.Count;
+            
+            foreach (var categoryId in selectedCategoryIds)
+            {
+                _transaction.TransactionCategories.Add(new TransactionCategory
+                {
+                    CategoryId = categoryId,
+                    Amount = amountPerCategory
+                });
+            }
+        }
+
+        try
+        {
+            await TransactionService.CreateTransactionAsync(_transaction);
+            Snackbar.Add("Transaktion skapad", Severity.Success);
+            Navigation.NavigateTo("/transactions");
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Fel vid skapande av transaktion: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void Cancel()
+    {
+        Navigation.NavigateTo("/transactions");
+    }
+}

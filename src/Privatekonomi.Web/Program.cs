@@ -1,0 +1,53 @@
+using Microsoft.EntityFrameworkCore;
+using MudBlazor.Services;
+using Privatekonomi.Core.Data;
+using Privatekonomi.Core.Services;
+using Privatekonomi.Web.Components;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Add services to the container.
+builder.Services.AddRazorComponents()
+    .AddInteractiveServerComponents();
+
+// Add MudBlazor services
+builder.Services.AddMudServices();
+
+// Configure DbContext with InMemory database
+builder.Services.AddDbContext<PrivatekonomyContext>(options =>
+    options.UseInMemoryDatabase("PrivatekonomyDb"));
+
+// Register services
+builder.Services.AddScoped<ITransactionService, TransactionService>();
+builder.Services.AddScoped<ICategoryService, CategoryService>();
+
+// Add HttpClient for API calls (if needed later)
+builder.Services.AddHttpClient();
+
+var app = builder.Build();
+
+// Seed the database
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<PrivatekonomyContext>();
+    context.Database.EnsureCreated();
+}
+
+// Configure the HTTP request pipeline.
+if (!app.Environment.IsDevelopment())
+{
+    app.UseExceptionHandler("/Error", createScopeForErrors: true);
+    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+    app.UseHsts();
+}
+
+app.UseHttpsRedirection();
+
+
+app.UseAntiforgery();
+
+app.MapStaticAssets();
+app.MapRazorComponents<App>()
+    .AddInteractiveServerRenderMode();
+
+app.Run();
