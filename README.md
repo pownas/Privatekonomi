@@ -36,18 +36,28 @@ git clone https://github.com/pownas/Privatekonomi.git
 cd Privatekonomi
 ```
 
-2. Bygg lösningen:
+3. Installera .Net SDK
+```bash
+# install .Net
+bash <(curl -sSL https://dot.net/v1/dotnet-install.sh) --channel 9.0 --install-dir "$HOME/.dotnet"
+
+# add to current session (and add these lines to ~/.bashrc or ~/.profile to persist)
+export DOTNET_ROOT="$HOME/.dotnet"
+export PATH="$HOME/.dotnet:$PATH"
+```
+
+3. Bygg lösningen:
 ```bash
 dotnet build
 ```
 
-3. Kör Web-applikationen:
+4. Kör Web-applikationen:
 ```bash
 cd src/Privatekonomi.Web
 dotnet run
 ```
 
-4. Öppna webbläsaren och navigera till: `http://localhost:5274`
+5. Öppna webbläsaren och navigera till: `http://localhost:5274`
 
 Alternativt kan du köra API-applikationen:
 ```bash
