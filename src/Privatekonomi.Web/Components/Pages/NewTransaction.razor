@@ -2,6 +2,7 @@
 @rendermode InteractiveServer
 @inject ITransactionService TransactionService
 @inject ICategoryService CategoryService
+@inject IBankSourceService BankSourceService
 @inject ISnackbar Snackbar
 @inject NavigationManager Navigation
 
@@ -26,8 +27,14 @@
             </MudItem>
             
             <MudItem xs="12">
-                <MudTextField Label="Bank (t.ex. Swedbank, SEB, Nordea)" @bind-Value="_transaction.BankSource" 
-                              Placeholder="Välj bank" />
+                <MudSelect T="int?" Label="Bank" @bind-Value="_transaction.BankSourceId" Clearable="true">
+                    @foreach (var bank in _bankSources)
+                    {
+                        <MudSelectItem T="int?" Value="@bank.BankSourceId">
+                            @bank.Name
+                        </MudSelectItem>
+                    }
+                </MudSelect>
             </MudItem>
             
             <MudItem xs="12">
@@ -76,11 +83,13 @@
     private Transaction _transaction = new Transaction { Date = DateTime.Today, Amount = 0 };
     private DateTime? _date = DateTime.Today;
     private IEnumerable<Category> _categories = new List<Category>();
+    private IEnumerable<BankSource> _bankSources = new List<BankSource>();
     private Dictionary<int, bool> _selectedCategories = new();
 
     protected override async Task OnInitializedAsync()
     {
         await LoadCategories();
+        await LoadBankSources();
     }
 
     private async Task LoadCategories()
@@ -94,6 +103,11 @@
         }
         
         _loading = false;
+    }
+
+    private async Task LoadBankSources()
+    {
+        _bankSources = await BankSourceService.GetAllBankSourcesAsync();
     }
 
     private async Task OnValidSubmit()
