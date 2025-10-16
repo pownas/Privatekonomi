@@ -13,6 +13,7 @@ public class PrivatekonomyContext : DbContext
     public DbSet<Transaction> Transactions { get; set; }
     public DbSet<Category> Categories { get; set; }
     public DbSet<TransactionCategory> TransactionCategories { get; set; }
+    public DbSet<Loan> Loans { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -47,6 +48,16 @@ public class PrivatekonomyContext : DbContext
                 .WithMany(c => c.TransactionCategories)
                 .HasForeignKey(e => e.CategoryId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<Loan>(entity =>
+        {
+            entity.HasKey(e => e.LoanId);
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(200);
+            entity.Property(e => e.Type).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.Amount).HasPrecision(18, 2);
+            entity.Property(e => e.InterestRate).HasPrecision(5, 2);
+            entity.Property(e => e.Amortization).HasPrecision(18, 2);
         });
 
         // Seed initial categories

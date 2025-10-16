@@ -1,0 +1,289 @@
+@page "/loans"
+@rendermode InteractiveServer
+@inject ILoanService LoanService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+<PageTitle>Lån & Krediter - Privatekonomi</PageTitle>
+
+<div class="d-flex justify-space-between align-center mb-4">
+    <MudText Typo="Typo.h4">Lån & Krediter</MudText>
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="ToggleCreateForm">
+        Nytt Lån/Kredit
+    </MudButton>
+</div>
+
+@if (_showCreateForm)
+{
+    <MudPaper Class="pa-4 mb-4">
+        <MudText Typo="Typo.h6" Class="mb-3">@(_editingLoan != null ? "Redigera Lån/Kredit" : "Lägg till Nytt Lån/Kredit")</MudText>
+        
+        <MudTextField @bind-Value="_formLoan.Name" 
+                      Label="Namn" 
+                      Variant="Variant.Outlined"
+                      Required="true"
+                      MaxLength="200"
+                      Class="mb-3" />
+        
+        <MudSelect @bind-Value="_formLoan.Type" 
+                   Label="Typ" 
+                   Variant="Variant.Outlined"
+                   Required="true"
+                   Class="mb-3">
+            <MudSelectItem Value="@("Bolån")">Bolån</MudSelectItem>
+            <MudSelectItem Value="@("CSN-lån")">CSN-lån</MudSelectItem>
+            <MudSelectItem Value="@("Privatlån")">Privatlån</MudSelectItem>
+            <MudSelectItem Value="@("Kreditkort")">Kreditkort</MudSelectItem>
+        </MudSelect>
+
+        <MudNumericField @bind-Value="_formLoan.Amount" 
+                         Label="Belopp (kr)" 
+                         Variant="Variant.Outlined"
+                         Min="0"
+                         Format="N2"
+                         Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                         Class="mb-3" />
+
+        <MudNumericField @bind-Value="_formLoan.InterestRate" 
+                         Label="Ränta (%)" 
+                         Variant="Variant.Outlined"
+                         Min="0"
+                         Max="100"
+                         Format="N2"
+                         Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                         Class="mb-3" />
+
+        <MudNumericField @bind-Value="_formLoan.Amortization" 
+                         Label="Amortering per månad (kr)" 
+                         Variant="Variant.Outlined"
+                         Min="0"
+                         Format="N2"
+                         Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                         Class="mb-3" />
+
+        <div class="d-flex gap-2">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveLoan">
+                @(_editingLoan != null ? "Uppdatera" : "Lägg till")
+            </MudButton>
+            <MudButton Variant="Variant.Outlined" OnClick="CancelForm">Avbryt</MudButton>
+        </div>
+    </MudPaper>
+}
+
+@if (_loading)
+{
+    <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+}
+else
+{
+    <MudPaper Class="pa-4 mb-4">
+        <MudGrid>
+            <MudItem xs="12" md="4">
+                <MudCard Elevation="2" Class="pa-4">
+                    <MudCardContent>
+                        <MudText Typo="Typo.h6">Total Belåning</MudText>
+                        <MudText Typo="Typo.h4" Color="Color.Error">@_totalDebt.ToString("C", new System.Globalization.CultureInfo("sv-SE"))</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <MudCard Elevation="2" Class="pa-4">
+                    <MudCardContent>
+                        <MudText Typo="Typo.h6">Total Månadskostnad</MudText>
+                        <MudText Typo="Typo.h4">@_totalMonthlyCost.ToString("C", new System.Globalization.CultureInfo("sv-SE"))</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <MudCard Elevation="2" Class="pa-4">
+                    <MudCardContent>
+                        <MudText Typo="Typo.h6">Antal Lån/Krediter</MudText>
+                        <MudText Typo="Typo.h4">@_loans.Count()</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+
+    <MudPaper Class="pa-4">
+        @if (!_loans.Any())
+        {
+            <MudText>Inga lån eller krediter registrerade än.</MudText>
+        }
+        else
+        {
+            <MudTable Items="@_loans" Hover="true" Striped="true">
+                <HeaderContent>
+                    <MudTh>Namn</MudTh>
+                    <MudTh>Typ</MudTh>
+                    <MudTh Style="text-align: right">Belopp</MudTh>
+                    <MudTh Style="text-align: right">Ränta</MudTh>
+                    <MudTh Style="text-align: right">Amortering/mån</MudTh>
+                    <MudTh Style="text-align: right">Månadskostnad</MudTh>
+                    <MudTh>Åtgärder</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Namn">@context.Name</MudTd>
+                    <MudTd DataLabel="Typ">
+                        <MudChip T="string" Size="Size.Small" Color="GetLoanTypeColor(context.Type)">
+                            @context.Type
+                        </MudChip>
+                    </MudTd>
+                    <MudTd DataLabel="Belopp" Style="text-align: right">
+                        @context.Amount.ToString("C", new System.Globalization.CultureInfo("sv-SE"))
+                    </MudTd>
+                    <MudTd DataLabel="Ränta" Style="text-align: right">
+                        @context.InterestRate.ToString("F2")%
+                    </MudTd>
+                    <MudTd DataLabel="Amortering/mån" Style="text-align: right">
+                        @context.Amortization.ToString("C", new System.Globalization.CultureInfo("sv-SE"))
+                    </MudTd>
+                    <MudTd DataLabel="Månadskostnad" Style="text-align: right">
+                        <MudText Color="Color.Warning">
+                            @CalculateMonthlyCost(context).ToString("C", new System.Globalization.CultureInfo("sv-SE"))
+                        </MudText>
+                    </MudTd>
+                    <MudTd DataLabel="Åtgärder">
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small"
+                                       OnClick="@(() => EditLoan(context))" />
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small"
+                                       OnClick="@(() => DeleteLoan(context.LoanId))" />
+                    </MudTd>
+                </RowTemplate>
+            </MudTable>
+        }
+    </MudPaper>
+}
+
+@code {
+    private bool _loading = true;
+    private bool _showCreateForm = false;
+    private IEnumerable<Loan> _loans = new List<Loan>();
+    private decimal _totalDebt = 0;
+    private decimal _totalMonthlyCost = 0;
+    private Loan _formLoan = new Loan();
+    private Loan? _editingLoan = null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        _loading = true;
+        _loans = await LoanService.GetAllLoansAsync();
+        _totalDebt = _loans.Sum(l => l.Amount);
+        _totalMonthlyCost = _loans.Sum(l => CalculateMonthlyCost(l));
+        _loading = false;
+    }
+
+    private decimal CalculateMonthlyCost(Loan loan)
+    {
+        // Månadsränta = (Belopp * Ränta/100) / 12 + Amortering
+        var monthlyInterest = (loan.Amount * loan.InterestRate / 100) / 12;
+        return monthlyInterest + loan.Amortization;
+    }
+
+    private Color GetLoanTypeColor(string type)
+    {
+        return type switch
+        {
+            "Bolån" => Color.Primary,
+            "CSN-lån" => Color.Info,
+            "Privatlån" => Color.Warning,
+            "Kreditkort" => Color.Secondary,
+            _ => Color.Default
+        };
+    }
+
+    private void ToggleCreateForm()
+    {
+        _showCreateForm = !_showCreateForm;
+        if (_showCreateForm)
+        {
+            _formLoan = new Loan();
+            _editingLoan = null;
+        }
+    }
+
+    private void EditLoan(Loan loan)
+    {
+        _editingLoan = loan;
+        _formLoan = new Loan
+        {
+            LoanId = loan.LoanId,
+            Name = loan.Name,
+            Type = loan.Type,
+            Amount = loan.Amount,
+            InterestRate = loan.InterestRate,
+            Amortization = loan.Amortization
+        };
+        _showCreateForm = true;
+    }
+
+    private async Task SaveLoan()
+    {
+        if (string.IsNullOrWhiteSpace(_formLoan.Name))
+        {
+            Snackbar.Add("Namn är obligatoriskt", Severity.Error);
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_formLoan.Type))
+        {
+            Snackbar.Add("Typ är obligatorisk", Severity.Error);
+            return;
+        }
+
+        if (_formLoan.Amount <= 0)
+        {
+            Snackbar.Add("Belopp måste vara större än 0", Severity.Error);
+            return;
+        }
+
+        try
+        {
+            if (_editingLoan != null)
+            {
+                await LoanService.UpdateLoanAsync(_formLoan);
+                Snackbar.Add("Lån/Kredit uppdaterat!", Severity.Success);
+            }
+            else
+            {
+                await LoanService.CreateLoanAsync(_formLoan);
+                Snackbar.Add("Lån/Kredit tillagt!", Severity.Success);
+            }
+
+            _showCreateForm = false;
+            _editingLoan = null;
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Fel: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void CancelForm()
+    {
+        _showCreateForm = false;
+        _editingLoan = null;
+        _formLoan = new Loan();
+    }
+
+    private async Task DeleteLoan(int id)
+    {
+        var result = await DialogService.ShowMessageBox(
+            "Bekräfta borttagning",
+            "Är du säker på att du vill ta bort detta lån/kredit?",
+            yesText: "Ja", cancelText: "Avbryt");
+
+        if (result == true)
+        {
+            await LoanService.DeleteLoanAsync(id);
+            Snackbar.Add("Lån/Kredit borttaget", Severity.Success);
+            await LoadData();
+        }
+    }
+}
