@@ -19,6 +19,30 @@ Datum;Belopp;Beskrivning;Saldo
 ```
 
 ### Swedbank
+
+Swedbank supports two export formats:
+
+#### Format 1: CSN Format (Tab-separated with Swedish column names)
+**Format:** Tab-separated values
+**Required columns:**
+- Radnummer (Row number)
+- Bokföringsdag (Booking date)
+- Belopp (Amount)
+- Beskrivning (Description)
+
+**Example format:**
+```csv
+Radnummer	Clearingnummer	Kontonummer	Produkt	Valuta	Bokföringsdag	Transaktionsdag	Valutadag	Referens	Beskrivning	Belopp	Bokfört saldo
+1	84525	222222222	Privatkonto	SEK	2025-09-30	2025-09-30	2025-09-30	PRIS NYCKELKUND	PRIS NYCKELKUND	-39.00	2554.18
+2	84525	222222222	Privatkonto	SEK	2025-09-29	2025-09-28	2025-09-28	Swishkonto	Swishkonto	1300.00	2593.18
+```
+
+**Note:** 
+- Positive amounts are treated as income
+- Negative amounts are treated as expenses
+- Only SEK currency is supported
+
+#### Format 2: Old Format (Semicolon-separated with English column names)
 **Format:** Semicolon-separated (`;`) CSV file with quoted fields
 **Required columns:**
 - Row type
@@ -86,7 +110,14 @@ Each transaction is validated for:
 - Negative amounts → Expense
 - Amount is stored as absolute value
 
-**Swedbank:**
+**Swedbank (CSN Format):**
+- Positive amounts → Income
+- Negative amounts → Expense
+- Amount is stored as absolute value
+- Currency must be SEK
+- Description from "Beskrivning" or "Referens" column
+
+**Swedbank (Old Format):**
 - "K" (Kredit) → Income
 - "D" (Debet) → Expense
 - Currency must be SEK
