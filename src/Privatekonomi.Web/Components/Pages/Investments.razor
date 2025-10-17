@@ -90,15 +90,17 @@ else
                     <MudTextField @bind-Value="_searchString" Placeholder="Sök" Adornment="Adornment.Start" 
                                   AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
                     <MudSpacer />
-                    <MudSelect T="int?" @bind-Value="_filterBankId" Label="Bank" Clearable="true" 
-                               Variant="Variant.Outlined" Margin="Margin.Dense" Class="ml-2" Style="min-width: 150px;">
+                    <MudSelect T="int?" Value="_filterBankId" Label="Bank" Clearable="true" 
+                               Variant="Variant.Outlined" Margin="Margin.Dense" Class="ml-2" Style="min-width: 150px;"
+                               ValueChanged="@((int? value) => { _filterBankId = value; ApplyFilters(); })">
                         @foreach (var bank in _banks)
                         {
                             <MudSelectItem Value="@((int?)bank.BankSourceId)">@bank.Name</MudSelectItem>
                         }
                     </MudSelect>
-                    <MudSelect T="string" @bind-Value="_filterAccount" Label="Konto" Clearable="true" 
-                               Variant="Variant.Outlined" Margin="Margin.Dense" Class="ml-2" Style="min-width: 150px;">
+                    <MudSelect T="string" Value="_filterAccount" Label="Konto" Clearable="true" 
+                               Variant="Variant.Outlined" Margin="Margin.Dense" Class="ml-2" Style="min-width: 150px;"
+                               ValueChanged="@((string value) => { _filterAccount = value; ApplyFilters(); })">
                         @foreach (var account in _accounts)
                         {
                             <MudSelectItem Value="@account">@account</MudSelectItem>
