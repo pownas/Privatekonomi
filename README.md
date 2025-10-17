@@ -6,6 +6,7 @@ En privatekonomi-applikation byggd med .NET 9, Blazor Server och MudBlazor för 
 
 - **Dashboard**: Översikt över totala inkomster, utgifter och nettoresultat
 - **Transaktionshantering**: Registrera, visa och ta bort transaktioner
+- **Budgethantering**: Skapa och följa upp budgetar med visualisering av planerat vs faktiskt utfall
 - **Kategorisystem**: Förkonfigurerade kategorier med färgkodning
 - **Split-kategorisering**: Möjlighet att dela upp transaktioner i flera kategorier
 - **Automatisk kategorisering**: Systemet föreslår kategorier baserat på tidigare transaktioner
@@ -244,7 +245,7 @@ Se [tests/playwright/README.md](tests/playwright/README.md) för detaljerad doku
 
 - [ ] Fixa formulär-bindning i NewTransaction-sidan
 - [ ] Lägga till användare och autentisering
-- [ ] Implementera budget-funktionalitet
+- [x] Implementera budget-funktionalitet
 - [x] Kravspecifikation för CSV-import från banker
 - [x] Implementera CSV-import från ICA-banken och Swedbank
 - [ ] Exportera data till Excel/CSV

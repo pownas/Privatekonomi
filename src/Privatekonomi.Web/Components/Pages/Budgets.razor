@@ -1,0 +1,363 @@
+@page "/budgets"
+@rendermode InteractiveServer
+@inject IBudgetService BudgetService
+@inject ICategoryService CategoryService
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<PageTitle>Budget - Privatekonomi</PageTitle>
+
+<div class="d-flex justify-space-between align-center mb-4">
+    <MudText Typo="Typo.h4">Budgethantering</MudText>
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="ToggleCreateForm">
+        Ny Budget
+    </MudButton>
+</div>
+
+@if (_showCreateForm)
+{
+    <MudPaper Class="pa-4 mb-4">
+        <MudText Typo="Typo.h6" Class="mb-3">Skapa Ny Budget</MudText>
+        <MudGrid>
+            <MudItem xs="12" md="6">
+                <MudTextField @bind-Value="_newBudget.Name" 
+                             Label="Budgetnamn" 
+                             Variant="Variant.Outlined" 
+                             Required="true"
+                             MaxLength="200"
+                             Class="mb-3" />
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudRadioGroup @bind-Value="_newBudget.Period" Class="mb-3">
+                    <MudText Typo="Typo.body2" Class="mb-2">Period</MudText>
+                    <MudRadio Value="@BudgetPeriod.Monthly" Color="Color.Primary">Månadsbudget</MudRadio>
+                    <MudRadio Value="@BudgetPeriod.Yearly" Color="Color.Primary">Årsbudget</MudRadio>
+                </MudRadioGroup>
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudTextField @bind-Value="_newBudgetStartDateString" 
+                              Label="Startdatum (ÅÅÅÅ-MM-DD)" 
+                              Variant="Variant.Outlined"
+                              Placeholder="2025-01-01"
+                              Class="mb-3" />
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudTextField @bind-Value="_newBudgetEndDateString" 
+                              Label="Slutdatum (ÅÅÅÅ-MM-DD)" 
+                              Variant="Variant.Outlined"
+                              Placeholder="2025-01-31"
+                              Class="mb-3" />
+            </MudItem>
+            <MudItem xs="12">
+                <MudTextField @bind-Value="_newBudget.Description" 
+                             Label="Beskrivning (valfritt)" 
+                             Variant="Variant.Outlined"
+                             Lines="3"
+                             MaxLength="500"
+                             Class="mb-3" />
+            </MudItem>
+        </MudGrid>
+
+        <MudText Typo="Typo.h6" Class="mb-3 mt-4">Budgetposter per kategori</MudText>
+        <MudGrid>
+            @foreach (var category in _categories)
+            {
+                <MudItem xs="12" sm="6" md="4">
+                    <MudNumericField @bind-Value="@_categoryBudgets[category.CategoryId]"
+                                    Label="@category.Name"
+                                    Variant="Variant.Outlined"
+                                    Format="N2"
+                                    Adornment="Adornment.Start"
+                                    AdornmentText="kr"
+                                    Min="0"
+                                    Step="100M"
+                                    HideSpinButtons="false" />
+                </MudItem>
+            }
+        </MudGrid>
+
+        <div class="d-flex gap-2 mt-4">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="CreateBudget">Skapa</MudButton>
+            <MudButton Variant="Variant.Outlined" OnClick="ToggleCreateForm">Avbryt</MudButton>
+        </div>
+    </MudPaper>
+}
+
+<MudPaper Class="pa-4">
+    @if (_loading)
+    {
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+    }
+    else
+    {
+        @if (!_budgets.Any())
+        {
+            <MudText>Inga budgetar tillgängliga. Skapa din första budget för att börja planera din ekonomi!</MudText>
+        }
+        else
+        {
+            @foreach (var budget in _budgets)
+            {
+                <MudExpansionPanels Class="mb-3">
+                    <MudExpansionPanel>
+                        <TitleContent>
+                            <div class="d-flex justify-space-between align-center" style="width: 100%;">
+                                <div>
+                                    <MudText Typo="Typo.h6">@budget.Name</MudText>
+                                    <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                        @budget.StartDate.ToString("yyyy-MM-dd") - @budget.EndDate.ToString("yyyy-MM-dd") 
+                                        (@(budget.Period == BudgetPeriod.Monthly ? "Månadsbudget" : "Årsbudget"))
+                                    </MudText>
+                                </div>
+                                <div>
+                                    @if (IsBudgetActive(budget))
+                                    {
+                                        <MudChip T="string" Color="Color.Success" Size="Size.Small">Aktiv</MudChip>
+                                    }
+                                    else if (budget.EndDate < DateTime.Now)
+                                    {
+                                        <MudChip T="string" Color="Color.Default" Size="Size.Small">Avslutad</MudChip>
+                                    }
+                                    else
+                                    {
+                                        <MudChip T="string" Color="Color.Info" Size="Size.Small">Kommande</MudChip>
+                                    }
+                                    <MudIconButton Icon="@Icons.Material.Filled.Delete" 
+                                                 Color="Color.Error" 
+                                                 Size="Size.Small"
+                                                 OnClick="@(async () => await DeleteBudget(budget))" />
+                                </div>
+                            </div>
+                        </TitleContent>
+                        <ChildContent>
+                            @if (!string.IsNullOrEmpty(budget.Description))
+                            {
+                                <MudText Class="mb-3">@budget.Description</MudText>
+                            }
+                            
+                            <MudDivider Class="mb-3" />
+                            
+                            @if (_budgetActualAmounts.ContainsKey(budget.BudgetId))
+                            {
+                                var actualAmounts = _budgetActualAmounts[budget.BudgetId];
+                                var totalPlanned = budget.BudgetCategories.Sum(bc => bc.PlannedAmount);
+                                var totalActual = actualAmounts.Values.Sum();
+                                
+                                <div class="mb-4">
+                                    <MudText Typo="Typo.h6" Class="mb-2">Sammanfattning</MudText>
+                                    <MudGrid>
+                                        <MudItem xs="12" sm="4">
+                                            <MudText Typo="Typo.body2">Total Planerad:</MudText>
+                                            <MudText Typo="Typo.h6">@totalPlanned.ToString("C", new System.Globalization.CultureInfo("sv-SE"))</MudText>
+                                        </MudItem>
+                                        <MudItem xs="12" sm="4">
+                                            <MudText Typo="Typo.body2">Faktiskt Utfall:</MudText>
+                                            <MudText Typo="Typo.h6">@totalActual.ToString("C", new System.Globalization.CultureInfo("sv-SE"))</MudText>
+                                        </MudItem>
+                                        <MudItem xs="12" sm="4">
+                                            <MudText Typo="Typo.body2">Kvar att Spendera:</MudText>
+                                            <MudText Typo="Typo.h6" Color="@(totalPlanned - totalActual >= 0 ? Color.Success : Color.Error)">
+                                                @((totalPlanned - totalActual).ToString("C", new System.Globalization.CultureInfo("sv-SE")))
+                                            </MudText>
+                                        </MudItem>
+                                    </MudGrid>
+                                </div>
+                                
+                                <MudDivider Class="mb-3" />
+                                
+                                <MudText Typo="Typo.h6" Class="mb-3">Budgetposter per kategori</MudText>
+                                <MudTable Items="@budget.BudgetCategories" Dense="true" Hover="true" Striped="true">
+                                    <HeaderContent>
+                                        <MudTh>Kategori</MudTh>
+                                        <MudTh>Planerat</MudTh>
+                                        <MudTh>Faktiskt</MudTh>
+                                        <MudTh>Differens</MudTh>
+                                        <MudTh>Progress</MudTh>
+                                    </HeaderContent>
+                                    <RowTemplate>
+                                        <MudTd>
+                                            <MudChip T="string" 
+                                                    Style="@($"background-color: {context.Category.Color}; color: white;")" 
+                                                    Size="Size.Small">
+                                                @context.Category.Name
+                                            </MudChip>
+                                        </MudTd>
+                                        <MudTd>@context.PlannedAmount.ToString("C", new System.Globalization.CultureInfo("sv-SE"))</MudTd>
+                                        <MudTd>
+                                            @{
+                                                var actual = actualAmounts.ContainsKey(context.CategoryId) ? actualAmounts[context.CategoryId] : 0;
+                                            }
+                                            @actual.ToString("C", new System.Globalization.CultureInfo("sv-SE"))
+                                        </MudTd>
+                                        <MudTd>
+                                            @{
+                                                var actual = actualAmounts.ContainsKey(context.CategoryId) ? actualAmounts[context.CategoryId] : 0;
+                                                var diff = context.PlannedAmount - actual;
+                                            }
+                                            <MudText Color="@(diff >= 0 ? Color.Success : Color.Error)">
+                                                @diff.ToString("C", new System.Globalization.CultureInfo("sv-SE"))
+                                            </MudText>
+                                        </MudTd>
+                                        <MudTd>
+                                            @{
+                                                var actual = actualAmounts.ContainsKey(context.CategoryId) ? actualAmounts[context.CategoryId] : 0;
+                                                var percentage = context.PlannedAmount > 0 ? (double)(actual / context.PlannedAmount) * 100 : 0;
+                                                var progressColor = percentage <= 75 ? Color.Success : percentage <= 100 ? Color.Warning : Color.Error;
+                                            }
+                                            <MudProgressLinear Color="@progressColor" 
+                                                             Size="Size.Large"
+                                                             Value="@percentage" 
+                                                             Min="0" 
+                                                             Max="100"
+                                                             Class="my-1">
+                                                <MudText Typo="Typo.body2" Color="Color.Surface">
+                                                    @percentage.ToString("F0")%
+                                                </MudText>
+                                            </MudProgressLinear>
+                                        </MudTd>
+                                    </RowTemplate>
+                                </MudTable>
+                            }
+                            else
+                            {
+                                <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Small" />
+                            }
+                        </ChildContent>
+                    </MudExpansionPanel>
+                </MudExpansionPanels>
+            }
+        }
+    }
+</MudPaper>
+
+@code {
+    private bool _loading = true;
+    private bool _showCreateForm = false;
+    private IEnumerable<Budget> _budgets = new List<Budget>();
+    private IEnumerable<Category> _categories = new List<Category>();
+    private Budget _newBudget = new();
+    private string _newBudgetStartDateString = DateTime.Now.ToString("yyyy-MM-dd");
+    private string _newBudgetEndDateString = DateTime.Now.AddMonths(1).ToString("yyyy-MM-dd");
+    private Dictionary<int, decimal> _categoryBudgets = new();
+    private Dictionary<int, Dictionary<int, decimal>> _budgetActualAmounts = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        _loading = true;
+        _categories = await CategoryService.GetAllCategoriesAsync();
+        _budgets = await BudgetService.GetAllBudgetsAsync();
+        
+        // Initialize category budgets dictionary
+        _categoryBudgets = _categories.ToDictionary(c => c.CategoryId, c => 0m);
+        
+        // Load actual amounts for all budgets
+        foreach (var budget in _budgets)
+        {
+            var actualAmounts = await BudgetService.GetActualAmountsByCategoryAsync(budget.BudgetId);
+            _budgetActualAmounts[budget.BudgetId] = actualAmounts;
+        }
+        
+        _loading = false;
+    }
+
+    private void ToggleCreateForm()
+    {
+        _showCreateForm = !_showCreateForm;
+        if (_showCreateForm)
+        {
+            _newBudget = new Budget
+            {
+                Period = BudgetPeriod.Monthly
+            };
+            _newBudgetStartDateString = DateTime.Now.ToString("yyyy-MM-dd");
+            _newBudgetEndDateString = DateTime.Now.AddMonths(1).ToString("yyyy-MM-dd");
+            _categoryBudgets = _categories.ToDictionary(c => c.CategoryId, c => 0m);
+        }
+    }
+
+    private async Task CreateBudget()
+    {
+        if (string.IsNullOrWhiteSpace(_newBudget.Name))
+        {
+            Snackbar.Add("Budgetnamn är obligatoriskt", Severity.Error);
+            return;
+        }
+
+        if (!DateTime.TryParse(_newBudgetStartDateString, out var startDate) || 
+            !DateTime.TryParse(_newBudgetEndDateString, out var endDate))
+        {
+            Snackbar.Add("Ogiltigt datumformat. Använd ÅÅÅÅ-MM-DD", Severity.Error);
+            return;
+        }
+
+        if (endDate < startDate)
+        {
+            Snackbar.Add("Slutdatum måste vara efter startdatum", Severity.Error);
+            return;
+        }
+
+        try
+        {
+            _newBudget.StartDate = startDate;
+            _newBudget.EndDate = endDate;
+            
+            // Add budget categories with non-zero amounts
+            _newBudget.BudgetCategories = _categoryBudgets
+                .Where(kvp => kvp.Value > 0)
+                .Select(kvp => new BudgetCategory
+                {
+                    CategoryId = kvp.Key,
+                    PlannedAmount = kvp.Value
+                })
+                .ToList();
+
+            if (!_newBudget.BudgetCategories.Any())
+            {
+                Snackbar.Add("Lägg till minst en budgetpost", Severity.Warning);
+                return;
+            }
+
+            await BudgetService.CreateBudgetAsync(_newBudget);
+            Snackbar.Add("Budget skapad!", Severity.Success);
+            _showCreateForm = false;
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Fel vid skapande av budget: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task DeleteBudget(Budget budget)
+    {
+        var result = await DialogService.ShowMessageBox(
+            "Bekräfta borttagning",
+            $"Är du säker på att du vill ta bort budgeten '{budget.Name}'?",
+            yesText: "Ta bort", cancelText: "Avbryt");
+
+        if (result == true)
+        {
+            try
+            {
+                await BudgetService.DeleteBudgetAsync(budget.BudgetId);
+                Snackbar.Add("Budget borttagen!", Severity.Success);
+                await LoadData();
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Fel vid borttagning av budget: {ex.Message}", Severity.Error);
+            }
+        }
+    }
+
+    private bool IsBudgetActive(Budget budget)
+    {
+        var now = DateTime.Now;
+        return budget.StartDate <= now && budget.EndDate >= now;
+    }
+}

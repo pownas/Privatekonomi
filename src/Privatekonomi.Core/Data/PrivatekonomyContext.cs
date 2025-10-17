@@ -15,6 +15,8 @@ public class PrivatekonomyContext : DbContext
     public DbSet<TransactionCategory> TransactionCategories { get; set; }
     public DbSet<Loan> Loans { get; set; }
     public DbSet<Investment> Investments { get; set; }
+    public DbSet<Budget> Budgets { get; set; }
+    public DbSet<BudgetCategory> BudgetCategories { get; set; }
     public DbSet<BankSource> BankSources { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -85,6 +87,32 @@ public class PrivatekonomyContext : DbContext
             entity.Property(e => e.CurrentPrice).HasPrecision(18, 2);
             entity.Property(e => e.PurchaseDate).IsRequired();
             entity.Property(e => e.LastUpdated).IsRequired();
+        });
+
+        modelBuilder.Entity<Budget>(entity =>
+        {
+            entity.HasKey(e => e.BudgetId);
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(200);
+            entity.Property(e => e.Description).HasMaxLength(500);
+            entity.Property(e => e.StartDate).IsRequired();
+            entity.Property(e => e.EndDate).IsRequired();
+            entity.Property(e => e.Period).IsRequired();
+        });
+
+        modelBuilder.Entity<BudgetCategory>(entity =>
+        {
+            entity.HasKey(e => e.BudgetCategoryId);
+            entity.Property(e => e.PlannedAmount).HasPrecision(18, 2);
+            
+            entity.HasOne(e => e.Budget)
+                .WithMany(b => b.BudgetCategories)
+                .HasForeignKey(e => e.BudgetId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.HasOne(e => e.Category)
+                .WithMany()
+                .HasForeignKey(e => e.CategoryId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         // Seed initial categories
