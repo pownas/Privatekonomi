@@ -14,6 +14,7 @@ public static class TestDataSeeder
 
         SeedTransactions(context);
         SeedInvestments(context);
+        SeedBudgets(context);
     }
 
     private static void SeedTransactions(PrivatekonomyContext context)
@@ -106,6 +107,24 @@ public static class TestDataSeeder
 
             transactionId++;
             transactionCategoryId++;
+        }
+
+        // Add 5 unmapped transactions (without categories) to demonstrate the feature
+        var unmappedDescriptions = new[] { "Okänd transaktion", "Kontant betalning", "Swish från okänd", "Okategoriserad köp", "Diverse utgift" };
+        for (int i = 0; i < 5; i++)
+        {
+            var transaction = new Transaction
+            {
+                TransactionId = transactionId,
+                Amount = Math.Round(100m + (decimal)random.NextDouble() * 500m, 2),
+                Description = unmappedDescriptions[i],
+                Date = startDate.AddDays(random.Next(0, 90)),
+                IsIncome = false,
+                BankSourceId = bankSourceIds[random.Next(bankSourceIds.Length)]
+            };
+            
+            transactions.Add(transaction);
+            transactionId++;
         }
 
         // Add all transactions and categories to context
@@ -209,6 +228,64 @@ public static class TestDataSeeder
         };
 
         context.Investments.AddRange(investments);
+        context.SaveChanges();
+    }
+
+    private static void SeedBudgets(PrivatekonomyContext context)
+    {
+        // Create a budget for the current month
+        var now = DateTime.Now;
+        var startOfMonth = new DateTime(now.Year, now.Month, 1);
+        var endOfMonth = startOfMonth.AddMonths(1).AddDays(-1);
+
+        var currentMonthBudget = new Budget
+        {
+            BudgetId = 1,
+            Name = "Månadsbudget " + now.ToString("MMMM yyyy", new System.Globalization.CultureInfo("sv-SE")),
+            Description = "Budget för den aktuella månaden",
+            StartDate = startOfMonth,
+            EndDate = endOfMonth,
+            Period = BudgetPeriod.Monthly
+        };
+
+        // Add budget categories with planned amounts
+        var budgetCategories = new List<BudgetCategory>
+        {
+            new BudgetCategory { BudgetCategoryId = 1, BudgetId = 1, CategoryId = 1, PlannedAmount = 5000m },  // Mat & Dryck
+            new BudgetCategory { BudgetCategoryId = 2, BudgetId = 1, CategoryId = 2, PlannedAmount = 1500m },  // Transport
+            new BudgetCategory { BudgetCategoryId = 3, BudgetId = 1, CategoryId = 3, PlannedAmount = 12000m }, // Boende
+            new BudgetCategory { BudgetCategoryId = 4, BudgetId = 1, CategoryId = 4, PlannedAmount = 2000m },  // Nöje
+            new BudgetCategory { BudgetCategoryId = 5, BudgetId = 1, CategoryId = 5, PlannedAmount = 3000m },  // Shopping
+            new BudgetCategory { BudgetCategoryId = 6, BudgetId = 1, CategoryId = 6, PlannedAmount = 1000m },  // Hälsa
+        };
+
+        // Create a budget for the previous month
+        var prevMonthStart = startOfMonth.AddMonths(-1);
+        var prevMonthEnd = startOfMonth.AddDays(-1);
+
+        var previousMonthBudget = new Budget
+        {
+            BudgetId = 2,
+            Name = "Månadsbudget " + prevMonthStart.ToString("MMMM yyyy", new System.Globalization.CultureInfo("sv-SE")),
+            Description = "Budget för föregående månad",
+            StartDate = prevMonthStart,
+            EndDate = prevMonthEnd,
+            Period = BudgetPeriod.Monthly
+        };
+
+        var prevBudgetCategories = new List<BudgetCategory>
+        {
+            new BudgetCategory { BudgetCategoryId = 7, BudgetId = 2, CategoryId = 1, PlannedAmount = 4800m },  // Mat & Dryck
+            new BudgetCategory { BudgetCategoryId = 8, BudgetId = 2, CategoryId = 2, PlannedAmount = 1400m },  // Transport
+            new BudgetCategory { BudgetCategoryId = 9, BudgetId = 2, CategoryId = 3, PlannedAmount = 12000m }, // Boende
+            new BudgetCategory { BudgetCategoryId = 10, BudgetId = 2, CategoryId = 4, PlannedAmount = 1800m }, // Nöje
+            new BudgetCategory { BudgetCategoryId = 11, BudgetId = 2, CategoryId = 5, PlannedAmount = 2500m }, // Shopping
+            new BudgetCategory { BudgetCategoryId = 12, BudgetId = 2, CategoryId = 6, PlannedAmount = 900m },  // Hälsa
+        };
+
+        context.Budgets.AddRange(new[] { currentMonthBudget, previousMonthBudget });
+        context.BudgetCategories.AddRange(budgetCategories);
+        context.BudgetCategories.AddRange(prevBudgetCategories);
         context.SaveChanges();
     }
 }
