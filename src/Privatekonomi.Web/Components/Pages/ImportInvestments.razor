@@ -1,0 +1,253 @@
+@page "/import-investments"
+@rendermode InteractiveServer
+@inject IInvestmentService InvestmentService
+@inject IBankSourceService BankSourceService
+@inject ISnackbar Snackbar
+@inject NavigationManager Navigation
+@using System.Globalization
+
+<PageTitle>Importera Investeringar - Privatekonomi</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-4">Importera Investeringar</MudText>
+
+@if (_currentStep == ImportStep.BankSelection)
+{
+    <MudPaper Class="pa-6">
+        <MudText Typo="Typo.h6" Class="mb-4">Välj bank</MudText>
+        
+        <MudRadioGroup @bind-Value="_selectedBankId">
+            @foreach (var bank in _banks)
+            {
+                <MudRadio Value="@bank.BankSourceId" Color="Color.Primary">
+                    <MudText>@bank.Name</MudText>
+                </MudRadio>
+            }
+        </MudRadioGroup>
+        
+        <MudDivider Class="my-4" />
+        
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" 
+                   OnClick="NextToFileSelection" Disabled="_selectedBankId == 0">
+            Nästa
+        </MudButton>
+    </MudPaper>
+}
+else if (_currentStep == ImportStep.FileSelection)
+{
+    <MudPaper Class="pa-6">
+        <MudText Typo="Typo.h6" Class="mb-4">Välj fil att importera</MudText>
+        <MudText Typo="Typo.body2" Class="mb-2">Bank: <strong>@_selectedBankName</strong></MudText>
+        
+        <MudAlert Severity="Severity.Info" Class="mb-4">
+            Avanza tillhandahåller två CSV-format:
+            <ul>
+                <li><strong>Mitt innehav fördelat per konto</strong> - Visar innehav per konto med kontonummer</li>
+                <li><strong>Mitt sammanställda innehav</strong> - Visar sammanställt innehav över alla konton</li>
+            </ul>
+            Båda formaten stöds!
+        </MudAlert>
+        
+        <MudFileUpload T="IBrowserFile" FilesChanged="OnFileSelected" Accept=".csv">
+            <ActivatorContent>
+                <MudPaper Outlined="true" Class="pa-8 d-flex flex-column align-center justify-center" Style="min-height: 200px; cursor: pointer;">
+                    <MudIcon Icon="@Icons.Material.Filled.CloudUpload" Size="Size.Large" Class="mb-2" />
+                    <MudText Typo="Typo.h6">Dra och släpp CSV-fil här</MudText>
+                    <MudText Typo="Typo.body2" Class="mt-2">eller</MudText>
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="mt-2">
+                        Välj fil från dator
+                    </MudButton>
+                </MudPaper>
+            </ActivatorContent>
+        </MudFileUpload>
+        
+        @if (_selectedFile != null)
+        {
+            <MudAlert Severity="Severity.Info" Class="mt-4">
+                Vald fil: <strong>@_selectedFile.Name</strong> (@FormatFileSize(_selectedFile.Size))
+            </MudAlert>
+        }
+        
+        <MudText Typo="Typo.caption" Class="mt-4">
+            Tillåtna format: .csv<br/>
+            Max storlek: 10 MB
+        </MudText>
+        
+        <MudDivider Class="my-4" />
+        
+        <div class="d-flex justify-space-between">
+            <MudButton Variant="Variant.Outlined" Color="Color.Default" OnClick="BackToBankSelection">
+                Tillbaka
+            </MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" 
+                       OnClick="ImportFile" Disabled="_selectedFile == null || _importing">
+                @if (_importing)
+                {
+                    <MudProgressCircular Size="Size.Small" Indeterminate="true" />
+                    <MudText Class="ml-2">Importerar...</MudText>
+                }
+                else
+                {
+                    <span>Importera</span>
+                }
+            </MudButton>
+        </div>
+    </MudPaper>
+}
+else if (_currentStep == ImportStep.Complete)
+{
+    <MudPaper Class="pa-6">
+        <div class="d-flex flex-column align-center">
+            <MudIcon Icon="@(_importResult?.Success == true ? Icons.Material.Filled.CheckCircle : Icons.Material.Filled.Error)" 
+                     Color="@(_importResult?.Success == true ? Color.Success : Color.Error)" 
+                     Size="Size.Large" Class="mb-4" />
+            <MudText Typo="Typo.h5" Class="mb-2">
+                @(_importResult?.Success == true ? "Import slutförd!" : "Import misslyckades")
+            </MudText>
+            
+            @if (_importResult != null)
+            {
+                <MudAlert Severity="@(_importResult.Success ? Severity.Success : Severity.Error)" Class="mt-4" Style="width: 100%;">
+                    @if (_importResult.Success)
+                    {
+                        <MudText><strong>@_importResult.ImportedCount</strong> nya investeringar importerade</MudText>
+                        @if (_importResult.DuplicateCount > 0)
+                        {
+                            <MudText><strong>@_importResult.DuplicateCount</strong> befintliga investeringar uppdaterades</MudText>
+                        }
+                        <MudText>Totalt <strong>@_importResult.TotalRows</strong> rader bearbetades</MudText>
+                    }
+                    
+                    @if (_importResult.ErrorCount > 0 || _importResult.Errors.Any())
+                    {
+                        <MudText Class="mt-2"><strong>Fel:</strong></MudText>
+                        @foreach (var error in _importResult.Errors)
+                        {
+                            <MudText Class="red-text">• @error.ErrorMessage</MudText>
+                        }
+                    }
+                </MudAlert>
+            }
+            
+            <MudDivider Class="my-4" Style="width: 100%;" />
+            
+            <div class="d-flex gap-4">
+                <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="StartNewImport">
+                    Importera fler
+                </MudButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="GoToInvestments">
+                    Gå till investeringar
+                </MudButton>
+            </div>
+        </div>
+    </MudPaper>
+}
+
+@code {
+    private enum ImportStep
+    {
+        BankSelection,
+        FileSelection,
+        Complete
+    }
+
+    private ImportStep _currentStep = ImportStep.BankSelection;
+    private List<BankSource> _banks = new();
+    private int _selectedBankId = 0;
+    private string _selectedBankName = "";
+    private IBrowserFile? _selectedFile;
+    private bool _importing = false;
+    private CsvImportResult? _importResult;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var allBanks = await BankSourceService.GetAllBankSourcesAsync();
+        // Only show Avanza for now
+        _banks = allBanks.Where(b => b.Name == "Avanza").ToList();
+        
+        // If Avanza doesn't exist, add all banks
+        if (!_banks.Any())
+        {
+            _banks = allBanks.ToList();
+        }
+    }
+
+    private void NextToFileSelection()
+    {
+        _selectedBankName = _banks.FirstOrDefault(b => b.BankSourceId == _selectedBankId)?.Name ?? "";
+        _currentStep = ImportStep.FileSelection;
+    }
+
+    private void BackToBankSelection()
+    {
+        _currentStep = ImportStep.BankSelection;
+        _selectedFile = null;
+    }
+
+    private void OnFileSelected(IBrowserFile file)
+    {
+        _selectedFile = file;
+    }
+
+    private async Task ImportFile()
+    {
+        if (_selectedFile == null) return;
+
+        const long maxFileSize = 10 * 1024 * 1024; // 10 MB
+
+        if (_selectedFile.Size > maxFileSize)
+        {
+            Snackbar.Add("Filen är för stor. Max storlek är 10 MB.", Severity.Error);
+            return;
+        }
+
+        _importing = true;
+
+        try
+        {
+            using var stream = _selectedFile.OpenReadStream(maxFileSize);
+            _importResult = await InvestmentService.ImportFromCsvAsync(stream, _selectedBankId);
+
+            if (_importResult.Success)
+            {
+                Snackbar.Add($"Import slutförd! {_importResult.ImportedCount} investeringar importerade.", Severity.Success);
+            }
+            else
+            {
+                Snackbar.Add("Import misslyckades. Se detaljer nedan.", Severity.Error);
+            }
+
+            _currentStep = ImportStep.Complete;
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Ett fel uppstod: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _importing = false;
+        }
+    }
+
+    private void StartNewImport()
+    {
+        _currentStep = ImportStep.BankSelection;
+        _selectedFile = null;
+        _importResult = null;
+        _selectedBankId = 0;
+        _selectedBankName = "";
+    }
+
+    private void GoToInvestments()
+    {
+        Navigation.NavigateTo("/investments");
+    }
+
+    private string FormatFileSize(long bytes)
+    {
+        if (bytes < 1024)
+            return $"{bytes} B";
+        if (bytes < 1024 * 1024)
+            return $"{bytes / 1024.0:F1} KB";
+        return $"{bytes / (1024.0 * 1024.0):F1} MB";
+    }
+}

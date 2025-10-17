@@ -7,12 +7,16 @@ En privatekonomi-applikation byggd med .NET 9, Blazor Server och MudBlazor för 
 - **Dashboard**: Översikt över totala inkomster, utgifter och nettoresultat
 - **Transaktionshantering**: Registrera, visa och ta bort transaktioner
 - **Budgethantering**: Skapa och följa upp budgetar med visualisering av planerat vs faktiskt utfall
+- **Investeringshantering**: Hantera aktier, fonder och certifikat med översikt över värde och avkastning
 - **Kategorisystem**: Förkonfigurerade kategorier med färgkodning
 - **Split-kategorisering**: Möjlighet att dela upp transaktioner i flera kategorier
 - **Automatisk kategorisering**: Systemet föreslår kategorier baserat på tidigare transaktioner
 - **Responsiv design**: Fungerar på desktop och mobila enheter
 - **In-memory databas**: Använder Entity Framework Core InMemory för snabb utveckling
-- **CSV-import**: Import av transaktioner från ICA-banken och Swedbank med dubbletthantering och validering
+- **CSV-import**: 
+  - Import av transaktioner från ICA-banken och Swedbank
+  - Import av investeringar från Avanza Bank med dubbletthantering
+- **CSV-export**: Exportera investeringar för analys och rapportering
 
 ## 🏗️ Arkitektur
 
@@ -122,6 +126,8 @@ För att inaktivera testdata, kommentera bort `TestDataSeeder.SeedTestData(conte
 
 ### CSV-Import
 
+#### Import av transaktioner
+
 Applikationen stöder import av transaktioner från CSV-filer från ICA-banken och Swedbank:
 
 1. Navigera till **Importera** i menyn
@@ -138,6 +144,30 @@ Applikationen stöder import av transaktioner från CSV-filer från ICA-banken o
 - Detaljerad sammanfattning efter import
 
 Se [CSV_IMPORT_GUIDE.md](wiki/CSV_IMPORT_GUIDE.md) för detaljerad guide och exempel.
+
+#### Import av investeringar från Avanza
+
+Applikationen stöder import av investeringar från Avanza Bank:
+
+1. Exportera dina innehav från Avanza (två format stöds):
+   - **Mitt innehav fördelat per konto** - med kontonummer
+   - **Mitt sammanställda innehav** - utan kontonummer
+2. Navigera till **Aktier & Fonder** i menyn
+3. Klicka på **Importera**
+4. Välj **Avanza** som bank
+5. Ladda upp CSV-fil (max 10 MB)
+6. Bekräfta importen
+
+**Funktioner:**
+- Automatisk dubblettdetektion baserat på ISIN och kontonummer
+- Stöd för båda Avanza CSV-format
+- Uppdatering av befintliga investeringar
+- Detaljerad sammanfattning efter import
+- Visning av bank och konto i investeringslistan
+- Filtrering per bank och konto
+- Export till CSV för analys
+
+Se [AVANZA_IMPORT_GUIDE.md](wiki/AVANZA_IMPORT_GUIDE.md) för detaljerad guide med skärmdumpar och felsökning.
 
 ## 📊 Skärmdumpar
 
@@ -211,9 +241,19 @@ builder.Services.AddDbContext<PrivatekonomyContext>(options =>
 
 ## 📋 Dokumentation
 
-- **[ProgramSpecifikation.md](wiki/ProgramSpecifikation.md)**: Övergripande programspecifikation för applikationen
-- **[Kravspecifikation_CSV_Import.md](wiki/Kravspecifikation_CSV_Import.md)**: Detaljerad kravspecifikation för CSV-import från ICA-banken och Swedbank
-- **[CSV_IMPORT_GUIDE.md](wiki/CSV_IMPORT_GUIDE.md)**: Användarguide för CSV-import med exempel och felsökning
+### Användarguider
+
+- **[CSV_IMPORT_GUIDE.md](wiki/CSV_IMPORT_GUIDE.md)**: Guide för import av transaktioner från ICA-banken och Swedbank
+- **[AVANZA_IMPORT_GUIDE.md](wiki/AVANZA_IMPORT_GUIDE.md)**: Guide för import av investeringar från Avanza Bank
+- **[BUDGET_GUIDE.md](wiki/BUDGET_GUIDE.md)**: Guide för budgethantering
+
+### Teknisk dokumentation
+
+- **[ProgramSpecifikation.md](wiki/ProgramSpecifikation.md)**: Övergripande programspecifikation
+- **[ASPIRE_GUIDE.md](wiki/ASPIRE_GUIDE.md)**: Guide för .NET Aspire Orchestrator
+- **[Kravspecifikation_CSV_Import.md](wiki/Kravspecifikation_CSV_Import.md)**: Kravspecifikation för CSV-import av transaktioner
+- **[Kravspecifikation_Avanza_Integration.md](wiki/Kravspecifikation_Avanza_Integration.md)**: Kravspecifikation för Avanza-integration
+- **[Implementationsguide_Avanza.md](wiki/Implementationsguide_Avanza.md)**: Implementationsguide för Avanza-funktionalitet
 
 ## 🧪 Testning
 
@@ -248,9 +288,12 @@ Se [tests/playwright/README.md](tests/playwright/README.md) för detaljerad doku
 - [x] Implementera budget-funktionalitet
 - [x] Kravspecifikation för CSV-import från banker
 - [x] Implementera CSV-import från ICA-banken och Swedbank
-- [ ] Exportera data till Excel/CSV
+- [x] Implementera CSV-import från Avanza för investeringar
+- [x] Exportera investeringar till CSV
+- [ ] Exportera transaktioner och budget till Excel/CSV
 - [ ] Lägg till diagram och grafer på Dashboard
-- [ ] Integration med bank-API:er
+- [ ] Automatisk uppdatering av aktiekurser via API
+- [ ] Integration med bank-API:er för transaktioner
 - [ ] Mobilapp med samma funktionalitet
 - [ ] Förbättra automatisk kategorisering med ML
 
