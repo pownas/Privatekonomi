@@ -2,6 +2,8 @@
 @rendermode InteractiveServer
 @inject ITransactionService TransactionService
 @inject ICategoryService CategoryService
+@inject IBudgetService BudgetService
+@inject ISnackbar Snackbar
 
 <PageTitle>Dashboard - Privatekonomi</PageTitle>
 
@@ -135,6 +137,160 @@ else
         </MudGrid>
     }
 
+    @* Active Budgets Overview *@
+    @if (_activeBudgets.Any())
+    {
+        <MudPaper Class="pa-4 mt-4">
+            <MudText Typo="Typo.h6" Class="mb-4">Aktiva Budgetar</MudText>
+            <MudGrid>
+                @foreach (var budget in _activeBudgets)
+                {
+                    <MudItem xs="12" md="6">
+                        <MudCard Elevation="2">
+                            <MudCardContent>
+                                <MudText Typo="Typo.h6">@budget.Name</MudText>
+                                <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-3">
+                                    @budget.StartDate.ToString("yyyy-MM-dd") - @budget.EndDate.ToString("yyyy-MM-dd")
+                                </MudText>
+                                
+                                @if (_budgetActualAmounts.ContainsKey(budget.BudgetId))
+                                {
+                                    var actualAmounts = _budgetActualAmounts[budget.BudgetId];
+                                    var totalPlanned = budget.BudgetCategories.Sum(bc => bc.PlannedAmount);
+                                    var totalActual = actualAmounts.Values.Sum();
+                                    var percentage = totalPlanned > 0 ? (double)(totalActual / totalPlanned) * 100 : 0;
+                                    var progressColor = percentage <= 75 ? Color.Success : percentage <= 100 ? Color.Warning : Color.Error;
+                                    
+                                    <MudGrid>
+                                        <MudItem xs="6">
+                                            <MudText Typo="Typo.body2">Planerat:</MudText>
+                                            <MudText Typo="Typo.h6">@totalPlanned.ToString("C", new System.Globalization.CultureInfo("sv-SE"))</MudText>
+                                        </MudItem>
+                                        <MudItem xs="6">
+                                            <MudText Typo="Typo.body2">Använt:</MudText>
+                                            <MudText Typo="Typo.h6">@totalActual.ToString("C", new System.Globalization.CultureInfo("sv-SE"))</MudText>
+                                        </MudItem>
+                                    </MudGrid>
+                                    
+                                    <MudProgressLinear Color="@progressColor" 
+                                                     Size="Size.Large"
+                                                     Value="@percentage" 
+                                                     Min="0" 
+                                                     Max="100"
+                                                     Class="my-2">
+                                        <MudText Typo="Typo.body2" Color="Color.Surface">
+                                            @percentage.ToString("F0")%
+                                        </MudText>
+                                    </MudProgressLinear>
+                                    
+                                    <MudButton Variant="Variant.Text" 
+                                             Color="Color.Primary" 
+                                             Size="Size.Small"
+                                             OnClick="@(() => ToggleBudgetDetails(budget.BudgetId))">
+                                        @(_expandedBudgets.Contains(budget.BudgetId) ? "Dölj detaljer" : "Visa detaljer")
+                                    </MudButton>
+                                }
+                            </MudCardContent>
+                        </MudCard>
+                        
+                        @if (_expandedBudgets.Contains(budget.BudgetId) && _budgetTransactionsByCategory.ContainsKey(budget.BudgetId))
+                        {
+                            <MudPaper Class="pa-3 mt-2" Elevation="1">
+                                <MudText Typo="Typo.subtitle2" Class="mb-2">Transaktioner per Kategori</MudText>
+                                @foreach (var budgetCategory in budget.BudgetCategories.OrderByDescending(bc => _budgetActualAmounts[budget.BudgetId].ContainsKey(bc.CategoryId) ? _budgetActualAmounts[budget.BudgetId][bc.CategoryId] : 0))
+                                {
+                                    var categoryTransactions = _budgetTransactionsByCategory[budget.BudgetId].ContainsKey(budgetCategory.CategoryId) 
+                                        ? _budgetTransactionsByCategory[budget.BudgetId][budgetCategory.CategoryId] 
+                                        : new List<Transaction>();
+                                    var actual = _budgetActualAmounts[budget.BudgetId].ContainsKey(budgetCategory.CategoryId) 
+                                        ? _budgetActualAmounts[budget.BudgetId][budgetCategory.CategoryId] 
+                                        : 0;
+                                    
+                                    <MudExpansionPanels Dense="true" Class="mb-2">
+                                        <MudExpansionPanel>
+                                            <TitleContent>
+                                                <div class="d-flex align-center gap-2">
+                                                    <MudChip T="string" 
+                                                            Style="@($"background-color: {budgetCategory.Category.Color}; color: white;")" 
+                                                            Size="Size.Small">
+                                                        @budgetCategory.Category.Name
+                                                    </MudChip>
+                                                    <MudText Typo="Typo.body2">
+                                                        @actual.ToString("C", new System.Globalization.CultureInfo("sv-SE")) / @budgetCategory.PlannedAmount.ToString("C", new System.Globalization.CultureInfo("sv-SE"))
+                                                    </MudText>
+                                                </div>
+                                            </TitleContent>
+                                            <ChildContent>
+                                                @if (categoryTransactions.Any())
+                                                {
+                                                    <MudTable Items="@categoryTransactions" Dense="true" Hover="true">
+                                                        <HeaderContent>
+                                                            <MudTh>Datum</MudTh>
+                                                            <MudTh>Beskrivning</MudTh>
+                                                            <MudTh Style="text-align: right">Belopp</MudTh>
+                                                        </HeaderContent>
+                                                        <RowTemplate>
+                                                            <MudTd DataLabel="Datum">@context.Date.ToString("yyyy-MM-dd")</MudTd>
+                                                            <MudTd DataLabel="Beskrivning">@context.Description</MudTd>
+                                                            <MudTd DataLabel="Belopp" Style="text-align: right">
+                                                                @context.Amount.ToString("C", new System.Globalization.CultureInfo("sv-SE"))
+                                                            </MudTd>
+                                                        </RowTemplate>
+                                                    </MudTable>
+                                                }
+                                                else
+                                                {
+                                                    <MudText Typo="Typo.body2" Color="Color.Secondary">Inga transaktioner i denna kategori</MudText>
+                                                }
+                                            </ChildContent>
+                                        </MudExpansionPanel>
+                                    </MudExpansionPanels>
+                                }
+                            </MudPaper>
+                        }
+                    </MudItem>
+                }
+            </MudGrid>
+        </MudPaper>
+    }
+
+    @* Unmapped Transactions *@
+    @if (_unmappedTransactions.Any())
+    {
+        <MudPaper Class="pa-4 mt-4">
+            <MudAlert Severity="Severity.Warning" Class="mb-3">
+                Det finns @_unmappedTransactions.Count() transaktioner utan kategori. Kategorisera dem för att inkludera i budgetanalys.
+            </MudAlert>
+            <MudText Typo="Typo.h6" Class="mb-4">Transaktioner utan Kategori</MudText>
+            <MudTable Items="@_unmappedTransactions" Hover="true" Striped="true">
+                <HeaderContent>
+                    <MudTh>Datum</MudTh>
+                    <MudTh>Beskrivning</MudTh>
+                    <MudTh>Belopp</MudTh>
+                    <MudTh>Åtgärd</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Datum">@context.Date.ToString("yyyy-MM-dd")</MudTd>
+                    <MudTd DataLabel="Beskrivning">@context.Description</MudTd>
+                    <MudTd DataLabel="Belopp">
+                        <MudText Color="@(context.IsIncome ? Color.Success : Color.Error)">
+                            @(context.IsIncome ? "+" : "-")@context.Amount.ToString("C", new System.Globalization.CultureInfo("sv-SE"))
+                        </MudText>
+                    </MudTd>
+                    <MudTd DataLabel="Åtgärd">
+                        <MudButton Variant="Variant.Text" 
+                                 Color="Color.Primary" 
+                                 Size="Size.Small"
+                                 StartIcon="@Icons.Material.Filled.Category"
+                                 Href="@($"/transactions")">
+                            Kategorisera
+                        </MudButton>
+                    </MudTd>
+                </RowTemplate>
+            </MudTable>
+        </MudPaper>
+    }
+
     <MudPaper Class="pa-4 mt-4">
         <MudText Typo="Typo.h6" Class="mb-4">Senaste Transaktioner</MudText>
         @if (!_transactions.Any())
@@ -143,7 +299,7 @@ else
         }
         else
         {
-            <MudTable Items="@_transactions.Take(5)" Hover="true" Striped="true">
+            <MudTable Items="@_transactions.Take(10)" Hover="true" Striped="true">
                 <HeaderContent>
                     <MudTh>Datum</MudTh>
                     <MudTh>Beskrivning</MudTh>
@@ -156,7 +312,19 @@ else
                     <MudTd DataLabel="Kategori">
                         @if (context.TransactionCategories.Any())
                         {
-                            @string.Join(", ", context.TransactionCategories.Select(tc => tc.Category.Name))
+                            @foreach (var tc in context.TransactionCategories)
+                            {
+                                <MudChip T="string" 
+                                        Style="@($"background-color: {tc.Category.Color}; color: white;")" 
+                                        Size="Size.Small"
+                                        Class="mr-1">
+                                    @tc.Category.Name
+                                </MudChip>
+                            }
+                        }
+                        else
+                        {
+                            <MudChip T="string" Color="Color.Default" Size="Size.Small">Ingen kategori</MudChip>
                         }
                     </MudTd>
                     <MudTd DataLabel="Belopp" Style="text-align: right">
@@ -173,9 +341,14 @@ else
 @code {
     private bool _loading = true;
     private IEnumerable<Transaction> _transactions = new List<Transaction>();
+    private IEnumerable<Transaction> _unmappedTransactions = new List<Transaction>();
+    private IEnumerable<Budget> _activeBudgets = new List<Budget>();
     private decimal _totalIncome = 0;
     private decimal _totalExpenses = 0;
     private int _selectedMonths = 12;
+    private HashSet<int> _expandedBudgets = new();
+    private Dictionary<int, Dictionary<int, decimal>> _budgetActualAmounts = new();
+    private Dictionary<int, Dictionary<int, List<Transaction>>> _budgetTransactionsByCategory = new();
 
     // Chart data
     private double[] _expensePieData = Array.Empty<double>();
@@ -199,10 +372,32 @@ else
     {
         _loading = true;
         _transactions = await TransactionService.GetAllTransactionsAsync();
+        _unmappedTransactions = await TransactionService.GetUnmappedTransactionsAsync();
+        _activeBudgets = await BudgetService.GetActiveBudgetsAsync();
+        
+        // Load budget details
+        foreach (var budget in _activeBudgets)
+        {
+            _budgetActualAmounts[budget.BudgetId] = await BudgetService.GetActualAmountsByCategoryAsync(budget.BudgetId);
+            _budgetTransactionsByCategory[budget.BudgetId] = await BudgetService.GetTransactionsByCategoryForBudgetAsync(budget.BudgetId);
+        }
+        
         _totalIncome = _transactions.Where(t => t.IsIncome).Sum(t => t.Amount);
         _totalExpenses = _transactions.Where(t => !t.IsIncome).Sum(t => t.Amount);
         UpdateChartData();
         _loading = false;
+    }
+
+    private void ToggleBudgetDetails(int budgetId)
+    {
+        if (_expandedBudgets.Contains(budgetId))
+        {
+            _expandedBudgets.Remove(budgetId);
+        }
+        else
+        {
+            _expandedBudgets.Add(budgetId);
+        }
     }
 
     private void ChangePeriod(int months)

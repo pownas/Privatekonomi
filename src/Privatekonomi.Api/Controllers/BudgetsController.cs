@@ -81,6 +81,36 @@ public class BudgetsController : ControllerBase
         }
     }
 
+    [HttpGet("{id}/transactions")]
+    public async Task<ActionResult<IEnumerable<Transaction>>> GetTransactionsForBudget(int id)
+    {
+        try
+        {
+            var transactions = await _budgetService.GetTransactionsForBudgetAsync(id);
+            return Ok(transactions);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving transactions for budget {BudgetId}", id);
+            return StatusCode(500, "Internal server error");
+        }
+    }
+
+    [HttpGet("{id}/transactions-by-category")]
+    public async Task<ActionResult<Dictionary<int, List<Transaction>>>> GetTransactionsByCategoryForBudget(int id)
+    {
+        try
+        {
+            var transactions = await _budgetService.GetTransactionsByCategoryForBudgetAsync(id);
+            return Ok(transactions);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving transactions by category for budget {BudgetId}", id);
+            return StatusCode(500, "Internal server error");
+        }
+    }
+
     [HttpPost]
     public async Task<ActionResult<Budget>> CreateBudget(Budget budget)
     {

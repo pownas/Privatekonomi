@@ -68,6 +68,41 @@ public class TransactionsController : ControllerBase
         }
     }
 
+    [HttpGet("unmapped")]
+    public async Task<ActionResult<IEnumerable<Transaction>>> GetUnmappedTransactions()
+    {
+        try
+        {
+            var transactions = await _transactionService.GetUnmappedTransactionsAsync();
+            return Ok(transactions);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving unmapped transactions");
+            return StatusCode(500, "Internal server error");
+        }
+    }
+
+    [HttpPut("{id}/categories")]
+    public async Task<IActionResult> UpdateTransactionCategories(int id, List<TransactionCategory> categories)
+    {
+        try
+        {
+            await _transactionService.UpdateTransactionCategoriesAsync(id, categories);
+            return NoContent();
+        }
+        catch (ArgumentException ex)
+        {
+            _logger.LogError(ex, "Transaction not found {TransactionId}", id);
+            return NotFound(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating transaction categories for {TransactionId}", id);
+            return StatusCode(500, "Internal server error");
+        }
+    }
+
     [HttpPost]
     public async Task<ActionResult<Transaction>> CreateTransaction(Transaction transaction)
     {
