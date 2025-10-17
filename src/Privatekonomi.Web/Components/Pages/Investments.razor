@@ -62,10 +62,20 @@ else
         <MudGrid>
             <MudItem xs="12" Class="d-flex justify-space-between align-center mb-4">
                 <MudText Typo="Typo.h6">Mina Investeringar</MudText>
-                <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" 
-                           OnClick="OpenAddDialog">
-                    Lägg till
-                </MudButton>
+                <div class="d-flex gap-2">
+                    <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.CloudDownload" 
+                               OnClick="ExportToCSV" Disabled="!_investments.Any()">
+                        Exportera CSV
+                    </MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Upload" 
+                               Href="/import-investments">
+                        Importera
+                    </MudButton>
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" 
+                               OnClick="OpenAddDialog">
+                        Lägg till
+                    </MudButton>
+                </div>
             </MudItem>
         </MudGrid>
 
@@ -75,14 +85,31 @@ else
         }
         else
         {
-            <MudTable Items="@_investments" Hover="true" Striped="true" Filter="new Func<Investment,bool>(FilterFunc)">
+            <MudTable Items="@_filteredInvestments" Hover="true" Striped="true" Filter="new Func<Investment,bool>(FilterFunc)">
                 <ToolBarContent>
                     <MudTextField @bind-Value="_searchString" Placeholder="Sök" Adornment="Adornment.Start" 
                                   AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+                    <MudSpacer />
+                    <MudSelect T="int?" @bind-Value="_filterBankId" Label="Bank" Clearable="true" 
+                               Variant="Variant.Outlined" Margin="Margin.Dense" Class="ml-2" Style="min-width: 150px;">
+                        @foreach (var bank in _banks)
+                        {
+                            <MudSelectItem Value="@((int?)bank.BankSourceId)">@bank.Name</MudSelectItem>
+                        }
+                    </MudSelect>
+                    <MudSelect T="string" @bind-Value="_filterAccount" Label="Konto" Clearable="true" 
+                               Variant="Variant.Outlined" Margin="Margin.Dense" Class="ml-2" Style="min-width: 150px;">
+                        @foreach (var account in _accounts)
+                        {
+                            <MudSelectItem Value="@account">@account</MudSelectItem>
+                        }
+                    </MudSelect>
                 </ToolBarContent>
                 <HeaderContent>
                     <MudTh>Namn</MudTh>
                     <MudTh>Typ</MudTh>
+                    <MudTh>Bank</MudTh>
+                    <MudTh>Konto</MudTh>
                     <MudTh Style="text-align: right">Antal</MudTh>
                     <MudTh Style="text-align: right">Köpkurs</MudTh>
                     <MudTh Style="text-align: right">Aktuell kurs</MudTh>
@@ -92,11 +119,33 @@ else
                     <MudTh>Åtgärder</MudTh>
                 </HeaderContent>
                 <RowTemplate>
-                    <MudTd DataLabel="Namn">@context.Name</MudTd>
+                    <MudTd DataLabel="Namn">
+                        <div>
+                            <MudText Typo="Typo.body2">@context.Name</MudText>
+                            @if (!string.IsNullOrEmpty(context.ShortName))
+                            {
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">@context.ShortName</MudText>
+                            }
+                        </div>
+                    </MudTd>
                     <MudTd DataLabel="Typ">
-                        <MudChip T="string" Size="Size.Small" Color="@(context.Type == "Aktie" ? Color.Primary : Color.Secondary)">
+                        <MudChip T="string" Size="Size.Small" Color="@GetTypeColor(context.Type)">
                             @context.Type
                         </MudChip>
+                    </MudTd>
+                    <MudTd DataLabel="Bank">
+                        @if (context.BankSource != null)
+                        {
+                            <MudChip T="string" Size="Size.Small" Style="@($"background-color: {context.BankSource.Color}; color: white;")">
+                                @context.BankSource.Name
+                            </MudChip>
+                        }
+                    </MudTd>
+                    <MudTd DataLabel="Konto">
+                        @if (!string.IsNullOrEmpty(context.AccountNumber))
+                        {
+                            <MudText Typo="Typo.body2">@context.AccountNumber</MudText>
+                        }
                     </MudTd>
                     <MudTd DataLabel="Antal" Style="text-align: right">@context.Quantity.ToString("N2")</MudTd>
                     <MudTd DataLabel="Köpkurs" Style="text-align: right">@context.PurchasePrice.ToString("C", new System.Globalization.CultureInfo("sv-SE"))</MudTd>
@@ -124,10 +173,19 @@ else
     </MudPaper>
 }
 
+@inject IBankSourceService BankSourceService
+@inject IJSRuntime JS
+@using System.Text
+
 @code {
     private bool _loading = true;
     private IEnumerable<Investment> _investments = new List<Investment>();
+    private IEnumerable<Investment> _filteredInvestments = new List<Investment>();
+    private List<BankSource> _banks = new();
+    private List<string> _accounts = new();
     private string _searchString = "";
+    private int? _filterBankId = null;
+    private string? _filterAccount = null;
     
     private decimal _totalValue = 0;
     private decimal _totalCost = 0;
@@ -143,14 +201,41 @@ else
     {
         _loading = true;
         _investments = await InvestmentService.GetAllInvestmentsAsync();
+        _banks = (await BankSourceService.GetAllBankSourcesAsync()).ToList();
+        _accounts = _investments
+            .Where(i => !string.IsNullOrEmpty(i.AccountNumber))
+            .Select(i => i.AccountNumber!)
+            .Distinct()
+            .OrderBy(a => a)
+            .ToList();
+        
+        ApplyFilters();
         CalculateTotals();
         _loading = false;
     }
 
+    private void ApplyFilters()
+    {
+        _filteredInvestments = _investments;
+        
+        if (_filterBankId.HasValue)
+        {
+            _filteredInvestments = _filteredInvestments.Where(i => i.BankSourceId == _filterBankId.Value);
+        }
+        
+        if (!string.IsNullOrEmpty(_filterAccount))
+        {
+            _filteredInvestments = _filteredInvestments.Where(i => i.AccountNumber == _filterAccount);
+        }
+        
+        CalculateTotals();
+        StateHasChanged();
+    }
+
     private void CalculateTotals()
     {
-        _totalValue = _investments.Sum(i => i.TotalValue);
-        _totalCost = _investments.Sum(i => i.TotalCost);
+        _totalValue = _filteredInvestments.Sum(i => i.TotalValue);
+        _totalCost = _filteredInvestments.Sum(i => i.TotalCost);
         _totalProfitLoss = _totalValue - _totalCost;
         _totalProfitLossPercentage = _totalCost > 0 ? (_totalProfitLoss / _totalCost) * 100 : 0;
     }
@@ -163,7 +248,42 @@ else
             return true;
         if (investment.Type.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
             return true;
+        if (investment.ShortName?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) == true)
+            return true;
+        if (investment.BankSource?.Name.Contains(_searchString, StringComparison.OrdinalIgnoreCase) == true)
+            return true;
+        if (investment.AccountNumber?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) == true)
+            return true;
         return false;
+    }
+
+    private Color GetTypeColor(string type)
+    {
+        return type switch
+        {
+            "Aktie" => Color.Primary,
+            "Fond" => Color.Secondary,
+            "Certifikat" => Color.Warning,
+            _ => Color.Default
+        };
+    }
+
+    private async Task ExportToCSV()
+    {
+        try
+        {
+            var csvContent = await InvestmentService.ExportToCsvAsync(_filteredInvestments);
+            var bytes = Encoding.UTF8.GetBytes(csvContent);
+            var base64 = Convert.ToBase64String(bytes);
+            var fileName = $"investeringar_{DateTime.Now:yyyyMMdd}.csv";
+            
+            await JS.InvokeVoidAsync("downloadFile", fileName, "text/csv", base64);
+            Snackbar.Add("Export slutförd!", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Ett fel uppstod vid export: {ex.Message}", Severity.Error);
+        }
     }
 
     private async Task OpenAddDialog()
