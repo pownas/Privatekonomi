@@ -106,4 +106,39 @@ public class TransactionService : ITransactionService
 
         return null;
     }
+
+    public async Task<IEnumerable<Transaction>> GetUnmappedTransactionsAsync()
+    {
+        return await _context.Transactions
+            .Include(t => t.BankSource)
+            .Include(t => t.TransactionCategories)
+            .ThenInclude(tc => tc.Category)
+            .Where(t => !t.TransactionCategories.Any())
+            .OrderByDescending(t => t.Date)
+            .ToListAsync();
+    }
+
+    public async Task UpdateTransactionCategoriesAsync(int transactionId, List<TransactionCategory> categories)
+    {
+        var transaction = await _context.Transactions
+            .Include(t => t.TransactionCategories)
+            .FirstOrDefaultAsync(t => t.TransactionId == transactionId);
+
+        if (transaction == null)
+        {
+            throw new ArgumentException($"Transaction with ID {transactionId} not found");
+        }
+
+        // Remove existing categories
+        _context.TransactionCategories.RemoveRange(transaction.TransactionCategories);
+
+        // Add new categories
+        foreach (var category in categories)
+        {
+            category.TransactionId = transactionId;
+            _context.TransactionCategories.Add(category);
+        }
+
+        await _context.SaveChangesAsync();
+    }
 }

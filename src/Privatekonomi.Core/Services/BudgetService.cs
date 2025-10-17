@@ -95,4 +95,64 @@ public class BudgetService : IBudgetService
 
         return actualAmounts;
     }
+
+    public async Task<IEnumerable<Transaction>> GetTransactionsForBudgetAsync(int budgetId)
+    {
+        var budget = await _context.Budgets.FindAsync(budgetId);
+        if (budget == null)
+        {
+            return new List<Transaction>();
+        }
+
+        return await _context.Transactions
+            .Include(t => t.TransactionCategories)
+            .ThenInclude(tc => tc.Category)
+            .Include(t => t.BankSource)
+            .Where(t => t.Date >= budget.StartDate && t.Date <= budget.EndDate)
+            .OrderByDescending(t => t.Date)
+            .ToListAsync();
+    }
+
+    public async Task<Dictionary<int, List<Transaction>>> GetTransactionsByCategoryForBudgetAsync(int budgetId)
+    {
+        var budget = await _context.Budgets
+            .Include(b => b.BudgetCategories)
+            .ThenInclude(bc => bc.Category)
+            .FirstOrDefaultAsync(b => b.BudgetId == budgetId);
+            
+        if (budget == null)
+        {
+            return new Dictionary<int, List<Transaction>>();
+        }
+
+        var transactions = await _context.Transactions
+            .Include(t => t.TransactionCategories)
+            .ThenInclude(tc => tc.Category)
+            .Include(t => t.BankSource)
+            .Where(t => t.Date >= budget.StartDate && t.Date <= budget.EndDate && !t.IsIncome)
+            .OrderByDescending(t => t.Date)
+            .ToListAsync();
+
+        var transactionsByCategory = new Dictionary<int, List<Transaction>>();
+        
+        // Group transactions by their categories
+        foreach (var transaction in transactions)
+        {
+            foreach (var tc in transaction.TransactionCategories)
+            {
+                if (!transactionsByCategory.ContainsKey(tc.CategoryId))
+                {
+                    transactionsByCategory[tc.CategoryId] = new List<Transaction>();
+                }
+                
+                // Only add if not already in the list (avoid duplicates)
+                if (!transactionsByCategory[tc.CategoryId].Contains(transaction))
+                {
+                    transactionsByCategory[tc.CategoryId].Add(transaction);
+                }
+            }
+        }
+
+        return transactionsByCategory;
+    }
 }
