@@ -87,6 +87,24 @@ public class PrivatekonomyContext : DbContext
             entity.Property(e => e.CurrentPrice).HasPrecision(18, 2);
             entity.Property(e => e.PurchaseDate).IsRequired();
             entity.Property(e => e.LastUpdated).IsRequired();
+            
+            // New properties for bank and account information
+            entity.Property(e => e.AccountNumber).HasMaxLength(50);
+            entity.Property(e => e.ShortName).HasMaxLength(50);
+            entity.Property(e => e.ISIN).HasMaxLength(12);
+            entity.Property(e => e.Currency).HasMaxLength(3);
+            entity.Property(e => e.Country).HasMaxLength(2);
+            entity.Property(e => e.Market).HasMaxLength(50);
+            
+            // Relation to BankSource
+            entity.HasOne(e => e.BankSource)
+                .WithMany()
+                .HasForeignKey(e => e.BankSourceId)
+                .OnDelete(DeleteBehavior.SetNull);
+                
+            // Indexes for faster searching
+            entity.HasIndex(e => e.ISIN);
+            entity.HasIndex(e => e.AccountNumber);
         });
 
         modelBuilder.Entity<Budget>(entity =>
