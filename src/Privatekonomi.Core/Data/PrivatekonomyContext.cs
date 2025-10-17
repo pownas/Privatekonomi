@@ -15,10 +15,19 @@ public class PrivatekonomyContext : DbContext
     public DbSet<TransactionCategory> TransactionCategories { get; set; }
     public DbSet<Loan> Loans { get; set; }
     public DbSet<Investment> Investments { get; set; }
+    public DbSet<BankSource> BankSources { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        modelBuilder.Entity<BankSource>(entity =>
+        {
+            entity.HasKey(e => e.BankSourceId);
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.Color).IsRequired().HasMaxLength(7);
+            entity.Property(e => e.Logo).HasMaxLength(500);
+        });
 
         modelBuilder.Entity<Category>(entity =>
         {
@@ -33,7 +42,11 @@ public class PrivatekonomyContext : DbContext
             entity.Property(e => e.Amount).HasPrecision(18, 2);
             entity.Property(e => e.Description).IsRequired().HasMaxLength(500);
             entity.Property(e => e.Date).IsRequired();
-            entity.Property(e => e.BankSource).HasMaxLength(50);
+            
+            entity.HasOne(e => e.BankSource)
+                .WithMany(b => b.Transactions)
+                .HasForeignKey(e => e.BankSourceId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
 
         modelBuilder.Entity<TransactionCategory>(entity =>
@@ -85,6 +98,16 @@ public class PrivatekonomyContext : DbContext
             new Category { CategoryId = 7, Name = "Lön", Color = "#4CAF50" },
             new Category { CategoryId = 8, Name = "Sparande", Color = "#2196F3" },
             new Category { CategoryId = 9, Name = "Övrigt", Color = "#9E9E9E" }
+        );
+
+        // Seed initial bank sources
+        modelBuilder.Entity<BankSource>().HasData(
+            new BankSource { BankSourceId = 1, Name = "ICA-banken", Color = "#DC143C" }, // röd (Crimson)
+            new BankSource { BankSourceId = 2, Name = "Swedbank", Color = "#FF8C00" }, // mörk orange (Dark Orange)
+            new BankSource { BankSourceId = 3, Name = "SEB", Color = "#0066CC" }, // blå
+            new BankSource { BankSourceId = 4, Name = "Nordea", Color = "#00A9CE" }, // ljusblå
+            new BankSource { BankSourceId = 5, Name = "Handelsbanken", Color = "#003366" }, // mörk blå
+            new BankSource { BankSourceId = 6, Name = "Avanza", Color = "#006400" } // mörkgrön (Dark Green)
         );
     }
 }

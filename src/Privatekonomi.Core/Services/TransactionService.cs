@@ -16,6 +16,7 @@ public class TransactionService : ITransactionService
     public async Task<IEnumerable<Transaction>> GetAllTransactionsAsync()
     {
         return await _context.Transactions
+            .Include(t => t.BankSource)
             .Include(t => t.TransactionCategories)
             .ThenInclude(tc => tc.Category)
             .OrderByDescending(t => t.Date)
@@ -25,6 +26,7 @@ public class TransactionService : ITransactionService
     public async Task<Transaction?> GetTransactionByIdAsync(int id)
     {
         return await _context.Transactions
+            .Include(t => t.BankSource)
             .Include(t => t.TransactionCategories)
             .ThenInclude(tc => tc.Category)
             .FirstOrDefaultAsync(t => t.TransactionId == id);
@@ -71,6 +73,7 @@ public class TransactionService : ITransactionService
     public async Task<IEnumerable<Transaction>> GetTransactionsByDateRangeAsync(DateTime from, DateTime to)
     {
         return await _context.Transactions
+            .Include(t => t.BankSource)
             .Include(t => t.TransactionCategories)
             .ThenInclude(tc => tc.Category)
             .Where(t => t.Date >= from && t.Date <= to)

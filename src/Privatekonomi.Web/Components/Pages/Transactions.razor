@@ -46,11 +46,11 @@
                 <MudTd DataLabel="Datum">@context.Date.ToString("yyyy-MM-dd")</MudTd>
                 <MudTd DataLabel="Beskrivning">@context.Description</MudTd>
                 <MudTd DataLabel="Bank">
-                    @if (!string.IsNullOrWhiteSpace(context.BankSource))
+                    @if (context.BankSource != null)
                     {
-                        <MudText Typo="Typo.body2" Color="Color.Secondary">
-                            <MudIcon Icon="@Icons.Material.Filled.AccountBalance" Size="Size.Small" /> @context.BankSource
-                        </MudText>
+                        <MudChip T="string" Size="Size.Small" Style="@($"background-color: {context.BankSource.Color}; color: white;")">
+                            <MudIcon Icon="@Icons.Material.Filled.AccountBalance" Size="Size.Small" /> @context.BankSource.Name
+                        </MudChip>
                     }
                 </MudTd>
                 <MudTd DataLabel="Kategori">
@@ -103,7 +103,7 @@
             return true;
         if (transaction.TransactionCategories.Any(tc => tc.Category.Name.Contains(_searchString, StringComparison.OrdinalIgnoreCase)))
             return true;
-        if (!string.IsNullOrWhiteSpace(transaction.BankSource) && transaction.BankSource.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+        if (transaction.BankSource != null && transaction.BankSource.Name.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
             return true;
         return false;
     }
