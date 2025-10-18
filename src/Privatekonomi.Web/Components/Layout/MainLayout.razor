@@ -38,9 +38,16 @@
     {
         if (firstRender)
         {
-            _isDarkMode = await JSRuntime.InvokeAsync<bool>("themeManager.getTheme");
-            ThemeService.IsDarkMode = _isDarkMode;
-            StateHasChanged();
+            try
+            {
+                _isDarkMode = await JSRuntime.InvokeAsync<bool>("themeManager.getTheme");
+                ThemeService.IsDarkMode = _isDarkMode;
+                StateHasChanged();
+            }
+            catch
+            {
+                // Ignore JS interop errors on first render
+            }
         }
     }
 
@@ -58,7 +65,14 @@
     private async Task ToggleTheme()
     {
         ThemeService.ToggleTheme();
-        await JSRuntime.InvokeVoidAsync("themeManager.setTheme", ThemeService.IsDarkMode);
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("themeManager.setTheme", ThemeService.IsDarkMode);
+        }
+        catch
+        {
+            // Ignore JS interop errors
+        }
     }
     
     private void OnThemeChanged()
