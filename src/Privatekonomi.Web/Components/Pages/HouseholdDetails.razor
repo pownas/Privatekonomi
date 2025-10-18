@@ -1,0 +1,357 @@
+@page "/households/{HouseholdId:int}"
+@using Privatekonomi.Core.Models
+@using Privatekonomi.Core.Services
+@inject IHouseholdService HouseholdService
+@inject NavigationManager NavigationManager
+
+<PageTitle>@(household?.Name ?? "Hushåll")</PageTitle>
+
+@if (household == null)
+{
+    <MudProgressLinear Color="Color.Primary" Indeterminate="true" />
+}
+else
+{
+    <MudBreadcrumbs Items="breadcrumbs" Class="mb-4" />
+    
+    <MudText Typo="Typo.h4" Class="mb-2">@household.Name</MudText>
+    @if (!string.IsNullOrEmpty(household.Description))
+    {
+        <MudText Typo="Typo.body1" Color="Color.Secondary" Class="mb-4">@household.Description</MudText>
+    }
+
+    <MudTabs Elevation="2" Rounded="true" Color="Color.Primary" Class="mt-4">
+        <MudTabPanel Text="Medlemmar" Icon="@Icons.Material.Filled.People">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.PersonAdd" OnClick="OpenAddMemberDialog" Class="my-4">
+                Lägg till medlem
+            </MudButton>
+
+            @if (!household.Members.Any())
+            {
+                <MudAlert Severity="Severity.Info" Class="mt-4">Inga medlemmar ännu. Lägg till minst 2 medlemmar för att dela kostnader.</MudAlert>
+            }
+            else
+            {
+                <MudTable Items="@household.Members.Where(m => m.IsActive)" Class="mt-4" Hover="true">
+                    <HeaderContent>
+                        <MudTh>Namn</MudTh>
+                        <MudTh>E-post</MudTh>
+                        <MudTh>Gick med</MudTh>
+                        <MudTh>Åtgärder</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="Namn">@context.Name</MudTd>
+                        <MudTd DataLabel="E-post">@context.Email</MudTd>
+                        <MudTd DataLabel="Gick med">@context.JoinedDate.ToShortDateString()</MudTd>
+                        <MudTd DataLabel="Åtgärder">
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="@(() => RemoveMember(context.HouseholdMemberId))" />
+                        </MudTd>
+                    </RowTemplate>
+                </MudTable>
+            }
+        </MudTabPanel>
+
+        <MudTabPanel Text="Utgifter" Icon="@Icons.Material.Filled.Receipt">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenAddExpenseDialog" Class="my-4">
+                Lägg till utgift
+            </MudButton>
+
+            @if (!household.SharedExpenses.Any())
+            {
+                <MudAlert Severity="Severity.Info" Class="mt-4">Inga delade utgifter ännu.</MudAlert>
+            }
+            else
+            {
+                <MudTable Items="@household.SharedExpenses.OrderByDescending(e => e.ExpenseDate)" Class="mt-4" Hover="true">
+                    <HeaderContent>
+                        <MudTh>Namn</MudTh>
+                        <MudTh>Typ</MudTh>
+                        <MudTh>Belopp</MudTh>
+                        <MudTh>Fördelning</MudTh>
+                        <MudTh>Datum</MudTh>
+                        <MudTh>Åtgärder</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="Namn">@context.Name</MudTd>
+                        <MudTd DataLabel="Typ">@GetExpenseTypeText(context.Type)</MudTd>
+                        <MudTd DataLabel="Belopp">@context.TotalAmount.ToString("N2") kr</MudTd>
+                        <MudTd DataLabel="Fördelning">@GetSplitMethodText(context.SplitMethod)</MudTd>
+                        <MudTd DataLabel="Datum">@context.ExpenseDate.ToShortDateString()</MudTd>
+                        <MudTd DataLabel="Åtgärder">
+                            <MudIconButton Icon="@Icons.Material.Filled.Visibility" Color="Color.Primary" Size="Size.Small" OnClick="@(() => ViewExpenseDetails(context.SharedExpenseId))" />
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="@(() => DeleteExpense(context.SharedExpenseId))" />
+                        </MudTd>
+                    </RowTemplate>
+                </MudTable>
+            }
+        </MudTabPanel>
+
+        <MudTabPanel Text="Rapport" Icon="@Icons.Material.Filled.BarChart">
+            <MudText Typo="Typo.h6" Class="my-4">Kostnadsfördelning per medlem</MudText>
+            
+            @if (memberTotals != null && memberTotals.Any())
+            {
+                <MudSimpleTable Class="mt-4" Hover="true">
+                    <thead>
+                        <tr>
+                            <th>Medlem</th>
+                            <th style="text-align: right;">Total kostnad</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var memberTotal in memberTotals)
+                        {
+                            var member = household.Members.FirstOrDefault(m => m.HouseholdMemberId == memberTotal.Key);
+                            @if (member != null)
+                            {
+                                <tr>
+                                    <td>@member.Name</td>
+                                    <td style="text-align: right;"><strong>@memberTotal.Value.ToString("N2") kr</strong></td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </MudSimpleTable>
+            }
+            else
+            {
+                <MudAlert Severity="Severity.Info" Class="mt-4">Inga utgifter att visa i rapporten.</MudAlert>
+            }
+        </MudTabPanel>
+    </MudTabs>
+}
+
+<!-- Add Member Dialog -->
+<MudDialog @bind-Visible="showAddMemberDialog" Options="dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Lägg till medlem</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudTextField @bind-Value="newMember.Name" Label="Namn" Required="true" />
+        <MudTextField @bind-Value="newMember.Email" Label="E-post" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="CloseAddMemberDialog">Avbryt</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="AddMember">Lägg till</MudButton>
+    </DialogActions>
+</MudDialog>
+
+<!-- Add Expense Dialog -->
+<MudDialog @bind-Visible="showAddExpenseDialog" Options="dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Lägg till delad utgift</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudTextField @bind-Value="newExpense.Name" Label="Namn" Required="true" />
+        <MudTextField @bind-Value="newExpense.Description" Label="Beskrivning" Lines="2" />
+        <MudNumericField @bind-Value="newExpense.TotalAmount" Label="Totalt belopp" Adornment="Adornment.End" AdornmentText="kr" Required="true" />
+        <MudSelect @bind-Value="newExpense.Type" Label="Typ" Required="true">
+            <MudSelectItem Value="@ExpenseType.Rent">Hyra</MudSelectItem>
+            <MudSelectItem Value="@ExpenseType.Electricity">El</MudSelectItem>
+            <MudSelectItem Value="@ExpenseType.Internet">Bredband</MudSelectItem>
+            <MudSelectItem Value="@ExpenseType.Water">Vatten</MudSelectItem>
+            <MudSelectItem Value="@ExpenseType.Heating">Värme</MudSelectItem>
+            <MudSelectItem Value="@ExpenseType.Insurance">Försäkring</MudSelectItem>
+            <MudSelectItem Value="@ExpenseType.Other">Övrigt</MudSelectItem>
+        </MudSelect>
+        <MudDatePicker @bind-Date="expenseDate" Label="Datum" Required="true" />
+        <MudSelect @bind-Value="newExpense.SplitMethod" Label="Fördelningsmetod" Required="true">
+            <MudSelectItem Value="@SplitMethod.Equal">Jämnt fördelat</MudSelectItem>
+            <MudSelectItem Value="@SplitMethod.ByPercentage">Efter procent</MudSelectItem>
+            <MudSelectItem Value="@SplitMethod.ByAmount">Efter specifikt belopp</MudSelectItem>
+            <MudSelectItem Value="@SplitMethod.ByRoomSize">Efter rumsyta</MudSelectItem>
+        </MudSelect>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="CloseAddExpenseDialog">Avbryt</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="AddExpense">Lägg till</MudButton>
+    </DialogActions>
+</MudDialog>
+
+<!-- Expense Details Dialog -->
+<MudDialog @bind-Visible="showExpenseDetailsDialog" Options="dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Utgiftsdetaljer</MudText>
+    </TitleContent>
+    <DialogContent>
+        @if (selectedExpense != null)
+        {
+            <MudText><strong>Namn:</strong> @selectedExpense.Name</MudText>
+            <MudText><strong>Typ:</strong> @GetExpenseTypeText(selectedExpense.Type)</MudText>
+            <MudText><strong>Totalt belopp:</strong> @selectedExpense.TotalAmount.ToString("N2") kr</MudText>
+            <MudText><strong>Fördelningsmetod:</strong> @GetSplitMethodText(selectedExpense.SplitMethod)</MudText>
+            <MudText Class="mt-4"><strong>Fördelning per medlem:</strong></MudText>
+            <MudSimpleTable Class="mt-2">
+                <thead>
+                    <tr>
+                        <th>Medlem</th>
+                        <th style="text-align: right;">Belopp</th>
+                        <th style="text-align: right;">Procent</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var share in selectedExpense.ExpenseShares)
+                    {
+                        <tr>
+                            <td>@share.HouseholdMember?.Name</td>
+                            <td style="text-align: right;">@share.ShareAmount.ToString("N2") kr</td>
+                            <td style="text-align: right;">@share.SharePercentage?.ToString("N1")%</td>
+                        </tr>
+                    }
+                </tbody>
+            </MudSimpleTable>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="CloseExpenseDetailsDialog">Stäng</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [Parameter]
+    public int HouseholdId { get; set; }
+
+    private Household? household;
+    private Dictionary<int, decimal>? memberTotals;
+    private List<BreadcrumbItem> breadcrumbs = new();
+    
+    private bool showAddMemberDialog = false;
+    private bool showAddExpenseDialog = false;
+    private bool showExpenseDetailsDialog = false;
+    private HouseholdMember newMember = new HouseholdMember();
+    private SharedExpense newExpense = new SharedExpense();
+    private SharedExpense? selectedExpense;
+    private DateTime? expenseDate = DateTime.Today;
+    private DialogOptions dialogOptions = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadHousehold();
+        
+        breadcrumbs = new List<BreadcrumbItem>
+        {
+            new BreadcrumbItem("Hushåll", "/households"),
+            new BreadcrumbItem(household?.Name ?? "Detaljer", null, disabled: true)
+        };
+    }
+
+    private async Task LoadHousehold()
+    {
+        household = await HouseholdService.GetHouseholdByIdAsync(HouseholdId);
+        if (household != null)
+        {
+            memberTotals = await HouseholdService.GetMemberTotalSharesAsync(HouseholdId);
+        }
+    }
+
+    private void OpenAddMemberDialog()
+    {
+        if (household?.Members.Count(m => m.IsActive) >= 4)
+        {
+            // Show error that max 4 members allowed
+            return;
+        }
+        newMember = new HouseholdMember { HouseholdId = HouseholdId };
+        showAddMemberDialog = true;
+    }
+
+    private void CloseAddMemberDialog()
+    {
+        showAddMemberDialog = false;
+    }
+
+    private async Task AddMember()
+    {
+        if (string.IsNullOrWhiteSpace(newMember.Name))
+            return;
+
+        await HouseholdService.AddMemberAsync(newMember);
+        await LoadHousehold();
+        CloseAddMemberDialog();
+    }
+
+    private async Task RemoveMember(int memberId)
+    {
+        await HouseholdService.RemoveMemberAsync(memberId);
+        await LoadHousehold();
+    }
+
+    private void OpenAddExpenseDialog()
+    {
+        if (household?.Members.Count(m => m.IsActive) < 2)
+        {
+            // Show error that at least 2 members required
+            return;
+        }
+        newExpense = new SharedExpense { HouseholdId = HouseholdId, SplitMethod = SplitMethod.Equal };
+        expenseDate = DateTime.Today;
+        showAddExpenseDialog = true;
+    }
+
+    private void CloseAddExpenseDialog()
+    {
+        showAddExpenseDialog = false;
+    }
+
+    private async Task AddExpense()
+    {
+        if (string.IsNullOrWhiteSpace(newExpense.Name) || newExpense.TotalAmount <= 0)
+            return;
+
+        newExpense.ExpenseDate = expenseDate ?? DateTime.Today;
+        var expense = await HouseholdService.CreateSharedExpenseAsync(newExpense);
+        
+        // Automatically distribute according to selected method
+        if (newExpense.SplitMethod == SplitMethod.Equal)
+        {
+            await HouseholdService.DistributeExpenseEquallyAsync(expense.SharedExpenseId);
+        }
+        
+        await LoadHousehold();
+        CloseAddExpenseDialog();
+    }
+
+    private async Task DeleteExpense(int expenseId)
+    {
+        await HouseholdService.DeleteSharedExpenseAsync(expenseId);
+        await LoadHousehold();
+    }
+
+    private async Task ViewExpenseDetails(int expenseId)
+    {
+        selectedExpense = await HouseholdService.GetSharedExpenseByIdAsync(expenseId);
+        showExpenseDetailsDialog = true;
+    }
+
+    private void CloseExpenseDetailsDialog()
+    {
+        showExpenseDetailsDialog = false;
+    }
+
+    private string GetExpenseTypeText(ExpenseType type)
+    {
+        return type switch
+        {
+            ExpenseType.Rent => "Hyra",
+            ExpenseType.Electricity => "El",
+            ExpenseType.Internet => "Bredband",
+            ExpenseType.Water => "Vatten",
+            ExpenseType.Heating => "Värme",
+            ExpenseType.Insurance => "Försäkring",
+            ExpenseType.Other => "Övrigt",
+            _ => type.ToString()
+        };
+    }
+
+    private string GetSplitMethodText(SplitMethod method)
+    {
+        return method switch
+        {
+            SplitMethod.Equal => "Jämnt",
+            SplitMethod.ByPercentage => "Efter procent",
+            SplitMethod.ByAmount => "Efter belopp",
+            SplitMethod.ByRoomSize => "Efter rumsyta",
+            _ => method.ToString()
+        };
+    }
+}

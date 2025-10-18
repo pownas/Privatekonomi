@@ -1,0 +1,135 @@
+@page "/households"
+@using Privatekonomi.Core.Models
+@using Privatekonomi.Core.Services
+@inject IHouseholdService HouseholdService
+@inject NavigationManager NavigationManager
+
+<PageTitle>Hushåll</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-4">Hushåll</MudText>
+
+<MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenCreateDialog" Class="mb-4">
+    Skapa nytt hushåll
+</MudButton>
+
+<MudGrid>
+    @if (households == null)
+    {
+        <MudItem xs="12">
+            <MudProgressLinear Color="Color.Primary" Indeterminate="true" />
+        </MudItem>
+    }
+    else if (!households.Any())
+    {
+        <MudItem xs="12">
+            <MudAlert Severity="Severity.Info">
+                Inga hushåll finns än. Skapa ditt första hushåll för att börja hantera delade boendekostnader.
+            </MudAlert>
+        </MudItem>
+    }
+    else
+    {
+        @foreach (var household in households)
+        {
+            <MudItem xs="12" sm="6" md="4">
+                <MudCard>
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.h6">@household.Name</MudText>
+                        </CardHeaderContent>
+                        <CardHeaderActions>
+                            <MudIconButton Icon="@Icons.Material.Filled.MoreVert" Color="Color.Default" />
+                        </CardHeaderActions>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        @if (!string.IsNullOrEmpty(household.Description))
+                        {
+                            <MudText Typo="Typo.body2" Class="mb-2">@household.Description</MudText>
+                        }
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">
+                            <MudIcon Icon="@Icons.Material.Filled.People" Size="Size.Small" /> @household.Members.Count medlem(mar)
+                        </MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">
+                            <MudIcon Icon="@Icons.Material.Filled.Receipt" Size="Size.Small" /> @household.SharedExpenses.Count utgift(er)
+                        </MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-2">
+                            Skapad: @household.CreatedDate.ToShortDateString()
+                        </MudText>
+                    </MudCardContent>
+                    <MudCardActions>
+                        <MudButton Variant="Variant.Text" Color="Color.Primary" OnClick="@(() => ViewHousehold(household.HouseholdId))">
+                            Visa detaljer
+                        </MudButton>
+                        <MudButton Variant="Variant.Text" Color="Color.Error" OnClick="@(() => DeleteHousehold(household.HouseholdId))">
+                            Ta bort
+                        </MudButton>
+                    </MudCardActions>
+                </MudCard>
+            </MudItem>
+        }
+    }
+</MudGrid>
+
+<MudDialog @bind-Visible="showCreateDialog" Options="dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Skapa nytt hushåll</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudTextField @bind-Value="newHousehold.Name" Label="Namn" Required="true" />
+        <MudTextField @bind-Value="newHousehold.Description" Label="Beskrivning" Lines="3" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="CloseCreateDialog">Avbryt</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="CreateHousehold">Skapa</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private List<Household>? households;
+    private bool showCreateDialog = false;
+    private Household newHousehold = new Household();
+    private DialogOptions dialogOptions = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadHouseholds();
+    }
+
+    private async Task LoadHouseholds()
+    {
+        var result = await HouseholdService.GetAllHouseholdsAsync();
+        households = result.ToList();
+    }
+
+    private void OpenCreateDialog()
+    {
+        newHousehold = new Household();
+        showCreateDialog = true;
+    }
+
+    private void CloseCreateDialog()
+    {
+        showCreateDialog = false;
+    }
+
+    private async Task CreateHousehold()
+    {
+        if (string.IsNullOrWhiteSpace(newHousehold.Name))
+            return;
+
+        await HouseholdService.CreateHouseholdAsync(newHousehold);
+        await LoadHouseholds();
+        CloseCreateDialog();
+    }
+
+    private void ViewHousehold(int householdId)
+    {
+        NavigationManager.NavigateTo($"/households/{householdId}");
+    }
+
+    private async Task DeleteHousehold(int householdId)
+    {
+        await HouseholdService.DeleteHouseholdAsync(householdId);
+        await LoadHouseholds();
+    }
+}

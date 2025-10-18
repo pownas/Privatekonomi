@@ -27,6 +27,7 @@ builder.Services.AddScoped<ILoanService, LoanService>();
 builder.Services.AddScoped<IInvestmentService, InvestmentService>();
 builder.Services.AddScoped<IBudgetService, BudgetService>();
 builder.Services.AddScoped<IBankSourceService, BankSourceService>();
+builder.Services.AddScoped<IHouseholdService, HouseholdService>();
 
 // Add HttpClient for API calls (if needed later)
 builder.Services.AddHttpClient();
