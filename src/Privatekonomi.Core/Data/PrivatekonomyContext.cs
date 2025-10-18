@@ -18,6 +18,10 @@ public class PrivatekonomyContext : DbContext
     public DbSet<Budget> Budgets { get; set; }
     public DbSet<BudgetCategory> BudgetCategories { get; set; }
     public DbSet<BankSource> BankSources { get; set; }
+    public DbSet<Household> Households { get; set; }
+    public DbSet<HouseholdMember> HouseholdMembers { get; set; }
+    public DbSet<SharedExpense> SharedExpenses { get; set; }
+    public DbSet<ExpenseShare> ExpenseShares { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -155,5 +159,63 @@ public class PrivatekonomyContext : DbContext
             new BankSource { BankSourceId = 5, Name = "Handelsbanken", Color = "#003366" }, // mörk blå
             new BankSource { BankSourceId = 6, Name = "Avanza", Color = "#006400" } // mörkgrön (Dark Green)
         );
+
+        // Household configuration
+        modelBuilder.Entity<Household>(entity =>
+        {
+            entity.HasKey(e => e.HouseholdId);
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(200);
+            entity.Property(e => e.Description).HasMaxLength(500);
+            entity.Property(e => e.CreatedDate).IsRequired();
+        });
+
+        modelBuilder.Entity<HouseholdMember>(entity =>
+        {
+            entity.HasKey(e => e.HouseholdMemberId);
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.Email).HasMaxLength(200);
+            entity.Property(e => e.IsActive).IsRequired();
+            entity.Property(e => e.JoinedDate).IsRequired();
+            
+            entity.HasOne(e => e.Household)
+                .WithMany(h => h.Members)
+                .HasForeignKey(e => e.HouseholdId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<SharedExpense>(entity =>
+        {
+            entity.HasKey(e => e.SharedExpenseId);
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(200);
+            entity.Property(e => e.Description).HasMaxLength(500);
+            entity.Property(e => e.TotalAmount).HasPrecision(18, 2);
+            entity.Property(e => e.Type).IsRequired();
+            entity.Property(e => e.ExpenseDate).IsRequired();
+            entity.Property(e => e.CreatedDate).IsRequired();
+            entity.Property(e => e.SplitMethod).IsRequired();
+            
+            entity.HasOne(e => e.Household)
+                .WithMany(h => h.SharedExpenses)
+                .HasForeignKey(e => e.HouseholdId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<ExpenseShare>(entity =>
+        {
+            entity.HasKey(e => e.ExpenseShareId);
+            entity.Property(e => e.ShareAmount).HasPrecision(18, 2);
+            entity.Property(e => e.SharePercentage).HasPrecision(5, 2);
+            entity.Property(e => e.RoomSize).HasPrecision(10, 2);
+            
+            entity.HasOne(e => e.SharedExpense)
+                .WithMany(se => se.ExpenseShares)
+                .HasForeignKey(e => e.SharedExpenseId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.HasOne(e => e.HouseholdMember)
+                .WithMany(hm => hm.ExpenseShares)
+                .HasForeignKey(e => e.HouseholdMemberId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
     }
 }

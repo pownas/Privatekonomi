@@ -15,6 +15,7 @@ public static class TestDataSeeder
         SeedTransactions(context);
         SeedInvestments(context);
         SeedBudgets(context);
+        SeedHouseholds(context);
     }
 
     private static void SeedTransactions(PrivatekonomyContext context)
@@ -286,6 +287,113 @@ public static class TestDataSeeder
         context.Budgets.AddRange(new[] { currentMonthBudget, previousMonthBudget });
         context.BudgetCategories.AddRange(budgetCategories);
         context.BudgetCategories.AddRange(prevBudgetCategories);
+        context.SaveChanges();
+    }
+
+    private static void SeedHouseholds(PrivatekonomyContext context)
+    {
+        // Create a sample household with members and shared expenses
+        var household = new Household
+        {
+            HouseholdId = 1,
+            Name = "Familjen Andersson",
+            Description = "Hushåll med delad lägenhet i Stockholm",
+            CreatedDate = DateTime.Now.AddMonths(-6)
+        };
+
+        var members = new List<HouseholdMember>
+        {
+            new HouseholdMember
+            {
+                HouseholdMemberId = 1,
+                HouseholdId = 1,
+                Name = "Anna Andersson",
+                Email = "anna@example.com",
+                IsActive = true,
+                JoinedDate = DateTime.Now.AddMonths(-6)
+            },
+            new HouseholdMember
+            {
+                HouseholdMemberId = 2,
+                HouseholdId = 1,
+                Name = "Erik Andersson",
+                Email = "erik@example.com",
+                IsActive = true,
+                JoinedDate = DateTime.Now.AddMonths(-6)
+            },
+            new HouseholdMember
+            {
+                HouseholdMemberId = 3,
+                HouseholdId = 1,
+                Name = "Sara Johansson",
+                Email = "sara@example.com",
+                IsActive = true,
+                JoinedDate = DateTime.Now.AddMonths(-3)
+            }
+        };
+
+        // Create shared expenses with different distribution methods
+        var sharedExpenses = new List<SharedExpense>
+        {
+            new SharedExpense
+            {
+                SharedExpenseId = 1,
+                HouseholdId = 1,
+                Name = "Hyra lägenhet",
+                Description = "Månadshyra för 3-rummare",
+                TotalAmount = 15000m,
+                Type = ExpenseType.Rent,
+                ExpenseDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1),
+                CreatedDate = DateTime.Now.AddDays(-5),
+                SplitMethod = SplitMethod.Equal
+            },
+            new SharedExpense
+            {
+                SharedExpenseId = 2,
+                HouseholdId = 1,
+                Name = "El",
+                Description = "Elräkning för månaden",
+                TotalAmount = 1200m,
+                Type = ExpenseType.Electricity,
+                ExpenseDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 15),
+                CreatedDate = DateTime.Now.AddDays(-2),
+                SplitMethod = SplitMethod.Equal
+            },
+            new SharedExpense
+            {
+                SharedExpenseId = 3,
+                HouseholdId = 1,
+                Name = "Bredband",
+                Description = "Telia bredband 500 Mbit/s",
+                TotalAmount = 399m,
+                Type = ExpenseType.Internet,
+                ExpenseDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1),
+                CreatedDate = DateTime.Now.AddDays(-10),
+                SplitMethod = SplitMethod.Equal
+            }
+        };
+
+        // Create expense shares (equal distribution)
+        var expenseShares = new List<ExpenseShare>();
+        foreach (var expense in sharedExpenses)
+        {
+            var shareAmount = expense.TotalAmount / members.Count;
+            foreach (var member in members)
+            {
+                expenseShares.Add(new ExpenseShare
+                {
+                    SharedExpenseId = expense.SharedExpenseId,
+                    HouseholdMemberId = member.HouseholdMemberId,
+                    ShareAmount = shareAmount,
+                    SharePercentage = 100m / members.Count
+                });
+            }
+        }
+
+        context.Households.Add(household);
+        context.HouseholdMembers.AddRange(members);
+        context.SharedExpenses.AddRange(sharedExpenses);
+        context.ExpenseShares.AddRange(expenseShares);
         context.SaveChanges();
     }
 }
