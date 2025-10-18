@@ -4,6 +4,9 @@
 
 Budget-funktionaliteten i Privatekonomi hjälper dig att planera och följa upp din ekonomi genom att sätta upp budgetar för olika kategorier och sedan jämföra faktiskt utfall mot planerade belopp.
 
+![Budgethantering](https://github.com/user-attachments/assets/dbd0d556-e37a-43df-99fb-a99f09ffdd40)
+*Översikt över budgetar med aktiva och avslutade budgetar*
+
 ## Funktioner
 
 ### Skapa Budget

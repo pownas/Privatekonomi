@@ -124,6 +124,8 @@ Applikationen seedas automatiskt med ca **50 testransaktioner** vid start för u
 
 För att inaktivera testdata, kommentera bort `TestDataSeeder.SeedTestData(context);` i `Program.cs`.
 
+Se Dashboard-skärmdumpen ovan för exempel på hur testdata presenteras i applikationen.
+
 ### CSV-Import
 
 #### Import av transaktioner
@@ -290,10 +292,6 @@ Testerna verifierar:
 
 Se [tests/playwright/README.md](tests/playwright/README.md) för detaljerad dokumentation.
 
-### Skärmdump av testdata
-
-![Transaktioner med testdata](https://github.com/user-attachments/assets/93e402c7-ee15-4984-8053-9fe84512a9b5)
-
 ## 🎯 Förbättringsförslag
 
 - [ ] Fixa formulär-bindning i NewTransaction-sidan
@@ -313,13 +311,6 @@ Se [tests/playwright/README.md](tests/playwright/README.md) för detaljerad doku
 ## 📝 Licens
 
 Detta projekt är skapat som ett AI-genererat exempel.
-
-## 📚 Dokumentation
-
-- **[ASPIRE_GUIDE.md](wiki/ASPIRE_GUIDE.md)**: Guide för .NET Aspire Orchestrator
-- **[ProgramSpecifikation.md](wiki/ProgramSpecifikation.md)**: Övergripande programspecifikation för applikationen
-- **[Kravspecifikation_CSV_Import.md](wiki/Kravspecifikation_CSV_Import.md)**: Detaljerad kravspecifikation för CSV-import från ICA-banken och Swedbank
-- **[CSV_IMPORT_GUIDE.md](wiki/CSV_IMPORT_GUIDE.md)**: Användarguide för CSV-import med exempel och felsökning
 
 ## 🤝 Bidra
 
