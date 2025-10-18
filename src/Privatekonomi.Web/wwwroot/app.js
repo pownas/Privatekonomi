@@ -20,3 +20,13 @@ function base64ToBlob(base64, contentType) {
     const byteArray = new Uint8Array(byteNumbers);
     return new Blob([byteArray], { type: contentType });
 }
+
+// Theme management functions
+window.themeManager = {
+    getTheme: function() {
+        return localStorage.getItem('darkMode') === 'true';
+    },
+    setTheme: function(isDarkMode) {
+        localStorage.setItem('darkMode', isDarkMode.toString());
+    }
+};

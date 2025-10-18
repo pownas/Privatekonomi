@@ -1,6 +1,9 @@
 ﻿@inherits LayoutComponentBase
+@inject ThemeService ThemeService
+@inject IJSRuntime JSRuntime
+@implements IDisposable
 
-<MudThemeProvider />
+<MudThemeProvider @ref="@_mudThemeProvider" @bind-IsDarkMode="@_isDarkMode" />
 <MudPopoverProvider />
 <MudDialogProvider />
 <MudSnackbarProvider />
@@ -11,6 +14,10 @@
         <MudText Typo="Typo.h5" Class="ml-3">Privatekonomi</MudText>
         <MudSpacer />
         <MudText Typo="Typo.body1">Hantera din ekonomi</MudText>
+        <MudIconButton Icon="@(_isDarkMode ? Icons.Material.Filled.LightMode : Icons.Material.Filled.DarkMode)" 
+                       Color="Color.Inherit" 
+                       OnClick="@ToggleTheme" 
+                       aria-label="@(_isDarkMode ? "Ljust läge" : "Mörkt läge")" />
     </MudAppBar>
     
     <MudDrawer @bind-Open="@_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2">
@@ -24,9 +31,44 @@
 
 @code {
     private bool _drawerOpen = true;
+    private bool _isDarkMode = false;
+    private MudThemeProvider? _mudThemeProvider;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _isDarkMode = await JSRuntime.InvokeAsync<bool>("themeManager.getTheme");
+            ThemeService.IsDarkMode = _isDarkMode;
+            StateHasChanged();
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        _isDarkMode = ThemeService.IsDarkMode;
+        ThemeService.OnThemeChanged += OnThemeChanged;
+    }
 
     private void ToggleDrawer()
     {
         _drawerOpen = !_drawerOpen;
+    }
+    
+    private async Task ToggleTheme()
+    {
+        ThemeService.ToggleTheme();
+        await JSRuntime.InvokeVoidAsync("themeManager.setTheme", ThemeService.IsDarkMode);
+    }
+    
+    private void OnThemeChanged()
+    {
+        _isDarkMode = ThemeService.IsDarkMode;
+        StateHasChanged();
+    }
+    
+    public void Dispose()
+    {
+        ThemeService.OnThemeChanged -= OnThemeChanged;
     }
 }
