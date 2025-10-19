@@ -27,6 +27,7 @@ public class LoanService : ILoanService
 
     public async Task<Loan> CreateLoanAsync(Loan loan)
     {
+        loan.CreatedAt = DateTime.UtcNow;
         _context.Loans.Add(loan);
         await _context.SaveChangesAsync();
         return loan;
@@ -34,6 +35,7 @@ public class LoanService : ILoanService
 
     public async Task<Loan> UpdateLoanAsync(Loan loan)
     {
+        loan.UpdatedAt = DateTime.UtcNow;
         _context.Entry(loan).State = EntityState.Modified;
         await _context.SaveChangesAsync();
         return loan;

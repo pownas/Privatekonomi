@@ -8,6 +8,8 @@ public class Budget
     public DateTime StartDate { get; set; }
     public DateTime EndDate { get; set; }
     public BudgetPeriod Period { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime? UpdatedAt { get; set; }
     
     public ICollection<BudgetCategory> BudgetCategories { get; set; } = new List<BudgetCategory>();
 }
