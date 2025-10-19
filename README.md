@@ -124,6 +124,8 @@ Applikationen seedas automatiskt med ca **50 testransaktioner** vid start för u
 
 För att inaktivera testdata, kommentera bort `TestDataSeeder.SeedTestData(context);` i `Program.cs`.
 
+Se Dashboard-skärmdumpen ovan för exempel på hur testdata presenteras i applikationen.
+
 ### CSV-Import
 
 #### Import av transaktioner
@@ -172,15 +174,28 @@ Se [AVANZA_IMPORT_GUIDE.md](wiki/AVANZA_IMPORT_GUIDE.md) för detaljerad guide m
 ## 📊 Skärmdumpar
 
 ### Dashboard
-![Dashboard](https://github.com/user-attachments/assets/fb4eacaf-f7f8-47e5-9c08-99da4425e5ca)
+Översikt över totala inkomster, utgifter, nettoresultat och antal transaktioner. Visar även visualisering av kategorier med cirkeldiagram och stapeldiagram för utgifter per kategori och månad.
 
-### Ny Transaktion
-![Ny Transaktion](https://github.com/user-attachments/assets/36a53eb7-a145-481a-805c-6a9f07663ac9)
+![Dashboard](https://github.com/user-attachments/assets/43a0efb5-c9bd-4a14-be1d-3f8fc0f6bc16)
 
 ### Transaktioner
-![Transaktioner](https://github.com/user-attachments/assets/7124e7d3-5059-4bc3-8dc6-e004b1481d66)
+Lista över alla transaktioner med datum, beskrivning, bank, kategori och belopp. Inkluderar sökfunktion och möjlighet att ta bort transaktioner.
+
+![Transaktioner](https://github.com/user-attachments/assets/8af8bab6-5b9a-4daf-8dec-8ce18c480621)
+
+### Budgethantering
+Översikt över aktiva och avslutade budgetar med möjlighet att skapa nya budgetar och följa upp faktiskt utfall mot planerat.
+
+![Budget](https://github.com/user-attachments/assets/dbd0d556-e37a-43df-99fb-a99f09ffdd40)
+
+### Importera Transaktioner
+Import av transaktioner från CSV-filer från ICA-banken och Swedbank med dubbletthantering och förhandsvisning.
+
+![Importera](https://github.com/user-attachments/assets/e352caaf-230e-4032-baf0-b850667760f0)
 
 ### Kategorier
+Hantering av utgifts- och inkomstkategorier med färgkodning för enkel överblick.
+
 ![Kategorier](https://github.com/user-attachments/assets/fde2ebab-21a6-4a16-8145-08b585abdcc1)
 
 ## 🎨 Teknisk stack
@@ -277,10 +292,6 @@ Testerna verifierar:
 
 Se [tests/playwright/README.md](tests/playwright/README.md) för detaljerad dokumentation.
 
-### Skärmdump av testdata
-
-![Transaktioner med testdata](https://github.com/user-attachments/assets/93e402c7-ee15-4984-8053-9fe84512a9b5)
-
 ## 🎯 Förbättringsförslag
 
 - [ ] Fixa formulär-bindning i NewTransaction-sidan
@@ -300,13 +311,6 @@ Se [tests/playwright/README.md](tests/playwright/README.md) för detaljerad doku
 ## 📝 Licens
 
 Detta projekt är skapat som ett AI-genererat exempel.
-
-## 📚 Dokumentation
-
-- **[ASPIRE_GUIDE.md](wiki/ASPIRE_GUIDE.md)**: Guide för .NET Aspire Orchestrator
-- **[ProgramSpecifikation.md](wiki/ProgramSpecifikation.md)**: Övergripande programspecifikation för applikationen
-- **[Kravspecifikation_CSV_Import.md](wiki/Kravspecifikation_CSV_Import.md)**: Detaljerad kravspecifikation för CSV-import från ICA-banken och Swedbank
-- **[CSV_IMPORT_GUIDE.md](wiki/CSV_IMPORT_GUIDE.md)**: Användarguide för CSV-import med exempel och felsökning
 
 ## 🤝 Bidra
 

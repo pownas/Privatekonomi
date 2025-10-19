@@ -7,6 +7,9 @@
 
 Denna guide beskriver hur du importerar dina investeringar från Avanza Bank till Privatekonomi-applikationen.
 
+![Importera från Avanza](https://github.com/user-attachments/assets/e352caaf-230e-4032-baf0-b850667760f0)
+*Importvyn där du väljer bank och laddar upp CSV-fil*
+
 ## Exportera från Avanza
 
 ### Steg 1: Logga in på Avanza

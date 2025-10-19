@@ -2,6 +2,8 @@
 
 This guide explains how to use the CSV import functionality to import transactions from ICA-banken and Swedbank.
 
+![Importera Transaktioner](https://github.com/user-attachments/assets/e352caaf-230e-4032-baf0-b850667760f0)
+
 ## Supported Banks
 
 ### ICA-banken
