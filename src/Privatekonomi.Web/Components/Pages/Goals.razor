@@ -1,0 +1,330 @@
+@page "/goals"
+@rendermode InteractiveServer
+@inject IGoalService GoalService
+@inject IBankSourceService BankSourceService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+<PageTitle>Sparmål - Privatekonomi</PageTitle>
+
+<div class="d-flex justify-space-between align-center mb-4">
+    <MudText Typo="Typo.h4">Sparmål</MudText>
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="ToggleCreateForm">
+        Nytt Sparmål
+    </MudButton>
+</div>
+
+@if (_showCreateForm)
+{
+    <MudPaper Class="pa-4 mb-4">
+        <MudText Typo="Typo.h6" Class="mb-3">@(_editingGoal != null ? "Redigera Sparmål" : "Lägg till Nytt Sparmål")</MudText>
+        
+        <MudTextField @bind-Value="_formGoal.Name" 
+                      Label="Namn" 
+                      Variant="Variant.Outlined"
+                      Required="true"
+                      MaxLength="200"
+                      Class="mb-3" />
+        
+        <MudTextField @bind-Value="_formGoal.Description" 
+                      Label="Beskrivning" 
+                      Variant="Variant.Outlined"
+                      Lines="3"
+                      MaxLength="500"
+                      Class="mb-3" />
+
+        <MudNumericField @bind-Value="_formGoal.TargetAmount" 
+                         Label="Målbelopp (kr)" 
+                         Variant="Variant.Outlined"
+                         Min="0"
+                         Format="N2"
+                         Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                         Class="mb-3" />
+
+        <MudNumericField @bind-Value="_formGoal.CurrentAmount" 
+                         Label="Sparat belopp (kr)" 
+                         Variant="Variant.Outlined"
+                         Min="0"
+                         Format="N2"
+                         Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                         Class="mb-3" />
+
+        <MudDatePicker @bind-Date="_formGoalTargetDate"
+                       Label="Målsättningsdatum"
+                       Variant="Variant.Outlined"
+                       Class="mb-3" />
+
+        <MudSelect @bind-Value="_formGoal.Priority" Label="Prioritet" Variant="Variant.Outlined" Class="mb-3">
+            <MudSelectItem Value="1">1 - Högst</MudSelectItem>
+            <MudSelectItem Value="2">2 - Hög</MudSelectItem>
+            <MudSelectItem Value="3">3 - Normal</MudSelectItem>
+            <MudSelectItem Value="4">4 - Låg</MudSelectItem>
+            <MudSelectItem Value="5">5 - Lägst</MudSelectItem>
+        </MudSelect>
+
+        <MudSelect @bind-Value="_formGoal.FundedFromBankSourceId" 
+                   Label="Sparkonto (valfritt)" 
+                   Variant="Variant.Outlined" 
+                   Class="mb-3"
+                   Clearable="true">
+            @foreach (var bankSource in _bankSources)
+            {
+                <MudSelectItem Value="@((int?)bankSource.BankSourceId)">@bankSource.Name</MudSelectItem>
+            }
+        </MudSelect>
+
+        <div class="d-flex gap-2">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveGoal">
+                @(_editingGoal != null ? "Uppdatera" : "Lägg till")
+            </MudButton>
+            <MudButton Variant="Variant.Outlined" OnClick="CancelForm">Avbryt</MudButton>
+        </div>
+    </MudPaper>
+}
+
+@if (_loading)
+{
+    <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+}
+else
+{
+    <MudPaper Class="pa-4 mb-4">
+        <MudGrid>
+            <MudItem xs="12" md="4">
+                <MudCard Elevation="2" Class="pa-4">
+                    <MudCardContent>
+                        <MudText Typo="Typo.h6">Totalt Sparmål</MudText>
+                        <MudText Typo="Typo.h4" Color="Color.Primary">@_totalTargetAmount.ToString("C", new System.Globalization.CultureInfo("sv-SE"))</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <MudCard Elevation="2" Class="pa-4">
+                    <MudCardContent>
+                        <MudText Typo="Typo.h6">Totalt Sparat</MudText>
+                        <MudText Typo="Typo.h4" Color="Color.Success">@_totalCurrentAmount.ToString("C", new System.Globalization.CultureInfo("sv-SE"))</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <MudCard Elevation="2" Class="pa-4">
+                    <MudCardContent>
+                        <MudText Typo="Typo.h6">Genomsnittligt Framsteg</MudText>
+                        <MudText Typo="Typo.h4">@_averageProgress.ToString("F1")%</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+
+    <MudTable Items="@_goals" Hover="true" Striped="true" Dense="true">
+        <HeaderContent>
+            <MudTh>Namn</MudTh>
+            <MudTh>Beskrivning</MudTh>
+            <MudTh>Målbelopp</MudTh>
+            <MudTh>Sparat</MudTh>
+            <MudTh>Framsteg</MudTh>
+            <MudTh>Målsättningsdatum</MudTh>
+            <MudTh>Prioritet</MudTh>
+            <MudTh>Sparkonto</MudTh>
+            <MudTh>Åtgärder</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Namn">@context.Name</MudTd>
+            <MudTd DataLabel="Beskrivning">@context.Description</MudTd>
+            <MudTd DataLabel="Målbelopp">@context.TargetAmount.ToString("C", new System.Globalization.CultureInfo("sv-SE"))</MudTd>
+            <MudTd DataLabel="Sparat">@context.CurrentAmount.ToString("C", new System.Globalization.CultureInfo("sv-SE"))</MudTd>
+            <MudTd DataLabel="Framsteg">
+                <div class="d-flex align-center gap-2">
+                    <MudProgressLinear Color="@GetProgressColor(context)" 
+                                       Rounded="true" 
+                                       Size="Size.Large" 
+                                       Value="@GetProgress(context)" 
+                                       Class="flex-grow-1" />
+                    <MudText Typo="Typo.body2">@GetProgress(context).ToString("F0")%</MudText>
+                </div>
+            </MudTd>
+            <MudTd DataLabel="Målsättningsdatum">
+                @if (context.TargetDate.HasValue)
+                {
+                    @context.TargetDate.Value.ToString("yyyy-MM-dd")
+                }
+                else
+                {
+                    <span>-</span>
+                }
+            </MudTd>
+            <MudTd DataLabel="Prioritet">
+                <MudChip T="string" Color="@GetPriorityColor(context.Priority)" Size="Size.Small">
+                    Prioritet @context.Priority
+                </MudChip>
+            </MudTd>
+            <MudTd DataLabel="Sparkonto">
+                @if (context.FundedFromBankSource != null)
+                {
+                    <MudChip T="string" Size="Size.Small" Style="@($"background-color: {context.FundedFromBankSource.Color}; color: white;")">
+                        @context.FundedFromBankSource.Name
+                    </MudChip>
+                }
+                else
+                {
+                    <span>-</span>
+                }
+            </MudTd>
+            <MudTd DataLabel="Åtgärder">
+                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" OnClick="@(() => EditGoal(context))" Color="Color.Primary" />
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" OnClick="@(() => DeleteGoal(context.GoalId))" Color="Color.Error" />
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+
+    @if (!_goals.Any())
+    {
+        <MudAlert Severity="Severity.Info" Class="mt-4">
+            Inga sparmål har lagts till än. Klicka på "Nytt Sparmål" för att komma igång!
+        </MudAlert>
+    }
+}
+
+@code {
+    private IEnumerable<Goal> _goals = new List<Goal>();
+    private IEnumerable<BankSource> _bankSources = new List<BankSource>();
+    private bool _loading = true;
+    private bool _showCreateForm = false;
+    private Goal _formGoal = new();
+    private DateTime? _formGoalTargetDate;
+    private Goal? _editingGoal;
+
+    private decimal _totalTargetAmount;
+    private decimal _totalCurrentAmount;
+    private double _averageProgress;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadGoals();
+        await LoadBankSources();
+    }
+
+    private async Task LoadGoals()
+    {
+        _loading = true;
+        _goals = await GoalService.GetAllGoalsAsync();
+        
+        _totalTargetAmount = _goals.Sum(g => g.TargetAmount);
+        _totalCurrentAmount = _goals.Sum(g => g.CurrentAmount);
+        _averageProgress = _goals.Any() ? _goals.Average(g => GetProgress(g)) : 0;
+        
+        _loading = false;
+    }
+
+    private async Task LoadBankSources()
+    {
+        _bankSources = await BankSourceService.GetAllBankSourcesAsync();
+    }
+
+    private void ToggleCreateForm()
+    {
+        _showCreateForm = !_showCreateForm;
+        if (_showCreateForm)
+        {
+            _formGoal = new Goal { Priority = 3, CurrentAmount = 0 };
+            _formGoalTargetDate = DateTime.Now.AddMonths(12);
+            _editingGoal = null;
+        }
+    }
+
+    private void EditGoal(Goal goal)
+    {
+        _editingGoal = goal;
+        _formGoal = new Goal
+        {
+            GoalId = goal.GoalId,
+            Name = goal.Name,
+            Description = goal.Description,
+            TargetAmount = goal.TargetAmount,
+            CurrentAmount = goal.CurrentAmount,
+            Priority = goal.Priority,
+            FundedFromBankSourceId = goal.FundedFromBankSourceId
+        };
+        _formGoalTargetDate = goal.TargetDate;
+        _showCreateForm = true;
+    }
+
+    private async Task SaveGoal()
+    {
+        try
+        {
+            _formGoal.TargetDate = _formGoalTargetDate;
+
+            if (_editingGoal != null)
+            {
+                await GoalService.UpdateGoalAsync(_formGoal);
+                Snackbar.Add("Sparmålet har uppdaterats!", Severity.Success);
+            }
+            else
+            {
+                await GoalService.CreateGoalAsync(_formGoal);
+                Snackbar.Add("Sparmålet har lagts till!", Severity.Success);
+            }
+
+            await LoadGoals();
+            CancelForm();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Ett fel uppstod: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void CancelForm()
+    {
+        _showCreateForm = false;
+        _formGoal = new();
+        _formGoalTargetDate = null;
+        _editingGoal = null;
+    }
+
+    private async Task DeleteGoal(int goalId)
+    {
+        bool? result = await DialogService.ShowMessageBox(
+            "Bekräfta borttagning",
+            "Är du säker på att du vill ta bort detta sparmål?",
+            yesText: "Ja", cancelText: "Avbryt");
+
+        if (result == true)
+        {
+            await GoalService.DeleteGoalAsync(goalId);
+            Snackbar.Add("Sparmålet har tagits bort", Severity.Info);
+            await LoadGoals();
+        }
+    }
+
+    private double GetProgress(Goal goal)
+    {
+        if (goal.TargetAmount == 0) return 0;
+        return Math.Min(100, (double)(goal.CurrentAmount / goal.TargetAmount * 100));
+    }
+
+    private Color GetProgressColor(Goal goal)
+    {
+        var progress = GetProgress(goal);
+        if (progress >= 100) return Color.Success;
+        if (progress >= 75) return Color.Info;
+        if (progress >= 50) return Color.Primary;
+        if (progress >= 25) return Color.Warning;
+        return Color.Error;
+    }
+
+    private Color GetPriorityColor(int priority)
+    {
+        return priority switch
+        {
+            1 => Color.Error,
+            2 => Color.Warning,
+            3 => Color.Primary,
+            4 => Color.Info,
+            5 => Color.Default,
+            _ => Color.Default
+        };
+    }
+}

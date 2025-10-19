@@ -34,6 +34,9 @@ public class TransactionService : ITransactionService
 
     public async Task<Transaction> CreateTransactionAsync(Transaction transaction)
     {
+        // Set audit fields
+        transaction.CreatedAt = DateTime.UtcNow;
+        
         // Auto-categorize based on similar descriptions if no categories assigned
         if (!transaction.TransactionCategories.Any())
         {
@@ -55,6 +58,7 @@ public class TransactionService : ITransactionService
 
     public async Task<Transaction> UpdateTransactionAsync(Transaction transaction)
     {
+        transaction.UpdatedAt = DateTime.UtcNow;
         _context.Entry(transaction).State = EntityState.Modified;
         await _context.SaveChangesAsync();
         return transaction;

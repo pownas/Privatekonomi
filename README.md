@@ -7,9 +7,10 @@ En privatekonomi-applikation byggd med .NET 9, Blazor Server och MudBlazor för 
 - **Dashboard**: Översikt över totala inkomster, utgifter och nettoresultat
 - **Transaktionshantering**: Registrera, visa och ta bort transaktioner
 - **Budgethantering**: Skapa och följa upp budgetar med visualisering av planerat vs faktiskt utfall
+- **Sparmål**: Sätt upp och följ sparmål med målbelopp, tidsgräns och prioritering
 - **Investeringshantering**: Hantera aktier, fonder och certifikat med översikt över värde och avkastning
 - **Automatisk kursuppdatering**: Uppdatera aktiekurser via Yahoo Finance API med ett knapptryck
-- **Kategorisystem**: Förkonfigurerade kategorier med färgkodning
+- **Kategorisystem**: Förkonfigurerade kategorier med färgkodning och hierarkisk struktur
 - **Split-kategorisering**: Möjlighet att dela upp transaktioner i flera kategorier
 - **Automatisk kategorisering**: Systemet föreslår kategorier baserat på tidigare transaktioner
 - **Responsiv design**: Fungerar på desktop och mobila enheter
@@ -18,6 +19,7 @@ En privatekonomi-applikation byggd med .NET 9, Blazor Server och MudBlazor för 
   - Import av transaktioner från ICA-banken och Swedbank
   - Import av investeringar från Avanza Bank med dubbletthantering
 - **CSV-export**: Exportera investeringar för analys och rapportering
+- **Förbättrad datamodell**: Utökade modeller med audit trail, valutastöd och mer
 
 ## 🏗️ Arkitektur
 
@@ -271,6 +273,7 @@ builder.Services.AddDbContext<PrivatekonomyContext>(options =>
 - **[Kravspecifikation_CSV_Import.md](wiki/Kravspecifikation_CSV_Import.md)**: Kravspecifikation för CSV-import av transaktioner
 - **[Kravspecifikation_Avanza_Integration.md](wiki/Kravspecifikation_Avanza_Integration.md)**: Kravspecifikation för Avanza-integration
 - **[Implementationsguide_Avanza.md](wiki/Implementationsguide_Avanza.md)**: Implementationsguide för Avanza-funktionalitet
+- **[Datamodell_Forbattringar.md](docs/Datamodell_Forbattringar.md)**: Dokumentation av datamodellförbättringar och nya funktioner
 
 ## 🧪 Testning
 
