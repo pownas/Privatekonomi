@@ -75,11 +75,12 @@ Quick reference for:
 ### NuGet Packages Added
 
 **AppHost Project:**
-- Aspire.Hosting.AppHost 8.2.2
+- Aspire.Hosting.AppHost 9.5.1
+- Aspire.AppHost.Sdk 9.5.1
 
 **ServiceDefaults Project:**
 - Microsoft.Extensions.Http.Resilience 8.10.0
-- Microsoft.Extensions.ServiceDiscovery 8.2.2
+- Microsoft.Extensions.ServiceDiscovery 9.5.1
 - OpenTelemetry.Exporter.OpenTelemetryProtocol 1.9.0
 - OpenTelemetry.Extensions.Hosting 1.9.0
 - OpenTelemetry.Instrumentation.AspNetCore 1.9.0
