@@ -40,6 +40,14 @@ public class PrivatekonomyContext : DbContext
             entity.HasKey(e => e.CategoryId);
             entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
             entity.Property(e => e.Color).IsRequired().HasMaxLength(7);
+            
+            // Self-referencing relationship for parent/child categories
+            entity.HasOne(e => e.Parent)
+                .WithMany(c => c.SubCategories)
+                .HasForeignKey(e => e.ParentId)
+                .OnDelete(DeleteBehavior.Restrict);
+            
+            entity.Property(e => e.DefaultBudgetMonthly).HasPrecision(18, 2);
         });
 
         modelBuilder.Entity<Transaction>(entity =>
@@ -48,6 +56,10 @@ public class PrivatekonomyContext : DbContext
             entity.Property(e => e.Amount).HasPrecision(18, 2);
             entity.Property(e => e.Description).IsRequired().HasMaxLength(500);
             entity.Property(e => e.Date).IsRequired();
+            
+            // Additional properties from OpenAPI spec
+            entity.Property(e => e.Payee).HasMaxLength(200);
+            entity.Property(e => e.Currency).IsRequired().HasMaxLength(3);
             
             entity.HasOne(e => e.BankSource)
                 .WithMany(b => b.Transactions)
@@ -59,6 +71,7 @@ public class PrivatekonomyContext : DbContext
         {
             entity.HasKey(e => e.TransactionCategoryId);
             entity.Property(e => e.Amount).HasPrecision(18, 2);
+            entity.Property(e => e.Percentage).HasPrecision(5, 2);
             
             entity.HasOne(e => e.Transaction)
                 .WithMany(t => t.TransactionCategories)

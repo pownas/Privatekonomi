@@ -9,6 +9,12 @@ public class Transaction
     public bool IsIncome { get; set; }
     public int? BankSourceId { get; set; }
     
+    // Additional fields from OpenAPI spec
+    public string? Payee { get; set; }
+    public string Currency { get; set; } = "SEK";
+    public List<string> Tags { get; set; } = new();
+    public bool Imported { get; set; }
+    
     public BankSource? BankSource { get; set; }
     public ICollection<TransactionCategory> TransactionCategories { get; set; } = new List<TransactionCategory>();
 }
