@@ -27,10 +27,16 @@ Baserat på den medföljande OpenAPI-specifikationen har backend API:et utökats
   - Returnerar inkomster, utgifter, netto och top-10 kategorier
 
 #### GoalsController (`/api/goals`)
-- **GET** `/api/goals` - Placeholder (returnerar tom lista)
-- **POST** `/api/goals` - Placeholder (returnerar 501 Not Implemented)
+- **GET** `/api/goals` - Lista alla sparmål
+- **GET** `/api/goals/{id}` - Hämta specifikt sparmål
+- **GET** `/api/goals/active` - Hämta aktiva sparmål
+- **GET** `/api/goals/progress` - Total framsteg för aktiva sparmål
+- **POST** `/api/goals` - Skapa nytt sparmål
+- **PUT** `/api/goals/{id}` - Uppdatera sparmål
+- **DELETE** `/api/goals/{id}` - Ta bort sparmål
 
-*Förberedd för framtida implementation av sparmålsfunktionalitet.*
+*Komplett implementation med datamodell, service och CRUD-operationer.*
+
 
 ### ✅ 2. Förbättrade Befintliga Controllers
 
@@ -168,7 +174,7 @@ Komplett dokumentation finns i:
 | `/api/budgets` filtering | ✅ | Period-baserad |
 | `/api/reports/networth` | ✅ | Komplett |
 | `/api/reports/summary` | ✅ | Komplett |
-| `/api/goals` | ⚠️ | Placeholder |
+| `/api/goals` | ✅ | Komplett |
 
 ### ⚠️ Ej implementerat (framtida arbete)
 
@@ -179,19 +185,14 @@ Följande från OpenAPI-spec kräver större ändringar:
    - User-modell
    - Login/Logout endpoints
 
-2. **Goals (Sparmål)**
-   - Komplett datamodell
-   - Persistence layer
-   - Business logic
-
-3. **Batch Import**
+2. **Batch Import**
    - `POST /api/transactions` med array av transaktioner
 
-4. **Currency Support**
+3. **Currency Support**
    - Valutakonvertering
    - Multi-currency stöd
 
-5. **Soft Delete**
+4. **Soft Delete**
    - Logisk borttagning av entiteter
 
 ## Nästa Steg
@@ -199,9 +200,8 @@ Följande från OpenAPI-spec kräver större ändringar:
 För att fullständigt implementera OpenAPI-specen rekommenderas:
 
 1. **Fasad 1:** Implementera autentisering och auktorisering
-2. **Fasad 2:** Skapa komplett Goals-funktionalitet
-3. **Fasad 3:** Lägg till multi-currency support
-4. **Fasad 4:** Implementera soft-delete
+2. **Fasad 2:** Lägg till multi-currency support
+3. **Fasad 3:** Implementera soft-delete
 
 ## Breaking Changes
 

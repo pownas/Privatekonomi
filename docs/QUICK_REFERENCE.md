@@ -34,6 +34,39 @@ GET /api/reports/networth?start_date=2024-01-01&end_date=2024-12-31
 GET /api/reports/summary?year=2024&month=10
 ```
 
+### Goals (Sparmål)
+```bash
+# Lista alla sparmål
+GET /api/goals
+
+# Hämta specifikt sparmål
+GET /api/goals/{id}
+
+# Hämta endast aktiva sparmål
+GET /api/goals/active
+
+# Hämta total framsteg (i procent)
+GET /api/goals/progress
+
+# Skapa nytt sparmål
+POST /api/goals
+Content-Type: application/json
+{
+  "name": "Semesterresa",
+  "description": "Resa till Italien",
+  "targetAmount": 50000,
+  "currentAmount": 0,
+  "targetDate": "2025-06-01",
+  "color": "#2196F3"
+}
+
+# Uppdatera sparmål
+PUT /api/goals/{id}
+
+# Ta bort sparmål
+DELETE /api/goals/{id}
+```
+
 ### Transactions (Förbättrad)
 ```bash
 # Med filtrering och paginering
@@ -83,3 +116,12 @@ http://localhost:5277/swagger
 
 ### TransactionCategory
 - `percentage` - Procentuell fördelning (default: 100)
+
+### Goal
+- `name` - Namn på sparmålet
+- `description` - Beskrivning (optional)
+- `targetAmount` - Målbelopp
+- `currentAmount` - Nuvarande belopp
+- `targetDate` - Måldatum
+- `status` - Status (Active, Completed, Cancelled)
+- `color` - Färg för visualisering

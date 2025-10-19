@@ -49,6 +49,8 @@ test_endpoint "GET" "/api/reports/summary?year=2024&month=10" "200" "GET /api/re
 echo ""
 echo "Testing Goals Controller:"
 test_endpoint "GET" "/api/goals" "200" "GET /api/goals"
+test_endpoint "GET" "/api/goals/active" "200" "GET /api/goals/active"
+test_endpoint "GET" "/api/goals/progress" "200" "GET /api/goals/progress"
 
 # Test Enhanced Transactions Controller
 echo ""

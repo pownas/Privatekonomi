@@ -87,11 +87,58 @@ GET /api/reports/summary?year=2024&month=10
 
 ### 3. Goals Controller (`/api/goals`)
 
-Placeholder-controller för framtida sparmålsfunktionalitet.
+Controller för att hantera sparmål (savings goals).
 
 **Endpoints:**
-- `GET /api/goals` - Lista sparmål (returnerar tom lista)
-- `POST /api/goals` - Skapa sparmål (returnerar 501 Not Implemented)
+- `GET /api/goals` - Lista alla sparmål
+- `GET /api/goals/{id}` - Hämta ett specifikt sparmål
+- `GET /api/goals/active` - Hämta endast aktiva sparmål
+- `GET /api/goals/progress` - Hämta total framsteg för alla aktiva sparmål (i procent)
+- `POST /api/goals` - Skapa nytt sparmål
+- `PUT /api/goals/{id}` - Uppdatera sparmål
+- `DELETE /api/goals/{id}` - Ta bort sparmål
+
+**Datamodell:**
+```json
+{
+  "goalId": 1,
+  "name": "Semesterresa",
+  "description": "Sommarresa till Italien",
+  "targetAmount": 50000.00,
+  "currentAmount": 12500.00,
+  "targetDate": "2025-06-01T00:00:00",
+  "createdDate": "2024-10-19T00:00:00",
+  "status": "Active",
+  "color": "#2196F3"
+}
+```
+
+**Status:**
+- `Active` - Aktivt sparmål
+- `Completed` - Avslutat (målet uppnått)
+- `Cancelled` - Avbrutet
+
+**Exempel:**
+```bash
+# Hämta alla sparmål
+GET /api/goals
+
+# Skapa nytt sparmål
+POST /api/goals
+{
+  "name": "Ny bil",
+  "description": "Spara till en ny elbil",
+  "targetAmount": 350000.00,
+  "currentAmount": 0,
+  "targetDate": "2025-12-31",
+  "color": "#4CAF50"
+}
+
+# Hämta framsteg
+GET /api/goals/progress
+# Returnerar: { "progress": 25.5 }
+```
+
 
 ## Förbättrade Endpoints
 
