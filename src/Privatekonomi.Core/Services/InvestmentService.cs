@@ -48,6 +48,7 @@ public class InvestmentService : IInvestmentService
     public async Task<Investment> UpdateInvestmentAsync(Investment investment)
     {
         investment.LastUpdated = DateTime.Now;
+        investment.UpdatedAt = DateTime.UtcNow;
         _context.Investments.Update(investment);
         await _context.SaveChangesAsync();
         return investment;

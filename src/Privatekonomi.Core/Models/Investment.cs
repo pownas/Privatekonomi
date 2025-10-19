@@ -21,6 +21,10 @@ public class Investment
     public string? Country { get; set; }
     public string? Market { get; set; }
     
+    // Audit fields
+    public DateTime CreatedAt { get; set; }
+    public DateTime? UpdatedAt { get; set; }
+    
     public decimal TotalValue => Quantity * CurrentPrice;
     public decimal TotalCost => Quantity * PurchasePrice;
     public decimal ProfitLoss => TotalValue - TotalCost;

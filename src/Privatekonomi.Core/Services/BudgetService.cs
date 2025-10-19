@@ -32,6 +32,7 @@ public class BudgetService : IBudgetService
 
     public async Task<Budget> CreateBudgetAsync(Budget budget)
     {
+        budget.CreatedAt = DateTime.UtcNow;
         _context.Budgets.Add(budget);
         await _context.SaveChangesAsync();
         return budget;
@@ -39,6 +40,7 @@ public class BudgetService : IBudgetService
 
     public async Task<Budget> UpdateBudgetAsync(Budget budget)
     {
+        budget.UpdatedAt = DateTime.UtcNow;
         _context.Entry(budget).State = EntityState.Modified;
         await _context.SaveChangesAsync();
         return budget;
