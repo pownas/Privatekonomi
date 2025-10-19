@@ -19,8 +19,13 @@ else
         <MudItem xs="12" md="6" lg="3">
             <MudCard Elevation="2" Class="pa-4">
                 <MudCardContent>
-                    <MudText Typo="Typo.h6">Totalt Värde</MudText>
-                    <MudText Typo="Typo.h4" Color="Color.Info">@_totalValue.ToString("C", new System.Globalization.CultureInfo("sv-SE"))</MudText>
+                    <div class="d-flex align-center justify-space-between">
+                        <div>
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">Totalt Värde</MudText>
+                            <MudText Typo="Typo.h4" Color="Color.Info">@_totalValue.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))</MudText>
+                        </div>
+                        <MudIcon Icon="@Icons.Material.Filled.AccountBalance" Size="Size.Large" Color="Color.Info" />
+                    </div>
                 </MudCardContent>
             </MudCard>
         </MudItem>
@@ -28,8 +33,13 @@ else
         <MudItem xs="12" md="6" lg="3">
             <MudCard Elevation="2" Class="pa-4">
                 <MudCardContent>
-                    <MudText Typo="Typo.h6">Total Kostnad</MudText>
-                    <MudText Typo="Typo.h4">@_totalCost.ToString("C", new System.Globalization.CultureInfo("sv-SE"))</MudText>
+                    <div class="d-flex align-center justify-space-between">
+                        <div>
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">Total Kostnad</MudText>
+                            <MudText Typo="Typo.h4">@_totalCost.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))</MudText>
+                        </div>
+                        <MudIcon Icon="@Icons.Material.Filled.ShoppingCart" Size="Size.Large" Color="Color.Default" />
+                    </div>
                 </MudCardContent>
             </MudCard>
         </MudItem>
@@ -37,10 +47,17 @@ else
         <MudItem xs="12" md="6" lg="3">
             <MudCard Elevation="2" Class="pa-4">
                 <MudCardContent>
-                    <MudText Typo="Typo.h6">Vinst/Förlust</MudText>
-                    <MudText Typo="Typo.h4" Color="@(_totalProfitLoss >= 0 ? Color.Success : Color.Error)">
-                        @(_totalProfitLoss >= 0 ? "+" : "")@_totalProfitLoss.ToString("C", new System.Globalization.CultureInfo("sv-SE"))
-                    </MudText>
+                    <div class="d-flex align-center justify-space-between">
+                        <div>
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">Vinst/Förlust</MudText>
+                            <MudText Typo="Typo.h4" Color="@(_totalProfitLoss >= 0 ? Color.Success : Color.Error)">
+                                @(_totalProfitLoss >= 0 ? "+" : "")@_totalProfitLoss.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))
+                            </MudText>
+                        </div>
+                        <MudIcon Icon="@(_totalProfitLoss >= 0 ? Icons.Material.Filled.TrendingUp : Icons.Material.Filled.TrendingDown)" 
+                                 Size="Size.Large" 
+                                 Color="@(_totalProfitLoss >= 0 ? Color.Success : Color.Error)" />
+                    </div>
                 </MudCardContent>
             </MudCard>
         </MudItem>
@@ -48,31 +65,63 @@ else
         <MudItem xs="12" md="6" lg="3">
             <MudCard Elevation="2" Class="pa-4">
                 <MudCardContent>
-                    <MudText Typo="Typo.h6">Avkastning</MudText>
-                    <MudText Typo="Typo.h4" Color="@(_totalProfitLossPercentage >= 0 ? Color.Success : Color.Error)">
-                        @(_totalProfitLossPercentage >= 0 ? "+" : "")@_totalProfitLossPercentage.ToString("F2")%
-                    </MudText>
+                    <div class="d-flex align-center justify-space-between">
+                        <div>
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">Avkastning</MudText>
+                            <MudText Typo="Typo.h4" Color="@(_totalProfitLossPercentage >= 0 ? Color.Success : Color.Error)">
+                                @(_totalProfitLossPercentage >= 0 ? "+" : "")@_totalProfitLossPercentage.ToString("F2")%
+                            </MudText>
+                        </div>
+                        <MudIcon Icon="@Icons.Material.Filled.Percent" Size="Size.Large" 
+                                 Color="@(_totalProfitLossPercentage >= 0 ? Color.Success : Color.Error)" />
+                    </div>
                 </MudCardContent>
             </MudCard>
         </MudItem>
     </MudGrid>
 
+    <!-- Statistics by Type -->
+    @if (_investments.Any())
+    {
+        <MudGrid Class="mb-4">
+            @foreach (var stat in _typeStats.OrderByDescending(s => s.Value))
+            {
+                <MudItem xs="12" sm="6" md="4">
+                    <MudCard Elevation="1">
+                        <MudCardContent>
+                            <div class="d-flex justify-space-between align-center mb-2">
+                                <MudChip T="string" Size="Size.Small" Color="@GetTypeColor(stat.Key)">@stat.Key</MudChip>
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                    @((stat.Value / _totalValue * 100).ToString("F1"))%
+                                </MudText>
+                            </div>
+                            <MudText Typo="Typo.h6">@stat.Value.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))</MudText>
+                            <MudProgressLinear Value="@((double)(stat.Value / _totalValue * 100))" 
+                                             Color="@GetTypeColor(stat.Key)" 
+                                             Size="Size.Small" Class="mt-2" />
+                        </MudCardContent>
+                    </MudCard>
+                </MudItem>
+            }
+        </MudGrid>
+    }
+
     <!-- Investments Table -->
     <MudPaper Class="pa-4">
         <MudGrid>
             <MudItem xs="12" Class="d-flex justify-space-between align-center mb-4">
-                <MudText Typo="Typo.h6">Mina Investeringar</MudText>
-                <div class="d-flex gap-2">
+                <MudText Typo="Typo.h6">Mina Investeringar (@_filteredInvestments.Count() st)</MudText>
+                <div class="d-flex gap-2 flex-wrap">
                     <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.CloudDownload" 
-                               OnClick="ExportToCSV" Disabled="!_investments.Any()">
-                        Exportera CSV
+                               OnClick="ExportToCSV" Disabled="!_investments.Any()" Size="Size.Small">
+                        Exportera
                     </MudButton>
                     <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Upload" 
-                               Href="/import-investments">
+                               Href="/import-investments" Size="Size.Small">
                         Importera
                     </MudButton>
                     <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" 
-                               OnClick="OpenAddDialog">
+                               OnClick="OpenAddDialog" Size="Size.Small">
                         Lägg till
                     </MudButton>
                 </div>
@@ -85,7 +134,8 @@ else
         }
         else
         {
-            <MudTable Items="@_filteredInvestments" Hover="true" Striped="true" Filter="new Func<Investment,bool>(FilterFunc)">
+            <MudTable Items="@_filteredInvestments" Hover="true" Striped="true" Filter="new Func<Investment,bool>(FilterFunc)"
+                      SortLabel="Sortera">
                 <ToolBarContent>
                     <MudTextField @bind-Value="_searchString" Placeholder="Sök" Adornment="Adornment.Start" 
                                   AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
@@ -108,16 +158,16 @@ else
                     </MudSelect>
                 </ToolBarContent>
                 <HeaderContent>
-                    <MudTh>Namn</MudTh>
-                    <MudTh>Typ</MudTh>
+                    <MudTh><MudTableSortLabel SortBy="new Func<Investment, object>(x => x.Name)">Namn</MudTableSortLabel></MudTh>
+                    <MudTh><MudTableSortLabel SortBy="new Func<Investment, object>(x => x.Type)">Typ</MudTableSortLabel></MudTh>
                     <MudTh>Bank</MudTh>
                     <MudTh>Konto</MudTh>
-                    <MudTh Style="text-align: right">Antal</MudTh>
-                    <MudTh Style="text-align: right">Köpkurs</MudTh>
-                    <MudTh Style="text-align: right">Aktuell kurs</MudTh>
-                    <MudTh Style="text-align: right">Värde</MudTh>
-                    <MudTh Style="text-align: right">Vinst/Förlust</MudTh>
-                    <MudTh Style="text-align: right">%</MudTh>
+                    <MudTh Style="text-align: right"><MudTableSortLabel SortBy="new Func<Investment, object>(x => x.Quantity)">Antal</MudTableSortLabel></MudTh>
+                    <MudTh Style="text-align: right"><MudTableSortLabel SortBy="new Func<Investment, object>(x => x.PurchasePrice)">Köpkurs</MudTableSortLabel></MudTh>
+                    <MudTh Style="text-align: right"><MudTableSortLabel SortBy="new Func<Investment, object>(x => x.CurrentPrice)">Aktuell kurs</MudTableSortLabel></MudTh>
+                    <MudTh Style="text-align: right"><MudTableSortLabel SortBy="new Func<Investment, object>(x => x.TotalValue)">Värde</MudTableSortLabel></MudTh>
+                    <MudTh Style="text-align: right"><MudTableSortLabel SortBy="new Func<Investment, object>(x => x.ProfitLoss)">Vinst/Förlust</MudTableSortLabel></MudTh>
+                    <MudTh Style="text-align: right"><MudTableSortLabel SortBy="new Func<Investment, object>(x => x.ProfitLossPercentage)">%</MudTableSortLabel></MudTh>
                     <MudTh>Åtgärder</MudTh>
                 </HeaderContent>
                 <RowTemplate>
@@ -151,23 +201,37 @@ else
                     </MudTd>
                     <MudTd DataLabel="Antal" Style="text-align: right">@context.Quantity.ToString("N2")</MudTd>
                     <MudTd DataLabel="Köpkurs" Style="text-align: right">@context.PurchasePrice.ToString("C", new System.Globalization.CultureInfo("sv-SE"))</MudTd>
-                    <MudTd DataLabel="Aktuell kurs" Style="text-align: right">@context.CurrentPrice.ToString("C", new System.Globalization.CultureInfo("sv-SE"))</MudTd>
-                    <MudTd DataLabel="Värde" Style="text-align: right">@context.TotalValue.ToString("C", new System.Globalization.CultureInfo("sv-SE"))</MudTd>
+                    <MudTd DataLabel="Aktuell kurs" Style="text-align: right">
+                        <div class="d-flex align-center justify-end gap-1">
+                            <MudText>@context.CurrentPrice.ToString("C", new System.Globalization.CultureInfo("sv-SE"))</MudText>
+                            <MudTooltip Text="Uppdatera kurs">
+                                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" 
+                                             OnClick="@(() => OpenQuickPriceUpdate(context))" />
+                            </MudTooltip>
+                        </div>
+                    </MudTd>
+                    <MudTd DataLabel="Värde" Style="text-align: right">
+                        <MudText Typo="Typo.body2" Style="font-weight: 500">@context.TotalValue.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))</MudText>
+                    </MudTd>
                     <MudTd DataLabel="Vinst/Förlust" Style="text-align: right">
-                        <MudText Color="@(context.ProfitLoss >= 0 ? Color.Success : Color.Error)">
-                            @(context.ProfitLoss >= 0 ? "+" : "")@context.ProfitLoss.ToString("C", new System.Globalization.CultureInfo("sv-SE"))
+                        <MudText Color="@(context.ProfitLoss >= 0 ? Color.Success : Color.Error)" Style="font-weight: 500">
+                            @(context.ProfitLoss >= 0 ? "+" : "")@context.ProfitLoss.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))
                         </MudText>
                     </MudTd>
                     <MudTd DataLabel="%" Style="text-align: right">
-                        <MudText Color="@(context.ProfitLossPercentage >= 0 ? Color.Success : Color.Error)">
+                        <MudText Color="@(context.ProfitLossPercentage >= 0 ? Color.Success : Color.Error)" Style="font-weight: 500">
                             @(context.ProfitLossPercentage >= 0 ? "+" : "")@context.ProfitLossPercentage.ToString("F2")%
                         </MudText>
                     </MudTd>
                     <MudTd DataLabel="Åtgärder">
-                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Default" Size="Size.Small"
-                                       OnClick="@(() => OpenEditDialog(context))" />
-                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small"
-                                       OnClick="@(() => DeleteInvestment(context.InvestmentId))" />
+                        <MudTooltip Text="Redigera">
+                            <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Default" Size="Size.Small"
+                                           OnClick="@(() => OpenEditDialog(context))" />
+                        </MudTooltip>
+                        <MudTooltip Text="Ta bort">
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small"
+                                           OnClick="@(() => DeleteInvestment(context.InvestmentId))" />
+                        </MudTooltip>
                     </MudTd>
                 </RowTemplate>
             </MudTable>
@@ -193,6 +257,7 @@ else
     private decimal _totalCost = 0;
     private decimal _totalProfitLoss = 0;
     private decimal _totalProfitLossPercentage = 0;
+    private Dictionary<string, decimal> _typeStats = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -213,6 +278,7 @@ else
         
         ApplyFilters();
         CalculateTotals();
+        CalculateTypeStats();
         _loading = false;
     }
 
@@ -240,6 +306,13 @@ else
         _totalCost = _filteredInvestments.Sum(i => i.TotalCost);
         _totalProfitLoss = _totalValue - _totalCost;
         _totalProfitLossPercentage = _totalCost > 0 ? (_totalProfitLoss / _totalCost) * 100 : 0;
+    }
+
+    private void CalculateTypeStats()
+    {
+        _typeStats = _investments
+            .GroupBy(i => i.Type)
+            .ToDictionary(g => g.Key, g => g.Sum(i => i.TotalValue));
     }
 
     private bool FilterFunc(Investment investment)
@@ -285,6 +358,29 @@ else
         catch (Exception ex)
         {
             Snackbar.Add($"Ett fel uppstod vid export: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task OpenQuickPriceUpdate(Investment investment)
+    {
+        var parameters = new DialogParameters
+        {
+            { "ContentText", $"Uppdatera aktuell kurs för {investment.Name}" },
+            { "ButtonText", "Uppdatera" },
+            { "Color", Color.Primary }
+        };
+
+        var options = new DialogOptions() { CloseButton = true };
+        var dialog = await DialogService.ShowAsync<QuickPriceUpdateDialog>($"Uppdatera kurs", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled && result.Data is decimal newPrice && newPrice > 0)
+        {
+            investment.CurrentPrice = newPrice;
+            investment.LastUpdated = DateTime.Now;
+            await InvestmentService.UpdateInvestmentAsync(investment);
+            Snackbar.Add("Kurs uppdaterad", Severity.Success);
+            await LoadData();
         }
     }
 
