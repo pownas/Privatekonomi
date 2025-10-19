@@ -3,6 +3,7 @@ using MudBlazor.Services;
 using Privatekonomi.Core.Data;
 using Privatekonomi.Core.Services;
 using Privatekonomi.Web.Components;
+using Privatekonomi.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -28,6 +29,7 @@ builder.Services.AddScoped<IInvestmentService, InvestmentService>();
 builder.Services.AddScoped<IBudgetService, BudgetService>();
 builder.Services.AddScoped<IBankSourceService, BankSourceService>();
 builder.Services.AddScoped<IHouseholdService, HouseholdService>();
+builder.Services.AddScoped<ThemeService>();
 
 // Add HttpClient for API calls (if needed later)
 builder.Services.AddHttpClient();

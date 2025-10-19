@@ -1,6 +1,9 @@
 ﻿@inherits LayoutComponentBase
+@inject ThemeService ThemeService
+@inject IJSRuntime JSRuntime
+@implements IDisposable
 
-<MudThemeProvider />
+<MudThemeProvider @ref="@_mudThemeProvider" Theme="@_theme" @bind-IsDarkMode="@_isDarkMode" />
 <MudPopoverProvider />
 <MudDialogProvider />
 <MudSnackbarProvider />
@@ -11,6 +14,10 @@
         <MudText Typo="Typo.h5" Class="ml-3">Privatekonomi</MudText>
         <MudSpacer />
         <MudText Typo="Typo.body1">Hantera din ekonomi</MudText>
+        <MudIconButton Icon="@(_isDarkMode ? Icons.Material.Filled.LightMode : Icons.Material.Filled.DarkMode)" 
+                       Color="Color.Inherit" 
+                       OnClick="@ToggleTheme" 
+                       aria-label="@(_isDarkMode ? "Ljust läge" : "Mörkt läge")" />
     </MudAppBar>
     
     <MudDrawer @bind-Open="@_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2">
@@ -24,9 +31,91 @@
 
 @code {
     private bool _drawerOpen = true;
+    private bool _isDarkMode = false;
+    private MudThemeProvider? _mudThemeProvider;
+    private MudTheme _theme = new MudTheme()
+    {
+        PaletteLight = new PaletteLight()
+        {
+            Primary = "#594AE2",
+            Secondary = "#FF4081",
+            AppbarBackground = "#594AE2",
+        },
+        PaletteDark = new PaletteDark()
+        {
+            Primary = "#776BE7",
+            Secondary = "#FF4081",
+            AppbarBackground = "#27272f",
+            AppbarText = "rgba(255,255,255, 0.87)",
+            Background = "#1a1a1f",
+            BackgroundGray = "#27272f",
+            Surface = "#27272f",
+            DrawerBackground = "#27272f",
+            DrawerText = "rgba(255,255,255, 0.87)",
+            DrawerIcon = "rgba(255,255,255, 0.87)",
+            TextPrimary = "rgba(255,255,255, 0.87)",
+            TextSecondary = "rgba(255,255,255, 0.60)",
+            ActionDefault = "rgba(255,255,255, 0.87)",
+            ActionDisabled = "rgba(255,255,255, 0.26)",
+            ActionDisabledBackground = "rgba(255,255,255, 0.12)",
+            Divider = "rgba(255,255,255, 0.12)",
+            DividerLight = "rgba(255,255,255, 0.06)",
+            TableLines = "rgba(255,255,255, 0.12)",
+            LinesDefault = "rgba(255,255,255, 0.12)",
+            LinesInputs = "rgba(255,255,255, 0.3)",
+            TextDisabled = "rgba(255,255,255, 0.38)",
+        }
+    };
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                _isDarkMode = await JSRuntime.InvokeAsync<bool>("themeManager.getTheme");
+                ThemeService.IsDarkMode = _isDarkMode;
+                StateHasChanged();
+            }
+            catch
+            {
+                // Ignore JS interop errors on first render
+            }
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        _isDarkMode = ThemeService.IsDarkMode;
+        ThemeService.OnThemeChanged += OnThemeChanged;
+    }
 
     private void ToggleDrawer()
     {
         _drawerOpen = !_drawerOpen;
+    }
+    
+    private async Task ToggleTheme()
+    {
+        ThemeService.ToggleTheme();
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("themeManager.setTheme", ThemeService.IsDarkMode);
+        }
+        catch
+        {
+            // Ignore JS interop errors
+        }
+    }
+    
+    private void OnThemeChanged()
+    {
+        _isDarkMode = ThemeService.IsDarkMode;
+        StateHasChanged();
+    }
+    
+    public void Dispose()
+    {
+        ThemeService.OnThemeChanged -= OnThemeChanged;
     }
 }
