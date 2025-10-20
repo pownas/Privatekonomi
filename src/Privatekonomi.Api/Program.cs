@@ -24,6 +24,7 @@ builder.Services.AddScoped<ILoanService, LoanService>();
 builder.Services.AddScoped<IInvestmentService, InvestmentService>();
 builder.Services.AddScoped<IBudgetService, BudgetService>();
 builder.Services.AddScoped<IBankSourceService, BankSourceService>();
+builder.Services.AddScoped<IGoalService, GoalService>();
 
 // Configure CORS for Blazor Web
 builder.Services.AddCors(options =>

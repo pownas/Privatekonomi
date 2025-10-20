@@ -74,6 +74,10 @@ public class PrivatekonomyContext : DbContext
             entity.Property(e => e.Cleared).IsRequired();
             entity.Property(e => e.CreatedAt).IsRequired();
             
+            // Additional properties from OpenAPI spec
+            entity.Property(e => e.Payee).HasMaxLength(200);
+            entity.Property(e => e.Currency).IsRequired().HasMaxLength(3);
+            
             entity.HasOne(e => e.BankSource)
                 .WithMany(b => b.Transactions)
                 .HasForeignKey(e => e.BankSourceId)
@@ -89,6 +93,7 @@ public class PrivatekonomyContext : DbContext
         {
             entity.HasKey(e => e.TransactionCategoryId);
             entity.Property(e => e.Amount).HasPrecision(18, 2);
+            entity.Property(e => e.Percentage).HasPrecision(5, 2);
             
             entity.HasOne(e => e.Transaction)
                 .WithMany(t => t.TransactionCategories)

@@ -18,12 +18,58 @@ public class TransactionsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Transaction>>> GetTransactions()
+    public async Task<ActionResult<TransactionListResponse>> GetTransactions(
+        [FromQuery] int? account_id,
+        [FromQuery] DateTime? start_date,
+        [FromQuery] DateTime? end_date,
+        [FromQuery] int? category_id,
+        [FromQuery] int page = 1,
+        [FromQuery] int per_page = 50)
     {
         try
         {
             var transactions = await _transactionService.GetAllTransactionsAsync();
-            return Ok(transactions);
+            
+            // Apply filters
+            if (account_id.HasValue)
+            {
+                transactions = transactions.Where(t => t.BankSourceId == account_id.Value);
+            }
+            
+            if (start_date.HasValue)
+            {
+                transactions = transactions.Where(t => t.Date >= start_date.Value);
+            }
+            
+            if (end_date.HasValue)
+            {
+                transactions = transactions.Where(t => t.Date <= end_date.Value);
+            }
+            
+            if (category_id.HasValue)
+            {
+                transactions = transactions.Where(t => 
+                    t.TransactionCategories.Any(tc => tc.CategoryId == category_id.Value));
+            }
+            
+            // Apply pagination
+            var totalCount = transactions.Count();
+            var totalPages = (int)Math.Ceiling(totalCount / (double)per_page);
+            
+            var paginatedTransactions = transactions
+                .OrderByDescending(t => t.Date)
+                .Skip((page - 1) * per_page)
+                .Take(per_page)
+                .ToList();
+            
+            return Ok(new TransactionListResponse
+            {
+                Transactions = paginatedTransactions,
+                Page = page,
+                PerPage = per_page,
+                TotalCount = totalCount,
+                TotalPages = totalPages
+            });
         }
         catch (Exception ex)
         {
@@ -152,4 +198,13 @@ public class TransactionsController : ControllerBase
             return StatusCode(500, "Internal server error");
         }
     }
+}
+
+public class TransactionListResponse
+{
+    public IEnumerable<Transaction> Transactions { get; set; } = new List<Transaction>();
+    public int Page { get; set; }
+    public int PerPage { get; set; }
+    public int TotalCount { get; set; }
+    public int TotalPages { get; set; }
 }
