@@ -1,0 +1,300 @@
+@page "/assets"
+@rendermode InteractiveServer
+@inject IAssetService AssetService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+<PageTitle>Tillgångar - Privatekonomi</PageTitle>
+
+<div class="d-flex justify-space-between align-center mb-4">
+    <MudText Typo="Typo.h4">Tillgångar</MudText>
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="ToggleCreateForm">
+        Ny Tillgång
+    </MudButton>
+</div>
+
+@if (_showCreateForm)
+{
+    <MudPaper Class="pa-4 mb-4">
+        <MudText Typo="Typo.h6" Class="mb-3">@(_editingAsset != null ? "Redigera Tillgång" : "Lägg till Ny Tillgång")</MudText>
+        
+        <MudTextField @bind-Value="_formAsset.Name" 
+                      Label="Namn" 
+                      Variant="Variant.Outlined"
+                      Required="true"
+                      MaxLength="200"
+                      Class="mb-3" />
+        
+        <MudRadioGroup @bind-Value="_formAsset.Type" Required="true">
+            <MudText Typo="Typo.subtitle2" Class="mb-2">Typ</MudText>
+            <MudRadio Value="@("Fastighet")" Color="Color.Primary">Fastighet</MudRadio>
+            <MudRadio Value="@("Fordon")" Color="Color.Primary">Fordon</MudRadio>
+            <MudRadio Value="@("Möbler")" Color="Color.Primary">Möbler</MudRadio>
+            <MudRadio Value="@("Elektronik")" Color="Color.Primary">Elektronik</MudRadio>
+            <MudRadio Value="@("Övrigt")" Color="Color.Primary">Övrigt</MudRadio>
+        </MudRadioGroup>
+        <MudDivider Class="mb-3 mt-3" />
+
+        <MudTextField @bind-Value="_formAsset.Description" 
+                      Label="Beskrivning" 
+                      Variant="Variant.Outlined"
+                      Lines="3"
+                      MaxLength="500"
+                      Class="mb-3" />
+
+        <MudNumericField @bind-Value="_formAsset.PurchaseValue" 
+                         Label="Inköpsvärde (kr)" 
+                         Variant="Variant.Outlined"
+                         Min="0"
+                         Format="N2"
+                         Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                         Class="mb-3" />
+
+        <MudNumericField @bind-Value="_formAsset.CurrentValue" 
+                         Label="Nuvarande värde (kr)" 
+                         Variant="Variant.Outlined"
+                         Min="0"
+                         Format="N2"
+                         Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                         Class="mb-3" />
+
+        <MudDatePicker @bind-Date="_formAsset.PurchaseDate"
+                       Label="Inköpsdatum"
+                       Variant="Variant.Outlined"
+                       Class="mb-3" />
+
+        <MudTextField @bind-Value="_formAsset.Location" 
+                      Label="Plats/Lokalisering" 
+                      Variant="Variant.Outlined"
+                      MaxLength="200"
+                      Class="mb-3" />
+
+        <div class="d-flex gap-2">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveAsset">
+                @(_editingAsset != null ? "Uppdatera" : "Lägg till")
+            </MudButton>
+            <MudButton Variant="Variant.Outlined" OnClick="CancelForm">Avbryt</MudButton>
+        </div>
+    </MudPaper>
+}
+
+@if (_loading)
+{
+    <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+}
+else
+{
+    <MudPaper Class="pa-4 mb-4">
+        <MudGrid>
+            <MudItem xs="12" md="4">
+                <MudCard Elevation="2" Class="pa-4">
+                    <MudCardContent>
+                        <MudText Typo="Typo.h6">Totalt Värde</MudText>
+                        <MudText Typo="Typo.h4" Color="Color.Success">@_totalValue.ToString("C", new System.Globalization.CultureInfo("sv-SE"))</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <MudCard Elevation="2" Class="pa-4">
+                    <MudCardContent>
+                        <MudText Typo="Typo.h6">Totalt Inköpsvärde</MudText>
+                        <MudText Typo="Typo.h4">@_totalPurchaseValue.ToString("C", new System.Globalization.CultureInfo("sv-SE"))</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <MudCard Elevation="2" Class="pa-4">
+                    <MudCardContent>
+                        <MudText Typo="Typo.h6">Värdeförändring</MudText>
+                        <MudText Typo="Typo.h4" Color="@(_totalValueChange >= 0 ? Color.Success : Color.Error)">
+                            @(_totalValueChange >= 0 ? "+" : "")@_totalValueChange.ToString("C", new System.Globalization.CultureInfo("sv-SE"))
+                        </MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+
+    <MudPaper Class="pa-4">
+        @if (!_assets.Any())
+        {
+            <MudText>Inga tillgångar registrerade än.</MudText>
+        }
+        else
+        {
+            <MudTable Items="@_assets" Hover="true" Striped="true">
+                <HeaderContent>
+                    <MudTh>Namn</MudTh>
+                    <MudTh>Typ</MudTh>
+                    <MudTh>Beskrivning</MudTh>
+                    <MudTh Style="text-align: right">Inköpsvärde</MudTh>
+                    <MudTh Style="text-align: right">Nuvarande värde</MudTh>
+                    <MudTh Style="text-align: right">Värdeförändring</MudTh>
+                    <MudTh>Åtgärder</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Namn">@context.Name</MudTd>
+                    <MudTd DataLabel="Typ">
+                        <MudChip T="string" Size="Size.Small" Color="GetAssetTypeColor(context.Type)">
+                            @context.Type
+                        </MudChip>
+                    </MudTd>
+                    <MudTd DataLabel="Beskrivning">
+                        <MudText Typo="Typo.body2" Style="max-width: 200px; overflow: hidden; text-overflow: ellipsis;">
+                            @(string.IsNullOrWhiteSpace(context.Description) ? "-" : context.Description)
+                        </MudText>
+                    </MudTd>
+                    <MudTd DataLabel="Inköpsvärde" Style="text-align: right">
+                        @context.PurchaseValue.ToString("C", new System.Globalization.CultureInfo("sv-SE"))
+                    </MudTd>
+                    <MudTd DataLabel="Nuvarande värde" Style="text-align: right">
+                        @context.CurrentValue.ToString("C", new System.Globalization.CultureInfo("sv-SE"))
+                    </MudTd>
+                    <MudTd DataLabel="Värdeförändring" Style="text-align: right">
+                        <MudText Color="@(context.ValueChange >= 0 ? Color.Success : Color.Error)">
+                            @(context.ValueChange >= 0 ? "+" : "")@context.ValueChange.ToString("C", new System.Globalization.CultureInfo("sv-SE"))
+                            (@(context.ValueChange >= 0 ? "+" : "")@context.ValueChangePercentage.ToString("F1")%)
+                        </MudText>
+                    </MudTd>
+                    <MudTd DataLabel="Åtgärder">
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small"
+                                       OnClick="@(() => EditAsset(context))" />
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small"
+                                       OnClick="@(() => DeleteAsset(context.AssetId))" />
+                    </MudTd>
+                </RowTemplate>
+            </MudTable>
+        }
+    </MudPaper>
+}
+
+@code {
+    private bool _loading = true;
+    private bool _showCreateForm = false;
+    private IEnumerable<Asset> _assets = new List<Asset>();
+    private decimal _totalValue = 0;
+    private decimal _totalPurchaseValue = 0;
+    private decimal _totalValueChange = 0;
+    private Asset _formAsset = new Asset();
+    private Asset? _editingAsset = null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        _loading = true;
+        _assets = await AssetService.GetAllAssetsAsync();
+        _totalValue = _assets.Sum(a => a.CurrentValue);
+        _totalPurchaseValue = _assets.Sum(a => a.PurchaseValue);
+        _totalValueChange = _totalValue - _totalPurchaseValue;
+        _loading = false;
+    }
+
+    private Color GetAssetTypeColor(string type)
+    {
+        return type switch
+        {
+            "Fastighet" => Color.Primary,
+            "Fordon" => Color.Info,
+            "Möbler" => Color.Success,
+            "Elektronik" => Color.Secondary,
+            "Övrigt" => Color.Default,
+            _ => Color.Default
+        };
+    }
+
+    private void ToggleCreateForm()
+    {
+        _showCreateForm = !_showCreateForm;
+        if (_showCreateForm)
+        {
+            _formAsset = new Asset();
+            _editingAsset = null;
+        }
+    }
+
+    private void EditAsset(Asset asset)
+    {
+        _editingAsset = asset;
+        _formAsset = new Asset
+        {
+            AssetId = asset.AssetId,
+            Name = asset.Name,
+            Type = asset.Type,
+            Description = asset.Description,
+            PurchaseValue = asset.PurchaseValue,
+            CurrentValue = asset.CurrentValue,
+            PurchaseDate = asset.PurchaseDate,
+            Location = asset.Location
+        };
+        _showCreateForm = true;
+    }
+
+    private async Task SaveAsset()
+    {
+        if (string.IsNullOrWhiteSpace(_formAsset.Name))
+        {
+            Snackbar.Add("Namn är obligatoriskt", Severity.Error);
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_formAsset.Type))
+        {
+            Snackbar.Add("Typ är obligatorisk", Severity.Error);
+            return;
+        }
+
+        if (_formAsset.CurrentValue < 0)
+        {
+            Snackbar.Add("Nuvarande värde kan inte vara negativt", Severity.Error);
+            return;
+        }
+
+        try
+        {
+            if (_editingAsset != null)
+            {
+                await AssetService.UpdateAssetAsync(_formAsset);
+                Snackbar.Add("Tillgång uppdaterad!", Severity.Success);
+            }
+            else
+            {
+                await AssetService.CreateAssetAsync(_formAsset);
+                Snackbar.Add("Tillgång tillagd!", Severity.Success);
+            }
+
+            _showCreateForm = false;
+            _editingAsset = null;
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Fel: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void CancelForm()
+    {
+        _showCreateForm = false;
+        _editingAsset = null;
+        _formAsset = new Asset();
+    }
+
+    private async Task DeleteAsset(int id)
+    {
+        var result = await DialogService.ShowMessageBox(
+            "Bekräfta borttagning",
+            "Är du säker på att du vill ta bort denna tillgång?",
+            yesText: "Ja", cancelText: "Avbryt");
+
+        if (result == true)
+        {
+            await AssetService.DeleteAssetAsync(id);
+            Snackbar.Add("Tillgång borttagen", Severity.Success);
+            await LoadData();
+        }
+    }
+}

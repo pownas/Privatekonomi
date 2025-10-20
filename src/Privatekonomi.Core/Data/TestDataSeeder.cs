@@ -14,6 +14,8 @@ public static class TestDataSeeder
 
         SeedTransactions(context);
         SeedInvestments(context);
+        SeedAssets(context);
+        SeedLoans(context);
         SeedBudgets(context);
         SeedHouseholds(context);
         SeedGoals(context);
@@ -493,6 +495,143 @@ public static class TestDataSeeder
         };
 
         context.Goals.AddRange(goals);
+        context.SaveChanges();
+    }
+
+    private static void SeedAssets(PrivatekonomyContext context)
+    {
+        var assets = new List<Asset>
+        {
+            new Asset
+            {
+                AssetId = 1,
+                Name = "Bostadsrätt Södermalm",
+                Type = "Fastighet",
+                Description = "2:a på Södermalm, Stockholm",
+                PurchaseValue = 2800000m,
+                CurrentValue = 3200000m,
+                PurchaseDate = DateTime.Now.AddYears(-5),
+                Location = "Stockholm, Södermalm",
+                Currency = "SEK",
+                CreatedAt = DateTime.UtcNow
+            },
+            new Asset
+            {
+                AssetId = 2,
+                Name = "Volvo V60",
+                Type = "Fordon",
+                Description = "2020 års modell, diesel",
+                PurchaseValue = 285000m,
+                CurrentValue = 240000m,
+                PurchaseDate = DateTime.Now.AddYears(-3),
+                Location = "Stockholm",
+                Currency = "SEK",
+                CreatedAt = DateTime.UtcNow
+            },
+            new Asset
+            {
+                AssetId = 3,
+                Name = "MacBook Pro",
+                Type = "Elektronik",
+                Description = "MacBook Pro 16\" M3 Pro",
+                PurchaseValue = 32000m,
+                CurrentValue = 28000m,
+                PurchaseDate = DateTime.Now.AddMonths(-6),
+                Location = "Hemkontor",
+                Currency = "SEK",
+                CreatedAt = DateTime.UtcNow
+            },
+            new Asset
+            {
+                AssetId = 4,
+                Name = "IKEA Möbler",
+                Type = "Möbler",
+                Description = "Soffa, matbord, och bokhyllor",
+                PurchaseValue = 45000m,
+                CurrentValue = 25000m,
+                PurchaseDate = DateTime.Now.AddYears(-2),
+                Location = "Lägenheten",
+                Currency = "SEK",
+                CreatedAt = DateTime.UtcNow
+            },
+            new Asset
+            {
+                AssetId = 5,
+                Name = "Samsung TV",
+                Type = "Elektronik",
+                Description = "55\" 4K QLED TV",
+                PurchaseValue = 15000m,
+                CurrentValue = 10000m,
+                PurchaseDate = DateTime.Now.AddYears(-1),
+                Location = "Vardagsrum",
+                Currency = "SEK",
+                CreatedAt = DateTime.UtcNow
+            },
+            new Asset
+            {
+                AssetId = 6,
+                Name = "Rolex klocka",
+                Type = "Övrigt",
+                Description = "Vintage Submariner",
+                PurchaseValue = 85000m,
+                CurrentValue = 120000m,
+                PurchaseDate = DateTime.Now.AddYears(-10),
+                Location = "Bankfack",
+                Currency = "SEK",
+                CreatedAt = DateTime.UtcNow
+            }
+        };
+
+        context.Assets.AddRange(assets);
+        context.SaveChanges();
+    }
+
+    private static void SeedLoans(PrivatekonomyContext context)
+    {
+        var loans = new List<Loan>
+        {
+            new Loan
+            {
+                LoanId = 1,
+                Name = "Bolån bostadsrätt",
+                Type = "Bolån",
+                Amount = 2100000m,
+                InterestRate = 4.5m,
+                Amortization = 5000m,
+                Currency = "SEK",
+                StartDate = DateTime.Now.AddYears(-5),
+                MaturityDate = DateTime.Now.AddYears(25),
+                CreatedAt = DateTime.UtcNow
+            },
+            new Loan
+            {
+                LoanId = 2,
+                Name = "Billån Volvo",
+                Type = "Privatlån",
+                Amount = 150000m,
+                InterestRate = 5.9m,
+                Amortization = 3500m,
+                Currency = "SEK",
+                StartDate = DateTime.Now.AddYears(-3),
+                MaturityDate = DateTime.Now.AddYears(2),
+                CreatedAt = DateTime.UtcNow
+            },
+            new Loan
+            {
+                LoanId = 3,
+                Name = "CSN Studielån",
+                Type = "CSN-lån",
+                Amount = 180000m,
+                InterestRate = 1.5m,
+                Amortization = 1200m,
+                Currency = "SEK",
+                StartDate = DateTime.Now.AddYears(-8),
+                MaturityDate = DateTime.Now.AddYears(17),
+                CreatedAt = DateTime.UtcNow
+            }
+        };
+
+        context.Loans.AddRange(loans);
         context.SaveChanges();
     }
 }
