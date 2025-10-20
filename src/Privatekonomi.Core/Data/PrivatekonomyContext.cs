@@ -18,6 +18,7 @@ public class PrivatekonomyContext : DbContext
     public DbSet<Budget> Budgets { get; set; }
     public DbSet<BudgetCategory> BudgetCategories { get; set; }
     public DbSet<BankSource> BankSources { get; set; }
+    public DbSet<BankConnection> BankConnections { get; set; }
     public DbSet<Household> Households { get; set; }
     public DbSet<HouseholdMember> HouseholdMembers { get; set; }
     public DbSet<SharedExpense> SharedExpenses { get; set; }
@@ -42,6 +43,25 @@ public class PrivatekonomyContext : DbContext
             
             // Ignore computed property
             entity.Ignore(e => e.CurrentBalance);
+        });
+
+        modelBuilder.Entity<BankConnection>(entity =>
+        {
+            entity.HasKey(e => e.BankConnectionId);
+            entity.Property(e => e.ApiType).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.ExternalAccountId).HasMaxLength(100);
+            entity.Property(e => e.AccessToken).HasMaxLength(2000);
+            entity.Property(e => e.RefreshToken).HasMaxLength(2000);
+            entity.Property(e => e.Status).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.CreatedAt).IsRequired();
+            
+            entity.HasOne(e => e.BankSource)
+                .WithMany()
+                .HasForeignKey(e => e.BankSourceId)
+                .OnDelete(DeleteBehavior.Cascade);
+                
+            entity.HasIndex(e => e.BankSourceId);
+            entity.HasIndex(e => e.ExternalAccountId);
         });
 
         modelBuilder.Entity<Category>(entity =>
