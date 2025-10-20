@@ -299,8 +299,21 @@ Se [tests/playwright/README.md](tests/playwright/README.md) för detaljerad doku
 
 ## 🎯 Förbättringsförslag
 
+För en omfattande analys av förbättringsmöjligheter, se:
+- **[Fullständiga Förbättringsförslag](docs/IMPROVEMENT_SUGGESTIONS.md)** - Detaljerad analys med 45+ förbättringsförslag
+- **[Sammanfattning](docs/IMPROVEMENT_SUMMARY.md)** - Snabböversikt och prioriterad plan
+
+### Högt Prioriterade
+- [ ] Byt från InMemory till persistent databas (SQL Server)
+- [ ] Fixa nullable reference warnings (4 st)
+- [ ] Implementera enhetstester (0% täckning för närvarande)
+- [ ] Lägg till användarautentisering med ASP.NET Core Identity
+- [ ] Skapa CI/CD pipeline med GitHub Actions
+- [ ] Implementera global exception handler
+- [ ] Lägg till strukturerad logging
+
+### Funktionsönskemål
 - [ ] Fixa formulär-bindning i NewTransaction-sidan
-- [ ] Lägga till användare och autentisering
 - [x] Implementera budget-funktionalitet
 - [x] Kravspecifikation för CSV-import från banker
 - [x] Implementera CSV-import från ICA-banken och Swedbank
