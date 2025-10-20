@@ -16,6 +16,7 @@ public static class TestDataSeeder
         SeedInvestments(context);
         SeedBudgets(context);
         SeedHouseholds(context);
+        SeedGoals(context);
     }
 
     private static void SeedTransactions(PrivatekonomyContext context)
@@ -90,7 +91,11 @@ public static class TestDataSeeder
                 Description = description,
                 Date = date,
                 IsIncome = isIncome,
-                BankSourceId = bankSourceIds[random.Next(bankSourceIds.Length)]
+                BankSourceId = bankSourceIds[random.Next(bankSourceIds.Length)],
+                Currency = "SEK",
+                Imported = false,
+                Cleared = true,
+                CreatedAt = DateTime.UtcNow
             };
 
             transactions.Add(transaction);
@@ -121,7 +126,11 @@ public static class TestDataSeeder
                 Description = unmappedDescriptions[i],
                 Date = startDate.AddDays(random.Next(0, 90)),
                 IsIncome = false,
-                BankSourceId = bankSourceIds[random.Next(bankSourceIds.Length)]
+                BankSourceId = bankSourceIds[random.Next(bankSourceIds.Length)],
+                Currency = "SEK",
+                Imported = false,
+                Cleared = false,
+                CreatedAt = DateTime.UtcNow
             };
             
             transactions.Add(transaction);
@@ -142,34 +151,43 @@ public static class TestDataSeeder
             {
                 InvestmentId = 1,
                 Name = "Volvo B",
+                ShortName = "VOLV-B",
                 Type = "Aktie",
                 Quantity = 100,
                 PurchasePrice = 245.50m,
                 CurrentPrice = 268.75m,
                 PurchaseDate = DateTime.Now.AddMonths(-6),
-                LastUpdated = DateTime.Now.AddDays(-1)
+                LastUpdated = DateTime.Now.AddDays(-1),
+                Market = "Stockholm",
+                CreatedAt = DateTime.UtcNow
             },
             new Investment
             {
                 InvestmentId = 2,
                 Name = "SEB A",
+                ShortName = "SEB-A",
                 Type = "Aktie",
                 Quantity = 50,
                 PurchasePrice = 152.30m,
                 CurrentPrice = 165.20m,
                 PurchaseDate = DateTime.Now.AddMonths(-8),
-                LastUpdated = DateTime.Now.AddDays(-2)
+                LastUpdated = DateTime.Now.AddDays(-2),
+                Market = "Stockholm",
+                CreatedAt = DateTime.UtcNow
             },
             new Investment
             {
                 InvestmentId = 3,
                 Name = "Investor B",
+                ShortName = "INVE-B",
                 Type = "Aktie",
                 Quantity = 75,
                 PurchasePrice = 289.00m,
                 CurrentPrice = 312.50m,
                 PurchaseDate = DateTime.Now.AddMonths(-4),
-                LastUpdated = DateTime.Now.AddDays(-1)
+                LastUpdated = DateTime.Now.AddDays(-1),
+                Market = "Stockholm",
+                CreatedAt = DateTime.UtcNow
             },
             new Investment
             {
@@ -180,7 +198,8 @@ public static class TestDataSeeder
                 PurchasePrice = 125.75m,
                 CurrentPrice = 138.40m,
                 PurchaseDate = DateTime.Now.AddMonths(-12),
-                LastUpdated = DateTime.Now.AddDays(-3)
+                LastUpdated = DateTime.Now.AddDays(-3),
+                CreatedAt = DateTime.UtcNow
             },
             new Investment
             {
@@ -191,7 +210,8 @@ public static class TestDataSeeder
                 PurchasePrice = 98.50m,
                 CurrentPrice = 104.80m,
                 PurchaseDate = DateTime.Now.AddMonths(-10),
-                LastUpdated = DateTime.Now.AddDays(-1)
+                LastUpdated = DateTime.Now.AddDays(-1),
+                CreatedAt = DateTime.UtcNow
             },
             new Investment
             {
@@ -202,29 +222,36 @@ public static class TestDataSeeder
                 PurchasePrice = 215.30m,
                 CurrentPrice = 232.90m,
                 PurchaseDate = DateTime.Now.AddMonths(-9),
-                LastUpdated = DateTime.Now.AddDays(-2)
+                LastUpdated = DateTime.Now.AddDays(-2),
+                CreatedAt = DateTime.UtcNow
             },
             new Investment
             {
                 InvestmentId = 7,
                 Name = "Ericsson B",
+                ShortName = "ERIC-B",
                 Type = "Aktie",
                 Quantity = 250,
                 PurchasePrice = 58.20m,
                 CurrentPrice = 62.15m,
                 PurchaseDate = DateTime.Now.AddMonths(-5),
-                LastUpdated = DateTime.Now
+                LastUpdated = DateTime.Now,
+                Market = "Stockholm",
+                CreatedAt = DateTime.UtcNow
             },
             new Investment
             {
                 InvestmentId = 8,
                 Name = "Nordea",
+                ShortName = "NDA-SE",
                 Type = "Aktie",
                 Quantity = 80,
                 PurchasePrice = 125.40m,
                 CurrentPrice = 118.90m,
                 PurchaseDate = DateTime.Now.AddMonths(-3),
-                LastUpdated = DateTime.Now.AddDays(-1)
+                LastUpdated = DateTime.Now.AddDays(-1),
+                Market = "Stockholm",
+                CreatedAt = DateTime.UtcNow
             }
         };
 
@@ -246,7 +273,8 @@ public static class TestDataSeeder
             Description = "Budget för den aktuella månaden",
             StartDate = startOfMonth,
             EndDate = endOfMonth,
-            Period = BudgetPeriod.Monthly
+            Period = BudgetPeriod.Monthly,
+            CreatedAt = DateTime.UtcNow
         };
 
         // Add budget categories with planned amounts
@@ -271,7 +299,8 @@ public static class TestDataSeeder
             Description = "Budget för föregående månad",
             StartDate = prevMonthStart,
             EndDate = prevMonthEnd,
-            Period = BudgetPeriod.Monthly
+            Period = BudgetPeriod.Monthly,
+            CreatedAt = DateTime.UtcNow
         };
 
         var prevBudgetCategories = new List<BudgetCategory>
@@ -394,6 +423,76 @@ public static class TestDataSeeder
         context.HouseholdMembers.AddRange(members);
         context.SharedExpenses.AddRange(sharedExpenses);
         context.ExpenseShares.AddRange(expenseShares);
+        context.SaveChanges();
+    }
+
+    private static void SeedGoals(PrivatekonomyContext context)
+    {
+        // Create sample savings goals
+        var goals = new List<Goal>
+        {
+            new Goal
+            {
+                GoalId = 1,
+                Name = "Semesterresa till Japan",
+                Description = "Spara till en två veckors resa till Japan",
+                TargetAmount = 50000m,
+                CurrentAmount = 15000m,
+                TargetDate = DateTime.Now.AddMonths(12),
+                Priority = 1,
+                FundedFromBankSourceId = 1,
+                CreatedAt = DateTime.UtcNow
+            },
+            new Goal
+            {
+                GoalId = 2,
+                Name = "Ny laptop",
+                Description = "MacBook Pro för arbete och studier",
+                TargetAmount = 25000m,
+                CurrentAmount = 8500m,
+                TargetDate = DateTime.Now.AddMonths(6),
+                Priority = 2,
+                FundedFromBankSourceId = 1,
+                CreatedAt = DateTime.UtcNow
+            },
+            new Goal
+            {
+                GoalId = 3,
+                Name = "Nödfond",
+                Description = "Buffert för oförutsedda utgifter - 3 månadslöner",
+                TargetAmount = 90000m,
+                CurrentAmount = 45000m,
+                TargetDate = DateTime.Now.AddMonths(18),
+                Priority = 1,
+                FundedFromBankSourceId = 2,
+                CreatedAt = DateTime.UtcNow
+            },
+            new Goal
+            {
+                GoalId = 4,
+                Name = "Kontantinsats lägenhet",
+                Description = "Spara till 15% kontantinsats för lägenhet",
+                TargetAmount = 300000m,
+                CurrentAmount = 120000m,
+                TargetDate = DateTime.Now.AddMonths(24),
+                Priority = 1,
+                CreatedAt = DateTime.UtcNow
+            },
+            new Goal
+            {
+                GoalId = 5,
+                Name = "Ny cykel",
+                Description = "Elcykel för pendling",
+                TargetAmount = 15000m,
+                CurrentAmount = 12000m,
+                TargetDate = DateTime.Now.AddMonths(3),
+                Priority = 3,
+                FundedFromBankSourceId = 1,
+                CreatedAt = DateTime.UtcNow
+            }
+        };
+
+        context.Goals.AddRange(goals);
         context.SaveChanges();
     }
 }

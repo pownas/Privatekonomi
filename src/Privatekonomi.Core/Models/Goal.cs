@@ -11,6 +11,12 @@ public class Goal
     public DateTime CreatedDate { get; set; }
     public GoalStatus Status { get; set; }
     public string Color { get; set; } = "#2196F3";
+    public int Priority { get; set; } = 3; // 1 (highest) to 5 (lowest)
+    public int? FundedFromBankSourceId { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime? UpdatedAt { get; set; }
+    
+    public BankSource? FundedFromBankSource { get; set; }
 }
 
 public enum GoalStatus

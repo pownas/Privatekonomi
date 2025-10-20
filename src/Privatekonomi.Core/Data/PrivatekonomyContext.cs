@@ -34,6 +34,14 @@ public class PrivatekonomyContext : DbContext
             entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
             entity.Property(e => e.Color).IsRequired().HasMaxLength(7);
             entity.Property(e => e.Logo).HasMaxLength(500);
+            entity.Property(e => e.AccountType).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.Currency).IsRequired().HasMaxLength(3);
+            entity.Property(e => e.Institution).HasMaxLength(200);
+            entity.Property(e => e.InitialBalance).HasPrecision(18, 2);
+            entity.Property(e => e.CreatedAt).IsRequired();
+            
+            // Ignore computed property
+            entity.Ignore(e => e.CurrentBalance);
         });
 
         modelBuilder.Entity<Category>(entity =>
@@ -41,14 +49,15 @@ public class PrivatekonomyContext : DbContext
             entity.HasKey(e => e.CategoryId);
             entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
             entity.Property(e => e.Color).IsRequired().HasMaxLength(7);
+            entity.Property(e => e.DefaultBudgetMonthly).HasPrecision(18, 2);
+            entity.Property(e => e.TaxRelated).IsRequired();
+            entity.Property(e => e.CreatedAt).IsRequired();
             
-            // Self-referencing relationship for parent/child categories
+            // Self-referencing relationship for hierarchical categories
             entity.HasOne(e => e.Parent)
                 .WithMany(c => c.SubCategories)
                 .HasForeignKey(e => e.ParentId)
                 .OnDelete(DeleteBehavior.Restrict);
-            
-            entity.Property(e => e.DefaultBudgetMonthly).HasPrecision(18, 2);
         });
 
         modelBuilder.Entity<Transaction>(entity =>
@@ -57,6 +66,13 @@ public class PrivatekonomyContext : DbContext
             entity.Property(e => e.Amount).HasPrecision(18, 2);
             entity.Property(e => e.Description).IsRequired().HasMaxLength(500);
             entity.Property(e => e.Date).IsRequired();
+            entity.Property(e => e.Currency).IsRequired().HasMaxLength(3);
+            entity.Property(e => e.Payee).HasMaxLength(200);
+            entity.Property(e => e.Tags).HasMaxLength(500);
+            entity.Property(e => e.ImportSource).HasMaxLength(100);
+            entity.Property(e => e.Imported).IsRequired();
+            entity.Property(e => e.Cleared).IsRequired();
+            entity.Property(e => e.CreatedAt).IsRequired();
             
             // Additional properties from OpenAPI spec
             entity.Property(e => e.Payee).HasMaxLength(200);
@@ -66,6 +82,11 @@ public class PrivatekonomyContext : DbContext
                 .WithMany(b => b.Transactions)
                 .HasForeignKey(e => e.BankSourceId)
                 .OnDelete(DeleteBehavior.SetNull);
+            
+            // Indexes for performance optimization
+            entity.HasIndex(e => e.Date);
+            entity.HasIndex(e => new { e.BankSourceId, e.Date });
+            entity.HasIndex(e => e.Payee);
         });
 
         modelBuilder.Entity<TransactionCategory>(entity =>
@@ -93,6 +114,8 @@ public class PrivatekonomyContext : DbContext
             entity.Property(e => e.Amount).HasPrecision(18, 2);
             entity.Property(e => e.InterestRate).HasPrecision(5, 2);
             entity.Property(e => e.Amortization).HasPrecision(18, 2);
+            entity.Property(e => e.Currency).IsRequired().HasMaxLength(3);
+            entity.Property(e => e.CreatedAt).IsRequired();
         });
         
         modelBuilder.Entity<Investment>(entity =>
@@ -105,6 +128,7 @@ public class PrivatekonomyContext : DbContext
             entity.Property(e => e.CurrentPrice).HasPrecision(18, 2);
             entity.Property(e => e.PurchaseDate).IsRequired();
             entity.Property(e => e.LastUpdated).IsRequired();
+            entity.Property(e => e.CreatedAt).IsRequired();
             
             // New properties for bank and account information
             entity.Property(e => e.AccountNumber).HasMaxLength(50);
@@ -123,6 +147,12 @@ public class PrivatekonomyContext : DbContext
             // Indexes for faster searching
             entity.HasIndex(e => e.ISIN);
             entity.HasIndex(e => e.AccountNumber);
+            
+            // Ignore computed properties
+            entity.Ignore(e => e.TotalValue);
+            entity.Ignore(e => e.TotalCost);
+            entity.Ignore(e => e.ProfitLoss);
+            entity.Ignore(e => e.ProfitLossPercentage);
         });
 
         modelBuilder.Entity<Budget>(entity =>
@@ -133,6 +163,7 @@ public class PrivatekonomyContext : DbContext
             entity.Property(e => e.StartDate).IsRequired();
             entity.Property(e => e.EndDate).IsRequired();
             entity.Property(e => e.Period).IsRequired();
+            entity.Property(e => e.CreatedAt).IsRequired();
         });
 
         modelBuilder.Entity<BudgetCategory>(entity =>
@@ -151,27 +182,44 @@ public class PrivatekonomyContext : DbContext
                 .OnDelete(DeleteBehavior.Restrict);
         });
 
+        // Goal configuration
+        modelBuilder.Entity<Goal>(entity =>
+        {
+            entity.HasKey(e => e.GoalId);
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(200);
+            entity.Property(e => e.Description).HasMaxLength(500);
+            entity.Property(e => e.TargetAmount).HasPrecision(18, 2);
+            entity.Property(e => e.CurrentAmount).HasPrecision(18, 2);
+            entity.Property(e => e.Priority).IsRequired();
+            entity.Property(e => e.CreatedAt).IsRequired();
+            
+            entity.HasOne(e => e.FundedFromBankSource)
+                .WithMany()
+                .HasForeignKey(e => e.FundedFromBankSourceId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
         // Seed initial categories
         modelBuilder.Entity<Category>().HasData(
-            new Category { CategoryId = 1, Name = "Mat & Dryck", Color = "#FF6B6B" },
-            new Category { CategoryId = 2, Name = "Transport", Color = "#4ECDC4" },
-            new Category { CategoryId = 3, Name = "Boende", Color = "#45B7D1" },
-            new Category { CategoryId = 4, Name = "Nöje", Color = "#FFA07A" },
-            new Category { CategoryId = 5, Name = "Shopping", Color = "#98D8C8" },
-            new Category { CategoryId = 6, Name = "Hälsa", Color = "#6BCF7F" },
-            new Category { CategoryId = 7, Name = "Lön", Color = "#4CAF50" },
-            new Category { CategoryId = 8, Name = "Sparande", Color = "#2196F3" },
-            new Category { CategoryId = 9, Name = "Övrigt", Color = "#9E9E9E" }
+            new Category { CategoryId = 1, Name = "Mat & Dryck", Color = "#FF6B6B", TaxRelated = false, CreatedAt = DateTime.UtcNow },
+            new Category { CategoryId = 2, Name = "Transport", Color = "#4ECDC4", TaxRelated = false, CreatedAt = DateTime.UtcNow },
+            new Category { CategoryId = 3, Name = "Boende", Color = "#45B7D1", TaxRelated = false, CreatedAt = DateTime.UtcNow },
+            new Category { CategoryId = 4, Name = "Nöje", Color = "#FFA07A", TaxRelated = false, CreatedAt = DateTime.UtcNow },
+            new Category { CategoryId = 5, Name = "Shopping", Color = "#98D8C8", TaxRelated = false, CreatedAt = DateTime.UtcNow },
+            new Category { CategoryId = 6, Name = "Hälsa", Color = "#6BCF7F", TaxRelated = false, CreatedAt = DateTime.UtcNow },
+            new Category { CategoryId = 7, Name = "Lön", Color = "#4CAF50", TaxRelated = false, CreatedAt = DateTime.UtcNow },
+            new Category { CategoryId = 8, Name = "Sparande", Color = "#2196F3", TaxRelated = false, CreatedAt = DateTime.UtcNow },
+            new Category { CategoryId = 9, Name = "Övrigt", Color = "#9E9E9E", TaxRelated = false, CreatedAt = DateTime.UtcNow }
         );
 
         // Seed initial bank sources
         modelBuilder.Entity<BankSource>().HasData(
-            new BankSource { BankSourceId = 1, Name = "ICA-banken", Color = "#DC143C" }, // röd (Crimson)
-            new BankSource { BankSourceId = 2, Name = "Swedbank", Color = "#FF8C00" }, // mörk orange (Dark Orange)
-            new BankSource { BankSourceId = 3, Name = "SEB", Color = "#0066CC" }, // blå
-            new BankSource { BankSourceId = 4, Name = "Nordea", Color = "#00A9CE" }, // ljusblå
-            new BankSource { BankSourceId = 5, Name = "Handelsbanken", Color = "#003366" }, // mörk blå
-            new BankSource { BankSourceId = 6, Name = "Avanza", Color = "#006400" } // mörkgrön (Dark Green)
+            new BankSource { BankSourceId = 1, Name = "ICA-banken", Color = "#DC143C", AccountType = "checking", Currency = "SEK", InitialBalance = 0, CreatedAt = DateTime.UtcNow }, // röd (Crimson)
+            new BankSource { BankSourceId = 2, Name = "Swedbank", Color = "#FF8C00", AccountType = "checking", Currency = "SEK", InitialBalance = 0, CreatedAt = DateTime.UtcNow }, // mörk orange (Dark Orange)
+            new BankSource { BankSourceId = 3, Name = "SEB", Color = "#0066CC", AccountType = "checking", Currency = "SEK", InitialBalance = 0, CreatedAt = DateTime.UtcNow }, // blå
+            new BankSource { BankSourceId = 4, Name = "Nordea", Color = "#00A9CE", AccountType = "checking", Currency = "SEK", InitialBalance = 0, CreatedAt = DateTime.UtcNow }, // ljusblå
+            new BankSource { BankSourceId = 5, Name = "Handelsbanken", Color = "#003366", AccountType = "checking", Currency = "SEK", InitialBalance = 0, CreatedAt = DateTime.UtcNow }, // mörk blå
+            new BankSource { BankSourceId = 6, Name = "Avanza", Color = "#006400", AccountType = "investment", Currency = "SEK", InitialBalance = 0, CreatedAt = DateTime.UtcNow } // mörkgrön (Dark Green)
         );
 
         // Household configuration

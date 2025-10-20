@@ -11,4 +11,6 @@ public interface IGoalService
     Task DeleteGoalAsync(int id);
     Task<IEnumerable<Goal>> GetActiveGoalsAsync();
     Task<decimal> GetTotalProgress();
+    Task<Goal> UpdateGoalProgressAsync(int id, decimal currentAmount);
+    Task<IEnumerable<Goal>> GetGoalsByPriorityAsync(int priority);
 }

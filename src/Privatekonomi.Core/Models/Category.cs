@@ -6,9 +6,12 @@ public class Category
     public string Name { get; set; } = string.Empty;
     public string Color { get; set; } = "#000000";
     
-    // Additional fields from OpenAPI spec
-    public int? ParentId { get; set; }
-    public decimal? DefaultBudgetMonthly { get; set; }
+    // Enhanced fields from proposed model
+    public int? ParentId { get; set; } // For hierarchical categories (e.g., "Transport" -> "Public Transport")
+    public decimal? DefaultBudgetMonthly { get; set; } // Default monthly budget suggestion
+    public bool TaxRelated { get; set; } // Whether category is tax-deductible or affects tax reporting
+    public DateTime CreatedAt { get; set; }
+    public DateTime? UpdatedAt { get; set; }
     
     public Category? Parent { get; set; }
     public ICollection<Category> SubCategories { get; set; } = new List<Category>();

@@ -15,16 +15,24 @@ public class CategoryService : ICategoryService
 
     public async Task<IEnumerable<Category>> GetAllCategoriesAsync()
     {
-        return await _context.Categories.ToListAsync();
+        return await _context.Categories
+            .Include(c => c.Parent)
+            .Include(c => c.SubCategories)
+            .OrderBy(c => c.Name)
+            .ToListAsync();
     }
 
     public async Task<Category?> GetCategoryByIdAsync(int id)
     {
-        return await _context.Categories.FindAsync(id);
+        return await _context.Categories
+            .Include(c => c.Parent)
+            .Include(c => c.SubCategories)
+            .FirstOrDefaultAsync(c => c.CategoryId == id);
     }
 
     public async Task<Category> CreateCategoryAsync(Category category)
     {
+        category.CreatedAt = DateTime.UtcNow;
         _context.Categories.Add(category);
         await _context.SaveChangesAsync();
         return category;
@@ -32,6 +40,7 @@ public class CategoryService : ICategoryService
 
     public async Task<Category> UpdateCategoryAsync(Category category)
     {
+        category.UpdatedAt = DateTime.UtcNow;
         _context.Entry(category).State = EntityState.Modified;
         await _context.SaveChangesAsync();
         return category;

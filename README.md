@@ -7,8 +7,10 @@ En privatekonomi-applikation byggd med .NET 9, Blazor Server och MudBlazor för 
 - **Dashboard**: Översikt över totala inkomster, utgifter och nettoresultat
 - **Transaktionshantering**: Registrera, visa och ta bort transaktioner
 - **Budgethantering**: Skapa och följa upp budgetar med visualisering av planerat vs faktiskt utfall
+- **Sparmål**: Sätt upp och följ sparmål med målbelopp, tidsgräns och prioritering
 - **Investeringshantering**: Hantera aktier, fonder och certifikat med översikt över värde och avkastning
-- **Kategorisystem**: Förkonfigurerade kategorier med färgkodning
+- **Automatisk kursuppdatering**: Uppdatera aktiekurser via Yahoo Finance API med ett knapptryck
+- **Kategorisystem**: Förkonfigurerade kategorier med färgkodning och hierarkisk struktur
 - **Split-kategorisering**: Möjlighet att dela upp transaktioner i flera kategorier
 - **Automatisk kategorisering**: Systemet föreslår kategorier baserat på tidigare transaktioner
 - **Responsiv design**: Fungerar på desktop och mobila enheter
@@ -17,6 +19,7 @@ En privatekonomi-applikation byggd med .NET 9, Blazor Server och MudBlazor för 
   - Import av transaktioner från ICA-banken och Swedbank
   - Import av investeringar från Avanza Bank med dubbletthantering
 - **CSV-export**: Exportera investeringar för analys och rapportering
+- **Förbättrad datamodell**: Utökade modeller med audit trail, valutastöd och mer
 
 ## 🏗️ Arkitektur
 
@@ -260,6 +263,7 @@ builder.Services.AddDbContext<PrivatekonomyContext>(options =>
 
 - **[CSV_IMPORT_GUIDE.md](wiki/CSV_IMPORT_GUIDE.md)**: Guide för import av transaktioner från ICA-banken och Swedbank
 - **[AVANZA_IMPORT_GUIDE.md](wiki/AVANZA_IMPORT_GUIDE.md)**: Guide för import av investeringar från Avanza Bank
+- **[STOCK_PRICE_API_GUIDE.md](wiki/STOCK_PRICE_API_GUIDE.md)**: Guide för automatisk uppdatering av aktiekurser via API
 - **[BUDGET_GUIDE.md](wiki/BUDGET_GUIDE.md)**: Guide för budgethantering
 
 ### Teknisk dokumentation
@@ -269,6 +273,7 @@ builder.Services.AddDbContext<PrivatekonomyContext>(options =>
 - **[Kravspecifikation_CSV_Import.md](wiki/Kravspecifikation_CSV_Import.md)**: Kravspecifikation för CSV-import av transaktioner
 - **[Kravspecifikation_Avanza_Integration.md](wiki/Kravspecifikation_Avanza_Integration.md)**: Kravspecifikation för Avanza-integration
 - **[Implementationsguide_Avanza.md](wiki/Implementationsguide_Avanza.md)**: Implementationsguide för Avanza-funktionalitet
+- **[Datamodell_Forbattringar.md](docs/Datamodell_Forbattringar.md)**: Dokumentation av datamodellförbättringar och nya funktioner
 
 ## 🧪 Testning
 
@@ -301,9 +306,9 @@ Se [tests/playwright/README.md](tests/playwright/README.md) för detaljerad doku
 - [x] Implementera CSV-import från ICA-banken och Swedbank
 - [x] Implementera CSV-import från Avanza för investeringar
 - [x] Exportera investeringar till CSV
+- [x] Automatisk uppdatering av aktiekurser via API
 - [ ] Exportera transaktioner och budget till Excel/CSV
 - [ ] Lägg till diagram och grafer på Dashboard
-- [ ] Automatisk uppdatering av aktiekurser via API
 - [ ] Integration med bank-API:er för transaktioner
 - [ ] Mobilapp med samma funktionalitet
 - [ ] Förbättra automatisk kategorisering med ML
