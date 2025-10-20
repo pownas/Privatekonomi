@@ -1,0 +1,134 @@
+@inject IStockPriceService StockPriceService
+
+<MudDialog>
+    <DialogContent>
+        @if (_isUpdating)
+        {
+            <div class="text-center">
+                <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Large" />
+                <MudText Typo="Typo.h6" Class="mt-4">Uppdaterar aktiekurser...</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                    @_updateProgress / @_totalInvestments
+                </MudText>
+            </div>
+        }
+        else if (_isComplete)
+        {
+            <div>
+                <MudAlert Severity="Severity.Success" Class="mb-4">
+                    <MudText>Uppdatering slutförd!</MudText>
+                </MudAlert>
+                <MudText Typo="Typo.body1" Class="mb-2">
+                    <strong>Lyckade:</strong> @_result.SuccessCount
+                </MudText>
+                <MudText Typo="Typo.body1" Class="mb-2">
+                    <strong>Misslyckade:</strong> @_result.FailedCount
+                </MudText>
+                @if (_result.Errors.Any())
+                {
+                    <MudText Typo="Typo.body2" Color="Color.Error" Class="mt-4">Fel:</MudText>
+                    <MudList T="string" Dense="true">
+                        @foreach (var error in _result.Errors.Take(5))
+                        {
+                            <MudListItem T="string">
+                                <MudText Typo="Typo.body2" Color="Color.Error">• @error</MudText>
+                            </MudListItem>
+                        }
+                        @if (_result.Errors.Count > 5)
+                        {
+                            <MudListItem T="string">
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">... och @(_result.Errors.Count - 5) till</MudText>
+                            </MudListItem>
+                        }
+                    </MudList>
+                }
+            </div>
+        }
+        else
+        {
+            <MudText>
+                Vill du uppdatera aktiekurserna för alla <strong>@_totalInvestments</strong> investeringar?
+            </MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-2">
+                Detta kan ta några minuter beroende på antalet investeringar.
+            </MudText>
+        }
+    </DialogContent>
+    <DialogActions>
+        @if (_isComplete)
+        {
+            <MudButton Color="Color.Primary" OnClick="Close">Stäng</MudButton>
+        }
+        else if (!_isUpdating)
+        {
+            <MudButton OnClick="Cancel">Avbryt</MudButton>
+            <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="StartUpdate">
+                Uppdatera alla
+            </MudButton>
+        }
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    public required IMudDialogInstance MudDialog { get; set; }
+
+    [Parameter]
+    public IEnumerable<Investment> Investments { get; set; } = new List<Investment>();
+
+    private bool _isUpdating = false;
+    private bool _isComplete = false;
+    private int _updateProgress = 0;
+    private int _totalInvestments = 0;
+    private StockPriceUpdateResult _result = new StockPriceUpdateResult();
+
+    protected override void OnInitialized()
+    {
+        _totalInvestments = Investments.Count();
+    }
+
+    private async Task StartUpdate()
+    {
+        _isUpdating = true;
+        _updateProgress = 0;
+        StateHasChanged();
+
+        // Create a progress callback
+        var investmentsList = Investments.ToList();
+        _result = new StockPriceUpdateResult();
+        
+        foreach (var investment in investmentsList)
+        {
+            var success = await StockPriceService.UpdatePriceAsync(investment);
+            if (success)
+            {
+                _result.SuccessCount++;
+            }
+            else
+            {
+                _result.FailedCount++;
+                _result.Errors.Add($"{investment.Name}");
+            }
+            
+            _updateProgress++;
+            StateHasChanged();
+            
+            // Small delay to avoid rate limiting
+            await Task.Delay(500);
+        }
+
+        _isUpdating = false;
+        _isComplete = true;
+        StateHasChanged();
+    }
+
+    private void Close()
+    {
+        MudDialog.Close(DialogResult.Ok(_result));
+    }
+
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+}

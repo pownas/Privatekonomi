@@ -151,36 +151,42 @@ public static class TestDataSeeder
             {
                 InvestmentId = 1,
                 Name = "Volvo B",
+                ShortName = "VOLV-B",
                 Type = "Aktie",
                 Quantity = 100,
                 PurchasePrice = 245.50m,
                 CurrentPrice = 268.75m,
                 PurchaseDate = DateTime.Now.AddMonths(-6),
                 LastUpdated = DateTime.Now.AddDays(-1),
+                Market = "Stockholm",
                 CreatedAt = DateTime.UtcNow
             },
             new Investment
             {
                 InvestmentId = 2,
                 Name = "SEB A",
+                ShortName = "SEB-A",
                 Type = "Aktie",
                 Quantity = 50,
                 PurchasePrice = 152.30m,
                 CurrentPrice = 165.20m,
                 PurchaseDate = DateTime.Now.AddMonths(-8),
                 LastUpdated = DateTime.Now.AddDays(-2),
+                Market = "Stockholm",
                 CreatedAt = DateTime.UtcNow
             },
             new Investment
             {
                 InvestmentId = 3,
                 Name = "Investor B",
+                ShortName = "INVE-B",
                 Type = "Aktie",
                 Quantity = 75,
                 PurchasePrice = 289.00m,
                 CurrentPrice = 312.50m,
                 PurchaseDate = DateTime.Now.AddMonths(-4),
                 LastUpdated = DateTime.Now.AddDays(-1),
+                Market = "Stockholm",
                 CreatedAt = DateTime.UtcNow
             },
             new Investment
@@ -223,24 +229,28 @@ public static class TestDataSeeder
             {
                 InvestmentId = 7,
                 Name = "Ericsson B",
+                ShortName = "ERIC-B",
                 Type = "Aktie",
                 Quantity = 250,
                 PurchasePrice = 58.20m,
                 CurrentPrice = 62.15m,
                 PurchaseDate = DateTime.Now.AddMonths(-5),
                 LastUpdated = DateTime.Now,
+                Market = "Stockholm",
                 CreatedAt = DateTime.UtcNow
             },
             new Investment
             {
                 InvestmentId = 8,
                 Name = "Nordea",
+                ShortName = "NDA-SE",
                 Type = "Aktie",
                 Quantity = 80,
                 PurchasePrice = 125.40m,
                 CurrentPrice = 118.90m,
                 PurchaseDate = DateTime.Now.AddMonths(-3),
                 LastUpdated = DateTime.Now.AddDays(-1),
+                Market = "Stockholm",
                 CreatedAt = DateTime.UtcNow
             }
         };
