@@ -31,8 +31,7 @@ public class GoalService : IGoalService
 
     public async Task<Goal> CreateGoalAsync(Goal goal)
     {
-        goal.CreatedDate = DateTime.Now;
-        goal.Status = GoalStatus.Active;
+        goal.CreatedAt = DateTime.UtcNow;
         
         _context.Goals.Add(goal);
         await _context.SaveChangesAsync();
@@ -59,16 +58,20 @@ public class GoalService : IGoalService
 
     public async Task<IEnumerable<Goal>> GetActiveGoalsAsync()
     {
+        // Return goals that are not yet completed (current amount < target or target date in future)
         return await _context.Goals
-            .Where(g => g.Status == GoalStatus.Active)
-            .OrderBy(g => g.TargetDate)
+            .Include(g => g.FundedFromBankSource)
+            .Where(g => g.CurrentAmount < g.TargetAmount || (g.TargetDate.HasValue && g.TargetDate.Value > DateTime.UtcNow))
+            .OrderBy(g => g.Priority)
+            .ThenBy(g => g.TargetDate)
             .ToListAsync();
     }
 
     public async Task<decimal> GetTotalProgress()
     {
+        // Calculate progress for goals not yet completed
         var activeGoals = await _context.Goals
-            .Where(g => g.Status == GoalStatus.Active)
+            .Where(g => g.CurrentAmount < g.TargetAmount)
             .ToListAsync();
 
         if (!activeGoals.Any())

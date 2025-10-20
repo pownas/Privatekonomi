@@ -279,18 +279,5 @@ public class PrivatekonomyContext : DbContext
                 .HasForeignKey(e => e.HouseholdMemberId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
-
-        modelBuilder.Entity<Goal>(entity =>
-        {
-            entity.HasKey(e => e.GoalId);
-            entity.Property(e => e.Name).IsRequired().HasMaxLength(200);
-            entity.Property(e => e.Description).HasMaxLength(500);
-            entity.Property(e => e.TargetAmount).HasPrecision(18, 2);
-            entity.Property(e => e.CurrentAmount).HasPrecision(18, 2);
-            entity.Property(e => e.TargetDate).IsRequired();
-            entity.Property(e => e.CreatedDate).IsRequired();
-            entity.Property(e => e.Status).IsRequired();
-            entity.Property(e => e.Color).IsRequired().HasMaxLength(7);
-        });
     }
 }
