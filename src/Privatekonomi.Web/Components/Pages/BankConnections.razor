@@ -1,0 +1,193 @@
+@page "/bank-connections"
+@rendermode InteractiveServer
+@inject ISnackbar Snackbar
+@inject NavigationManager Navigation
+@inject HttpClient Http
+@using Privatekonomi.Core.Models
+@using Privatekonomi.Core.Services
+
+<PageTitle>Bankkopplingar - Privatekonomi</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-4">Bankkopplingar</MudText>
+
+<MudText Typo="Typo.body1" Class="mb-4">
+    Anslut dina bankkonton via PSD2-API för automatisk transaktionsimport. Stöd för Swedbank, Avanza Bank och ICA Banken.
+</MudText>
+
+@if (_loading)
+{
+    <MudProgressCircular Indeterminate="true" />
+}
+else
+{
+    <MudPaper Class="pa-4 mb-4">
+        <div class="d-flex justify-space-between align-center mb-4">
+            <MudText Typo="Typo.h6">Mina bankkopplingar</MudText>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" 
+                       StartIcon="@Icons.Material.Filled.Add" OnClick="ShowAddConnectionDialog">
+                Lägg till bank
+            </MudButton>
+        </div>
+
+        @if (_connections == null || !_connections.Any())
+        {
+            <MudAlert Severity="Severity.Info" Class="mb-4">
+                Du har inga aktiva bankkopplingar. Klicka på "Lägg till bank" för att komma igång.
+            </MudAlert>
+        }
+        else
+        {
+            <MudTable Items="_connections" Hover="true" Striped="true">
+                <HeaderContent>
+                    <MudTh>Bank</MudTh>
+                    <MudTh>Konto</MudTh>
+                    <MudTh>Status</MudTh>
+                    <MudTh>Senast synkad</MudTh>
+                    <MudTh>Auto-sync</MudTh>
+                    <MudTh>Åtgärder</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Bank">
+                        @if (context.BankSource != null)
+                        {
+                            <MudChip T="string" Color="Color.Primary" Size="Size.Small">@context.BankSource.Name</MudChip>
+                        }
+                    </MudTd>
+                    <MudTd DataLabel="Konto">@(context.ExternalAccountId ?? "Ej angivet")</MudTd>
+                    <MudTd DataLabel="Status">
+                        @if (context.Status == "Active")
+                        {
+                            <MudChip T="string" Color="Color.Success" Size="Size.Small">Aktiv</MudChip>
+                        }
+                        else if (context.Status == "Expired")
+                        {
+                            <MudChip T="string" Color="Color.Warning" Size="Size.Small">Utgången</MudChip>
+                        }
+                        else
+                        {
+                            <MudChip T="string" Color="Color.Error" Size="Size.Small">Fel</MudChip>
+                        }
+                    </MudTd>
+                    <MudTd DataLabel="Senast synkad">
+                        @(context.LastSyncedAt?.ToString("yyyy-MM-dd HH:mm") ?? "Aldrig")
+                    </MudTd>
+                    <MudTd DataLabel="Auto-sync">
+                        @(context.AutoSyncEnabled ? "Ja" : "Nej")
+                    </MudTd>
+                    <MudTd DataLabel="Åtgärder">
+                        <MudIconButton Icon="@Icons.Material.Filled.Sync" 
+                                      Color="Color.Primary" 
+                                      Size="Size.Small"
+                                      OnClick="@(() => SyncConnection(context))"
+                                      Title="Synkronisera nu" />
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" 
+                                      Color="Color.Error" 
+                                      Size="Size.Small"
+                                      OnClick="@(() => DeleteConnection(context))"
+                                      Title="Ta bort" />
+                    </MudTd>
+                </RowTemplate>
+            </MudTable>
+        }
+    </MudPaper>
+
+    <MudPaper Class="pa-4">
+        <MudText Typo="Typo.h6" Class="mb-2">Information om PSD2-API</MudText>
+        <MudText Typo="Typo.body2" Class="mb-2">
+            PSD2 (Payment Services Directive 2) är ett EU-direktiv som kräver att banker tillhandahåller API:er 
+            för säker åtkomst till kontoinformation.
+        </MudText>
+        <MudAlert Severity="Severity.Info" Class="mt-2">
+            <MudText Typo="Typo.body2">
+                <strong>Obs:</strong> För att använda API-import behöver du konfigurera klient-credentials 
+                i applikationens konfiguration. Se 
+                <MudLink Href="/wiki/PSD2_API_GUIDE.md" Target="_blank">PSD2 API Guide</MudLink> 
+                för mer information.
+            </MudText>
+        </MudAlert>
+    </MudPaper>
+}
+
+@code {
+    private bool _loading = true;
+    private List<BankConnection>? _connections;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadConnections();
+    }
+
+    private async Task LoadConnections()
+    {
+        _loading = true;
+        try
+        {
+            // TODO: Call API endpoint to get connections
+            // For now, we'll initialize empty list
+            _connections = new List<BankConnection>();
+            
+            Snackbar.Add("Bankkopplingar laddade", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Fel vid laddning av bankkopplingar: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task ShowAddConnectionDialog()
+    {
+        Snackbar.Add("Lägg till bank-funktionalitet kommer snart!", Severity.Info);
+        
+        // TODO: Show dialog to select bank and initiate OAuth flow
+        // 1. Get available banks from API
+        // 2. User selects bank
+        // 3. Initiate OAuth authorization
+        // 4. Redirect to bank's login page
+        // 5. Handle callback and save connection
+    }
+
+    private async Task SyncConnection(BankConnection connection)
+    {
+        try
+        {
+            Snackbar.Add($"Synkroniserar {connection.BankSource?.Name}...", Severity.Info);
+            
+            // TODO: Call API endpoint to sync transactions
+            // For now, just show a message
+            
+            await Task.Delay(1000); // Simulate API call
+            
+            Snackbar.Add("Synkronisering slutförd", Severity.Success);
+            await LoadConnections();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Fel vid synkronisering: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task DeleteConnection(BankConnection connection)
+    {
+        try
+        {
+            // Show confirmation message
+            Snackbar.Add(
+                $"Är du säker på att du vill ta bort kopplingen till {connection.BankSource?.Name}? (Funktionen är inte implementerad ännu)",
+                Severity.Warning
+            );
+
+            // TODO: Implement proper confirmation dialog
+            // TODO: Call API endpoint to delete connection
+            // Snackbar.Add("Bankkoppling borttagen", Severity.Success);
+            // await LoadConnections();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Fel vid borttagning: {ex.Message}", Severity.Error);
+        }
+    }
+}
