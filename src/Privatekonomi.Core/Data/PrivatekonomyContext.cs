@@ -15,6 +15,7 @@ public class PrivatekonomyContext : DbContext
     public DbSet<TransactionCategory> TransactionCategories { get; set; }
     public DbSet<Loan> Loans { get; set; }
     public DbSet<Investment> Investments { get; set; }
+    public DbSet<Asset> Assets { get; set; }
     public DbSet<Budget> Budgets { get; set; }
     public DbSet<BudgetCategory> BudgetCategories { get; set; }
     public DbSet<BankSource> BankSources { get; set; }
@@ -136,6 +137,23 @@ public class PrivatekonomyContext : DbContext
             entity.Property(e => e.Amortization).HasPrecision(18, 2);
             entity.Property(e => e.Currency).IsRequired().HasMaxLength(3);
             entity.Property(e => e.CreatedAt).IsRequired();
+        });
+        
+        modelBuilder.Entity<Asset>(entity =>
+        {
+            entity.HasKey(e => e.AssetId);
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(200);
+            entity.Property(e => e.Type).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.Description).HasMaxLength(500);
+            entity.Property(e => e.PurchaseValue).HasPrecision(18, 2);
+            entity.Property(e => e.CurrentValue).HasPrecision(18, 2);
+            entity.Property(e => e.Currency).IsRequired().HasMaxLength(3);
+            entity.Property(e => e.Location).HasMaxLength(200);
+            entity.Property(e => e.CreatedAt).IsRequired();
+            
+            // Ignore computed properties
+            entity.Ignore(e => e.ValueChange);
+            entity.Ignore(e => e.ValueChangePercentage);
         });
         
         modelBuilder.Entity<Investment>(entity =>
