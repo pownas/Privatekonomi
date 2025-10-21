@@ -25,6 +25,7 @@ builder.Services.AddScoped<IInvestmentService, InvestmentService>();
 builder.Services.AddScoped<IBudgetService, BudgetService>();
 builder.Services.AddScoped<IBankSourceService, BankSourceService>();
 builder.Services.AddScoped<IBankConnectionService, BankConnectionService>();
+builder.Services.AddScoped<IGoalService, GoalService>();
 
 // Register HttpClient for bank API services
 builder.Services.AddHttpClient();
