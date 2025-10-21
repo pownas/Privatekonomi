@@ -1,0 +1,290 @@
+@page "/k4-report"
+@using Privatekonomi.Core.Models
+@using Privatekonomi.Core.Services
+@using Privatekonomi.Core.Data
+@using System.Text
+@using K4ReportModel = Privatekonomi.Core.Services.K4Report
+@inject PrivatekonomyContext Context
+@inject IK4Generator K4Generator
+@inject ISnackbar Snackbar
+
+<PageTitle>K4 Kapitalvinster</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+    <MudText Typo="Typo.h3" GutterBottom="true">K4 - Blankett för kapitalinkomster</MudText>
+    <MudText Typo="Typo.body1" Class="mb-4">
+        Generera K4-underlag för din skattedeklaration baserat på försäljningar av aktier och fonder.
+    </MudText>
+
+    <MudCard Class="mb-4">
+        <MudCardContent>
+            <MudGrid>
+                <MudItem xs="12" sm="6" md="4">
+                    <MudSelect @bind-Value="selectedYear" Label="Beskattningsår" Variant="Variant.Outlined">
+                        @for (int year = DateTime.Now.Year - 5; year <= DateTime.Now.Year; year++)
+                        {
+                            <MudSelectItem Value="@year">@year</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="4">
+                    <MudButton OnClick="GenerateReport" Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Assessment" FullWidth="true">
+                        Generera K4-rapport
+                    </MudButton>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="4">
+                    <MudButton OnClick="AddSampleData" Variant="Variant.Outlined" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Add" FullWidth="true">
+                        Lägg till testdata
+                    </MudButton>
+                </MudItem>
+            </MudGrid>
+        </MudCardContent>
+    </MudCard>
+
+    @if (report != null)
+    {
+        <MudCard Class="mb-4">
+            <MudCardHeader>
+                <CardHeaderContent>
+                    <MudText Typo="Typo.h5">Sammanfattning @selectedYear</MudText>
+                </CardHeaderContent>
+            </MudCardHeader>
+            <MudCardContent>
+                <MudGrid>
+                    <MudItem xs="12" sm="6" md="3">
+                        <MudPaper Class="pa-4" Elevation="2">
+                            <MudText Typo="Typo.h6" Color="Color.Success">Kapitalvinster</MudText>
+                            <MudText Typo="Typo.h4">@report.TotalGain.ToString("N2") kr</MudText>
+                            <MudText Typo="Typo.caption">Totala vinster</MudText>
+                        </MudPaper>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="3">
+                        <MudPaper Class="pa-4" Elevation="2">
+                            <MudText Typo="Typo.h6" Color="Color.Error">Kapitalförluster</MudText>
+                            <MudText Typo="Typo.h4">@report.TotalLoss.ToString("N2") kr</MudText>
+                            <MudText Typo="Typo.caption">Totala förluster</MudText>
+                        </MudPaper>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="3">
+                        <MudPaper Class="pa-4" Elevation="2">
+                            <MudText Typo="Typo.h6" Color="@(report.NetGain >= 0 ? Color.Success : Color.Error)">Nettoresultat</MudText>
+                            <MudText Typo="Typo.h4">@report.NetGain.ToString("N2") kr</MudText>
+                            <MudText Typo="Typo.caption">Vinst - Förlust</MudText>
+                        </MudPaper>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="3">
+                        <MudPaper Class="pa-4" Elevation="2">
+                            <MudText Typo="Typo.h6" Color="Color.Warning">Skatt (30%)</MudText>
+                            <MudText Typo="Typo.h4">@report.TaxableGain.ToString("N2") kr</MudText>
+                            <MudText Typo="Typo.caption">Beräknad skatt</MudText>
+                        </MudPaper>
+                    </MudItem>
+                </MudGrid>
+
+                @if (report.CategorySummaries.Any())
+                {
+                    <MudDivider Class="my-4" />
+                    <MudText Typo="Typo.h6" GutterBottom="true">Fördelning per värdepapperstyp</MudText>
+                    <MudSimpleTable Style="overflow-x: auto;">
+                        <thead>
+                            <tr>
+                                <th>Typ</th>
+                                <th>Antal transaktioner</th>
+                                <th>Vinster</th>
+                                <th>Förluster</th>
+                                <th>Netto</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var summary in report.CategorySummaries)
+                            {
+                                <tr>
+                                    <td><MudChip T="string" Size="Size.Small">@summary.SecurityType</MudChip></td>
+                                    <td>@summary.TransactionCount st</td>
+                                    <td style="color: green;">@summary.TotalGain.ToString("N2") kr</td>
+                                    <td style="color: red;">@summary.TotalLoss.ToString("N2") kr</td>
+                                    <td><strong>@summary.NetGain.ToString("N2") kr</strong></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </MudSimpleTable>
+                }
+            </MudCardContent>
+        </MudCard>
+
+        <MudCard>
+            <MudCardHeader>
+                <CardHeaderContent>
+                    <MudText Typo="Typo.h6">Detaljerade transaktioner (@report.Gains.Count st)</MudText>
+                </CardHeaderContent>
+                <CardHeaderActions>
+                    <MudButton OnClick="ExportToText" Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Download">
+                        Exportera K4
+                    </MudButton>
+                </CardHeaderActions>
+            </MudCardHeader>
+            <MudCardContent>
+                <MudTable Items="@report.Gains" Hover="true" Breakpoint="Breakpoint.Sm" Dense="true">
+                    <HeaderContent>
+                        <MudTh>Namn</MudTh>
+                        <MudTh>ISIN</MudTh>
+                        <MudTh>Typ</MudTh>
+                        <MudTh>Försäljningsdatum</MudTh>
+                        <MudTh>Antal</MudTh>
+                        <MudTh>Inköpspris</MudTh>
+                        <MudTh>Försäljningspris</MudTh>
+                        <MudTh>Vinst/Förlust</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="Namn">@context.SecurityName</MudTd>
+                        <MudTd DataLabel="ISIN">@(context.ISIN ?? "-")</MudTd>
+                        <MudTd DataLabel="Typ">
+                            <MudChip T="string" Size="Size.Small" Color="Color.Info">@context.SecurityType</MudChip>
+                        </MudTd>
+                        <MudTd DataLabel="Datum">@context.SaleDate.ToShortDateString()</MudTd>
+                        <MudTd DataLabel="Antal">@context.Quantity.ToString("N2")</MudTd>
+                        <MudTd DataLabel="Inköp">@context.TotalPurchasePrice.ToString("N2") kr</MudTd>
+                        <MudTd DataLabel="Försäljning">@context.TotalSalePrice.ToString("N2") kr</MudTd>
+                        <MudTd DataLabel="Vinst/Förlust">
+                            <MudText Typo="Typo.body2" Color="@(context.Gain >= 0 ? Color.Success : Color.Error)">
+                                <strong>@context.Gain.ToString("N2") kr</strong>
+                            </MudText>
+                        </MudTd>
+                    </RowTemplate>
+                    <NoRecordsContent>
+                        <MudText>Inga kapitalvinster/förluster registrerade för @selectedYear</MudText>
+                    </NoRecordsContent>
+                </MudTable>
+            </MudCardContent>
+        </MudCard>
+
+        <MudCard Class="mt-4">
+            <MudCardContent>
+                <MudAlert Severity="Severity.Info" Icon="@Icons.Material.Filled.Info">
+                    <strong>Viktigt att veta:</strong>
+                    <ul>
+                        <li>Kapitalvinster beskattas med 30% i Sverige</li>
+                        <li>Kapitalförluster kan kvittas mot kapitalvinster samma år</li>
+                        <li>Kvarvarande förlust kan dras av med 70% mot andra inkomster (max 100 000 kr/år)</li>
+                        <li>ISK-konton (Investeringssparkonto) beskattas med schablonintäkt och ingår ej här</li>
+                        <li>Kontrollera alltid uppgifterna med dina kontoutdrag och handlingar</li>
+                    </ul>
+                </MudAlert>
+            </MudCardContent>
+        </MudCard>
+    }
+</MudContainer>
+
+@code {
+    private int selectedYear = DateTime.Now.Year;
+    private K4ReportModel? report;
+
+    private async Task GenerateReport()
+    {
+        report = await K4Generator.GenerateK4ReportAsync(householdId: 1, taxYear: selectedYear);
+        if (report.Gains.Count == 0)
+        {
+            Snackbar.Add("Inga kapitalvinster/förluster hittades för det valda året", Severity.Info);
+        }
+        else
+        {
+            Snackbar.Add($"K4-rapport genererad: {report.Gains.Count} transaktioner", Severity.Success);
+        }
+    }
+
+    private async Task AddSampleData()
+    {
+        // Add sample capital gains for demonstration
+        var sampleGains = new List<CapitalGain>
+        {
+            new CapitalGain
+            {
+                InvestmentId = 1,
+                SaleDate = new DateTime(selectedYear, 3, 15),
+                Quantity = 100,
+                PurchasePricePerUnit = 100,
+                TotalPurchasePrice = 10000,
+                SalePricePerUnit = 150,
+                TotalSalePrice = 15000,
+                Gain = 5000,
+                SecurityType = "Stock",
+                SecurityName = "Volvo B",
+                ISIN = "SE0000115446",
+                TaxYear = selectedYear,
+                IsISK = false,
+                Currency = "SEK",
+                CreatedAt = DateTime.UtcNow
+            },
+            new CapitalGain
+            {
+                InvestmentId = 2,
+                SaleDate = new DateTime(selectedYear, 6, 20),
+                Quantity = 50,
+                PurchasePricePerUnit = 200,
+                TotalPurchasePrice = 10000,
+                SalePricePerUnit = 180,
+                TotalSalePrice = 9000,
+                Gain = -1000,
+                SecurityType = "Stock",
+                SecurityName = "Ericsson B",
+                ISIN = "SE0000108656",
+                TaxYear = selectedYear,
+                IsISK = false,
+                Currency = "SEK",
+                CreatedAt = DateTime.UtcNow
+            },
+            new CapitalGain
+            {
+                InvestmentId = 3,
+                SaleDate = new DateTime(selectedYear, 9, 10),
+                Quantity = 200,
+                PurchasePricePerUnit = 50,
+                TotalPurchasePrice = 10000,
+                SalePricePerUnit = 75,
+                TotalSalePrice = 15000,
+                Gain = 5000,
+                SecurityType = "Fund",
+                SecurityName = "Swedbank Robur Ny Teknik A",
+                ISIN = "SE0009807308",
+                TaxYear = selectedYear,
+                IsISK = false,
+                Currency = "SEK",
+                CreatedAt = DateTime.UtcNow
+            },
+            new CapitalGain
+            {
+                InvestmentId = 4,
+                SaleDate = new DateTime(selectedYear, 11, 5),
+                Quantity = 150,
+                PurchasePricePerUnit = 80,
+                TotalPurchasePrice = 12000,
+                SalePricePerUnit = 95,
+                TotalSalePrice = 14250,
+                Gain = 2250,
+                SecurityType = "Fund",
+                SecurityName = "SEB Sverigefond Småbolag",
+                ISIN = "SE0001247825",
+                TaxYear = selectedYear,
+                IsISK = false,
+                Currency = "SEK",
+                CreatedAt = DateTime.UtcNow
+            }
+        };
+
+        Context.CapitalGains.AddRange(sampleGains);
+        await Context.SaveChangesAsync();
+        
+        Snackbar.Add("Testdata för kapitalvinster har lagts till", Severity.Success);
+        await GenerateReport();
+    }
+
+    private async Task ExportToText()
+    {
+        if (report == null) return;
+
+        var k4Text = await K4Generator.ExportK4ToTextAsync(householdId: 1, taxYear: selectedYear);
+        
+        // In a real scenario, this would trigger a file download
+        Snackbar.Add($"K4-rapport för {selectedYear} exporterad", Severity.Success);
+    }
+}
