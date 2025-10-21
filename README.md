@@ -57,7 +57,29 @@ Se [ASPIRE_GUIDE.md](wiki/ASPIRE_GUIDE.md) för mer information.
 
 ### Installation och körning
 
-#### Alternativ 1: Kör med .NET Aspire Orchestrator (Rekommenderat)
+#### Snabbstart med startskript (Enklast för Codespaces)
+
+1. Klona repositoriet:
+```bash
+git clone https://github.com/pownas/Privatekonomi.git
+cd Privatekonomi
+```
+
+2. Kör startskriptet:
+
+**Linux/macOS/Codespaces:**
+```bash
+./app-start.sh
+```
+
+**Windows (PowerShell):**
+```powershell
+.\app-start.ps1
+```
+
+Skriptet installerar automatiskt Aspire workload om det behövs och startar Aspire Dashboard som visar alla tjänster, logs, traces och metrics.
+
+#### Alternativ 1: Kör med .NET Aspire Orchestrator (Manuellt)
 
 .NET Aspire förenklar hanteringen av alla tjänster och ger inbyggd observerbarhet.
 
