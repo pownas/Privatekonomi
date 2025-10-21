@@ -18,6 +18,11 @@ En privatekonomi-applikation byggd med .NET 9, Blazor Server och MudBlazor för 
 - **CSV-import**: 
   - Import av transaktioner från ICA-banken och Swedbank
   - Import av investeringar från Avanza Bank med dubbletthantering
+- **Automatisk bankimport via PSD2-API** (NYT!):
+  - Stöd för Swedbank, Avanza Bank och ICA Banken
+  - OAuth2-baserad autentisering med BankID
+  - Automatisk synkronisering av transaktioner
+  - Realtidsdata från banken
 - **CSV-export**: Exportera investeringar för analys och rapportering
 - **Förbättrad datamodell**: Utökade modeller med audit trail, valutastöd och mer
 
@@ -262,6 +267,7 @@ builder.Services.AddDbContext<PrivatekonomyContext>(options =>
 ### Användarguider
 
 - **[CSV_IMPORT_GUIDE.md](wiki/CSV_IMPORT_GUIDE.md)**: Guide för import av transaktioner från ICA-banken och Swedbank
+- **[PSD2_API_GUIDE.md](wiki/PSD2_API_GUIDE.md)**: Guide för automatisk bankimport via PSD2-API (Swedbank, Avanza, ICA Banken)
 - **[AVANZA_IMPORT_GUIDE.md](wiki/AVANZA_IMPORT_GUIDE.md)**: Guide för import av investeringar från Avanza Bank
 - **[STOCK_PRICE_API_GUIDE.md](wiki/STOCK_PRICE_API_GUIDE.md)**: Guide för automatisk uppdatering av aktiekurser via API
 - **[BUDGET_GUIDE.md](wiki/BUDGET_GUIDE.md)**: Guide för budgethantering
@@ -307,9 +313,10 @@ Se [tests/playwright/README.md](tests/playwright/README.md) för detaljerad doku
 - [x] Implementera CSV-import från Avanza för investeringar
 - [x] Exportera investeringar till CSV
 - [x] Automatisk uppdatering av aktiekurser via API
+- [x] Automatisk bankimport / PSD2-API-stöd (Swedbank, Avanza, ICA Banken)
+- [ ] Grafiskt gränssnitt för hantering av bankkopplingar
 - [ ] Exportera transaktioner och budget till Excel/CSV
 - [ ] Lägg till diagram och grafer på Dashboard
-- [ ] Integration med bank-API:er för transaktioner
 - [ ] Mobilapp med samma funktionalitet
 - [ ] Förbättra automatisk kategorisering med ML
 
