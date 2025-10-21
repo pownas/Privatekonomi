@@ -1,9 +1,11 @@
 @page "/transactions"
 @rendermode InteractiveServer
 @inject ITransactionService TransactionService
+@inject IExportService ExportService
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
 @inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
 
 <PageTitle>Transaktioner - Privatekonomi</PageTitle>
 
@@ -16,6 +18,14 @@
                        OnClick="@(() => Navigation.NavigateTo("/transactions/new"))">
                 Ny Transaktion
             </MudButton>
+            <MudButtonGroup Color="Color.Primary" Variant="Variant.Outlined">
+                <MudButton StartIcon="@Icons.Material.Filled.Download" OnClick="ExportToCsv">
+                    Exportera CSV
+                </MudButton>
+                <MudButton StartIcon="@Icons.Material.Filled.Download" OnClick="ExportToJson">
+                    Exportera JSON
+                </MudButton>
+            </MudButtonGroup>
         </MudItem>
     </MudGrid>
 
@@ -185,5 +195,43 @@
             Snackbar.Add("Transaktion borttagen", Severity.Success);
             await LoadData();
         }
+    }
+
+    private async Task ExportToCsv()
+    {
+        try
+        {
+            var csvData = await ExportService.ExportTransactionsToCsvAsync();
+            var fileName = $"transaktioner_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
+            
+            await DownloadFile(csvData, fileName, "text/csv");
+            Snackbar.Add("Transaktioner exporterade till CSV", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Ett fel uppstod vid export: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task ExportToJson()
+    {
+        try
+        {
+            var jsonData = await ExportService.ExportTransactionsToJsonAsync();
+            var fileName = $"transaktioner_{DateTime.Now:yyyyMMdd_HHmmss}.json";
+            
+            await DownloadFile(jsonData, fileName, "application/json");
+            Snackbar.Add("Transaktioner exporterade till JSON", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Ett fel uppstod vid export: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task DownloadFile(byte[] fileData, string fileName, string contentType)
+    {
+        var base64 = Convert.ToBase64String(fileData);
+        await JSRuntime.InvokeVoidAsync("downloadFile", fileName, contentType, base64);
     }
 }
