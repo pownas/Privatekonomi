@@ -7,26 +7,48 @@ namespace Privatekonomi.Core.Services;
 public class BankSourceService : IBankSourceService
 {
     private readonly PrivatekonomyContext _context;
+    private readonly ICurrentUserService? _currentUserService;
 
-    public BankSourceService(PrivatekonomyContext context)
+    public BankSourceService(PrivatekonomyContext context, ICurrentUserService? currentUserService = null)
     {
         _context = context;
+        _currentUserService = currentUserService;
     }
 
     public async Task<IEnumerable<BankSource>> GetAllBankSourcesAsync()
     {
-        return await _context.BankSources
-            .OrderBy(b => b.Name)
-            .ToListAsync();
+        var query = _context.BankSources.AsQueryable();
+
+        // Filter by current user if authenticated
+        if (_currentUserService?.IsAuthenticated == true && _currentUserService.UserId != null)
+        {
+            query = query.Where(b => b.UserId == _currentUserService.UserId);
+        }
+
+        return await query.OrderBy(b => b.Name).ToListAsync();
     }
 
     public async Task<BankSource?> GetBankSourceByIdAsync(int id)
     {
-        return await _context.BankSources.FindAsync(id);
+        var query = _context.BankSources.AsQueryable();
+
+        // Filter by current user if authenticated
+        if (_currentUserService?.IsAuthenticated == true && _currentUserService.UserId != null)
+        {
+            query = query.Where(b => b.UserId == _currentUserService.UserId);
+        }
+
+        return await query.FirstOrDefaultAsync(b => b.BankSourceId == id);
     }
 
     public async Task<BankSource> CreateBankSourceAsync(BankSource bankSource)
     {
+        // Set user ID for new bank sources
+        if (_currentUserService?.IsAuthenticated == true && _currentUserService.UserId != null)
+        {
+            bankSource.UserId = _currentUserService.UserId;
+        }
+        
         _context.BankSources.Add(bankSource);
         await _context.SaveChangesAsync();
         return bankSource;
