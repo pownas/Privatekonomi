@@ -20,18 +20,12 @@ public class SalaryHistoryController : ControllerBase
         _logger = logger;
     }
 
-    private string GetUserId()
-    {
-        return User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
-    }
-
     [HttpGet]
     public async Task<ActionResult<IEnumerable<SalaryHistory>>> GetAll()
     {
         try
         {
-            var userId = GetUserId();
-            var salaries = await _salaryHistoryService.GetAllSalaryHistoriesAsync(userId);
+            var salaries = await _salaryHistoryService.GetAllSalaryHistoriesAsync(string.Empty);
             return Ok(salaries);
         }
         catch (Exception ex)
@@ -46,8 +40,7 @@ public class SalaryHistoryController : ControllerBase
     {
         try
         {
-            var userId = GetUserId();
-            var salary = await _salaryHistoryService.GetSalaryHistoryByIdAsync(id, userId);
+            var salary = await _salaryHistoryService.GetSalaryHistoryByIdAsync(id, string.Empty);
             
             if (salary == null)
                 return NotFound();
@@ -66,8 +59,7 @@ public class SalaryHistoryController : ControllerBase
     {
         try
         {
-            var userId = GetUserId();
-            var salary = await _salaryHistoryService.GetCurrentSalaryAsync(userId);
+            var salary = await _salaryHistoryService.GetCurrentSalaryAsync(string.Empty);
             
             if (salary == null)
                 return NotFound();
@@ -88,8 +80,7 @@ public class SalaryHistoryController : ControllerBase
     {
         try
         {
-            var userId = GetUserId();
-            var salaries = await _salaryHistoryService.GetSalaryHistoriesByPeriodAsync(userId, startPeriod, endPeriod);
+            var salaries = await _salaryHistoryService.GetSalaryHistoriesByPeriodAsync(string.Empty, startPeriod, endPeriod);
             return Ok(salaries);
         }
         catch (Exception ex)
@@ -104,8 +95,7 @@ public class SalaryHistoryController : ControllerBase
     {
         try
         {
-            var userId = GetUserId();
-            var average = await _salaryHistoryService.GetAverageSalaryAsync(userId, months);
+            var average = await _salaryHistoryService.GetAverageSalaryAsync(string.Empty, months);
             return Ok(new { averageSalary = average, months });
         }
         catch (Exception ex)
@@ -120,8 +110,7 @@ public class SalaryHistoryController : ControllerBase
     {
         try
         {
-            var userId = GetUserId();
-            var growth = await _salaryHistoryService.GetSalaryGrowthPercentageAsync(userId, months);
+            var growth = await _salaryHistoryService.GetSalaryGrowthPercentageAsync(string.Empty, months);
             return Ok(new { growthPercentage = growth, months });
         }
         catch (Exception ex)
@@ -136,9 +125,6 @@ public class SalaryHistoryController : ControllerBase
     {
         try
         {
-            var userId = GetUserId();
-            salaryHistory.UserId = userId;
-            
             var created = await _salaryHistoryService.AddSalaryHistoryAsync(salaryHistory);
             return CreatedAtAction(nameof(GetById), new { id = created.SalaryHistoryId }, created);
         }
@@ -154,15 +140,12 @@ public class SalaryHistoryController : ControllerBase
     {
         try
         {
-            var userId = GetUserId();
-            
             // Verify ownership
-            var existing = await _salaryHistoryService.GetSalaryHistoryByIdAsync(id, userId);
+            var existing = await _salaryHistoryService.GetSalaryHistoryByIdAsync(id, string.Empty);
             if (existing == null)
                 return NotFound();
             
             salaryHistory.SalaryHistoryId = id;
-            salaryHistory.UserId = userId;
             
             var updated = await _salaryHistoryService.UpdateSalaryHistoryAsync(salaryHistory);
             return Ok(updated);
@@ -179,14 +162,12 @@ public class SalaryHistoryController : ControllerBase
     {
         try
         {
-            var userId = GetUserId();
-            
             // Verify ownership
-            var existing = await _salaryHistoryService.GetSalaryHistoryByIdAsync(id, userId);
+            var existing = await _salaryHistoryService.GetSalaryHistoryByIdAsync(id, string.Empty);
             if (existing == null)
                 return NotFound();
             
-            await _salaryHistoryService.DeleteSalaryHistoryAsync(id, userId);
+            await _salaryHistoryService.DeleteSalaryHistoryAsync(id, string.Empty);
             return NoContent();
         }
         catch (Exception ex)
