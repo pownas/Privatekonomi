@@ -1,10 +1,11 @@
+using Microsoft.AspNetCore.Identity;
 using Privatekonomi.Core.Models;
 
 namespace Privatekonomi.Core.Data;
 
 public static class TestDataSeeder
 {
-    public static void SeedTestData(PrivatekonomyContext context)
+    public static async Task SeedTestDataAsync(PrivatekonomyContext context, UserManager<ApplicationUser> userManager)
     {
         // Check if there are already transactions to avoid duplicate seeding
         if (context.Transactions.Any())
@@ -12,14 +13,41 @@ public static class TestDataSeeder
             return;
         }
 
+        // Create test users first
+        var testUserId = await SeedUsers(userManager);
+        
+        // Seed data with user association
+        SeedTransactions(context, testUserId);
+        SeedInvestments(context, testUserId);
+        SeedAssets(context, testUserId);
+        SeedLoans(context, testUserId);
+        SeedBudgets(context, testUserId);
         SeedCategoryRules(context);
-        SeedTransactions(context);
-        SeedInvestments(context);
-        SeedAssets(context);
-        SeedLoans(context);
-        SeedBudgets(context);
         SeedHouseholds(context);
-        SeedGoals(context);
+        SeedGoals(context, testUserId);
+    }
+    
+    private static async Task<string> SeedUsers(UserManager<ApplicationUser> userManager)
+    {
+        // Create a test user
+        var testUser = new ApplicationUser
+        {
+            UserName = "test@example.com",
+            Email = "test@example.com",
+            FirstName = "Test",
+            LastName = "Användare",
+            EmailConfirmed = true,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        var existingUser = await userManager.FindByEmailAsync(testUser.Email);
+        if (existingUser == null)
+        {
+            await userManager.CreateAsync(testUser, "Test123!");
+            existingUser = testUser;
+        }
+
+        return existingUser.Id;
     }
 
     private static void SeedCategoryRules(PrivatekonomyContext context)
@@ -97,7 +125,7 @@ public static class TestDataSeeder
         context.SaveChanges();
     }
 
-    private static void SeedTransactions(PrivatekonomyContext context)
+    private static void SeedTransactions(PrivatekonomyContext context, string userId)
     {
 
         var random = new Random(42); // Fixed seed for reproducible data
@@ -173,7 +201,8 @@ public static class TestDataSeeder
                 Currency = "SEK",
                 Imported = false,
                 Cleared = true,
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                UserId = userId
             };
 
             transactions.Add(transaction);
@@ -208,7 +237,8 @@ public static class TestDataSeeder
                 Currency = "SEK",
                 Imported = false,
                 Cleared = false,
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                UserId = userId
             };
             
             transactions.Add(transaction);
@@ -221,7 +251,7 @@ public static class TestDataSeeder
         context.SaveChanges();
     }
 
-    private static void SeedInvestments(PrivatekonomyContext context)
+    private static void SeedInvestments(PrivatekonomyContext context, string userId)
     {
         var investments = new List<Investment>
         {
@@ -237,7 +267,8 @@ public static class TestDataSeeder
                 PurchaseDate = DateTime.Now.AddMonths(-6),
                 LastUpdated = DateTime.Now.AddDays(-1),
                 Market = "Stockholm",
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                UserId = userId
             },
             new Investment
             {
@@ -251,7 +282,8 @@ public static class TestDataSeeder
                 PurchaseDate = DateTime.Now.AddMonths(-8),
                 LastUpdated = DateTime.Now.AddDays(-2),
                 Market = "Stockholm",
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                UserId = userId
             },
             new Investment
             {
@@ -265,7 +297,8 @@ public static class TestDataSeeder
                 PurchaseDate = DateTime.Now.AddMonths(-4),
                 LastUpdated = DateTime.Now.AddDays(-1),
                 Market = "Stockholm",
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                UserId = userId
             },
             new Investment
             {
@@ -277,7 +310,8 @@ public static class TestDataSeeder
                 CurrentPrice = 138.40m,
                 PurchaseDate = DateTime.Now.AddMonths(-12),
                 LastUpdated = DateTime.Now.AddDays(-3),
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                UserId = userId
             },
             new Investment
             {
@@ -289,7 +323,8 @@ public static class TestDataSeeder
                 CurrentPrice = 104.80m,
                 PurchaseDate = DateTime.Now.AddMonths(-10),
                 LastUpdated = DateTime.Now.AddDays(-1),
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                UserId = userId
             },
             new Investment
             {
@@ -301,7 +336,8 @@ public static class TestDataSeeder
                 CurrentPrice = 232.90m,
                 PurchaseDate = DateTime.Now.AddMonths(-9),
                 LastUpdated = DateTime.Now.AddDays(-2),
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                UserId = userId
             },
             new Investment
             {
@@ -315,7 +351,8 @@ public static class TestDataSeeder
                 PurchaseDate = DateTime.Now.AddMonths(-5),
                 LastUpdated = DateTime.Now,
                 Market = "Stockholm",
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                UserId = userId
             },
             new Investment
             {
@@ -329,7 +366,8 @@ public static class TestDataSeeder
                 PurchaseDate = DateTime.Now.AddMonths(-3),
                 LastUpdated = DateTime.Now.AddDays(-1),
                 Market = "Stockholm",
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                UserId = userId
             }
         };
 
@@ -337,7 +375,7 @@ public static class TestDataSeeder
         context.SaveChanges();
     }
 
-    private static void SeedBudgets(PrivatekonomyContext context)
+    private static void SeedBudgets(PrivatekonomyContext context, string userId)
     {
         // Create a budget for the current month
         var now = DateTime.Now;
@@ -352,7 +390,8 @@ public static class TestDataSeeder
             StartDate = startOfMonth,
             EndDate = endOfMonth,
             Period = BudgetPeriod.Monthly,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
+            UserId = userId
         };
 
         // Add budget categories with planned amounts
@@ -378,7 +417,8 @@ public static class TestDataSeeder
             StartDate = prevMonthStart,
             EndDate = prevMonthEnd,
             Period = BudgetPeriod.Monthly,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
+            UserId = userId
         };
 
         var prevBudgetCategories = new List<BudgetCategory>
@@ -504,7 +544,7 @@ public static class TestDataSeeder
         context.SaveChanges();
     }
 
-    private static void SeedGoals(PrivatekonomyContext context)
+    private static void SeedGoals(PrivatekonomyContext context, string userId)
     {
         // Create sample savings goals
         var goals = new List<Goal>
@@ -519,7 +559,8 @@ public static class TestDataSeeder
                 TargetDate = DateTime.Now.AddMonths(12),
                 Priority = 1,
                 FundedFromBankSourceId = 1,
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                UserId = userId
             },
             new Goal
             {
@@ -531,7 +572,8 @@ public static class TestDataSeeder
                 TargetDate = DateTime.Now.AddMonths(6),
                 Priority = 2,
                 FundedFromBankSourceId = 1,
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                UserId = userId
             },
             new Goal
             {
@@ -543,7 +585,8 @@ public static class TestDataSeeder
                 TargetDate = DateTime.Now.AddMonths(18),
                 Priority = 1,
                 FundedFromBankSourceId = 2,
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                UserId = userId
             },
             new Goal
             {
@@ -554,7 +597,8 @@ public static class TestDataSeeder
                 CurrentAmount = 120000m,
                 TargetDate = DateTime.Now.AddMonths(24),
                 Priority = 1,
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                UserId = userId
             },
             new Goal
             {
@@ -566,7 +610,8 @@ public static class TestDataSeeder
                 TargetDate = DateTime.Now.AddMonths(3),
                 Priority = 3,
                 FundedFromBankSourceId = 1,
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                UserId = userId
             }
         };
 
@@ -574,7 +619,7 @@ public static class TestDataSeeder
         context.SaveChanges();
     }
 
-    private static void SeedAssets(PrivatekonomyContext context)
+    private static void SeedAssets(PrivatekonomyContext context, string userId)
     {
         var assets = new List<Asset>
         {
@@ -589,7 +634,8 @@ public static class TestDataSeeder
                 PurchaseDate = DateTime.Now.AddYears(-5),
                 Location = "Stockholm, Södermalm",
                 Currency = "SEK",
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                UserId = userId
             },
             new Asset
             {
@@ -602,7 +648,8 @@ public static class TestDataSeeder
                 PurchaseDate = DateTime.Now.AddYears(-3),
                 Location = "Stockholm",
                 Currency = "SEK",
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                UserId = userId
             },
             new Asset
             {
@@ -615,7 +662,8 @@ public static class TestDataSeeder
                 PurchaseDate = DateTime.Now.AddMonths(-6),
                 Location = "Hemkontor",
                 Currency = "SEK",
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                UserId = userId
             },
             new Asset
             {
@@ -628,7 +676,8 @@ public static class TestDataSeeder
                 PurchaseDate = DateTime.Now.AddYears(-2),
                 Location = "Lägenheten",
                 Currency = "SEK",
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                UserId = userId
             },
             new Asset
             {
@@ -641,7 +690,8 @@ public static class TestDataSeeder
                 PurchaseDate = DateTime.Now.AddYears(-1),
                 Location = "Vardagsrum",
                 Currency = "SEK",
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                UserId = userId
             },
             new Asset
             {
@@ -654,7 +704,8 @@ public static class TestDataSeeder
                 PurchaseDate = DateTime.Now.AddYears(-10),
                 Location = "Bankfack",
                 Currency = "SEK",
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                UserId = userId
             }
         };
 
@@ -662,7 +713,7 @@ public static class TestDataSeeder
         context.SaveChanges();
     }
 
-    private static void SeedLoans(PrivatekonomyContext context)
+    private static void SeedLoans(PrivatekonomyContext context, string userId)
     {
         var loans = new List<Loan>
         {
@@ -677,7 +728,8 @@ public static class TestDataSeeder
                 Currency = "SEK",
                 StartDate = DateTime.Now.AddYears(-5),
                 MaturityDate = DateTime.Now.AddYears(25),
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                UserId = userId
             },
             new Loan
             {
@@ -690,7 +742,8 @@ public static class TestDataSeeder
                 Currency = "SEK",
                 StartDate = DateTime.Now.AddYears(-3),
                 MaturityDate = DateTime.Now.AddYears(2),
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                UserId = userId
             },
             new Loan
             {
@@ -703,7 +756,8 @@ public static class TestDataSeeder
                 Currency = "SEK",
                 StartDate = DateTime.Now.AddYears(-8),
                 MaturityDate = DateTime.Now.AddYears(17),
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                UserId = userId
             }
         };
 

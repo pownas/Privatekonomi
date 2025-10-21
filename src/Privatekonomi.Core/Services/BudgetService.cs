@@ -7,32 +7,56 @@ namespace Privatekonomi.Core.Services;
 public class BudgetService : IBudgetService
 {
     private readonly PrivatekonomyContext _context;
+    private readonly ICurrentUserService? _currentUserService;
 
-    public BudgetService(PrivatekonomyContext context)
+    public BudgetService(PrivatekonomyContext context, ICurrentUserService? currentUserService = null)
     {
         _context = context;
+        _currentUserService = currentUserService;
     }
 
     public async Task<IEnumerable<Budget>> GetAllBudgetsAsync()
     {
-        return await _context.Budgets
+        var query = _context.Budgets
             .Include(b => b.BudgetCategories)
             .ThenInclude(bc => bc.Category)
-            .OrderByDescending(b => b.StartDate)
-            .ToListAsync();
+            .AsQueryable();
+
+        // Filter by current user if authenticated
+        if (_currentUserService?.IsAuthenticated == true && _currentUserService.UserId != null)
+        {
+            query = query.Where(b => b.UserId == _currentUserService.UserId);
+        }
+
+        return await query.OrderByDescending(b => b.StartDate).ToListAsync();
     }
 
     public async Task<Budget?> GetBudgetByIdAsync(int id)
     {
-        return await _context.Budgets
+        var query = _context.Budgets
             .Include(b => b.BudgetCategories)
             .ThenInclude(bc => bc.Category)
-            .FirstOrDefaultAsync(b => b.BudgetId == id);
+            .AsQueryable();
+
+        // Filter by current user if authenticated
+        if (_currentUserService?.IsAuthenticated == true && _currentUserService.UserId != null)
+        {
+            query = query.Where(b => b.UserId == _currentUserService.UserId);
+        }
+
+        return await query.FirstOrDefaultAsync(b => b.BudgetId == id);
     }
 
     public async Task<Budget> CreateBudgetAsync(Budget budget)
     {
         budget.CreatedAt = DateTime.UtcNow;
+        
+        // Set user ID for new budgets
+        if (_currentUserService?.IsAuthenticated == true && _currentUserService.UserId != null)
+        {
+            budget.UserId = _currentUserService.UserId;
+        }
+        
         _context.Budgets.Add(budget);
         await _context.SaveChangesAsync();
         return budget;

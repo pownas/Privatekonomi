@@ -43,6 +43,10 @@ public class Investment
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
     
+    // User ownership
+    public string? UserId { get; set; }
+    public ApplicationUser? User { get; set; }
+    
     public decimal TotalValue => Quantity * CurrentPrice;
     public decimal TotalCost => Quantity * PurchasePrice;
     public decimal ProfitLoss => TotalValue - TotalCost;

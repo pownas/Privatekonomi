@@ -4,6 +4,7 @@ En privatekonomi-applikation byggd med .NET 9, Blazor Server och MudBlazor för 
 
 ## 🎯 Funktioner
 
+- **Användarautentisering**: Komplett användarsystem med registrering, inloggning och dataisolering per användare
 - **Dashboard**: Översikt över totala inkomster, utgifter och nettoresultat
 - **Transaktionshantering**: Registrera, visa och ta bort transaktioner
 - **Budgethantering**: Skapa och följa upp budgetar med visualisering av planerat vs faktiskt utfall
@@ -154,16 +155,22 @@ dotnet run
 
 API Swagger-dokumentation finns på: `http://localhost:5000/swagger`
 
-### Testdata
+### Testdata och Testanvändare
 
-Applikationen seedas automatiskt med ca **50 testransaktioner** vid start för utveckling och test. Testdata inkluderar:
+Applikationen seedas automatiskt med en testanvändare och ca **50 testransaktioner** vid start för utveckling och test.
+
+**Testanvändare:**
+- E-post: test@example.com
+- Lösenord: Test123!
+
+Testdata inkluderar:
 - Realistiska svenska transaktioner (ICA, SL-kort, Hyra, Netflix, etc.)
 - Spridda över de senaste 3 månaderna
 - Olika kategorier med färgkodning
 - Både inkomster och utgifter
 - Belopp som varierar realistiskt per kategori
 
-För att inaktivera testdata, kommentera bort `TestDataSeeder.SeedTestData(context);` i `Program.cs`.
+För att inaktivera testdata, kommentera bort seeding-koden i `Program.cs`.
 
 Se Dashboard-skärmdumpen ovan för exempel på hur testdata presenteras i applikationen.
 
@@ -299,6 +306,7 @@ builder.Services.AddDbContext<PrivatekonomyContext>(options =>
 
 ### Användarguider
 
+- **[USER_AUTHENTICATION.md](docs/USER_AUTHENTICATION.md)**: Guide för användarregistrering, inloggning och datahantering
 - **[CSV_IMPORT_GUIDE.md](wiki/CSV_IMPORT_GUIDE.md)**: Guide för import av transaktioner från ICA-banken och Swedbank
 - **[PSD2_API_GUIDE.md](wiki/PSD2_API_GUIDE.md)**: Guide för automatisk bankimport via PSD2-API (Swedbank, Avanza, ICA Banken)
 - **[AVANZA_IMPORT_GUIDE.md](wiki/AVANZA_IMPORT_GUIDE.md)**: Guide för import av investeringar från Avanza Bank
@@ -365,7 +373,7 @@ För en omfattande analys av förbättringsmöjligheter, se:
 - [ ] Byt från InMemory till persistent databas (SQL Server)
 - [ ] Fixa nullable reference warnings (4 st)
 - [ ] Implementera enhetstester (0% täckning för närvarande)
-- [ ] Lägg till användarautentisering med ASP.NET Core Identity
+- [x] Lägg till användarautentisering med ASP.NET Core Identity
 - [ ] Skapa CI/CD pipeline med GitHub Actions
 - [ ] Implementera global exception handler
 - [ ] Lägg till strukturerad logging

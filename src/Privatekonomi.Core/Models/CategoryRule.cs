@@ -60,6 +60,11 @@ public class CategoryRule
     public string? UserId { get; set; }
     
     /// <summary>
+    /// Navigation property to the user who created this rule.
+    /// </summary>
+    public ApplicationUser? User { get; set; }
+    
+    /// <summary>
     /// For user rules that override system rules - references the system rule being overridden.
     /// </summary>
     public int? OverridesSystemRuleId { get; set; }

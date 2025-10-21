@@ -7,27 +7,50 @@ namespace Privatekonomi.Core.Services;
 public class AssetService : IAssetService
 {
     private readonly PrivatekonomyContext _context;
+    private readonly ICurrentUserService? _currentUserService;
 
-    public AssetService(PrivatekonomyContext context)
+    public AssetService(PrivatekonomyContext context, ICurrentUserService? currentUserService = null)
     {
         _context = context;
+        _currentUserService = currentUserService;
     }
 
     public async Task<IEnumerable<Asset>> GetAllAssetsAsync()
     {
-        return await _context.Assets
-            .OrderByDescending(a => a.CurrentValue)
-            .ToListAsync();
+        var query = _context.Assets.AsQueryable();
+
+        // Filter by current user if authenticated
+        if (_currentUserService?.IsAuthenticated == true && _currentUserService.UserId != null)
+        {
+            query = query.Where(a => a.UserId == _currentUserService.UserId);
+        }
+
+        return await query.OrderByDescending(a => a.CurrentValue).ToListAsync();
     }
 
     public async Task<Asset?> GetAssetByIdAsync(int id)
     {
-        return await _context.Assets.FindAsync(id);
+        var query = _context.Assets.AsQueryable();
+
+        // Filter by current user if authenticated
+        if (_currentUserService?.IsAuthenticated == true && _currentUserService.UserId != null)
+        {
+            query = query.Where(a => a.UserId == _currentUserService.UserId);
+        }
+
+        return await query.FirstOrDefaultAsync(a => a.AssetId == id);
     }
 
     public async Task<Asset> CreateAssetAsync(Asset asset)
     {
         asset.CreatedAt = DateTime.UtcNow;
+        
+        // Set user ID for new assets
+        if (_currentUserService?.IsAuthenticated == true && _currentUserService.UserId != null)
+        {
+            asset.UserId = _currentUserService.UserId;
+        }
+        
         _context.Assets.Add(asset);
         await _context.SaveChangesAsync();
         return asset;

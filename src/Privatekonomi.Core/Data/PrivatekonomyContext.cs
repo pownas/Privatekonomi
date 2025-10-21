@@ -1,9 +1,11 @@
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Privatekonomi.Core.Models;
 
 namespace Privatekonomi.Core.Data;
 
-public class PrivatekonomyContext : DbContext
+public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
 {
     public PrivatekonomyContext(DbContextOptions<PrivatekonomyContext> options)
         : base(options)
@@ -52,6 +54,13 @@ public class PrivatekonomyContext : DbContext
             entity.Property(e => e.Institution).HasMaxLength(200);
             entity.Property(e => e.InitialBalance).HasPrecision(18, 2);
             entity.Property(e => e.CreatedAt).IsRequired();
+            
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.HasIndex(e => e.UserId);
             
             // Ignore computed property
             entity.Ignore(e => e.CurrentBalance);
@@ -126,6 +135,12 @@ public class PrivatekonomyContext : DbContext
                 .HasForeignKey(e => e.CategoryId)
                 .OnDelete(DeleteBehavior.Cascade);
             
+            // User relationship (nullable for system rules)
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
             // Self-referencing relationship for rule overrides
             entity.HasOne(e => e.OverridesSystemRule)
                 .WithMany()
@@ -163,8 +178,14 @@ public class PrivatekonomyContext : DbContext
                 .HasForeignKey(e => e.BankSourceId)
                 .OnDelete(DeleteBehavior.SetNull);
             
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
             // Indexes for performance optimization
             entity.HasIndex(e => e.Date);
+            entity.HasIndex(e => e.UserId);
             entity.HasIndex(e => new { e.BankSourceId, e.Date });
             entity.HasIndex(e => e.Payee);
         });
@@ -202,6 +223,13 @@ public class PrivatekonomyContext : DbContext
             entity.Property(e => e.ExtraMonthlyPayment).HasPrecision(18, 2);
             entity.Property(e => e.Priority).IsRequired();
             
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.HasIndex(e => e.UserId);
+            
             // Ignore computed properties
             entity.Ignore(e => e.CurrentBalance);
             entity.Ignore(e => e.UtilizationRate);
@@ -218,6 +246,13 @@ public class PrivatekonomyContext : DbContext
             entity.Property(e => e.Currency).IsRequired().HasMaxLength(3);
             entity.Property(e => e.Location).HasMaxLength(200);
             entity.Property(e => e.CreatedAt).IsRequired();
+            
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.HasIndex(e => e.UserId);
             
             // Ignore computed properties
             entity.Ignore(e => e.ValueChange);
@@ -249,10 +284,16 @@ public class PrivatekonomyContext : DbContext
                 .WithMany()
                 .HasForeignKey(e => e.BankSourceId)
                 .OnDelete(DeleteBehavior.SetNull);
+            
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
                 
             // Indexes for faster searching
             entity.HasIndex(e => e.ISIN);
             entity.HasIndex(e => e.AccountNumber);
+            entity.HasIndex(e => e.UserId);
             
             // Ignore computed properties
             entity.Ignore(e => e.TotalValue);
@@ -270,6 +311,13 @@ public class PrivatekonomyContext : DbContext
             entity.Property(e => e.EndDate).IsRequired();
             entity.Property(e => e.Period).IsRequired();
             entity.Property(e => e.CreatedAt).IsRequired();
+            
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.HasIndex(e => e.UserId);
             
             entity.HasOne(e => e.Household)
                 .WithMany()
@@ -308,6 +356,13 @@ public class PrivatekonomyContext : DbContext
                 .WithMany()
                 .HasForeignKey(e => e.FundedFromBankSourceId)
                 .OnDelete(DeleteBehavior.SetNull);
+            
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.HasIndex(e => e.UserId);
         });
 
         // Seed initial categories
@@ -461,6 +516,19 @@ public class PrivatekonomyContext : DbContext
             entity.Property(e => e.Name).IsRequired().HasMaxLength(200);
             entity.Property(e => e.Description).HasMaxLength(500);
             entity.Property(e => e.CreatedDate).IsRequired();
+        });
+
+        // ApplicationUser configuration
+        modelBuilder.Entity<ApplicationUser>(entity =>
+        {
+            entity.Property(e => e.FirstName).HasMaxLength(100);
+            entity.Property(e => e.LastName).HasMaxLength(100);
+            entity.Property(e => e.CreatedAt).IsRequired();
+            
+            entity.HasOne(e => e.HouseholdMember)
+                .WithOne(hm => hm.User)
+                .HasForeignKey<ApplicationUser>(e => e.HouseholdMemberId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
 
         modelBuilder.Entity<HouseholdMember>(entity =>

@@ -7,31 +7,48 @@ namespace Privatekonomi.Core.Services;
 public class TransactionService : ITransactionService
 {
     private readonly PrivatekonomyContext _context;
+    private readonly ICurrentUserService? _currentUserService;
     private readonly ICategoryRuleService _categoryRuleService;
 
-    public TransactionService(PrivatekonomyContext context, ICategoryRuleService categoryRuleService)
+    public TransactionService(PrivatekonomyContext context, ICategoryRuleService categoryRuleService, ICurrentUserService? currentUserService = null)
     {
         _context = context;
+        _currentUserService = currentUserService;
         _categoryRuleService = categoryRuleService;
     }
 
     public async Task<IEnumerable<Transaction>> GetAllTransactionsAsync()
     {
-        return await _context.Transactions
+        var query = _context.Transactions
             .Include(t => t.BankSource)
             .Include(t => t.TransactionCategories)
             .ThenInclude(tc => tc.Category)
-            .OrderByDescending(t => t.Date)
-            .ToListAsync();
+            .AsQueryable();
+
+        // Filter by current user if authenticated
+        if (_currentUserService?.IsAuthenticated == true && _currentUserService.UserId != null)
+        {
+            query = query.Where(t => t.UserId == _currentUserService.UserId);
+        }
+
+        return await query.OrderByDescending(t => t.Date).ToListAsync();
     }
 
     public async Task<Transaction?> GetTransactionByIdAsync(int id)
     {
-        return await _context.Transactions
+        var query = _context.Transactions
             .Include(t => t.BankSource)
             .Include(t => t.TransactionCategories)
             .ThenInclude(tc => tc.Category)
-            .FirstOrDefaultAsync(t => t.TransactionId == id);
+            .AsQueryable();
+
+        // Filter by current user if authenticated
+        if (_currentUserService?.IsAuthenticated == true && _currentUserService.UserId != null)
+        {
+            query = query.Where(t => t.UserId == _currentUserService.UserId);
+        }
+
+        return await query.FirstOrDefaultAsync(t => t.TransactionId == id);
     }
 
     public async Task<Transaction> CreateTransactionAsync(Transaction transaction)
@@ -39,6 +56,13 @@ public class TransactionService : ITransactionService
         // Set audit fields
         transaction.CreatedAt = DateTime.UtcNow;
         
+        // Set user ID for new transactions
+        if (_currentUserService?.IsAuthenticated == true && _currentUserService.UserId != null)
+        {
+            transaction.UserId = _currentUserService.UserId;
+        }
+        
+        // Auto-categorize based on similar descriptions if no categories assigned
         // Auto-categorize based on rules or similar descriptions if no categories assigned
         if (!transaction.TransactionCategories.Any())
         {
@@ -94,23 +118,38 @@ public class TransactionService : ITransactionService
 
     public async Task<IEnumerable<Transaction>> GetTransactionsByDateRangeAsync(DateTime from, DateTime to)
     {
-        return await _context.Transactions
+        var query = _context.Transactions
             .Include(t => t.BankSource)
             .Include(t => t.TransactionCategories)
             .ThenInclude(tc => tc.Category)
             .Where(t => t.Date >= from && t.Date <= to)
-            .OrderByDescending(t => t.Date)
-            .ToListAsync();
+            .AsQueryable();
+
+        // Filter by current user if authenticated
+        if (_currentUserService?.IsAuthenticated == true && _currentUserService.UserId != null)
+        {
+            query = query.Where(t => t.UserId == _currentUserService.UserId);
+        }
+
+        return await query.OrderByDescending(t => t.Date).ToListAsync();
     }
 
     private async Task<Category?> SuggestCategoryAsync(string description)
     {
         // Find similar transactions and suggest the most common category
-        var similarTransactions = await _context.Transactions
+        var query = _context.Transactions
             .Include(t => t.TransactionCategories)
             .ThenInclude(tc => tc.Category)
             .Where(t => t.Description.ToLower().Contains(description.ToLower().Substring(0, Math.Min(3, description.Length))))
-            .ToListAsync();
+            .AsQueryable();
+
+        // Filter by current user if authenticated
+        if (_currentUserService?.IsAuthenticated == true && _currentUserService.UserId != null)
+        {
+            query = query.Where(t => t.UserId == _currentUserService.UserId);
+        }
+
+        var similarTransactions = await query.ToListAsync();
 
         if (similarTransactions.Any())
         {
@@ -131,13 +170,20 @@ public class TransactionService : ITransactionService
 
     public async Task<IEnumerable<Transaction>> GetUnmappedTransactionsAsync()
     {
-        return await _context.Transactions
+        var query = _context.Transactions
             .Include(t => t.BankSource)
             .Include(t => t.TransactionCategories)
             .ThenInclude(tc => tc.Category)
             .Where(t => !t.TransactionCategories.Any())
-            .OrderByDescending(t => t.Date)
-            .ToListAsync();
+            .AsQueryable();
+
+        // Filter by current user if authenticated
+        if (_currentUserService?.IsAuthenticated == true && _currentUserService.UserId != null)
+        {
+            query = query.Where(t => t.UserId == _currentUserService.UserId);
+        }
+
+        return await query.OrderByDescending(t => t.Date).ToListAsync();
     }
 
     public async Task UpdateTransactionCategoriesAsync(int transactionId, List<TransactionCategory> categories)

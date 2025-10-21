@@ -7,31 +7,53 @@ namespace Privatekonomi.Core.Services;
 public class GoalService : IGoalService
 {
     private readonly PrivatekonomyContext _context;
+    private readonly ICurrentUserService? _currentUserService;
 
-    public GoalService(PrivatekonomyContext context)
+    public GoalService(PrivatekonomyContext context, ICurrentUserService? currentUserService = null)
     {
         _context = context;
+        _currentUserService = currentUserService;
     }
 
     public async Task<IEnumerable<Goal>> GetAllGoalsAsync()
     {
-        return await _context.Goals
+        var query = _context.Goals
             .Include(g => g.FundedFromBankSource)
-            .OrderBy(g => g.Priority)
-            .ThenBy(g => g.TargetDate)
-            .ToListAsync();
+            .AsQueryable();
+
+        // Filter by current user if authenticated
+        if (_currentUserService?.IsAuthenticated == true && _currentUserService.UserId != null)
+        {
+            query = query.Where(g => g.UserId == _currentUserService.UserId);
+        }
+
+        return await query.OrderBy(g => g.Priority).ThenBy(g => g.TargetDate).ToListAsync();
     }
 
     public async Task<Goal?> GetGoalByIdAsync(int id)
     {
-        return await _context.Goals
+        var query = _context.Goals
             .Include(g => g.FundedFromBankSource)
-            .FirstOrDefaultAsync(g => g.GoalId == id);
+            .AsQueryable();
+
+        // Filter by current user if authenticated
+        if (_currentUserService?.IsAuthenticated == true && _currentUserService.UserId != null)
+        {
+            query = query.Where(g => g.UserId == _currentUserService.UserId);
+        }
+
+        return await query.FirstOrDefaultAsync(g => g.GoalId == id);
     }
 
     public async Task<Goal> CreateGoalAsync(Goal goal)
     {
         goal.CreatedAt = DateTime.UtcNow;
+        
+        // Set user ID for new goals
+        if (_currentUserService?.IsAuthenticated == true && _currentUserService.UserId != null)
+        {
+            goal.UserId = _currentUserService.UserId;
+        }
         
         _context.Goals.Add(goal);
         await _context.SaveChangesAsync();

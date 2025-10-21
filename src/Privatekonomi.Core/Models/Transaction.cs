@@ -21,6 +21,11 @@ public class Transaction
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
     
+    // User ownership
+    public string? UserId { get; set; }
+    public ApplicationUser? User { get; set; }
+  
+  
     // Swedish payment method specific fields
     /// <summary>
     /// Payment method: "Swish", "Autogiro", "E-faktura", "Banköverföring", "Kort", "Kontant"

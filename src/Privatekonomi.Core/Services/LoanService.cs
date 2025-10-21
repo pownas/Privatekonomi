@@ -7,27 +7,50 @@ namespace Privatekonomi.Core.Services;
 public class LoanService : ILoanService
 {
     private readonly PrivatekonomyContext _context;
+    private readonly ICurrentUserService? _currentUserService;
 
-    public LoanService(PrivatekonomyContext context)
+    public LoanService(PrivatekonomyContext context, ICurrentUserService? currentUserService = null)
     {
         _context = context;
+        _currentUserService = currentUserService;
     }
 
     public async Task<IEnumerable<Loan>> GetAllLoansAsync()
     {
-        return await _context.Loans
-            .OrderBy(l => l.Name)
-            .ToListAsync();
+        var query = _context.Loans.AsQueryable();
+
+        // Filter by current user if authenticated
+        if (_currentUserService?.IsAuthenticated == true && _currentUserService.UserId != null)
+        {
+            query = query.Where(l => l.UserId == _currentUserService.UserId);
+        }
+
+        return await query.OrderBy(l => l.Name).ToListAsync();
     }
 
     public async Task<Loan?> GetLoanByIdAsync(int id)
     {
-        return await _context.Loans.FindAsync(id);
+        var query = _context.Loans.AsQueryable();
+
+        // Filter by current user if authenticated
+        if (_currentUserService?.IsAuthenticated == true && _currentUserService.UserId != null)
+        {
+            query = query.Where(l => l.UserId == _currentUserService.UserId);
+        }
+
+        return await query.FirstOrDefaultAsync(l => l.LoanId == id);
     }
 
     public async Task<Loan> CreateLoanAsync(Loan loan)
     {
         loan.CreatedAt = DateTime.UtcNow;
+        
+        // Set user ID for new loans
+        if (_currentUserService?.IsAuthenticated == true && _currentUserService.UserId != null)
+        {
+            loan.UserId = _currentUserService.UserId;
+        }
+        
         _context.Loans.Add(loan);
         await _context.SaveChangesAsync();
         return loan;
