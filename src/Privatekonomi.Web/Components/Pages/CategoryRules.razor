@@ -1,0 +1,373 @@
+@page "/category-rules"
+@rendermode InteractiveServer
+@using Privatekonomi.Core.Models
+@inject ICategoryRuleService CategoryRuleService
+@inject ICategoryService CategoryService
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<PageTitle>Automatiska Kategoriseringsregler - Privatekonomi</PageTitle>
+
+<div class="d-flex justify-space-between align-center mb-4">
+    <div>
+        <MudText Typo="Typo.h4">Automatiska Kategoriseringsregler</MudText>
+        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-2">
+            Definiera regler för att automatiskt kategorisera transaktioner baserat på beskrivning eller betalningsmottagare.
+        </MudText>
+    </div>
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="ToggleCreateForm">
+        Ny Regel
+    </MudButton>
+</div>
+
+@if (_showCreateForm)
+{
+    <MudPaper Class="pa-4 mb-4" Elevation="2">
+        <MudText Typo="Typo.h6" Class="mb-3">@(_editingRule != null ? "Redigera Regel" : "Skapa Ny Regel")</MudText>
+        
+        <MudGrid>
+            <MudItem xs="12" md="6">
+                <MudTextField @bind-Value="_formPattern" 
+                             Label="Mönster" 
+                             Variant="Variant.Outlined" 
+                             Required="true"
+                             HelperText="Text att matcha mot (t.ex. 'ICA', 'Spotify', 'SL-kort')"
+                             MaxLength="500"
+                             Class="mb-3" />
+            </MudItem>
+            
+            <MudItem xs="12" md="6">
+                <MudSelect @bind-Value="_formMatchType" 
+                          Label="Matchningstyp" 
+                          Variant="Variant.Outlined"
+                          Class="mb-3">
+                    <MudSelectItem Value="@PatternMatchType.Contains">Innehåller</MudSelectItem>
+                    <MudSelectItem Value="@PatternMatchType.Exact">Exakt matchning</MudSelectItem>
+                    <MudSelectItem Value="@PatternMatchType.StartsWith">Börjar med</MudSelectItem>
+                    <MudSelectItem Value="@PatternMatchType.EndsWith">Slutar med</MudSelectItem>
+                    <MudSelectItem Value="@PatternMatchType.Regex">Reguljärt uttryck (Regex)</MudSelectItem>
+                </MudSelect>
+            </MudItem>
+            
+            <MudItem xs="12" md="6">
+                <MudSelect @bind-Value="_formCategoryId" 
+                          Label="Kategori" 
+                          Variant="Variant.Outlined"
+                          Required="true"
+                          Class="mb-3">
+                    @foreach (var category in _categories)
+                    {
+                        <MudSelectItem Value="@category.CategoryId">
+                            <div class="d-flex align-center gap-2">
+                                <div style="@($"width: 16px; height: 16px; background-color: {category.Color}; border-radius: 3px;")"></div>
+                                @category.Name
+                            </div>
+                        </MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            
+            <MudItem xs="12" md="6">
+                <MudSelect @bind-Value="_formField" 
+                          Label="Fält att matcha" 
+                          Variant="Variant.Outlined"
+                          Class="mb-3">
+                    <MudSelectItem Value="@MatchField.Both">Beskrivning och Betalningsmottagare</MudSelectItem>
+                    <MudSelectItem Value="@MatchField.Description">Endast Beskrivning</MudSelectItem>
+                    <MudSelectItem Value="@MatchField.Payee">Endast Betalningsmottagare</MudSelectItem>
+                </MudSelect>
+            </MudItem>
+            
+            <MudItem xs="12" md="4">
+                <MudNumericField @bind-Value="_formPriority" 
+                                Label="Prioritet" 
+                                Variant="Variant.Outlined"
+                                HelperText="Högre nummer = högre prioritet"
+                                Class="mb-3" />
+            </MudItem>
+            
+            <MudItem xs="12" md="4">
+                <MudSwitch @bind-Value="_formIsActive" 
+                          Label="Aktiv" 
+                          Color="Color.Primary"
+                          Class="mb-3" />
+            </MudItem>
+            
+            <MudItem xs="12" md="4">
+                <MudSwitch @bind-Value="_formCaseSensitive" 
+                          Label="Skiftlägeskänslig" 
+                          Color="Color.Primary"
+                          Class="mb-3" />
+            </MudItem>
+            
+            <MudItem xs="12">
+                <MudTextField @bind-Value="_formDescription" 
+                             Label="Beskrivning (valfritt)" 
+                             Variant="Variant.Outlined"
+                             Lines="2"
+                             HelperText="En beskrivning av regeln för dokumentation"
+                             MaxLength="500"
+                             Class="mb-3" />
+            </MudItem>
+        </MudGrid>
+        
+        <div class="d-flex gap-2 mt-3">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveRule">
+                @(_editingRule != null ? "Uppdatera" : "Skapa")
+            </MudButton>
+            <MudButton Variant="Variant.Outlined" OnClick="CancelEdit">Avbryt</MudButton>
+        </div>
+    </MudPaper>
+}
+
+<MudPaper Class="pa-4">
+    @if (_loading)
+    {
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+    }
+    else
+    {
+        <MudTable Items="_rules" Hover="true" Breakpoint="Breakpoint.Sm" Dense="true">
+            <HeaderContent>
+                <MudTh>Prioritet</MudTh>
+                <MudTh>Mönster</MudTh>
+                <MudTh>Matchning</MudTh>
+                <MudTh>Fält</MudTh>
+                <MudTh>Kategori</MudTh>
+                <MudTh>Status</MudTh>
+                <MudTh>Åtgärder</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Prioritet">
+                    <MudChip T="string" Size="Size.Small" Color="Color.Info">@context.Priority</MudChip>
+                </MudTd>
+                <MudTd DataLabel="Mönster">
+                    <MudText Typo="Typo.body2"><strong>@context.Pattern</strong></MudText>
+                    @if (!string.IsNullOrEmpty(context.Description))
+                    {
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">@context.Description</MudText>
+                    }
+                </MudTd>
+                <MudTd DataLabel="Matchning">
+                    @GetMatchTypeLabel(context.MatchType)
+                    @if (context.CaseSensitive)
+                    {
+                        <MudChip T="string" Size="Size.Small" Color="Color.Warning" Class="ml-1">Aa</MudChip>
+                    }
+                </MudTd>
+                <MudTd DataLabel="Fält">@GetFieldLabel(context.Field)</MudTd>
+                <MudTd DataLabel="Kategori">
+                    @if (context.Category != null)
+                    {
+                        <MudChip T="string" Style="@($"background-color: {context.Category.Color}; color: white;")" Size="Size.Small">
+                            @context.Category.Name
+                        </MudChip>
+                    }
+                </MudTd>
+                <MudTd DataLabel="Status">
+                    <MudChip T="string" Size="Size.Small" Color="@(context.IsActive ? Color.Success : Color.Default)">
+                        @(context.IsActive ? "Aktiv" : "Inaktiv")
+                    </MudChip>
+                </MudTd>
+                <MudTd DataLabel="Åtgärder">
+                    <div class="d-flex gap-1">
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit" 
+                                     Color="Color.Primary" 
+                                     Size="Size.Small"
+                                     OnClick="@(() => EditRule(context))" />
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" 
+                                     Color="Color.Error" 
+                                     Size="Size.Small"
+                                     OnClick="@(() => DeleteRule(context))" />
+                    </div>
+                </MudTd>
+            </RowTemplate>
+        </MudTable>
+        
+        @if (!_rules.Any())
+        {
+            <MudAlert Severity="Severity.Info" Class="mt-4">
+                Inga kategoriseringsregler finns ännu. Skapa en regel för att automatiskt kategorisera transaktioner.
+            </MudAlert>
+        }
+    }
+</MudPaper>
+
+@code {
+    private bool _loading = true;
+    private bool _showCreateForm = false;
+    private IEnumerable<CategoryRule> _rules = new List<CategoryRule>();
+    private IEnumerable<Category> _categories = new List<Category>();
+    private CategoryRule? _editingRule = null;
+    
+    // Form fields
+    private string _formPattern = string.Empty;
+    private PatternMatchType _formMatchType = PatternMatchType.Contains;
+    private int _formCategoryId = 0;
+    private MatchField _formField = MatchField.Both;
+    private int _formPriority = 50;
+    private bool _formIsActive = true;
+    private bool _formCaseSensitive = false;
+    private string _formDescription = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        _loading = true;
+        _rules = await CategoryRuleService.GetAllRulesAsync();
+        _categories = await CategoryService.GetAllCategoriesAsync();
+        _loading = false;
+    }
+
+    private void ToggleCreateForm()
+    {
+        _showCreateForm = !_showCreateForm;
+        if (_showCreateForm)
+        {
+            ResetForm();
+        }
+    }
+
+    private void ResetForm()
+    {
+        _editingRule = null;
+        _formPattern = string.Empty;
+        _formMatchType = PatternMatchType.Contains;
+        _formCategoryId = _categories.Any() ? _categories.First().CategoryId : 0;
+        _formField = MatchField.Both;
+        _formPriority = 50;
+        _formIsActive = true;
+        _formCaseSensitive = false;
+        _formDescription = string.Empty;
+    }
+
+    private void EditRule(CategoryRule rule)
+    {
+        _editingRule = rule;
+        _formPattern = rule.Pattern;
+        _formMatchType = rule.MatchType;
+        _formCategoryId = rule.CategoryId;
+        _formField = rule.Field;
+        _formPriority = rule.Priority;
+        _formIsActive = rule.IsActive;
+        _formCaseSensitive = rule.CaseSensitive;
+        _formDescription = rule.Description ?? string.Empty;
+        _showCreateForm = true;
+    }
+
+    private void CancelEdit()
+    {
+        _showCreateForm = false;
+        _editingRule = null;
+        ResetForm();
+    }
+
+    private async Task SaveRule()
+    {
+        if (string.IsNullOrWhiteSpace(_formPattern))
+        {
+            Snackbar.Add("Mönster är obligatoriskt", Severity.Error);
+            return;
+        }
+
+        if (_formCategoryId == 0)
+        {
+            Snackbar.Add("Kategori måste väljas", Severity.Error);
+            return;
+        }
+
+        try
+        {
+            if (_editingRule != null)
+            {
+                // Update existing rule
+                _editingRule.Pattern = _formPattern;
+                _editingRule.MatchType = _formMatchType;
+                _editingRule.CategoryId = _formCategoryId;
+                _editingRule.Field = _formField;
+                _editingRule.Priority = _formPriority;
+                _editingRule.IsActive = _formIsActive;
+                _editingRule.CaseSensitive = _formCaseSensitive;
+                _editingRule.Description = string.IsNullOrWhiteSpace(_formDescription) ? null : _formDescription;
+
+                await CategoryRuleService.UpdateRuleAsync(_editingRule);
+                Snackbar.Add("Regel uppdaterad!", Severity.Success);
+            }
+            else
+            {
+                // Create new rule
+                var rule = new CategoryRule
+                {
+                    Pattern = _formPattern,
+                    MatchType = _formMatchType,
+                    CategoryId = _formCategoryId,
+                    Field = _formField,
+                    Priority = _formPriority,
+                    IsActive = _formIsActive,
+                    CaseSensitive = _formCaseSensitive,
+                    Description = string.IsNullOrWhiteSpace(_formDescription) ? null : _formDescription
+                };
+
+                await CategoryRuleService.CreateRuleAsync(rule);
+                Snackbar.Add("Regel skapad!", Severity.Success);
+            }
+            
+            _showCreateForm = false;
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Fel vid sparande av regel: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task DeleteRule(CategoryRule rule)
+    {
+        var result = await DialogService.ShowMessageBox(
+            "Bekräfta borttagning",
+            $"Är du säker på att du vill ta bort regeln för '{rule.Pattern}'?",
+            yesText: "Ta bort", cancelText: "Avbryt");
+
+        if (result == true)
+        {
+            try
+            {
+                await CategoryRuleService.DeleteRuleAsync(rule.CategoryRuleId);
+                Snackbar.Add("Regel borttagen!", Severity.Success);
+                await LoadData();
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Fel vid borttagning av regel: {ex.Message}", Severity.Error);
+            }
+        }
+    }
+
+    private string GetMatchTypeLabel(PatternMatchType matchType)
+    {
+        return matchType switch
+        {
+            PatternMatchType.Exact => "Exakt",
+            PatternMatchType.Contains => "Innehåller",
+            PatternMatchType.StartsWith => "Börjar med",
+            PatternMatchType.EndsWith => "Slutar med",
+            PatternMatchType.Regex => "Regex",
+            _ => "Okänd"
+        };
+    }
+
+    private string GetFieldLabel(MatchField field)
+    {
+        return field switch
+        {
+            MatchField.Description => "Beskrivning",
+            MatchField.Payee => "Mottagare",
+            MatchField.Both => "Båda",
+            _ => "Okänd"
+        };
+    }
+}
