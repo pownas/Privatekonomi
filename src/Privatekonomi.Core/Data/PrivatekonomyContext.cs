@@ -135,6 +135,12 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
                 .HasForeignKey(e => e.CategoryId)
                 .OnDelete(DeleteBehavior.Cascade);
             
+            // User relationship (nullable for system rules)
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
             // Self-referencing relationship for rule overrides
             entity.HasOne(e => e.OverridesSystemRule)
                 .WithMany()
