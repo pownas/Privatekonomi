@@ -12,19 +12,30 @@ En privatekonomi-applikation byggd med .NET 9, Blazor Server och MudBlazor för 
 - **Automatisk kursuppdatering**: Uppdatera aktiekurser via Yahoo Finance API med ett knapptryck
 - **Kategorisystem**: Förkonfigurerade kategorier med färgkodning och hierarkisk struktur
 - **Split-kategorisering**: Möjlighet att dela upp transaktioner i flera kategorier
-- **Automatisk kategorisering**: Systemet föreslår kategorier baserat på tidigare transaktioner
+- **Automatisk kategorisering**: 
+  - Regelbaserad kategorisering med 44+ förkonfigurerade regler
+  - Stöd för olika matchningstyper (innehåller, exakt, börjar med, slutar med, regex)
+  - Prioritetsbaserad regelutvärdering
+  - Användarvänligt gränssnitt för att hantera kategoriseringsregler
+  - Systemet föreslår också kategorier baserat på tidigare transaktioner
 - **Responsiv design**: Fungerar på desktop och mobila enheter
 - **In-memory databas**: Använder Entity Framework Core InMemory för snabb utveckling
 - **CSV-import**: 
   - Import av transaktioner från ICA-banken och Swedbank
   - Import av investeringar från Avanza Bank med dubbletthantering
-- **Automatisk bankimport via PSD2-API** (NYT!):
+- **Automatisk bankimport via PSD2-API**:
   - Stöd för Swedbank, Avanza Bank och ICA Banken
   - OAuth2-baserad autentisering med BankID
   - Automatisk synkronisering av transaktioner
   - Realtidsdata från banken
 - **CSV-export**: Exportera investeringar för analys och rapportering
 - **Förbättrad datamodell**: Utökade modeller med audit trail, valutastöd och mer
+- **Familjesamarbete** (NYT!):
+  - Hushållshantering med flera medlemmar
+  - Delade utgifter med flexibel andelsfördelning
+  - Barnkonton med veckopeng och sparande
+  - Uppdrag-till-belöning system för sysslor
+  - Gemensamma budgetar för hela familjen
 
 ## 🏗️ Arkitektur
 
@@ -293,6 +304,25 @@ builder.Services.AddDbContext<PrivatekonomyContext>(options =>
 - **[AVANZA_IMPORT_GUIDE.md](wiki/AVANZA_IMPORT_GUIDE.md)**: Guide för import av investeringar från Avanza Bank
 - **[STOCK_PRICE_API_GUIDE.md](wiki/STOCK_PRICE_API_GUIDE.md)**: Guide för automatisk uppdatering av aktiekurser via API
 - **[BUDGET_GUIDE.md](wiki/BUDGET_GUIDE.md)**: Guide för budgethantering
+- **[AUTOMATIC_CATEGORIZATION.md](docs/AUTOMATIC_CATEGORIZATION.md)**: Guide för automatisk kategorisering av transaktioner
+- **[FAMILY_COLLABORATION_GUIDE.md](wiki/FAMILY_COLLABORATION_GUIDE.md)**: Guide för familjesamarbete, barnkonton och veckopeng
+
+### Sverige-specifika integrationer (NYT!)
+
+- **[SWEDISH_INTEGRATIONS_SUMMARY.md](wiki/SWEDISH_INTEGRATIONS_SUMMARY.md)**: Sammanfattning av Sverige-specifika funktioner
+- **[SWEDISH_INTEGRATIONS_EVALUATION.md](wiki/SWEDISH_INTEGRATIONS_EVALUATION.md)**: Utvärdering av genomförbarhet
+- **[SWEDISH_INTEGRATIONS_IMPLEMENTATION.md](wiki/SWEDISH_INTEGRATIONS_IMPLEMENTATION.md)**: Implementationsguide
+
+**Funktioner:**
+- ✅ ROT/RUT-avdrag
+- ✅ K4 kapitalvinstrapport
+- ✅ ISK/KF schablonbeskattning
+- ✅ SIE-export för bokföring
+- ✅ Bolån med bindningstid
+- ✅ CSN-lån
+- ✅ Reseavdrag
+- ⚠️ BankID (planerad)
+- ⚠️ Fortnox/Visma integration (planerad)
 
 ### Teknisk dokumentation
 
@@ -349,11 +379,15 @@ För en omfattande analys av förbättringsmöjligheter, se:
 - [x] Exportera investeringar till CSV
 - [x] Automatisk uppdatering av aktiekurser via API
 - [x] Automatisk bankimport / PSD2-API-stöd (Swedbank, Avanza, ICA Banken)
+- [x] Familjesamarbete: Hushållshantering med delade utgifter
+- [x] Barnkonton med veckopeng och uppdrag-till-belöning
+- [x] Gemensamma familjebudgetar
 - [ ] Grafiskt gränssnitt för hantering av bankkopplingar
 - [ ] Exportera transaktioner och budget till Excel/CSV
 - [ ] Lägg till diagram och grafer på Dashboard
 - [ ] Mobilapp med samma funktionalitet
 - [ ] Förbättra automatisk kategorisering med ML
+- [ ] Automatisk schemaläggning av återkommande uppdrag för barn
 
 ## 📝 Licens
 

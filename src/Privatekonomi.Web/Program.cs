@@ -24,6 +24,7 @@ builder.Services.AddDbContext<PrivatekonomyContext>(options =>
 // Register services
 builder.Services.AddScoped<ITransactionService, TransactionService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
+builder.Services.AddScoped<ICategoryRuleService, CategoryRuleService>();
 builder.Services.AddScoped<ILoanService, LoanService>();
 builder.Services.AddScoped<IDebtStrategyService, DebtStrategyService>();
 builder.Services.AddScoped<IInvestmentService, InvestmentService>();
@@ -31,12 +32,19 @@ builder.Services.AddScoped<IAssetService, AssetService>();
 builder.Services.AddScoped<IBudgetService, BudgetService>();
 builder.Services.AddScoped<IBankSourceService, BankSourceService>();
 builder.Services.AddScoped<IHouseholdService, HouseholdService>();
+builder.Services.AddScoped<IChildAllowanceService, ChildAllowanceService>();
 builder.Services.AddScoped<IGoalService, GoalService>();
 builder.Services.AddScoped<IAuditLogService, AuditLogService>();
 builder.Services.AddScoped<IBankConnectionService, BankConnectionService>();
 builder.Services.AddScoped<IExportService, ExportService>();
 builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<ThemeService>();
+
+// Swedish-specific services
+builder.Services.AddScoped<ISieExporter, SieExporter>();
+builder.Services.AddScoped<IK4Generator, K4Generator>();
+builder.Services.AddScoped<ITaxDeductionService, TaxDeductionService>();
+builder.Services.AddScoped<IISKTaxCalculator, ISKTaxCalculator>();
 
 // Add HttpClient for API calls (if needed later)
 builder.Services.AddHttpClient("api", client =>

@@ -10,9 +10,11 @@ public class Budget
     public BudgetPeriod Period { get; set; }
     public BudgetTemplateType? TemplateType { get; set; }
     public bool RolloverUnspent { get; set; } = false;
+    public int? HouseholdId { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
     
+    public Household? Household { get; set; }
     public ICollection<BudgetCategory> BudgetCategories { get; set; } = new List<BudgetCategory>();
 }
 

@@ -2,6 +2,7 @@
 @rendermode InteractiveServer
 @inject IBudgetService BudgetService
 @inject ICategoryService CategoryService
+@inject IHouseholdService HouseholdService
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 
@@ -47,6 +48,18 @@
                               Variant="Variant.Outlined"
                               Placeholder="2025-01-31"
                               Class="mb-3" />
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudSelect @bind-Value="_newBudget.HouseholdId" 
+                          Label="Hushåll (valfritt)" 
+                          Variant="Variant.Outlined"
+                          Clearable="true"
+                          Class="mb-3">
+                    @foreach (var household in _households)
+                    {
+                        <MudSelectItem Value="@((int?)household.HouseholdId)">@household.Name</MudSelectItem>
+                    }
+                </MudSelect>
             </MudItem>
             <MudItem xs="12">
                 <MudTextField @bind-Value="_newBudget.Description" 
@@ -279,6 +292,7 @@
     private bool _showCreateForm = false;
     private IEnumerable<Budget> _budgets = new List<Budget>();
     private IEnumerable<Category> _categories = new List<Category>();
+    private IEnumerable<Household> _households = new List<Household>();
     private Budget _newBudget = new();
     private string _newBudgetStartDateString = DateTime.Now.ToString("yyyy-MM-dd");
     private string _newBudgetEndDateString = DateTime.Now.AddMonths(1).ToString("yyyy-MM-dd");
@@ -297,6 +311,7 @@
         _loading = true;
         _categories = await CategoryService.GetAllCategoriesAsync();
         _budgets = await BudgetService.GetAllBudgetsAsync();
+        _households = await HouseholdService.GetAllHouseholdsAsync();
         
         // Initialize category budgets dictionary
         _categoryBudgets = _categories.ToDictionary(c => c.CategoryId, c => 0m);

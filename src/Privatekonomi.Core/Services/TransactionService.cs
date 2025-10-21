@@ -7,10 +7,12 @@ namespace Privatekonomi.Core.Services;
 public class TransactionService : ITransactionService
 {
     private readonly PrivatekonomyContext _context;
+    private readonly ICategoryRuleService _categoryRuleService;
 
-    public TransactionService(PrivatekonomyContext context)
+    public TransactionService(PrivatekonomyContext context, ICategoryRuleService categoryRuleService)
     {
         _context = context;
+        _categoryRuleService = categoryRuleService;
     }
 
     public async Task<IEnumerable<Transaction>> GetAllTransactionsAsync()
@@ -37,10 +39,26 @@ public class TransactionService : ITransactionService
         // Set audit fields
         transaction.CreatedAt = DateTime.UtcNow;
         
-        // Auto-categorize based on similar descriptions if no categories assigned
+        // Auto-categorize based on rules or similar descriptions if no categories assigned
         if (!transaction.TransactionCategories.Any())
         {
-            var suggestedCategory = await SuggestCategoryAsync(transaction.Description);
+            // First try rule-based categorization
+            var ruleCategoryId = await _categoryRuleService.ApplyCategoryRulesAsync(
+                transaction.Description, 
+                transaction.Payee);
+            
+            Category? suggestedCategory = null;
+            
+            if (ruleCategoryId.HasValue)
+            {
+                suggestedCategory = await _context.Categories.FindAsync(ruleCategoryId.Value);
+            }
+            else
+            {
+                // Fall back to similarity-based categorization
+                suggestedCategory = await SuggestCategoryAsync(transaction.Description);
+            }
+            
             if (suggestedCategory != null)
             {
                 transaction.TransactionCategories.Add(new TransactionCategory

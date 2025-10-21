@@ -1,0 +1,501 @@
+@page "/households/{HouseholdId:int}/allowances"
+@using Privatekonomi.Core.Models
+@using Privatekonomi.Core.Services
+@inject IChildAllowanceService ChildAllowanceService
+@inject IHouseholdService HouseholdService
+@inject NavigationManager NavigationManager
+
+<PageTitle>Barnkonton & Veckopeng</PageTitle>
+
+@if (household == null)
+{
+    <MudProgressLinear Color="Color.Primary" Indeterminate="true" />
+}
+else
+{
+    <MudBreadcrumbs Items="breadcrumbs" Class="mb-4" />
+    
+    <MudText Typo="Typo.h4" Class="mb-2">Barnkonton & Veckopeng - @household.Name</MudText>
+    <MudText Typo="Typo.body1" Color="Color.Secondary" Class="mb-4">Hantera barnens veckopeng, uppdrag och belöningar</MudText>
+
+    <MudTabs Elevation="2" Rounded="true" Color="Color.Primary" Class="mt-4">
+        <MudTabPanel Text="Konton" Icon="@Icons.Material.Filled.AccountBalance">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenCreateAllowanceDialog" Class="my-4">
+                Skapa nytt barnkonto
+            </MudButton>
+
+            @if (!allowances.Any())
+            {
+                <MudAlert Severity="Severity.Info" Class="mt-4">Inga barnkonton ännu. Skapa ett konto för att börja hantera veckopeng.</MudAlert>
+            }
+            else
+            {
+                <MudGrid Class="mt-4">
+                    @foreach (var allowance in allowances)
+                    {
+                        <MudItem xs="12" sm="6" md="4">
+                            <MudCard>
+                                <MudCardHeader>
+                                    <CardHeaderContent>
+                                        <MudText Typo="Typo.h6">@allowance.HouseholdMember?.Name</MudText>
+                                        <MudText Typo="Typo.body2" Color="Color.Secondary">@allowance.Name</MudText>
+                                    </CardHeaderContent>
+                                </MudCardHeader>
+                                <MudCardContent>
+                                    <MudText Typo="Typo.h5" Color="Color.Primary" Class="mb-2">
+                                        <strong>@allowance.CurrentBalance.ToString("N2") kr</strong>
+                                    </MudText>
+                                    <MudText Typo="Typo.body2">
+                                        Veckopeng: @allowance.Amount.ToString("N2") kr (@GetFrequencyText(allowance.Frequency))
+                                    </MudText>
+                                    <MudText Typo="Typo.body2" Color="@(allowance.IsActive ? Color.Success : Color.Error)">
+                                        Status: @(allowance.IsActive ? "Aktiv" : "Inaktiv")
+                                    </MudText>
+                                </MudCardContent>
+                                <MudCardActions>
+                                    <MudButton Variant="Variant.Text" Color="Color.Primary" OnClick="@(() => ViewAllowanceDetails(allowance.ChildAllowanceId))">
+                                        Visa detaljer
+                                    </MudButton>
+                                    <MudButton Variant="Variant.Text" Color="Color.Secondary" OnClick="@(() => ManageTasks(allowance.ChildAllowanceId))">
+                                        Uppdrag
+                                    </MudButton>
+                                </MudCardActions>
+                            </MudCard>
+                        </MudItem>
+                    }
+                </MudGrid>
+            }
+        </MudTabPanel>
+
+        <MudTabPanel Text="Uppdrag" Icon="@Icons.Material.Filled.Assignment">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenCreateTaskDialog" Class="my-4" Disabled="!allowances.Any()">
+                Lägg till uppdrag
+            </MudButton>
+
+            @if (selectedAllowanceId.HasValue && selectedAllowance != null)
+            {
+                <MudText Typo="Typo.h6" Class="mb-2">Uppdrag för @selectedAllowance.HouseholdMember?.Name</MudText>
+                
+                @if (!tasks.Any())
+                {
+                    <MudAlert Severity="Severity.Info" Class="mt-4">Inga uppdrag ännu.</MudAlert>
+                }
+                else
+                {
+                    <MudTable Items="@tasks" Class="mt-4" Hover="true">
+                        <HeaderContent>
+                            <MudTh>Uppdrag</MudTh>
+                            <MudTh>Belöning</MudTh>
+                            <MudTh>Förfallodatum</MudTh>
+                            <MudTh>Status</MudTh>
+                            <MudTh>Åtgärder</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataLabel="Uppdrag">@context.Name</MudTd>
+                            <MudTd DataLabel="Belöning">@context.RewardAmount.ToString("N2") kr</MudTd>
+                            <MudTd DataLabel="Förfallodatum">@context.DueDate.ToShortDateString()</MudTd>
+                            <MudTd DataLabel="Status">
+                                <MudChip T="string" Size="Size.Small" Color="@GetTaskStatusColor(context.Status)">@GetTaskStatusText(context.Status)</MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="Åtgärder">
+                                @if (context.Status == AllowanceTaskStatus.Pending || context.Status == AllowanceTaskStatus.InProgress)
+                                {
+                                    <MudIconButton Icon="@Icons.Material.Filled.Check" Color="Color.Success" Size="Size.Small" OnClick="@(() => CompleteTask(context.AllowanceTaskId))" />
+                                }
+                                @if (context.Status == AllowanceTaskStatus.Completed)
+                                {
+                                    <MudIconButton Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Size="Size.Small" OnClick="@(() => ApproveTask(context.AllowanceTaskId))" />
+                                    <MudIconButton Icon="@Icons.Material.Filled.Cancel" Color="Color.Error" Size="Size.Small" OnClick="@(() => RejectTask(context.AllowanceTaskId))" />
+                                }
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="@(() => DeleteTask(context.AllowanceTaskId))" />
+                            </MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                }
+            }
+            else
+            {
+                <MudAlert Severity="Severity.Info" Class="mt-4">Välj ett barnkonto från fliken "Konton" för att se uppdrag.</MudAlert>
+            }
+        </MudTabPanel>
+
+        <MudTabPanel Text="Transaktioner" Icon="@Icons.Material.Filled.Receipt">
+            @if (selectedAllowanceId.HasValue && selectedAllowance != null)
+            {
+                <MudText Typo="Typo.h6" Class="mb-2">Transaktioner för @selectedAllowance.HouseholdMember?.Name</MudText>
+                <MudText Typo="Typo.body1" Class="mb-4">Saldo: <strong>@selectedAllowance.CurrentBalance.ToString("N2") kr</strong></MudText>
+                
+                <MudButtonGroup Variant="Variant.Filled" Class="mb-4">
+                    <MudButton Color="Color.Success" OnClick="@(() => OpenTransactionDialog(AllowanceTransactionType.Deposit))">Sätt in</MudButton>
+                    <MudButton Color="Color.Warning" OnClick="@(() => OpenTransactionDialog(AllowanceTransactionType.Withdrawal))">Ta ut</MudButton>
+                    <MudButton Color="Color.Primary" OnClick="ProcessScheduledAllowance">Betala veckopeng</MudButton>
+                </MudButtonGroup>
+
+                @if (!transactions.Any())
+                {
+                    <MudAlert Severity="Severity.Info" Class="mt-4">Inga transaktioner ännu.</MudAlert>
+                }
+                else
+                {
+                    <MudTable Items="@transactions" Class="mt-4" Hover="true">
+                        <HeaderContent>
+                            <MudTh>Datum</MudTh>
+                            <MudTh>Beskrivning</MudTh>
+                            <MudTh>Typ</MudTh>
+                            <MudTh>Belopp</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataLabel="Datum">@context.TransactionDate.ToShortDateString()</MudTd>
+                            <MudTd DataLabel="Beskrivning">@context.Description</MudTd>
+                            <MudTd DataLabel="Typ">
+                                <MudChip T="string" Size="Size.Small" Color="@GetTransactionTypeColor(context.Type)">@GetTransactionTypeText(context.Type)</MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="Belopp">
+                                <span style="color: @(context.Type == AllowanceTransactionType.Withdrawal ? "red" : "green")">
+                                    @(context.Type == AllowanceTransactionType.Withdrawal ? "-" : "+")@context.Amount.ToString("N2") kr
+                                </span>
+                            </MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                }
+            }
+            else
+            {
+                <MudAlert Severity="Severity.Info" Class="mt-4">Välj ett barnkonto från fliken "Konton" för att se transaktioner.</MudAlert>
+            }
+        </MudTabPanel>
+    </MudTabs>
+}
+
+<!-- Create Allowance Dialog -->
+<MudDialog @bind-Visible="showCreateAllowanceDialog" Options="dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Skapa nytt barnkonto</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudSelect @bind-Value="newAllowance.HouseholdMemberId" Label="Barn" Required="true">
+            @foreach (var member in household?.Members.Where(m => m.IsActive) ?? Enumerable.Empty<HouseholdMember>())
+            {
+                <MudSelectItem Value="@member.HouseholdMemberId">@member.Name</MudSelectItem>
+            }
+        </MudSelect>
+        <MudTextField @bind-Value="newAllowance.Name" Label="Kontonamn" Required="true" />
+        <MudNumericField @bind-Value="newAllowance.Amount" Label="Veckopeng" Adornment="Adornment.End" AdornmentText="kr" Required="true" />
+        <MudSelect @bind-Value="newAllowance.Frequency" Label="Frekvens" Required="true">
+            <MudSelectItem Value="@AllowanceFrequency.Weekly">Varje vecka</MudSelectItem>
+            <MudSelectItem Value="@AllowanceFrequency.BiWeekly">Varannan vecka</MudSelectItem>
+            <MudSelectItem Value="@AllowanceFrequency.Monthly">Månatligen</MudSelectItem>
+        </MudSelect>
+        <MudDatePicker @bind-Date="allowanceStartDate" Label="Startdatum" Required="true" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="CloseCreateAllowanceDialog">Avbryt</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="CreateAllowance">Skapa</MudButton>
+    </DialogActions>
+</MudDialog>
+
+<!-- Create Task Dialog -->
+<MudDialog @bind-Visible="showCreateTaskDialog" Options="dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Lägg till uppdrag</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudSelect @bind-Value="newTask.ChildAllowanceId" Label="Barn" Required="true">
+            @foreach (var allowance in allowances)
+            {
+                <MudSelectItem Value="@allowance.ChildAllowanceId">@allowance.HouseholdMember?.Name</MudSelectItem>
+            }
+        </MudSelect>
+        <MudTextField @bind-Value="newTask.Name" Label="Uppdragsnamn" Required="true" />
+        <MudTextField @bind-Value="newTask.Description" Label="Beskrivning" Lines="2" />
+        <MudNumericField @bind-Value="newTask.RewardAmount" Label="Belöning" Adornment="Adornment.End" AdornmentText="kr" Required="true" />
+        <MudDatePicker @bind-Date="taskDueDate" Label="Förfallodatum" Required="true" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="CloseCreateTaskDialog">Avbryt</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="CreateTask">Lägg till</MudButton>
+    </DialogActions>
+</MudDialog>
+
+<!-- Transaction Dialog -->
+<MudDialog @bind-Visible="showTransactionDialog" Options="dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">@(transactionType == AllowanceTransactionType.Deposit ? "Sätt in pengar" : "Ta ut pengar")</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudNumericField @bind-Value="transactionAmount" Label="Belopp" Adornment="Adornment.End" AdornmentText="kr" Required="true" />
+        <MudTextField @bind-Value="transactionDescription" Label="Beskrivning" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="CloseTransactionDialog">Avbryt</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="AddTransaction">Bekräfta</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [Parameter]
+    public int HouseholdId { get; set; }
+
+    private Household? household;
+    private List<ChildAllowance> allowances = new();
+    private List<AllowanceTask> tasks = new();
+    private List<AllowanceTransaction> transactions = new();
+    private List<BreadcrumbItem> breadcrumbs = new();
+    
+    private int? selectedAllowanceId;
+    private ChildAllowance? selectedAllowance;
+    
+    private bool showCreateAllowanceDialog = false;
+    private bool showCreateTaskDialog = false;
+    private bool showTransactionDialog = false;
+    
+    private ChildAllowance newAllowance = new ChildAllowance();
+    private AllowanceTask newTask = new AllowanceTask();
+    private DateTime? allowanceStartDate = DateTime.Today;
+    private DateTime? taskDueDate = DateTime.Today.AddDays(7);
+    
+    private AllowanceTransactionType transactionType;
+    private decimal transactionAmount;
+    private string transactionDescription = string.Empty;
+    
+    private DialogOptions dialogOptions = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+        
+        breadcrumbs = new List<BreadcrumbItem>
+        {
+            new BreadcrumbItem("Hushåll", "/households"),
+            new BreadcrumbItem(household?.Name ?? "Detaljer", $"/households/{HouseholdId}"),
+            new BreadcrumbItem("Barnkonton", null, disabled: true)
+        };
+    }
+
+    private async Task LoadData()
+    {
+        household = await HouseholdService.GetHouseholdByIdAsync(HouseholdId);
+        allowances = (await ChildAllowanceService.GetAllAllowancesAsync(HouseholdId)).ToList();
+        
+        if (selectedAllowanceId.HasValue)
+        {
+            await LoadAllowanceDetails(selectedAllowanceId.Value);
+        }
+    }
+
+    private async Task LoadAllowanceDetails(int allowanceId)
+    {
+        selectedAllowanceId = allowanceId;
+        selectedAllowance = await ChildAllowanceService.GetAllowanceByIdAsync(allowanceId);
+        tasks = (await ChildAllowanceService.GetAllowanceTasksAsync(allowanceId)).ToList();
+        transactions = (await ChildAllowanceService.GetAllowanceTransactionsAsync(allowanceId)).ToList();
+    }
+
+    private void OpenCreateAllowanceDialog()
+    {
+        newAllowance = new ChildAllowance { Frequency = AllowanceFrequency.Weekly };
+        allowanceStartDate = DateTime.Today;
+        showCreateAllowanceDialog = true;
+    }
+
+    private void CloseCreateAllowanceDialog()
+    {
+        showCreateAllowanceDialog = false;
+    }
+
+    private async Task CreateAllowance()
+    {
+        if (newAllowance.HouseholdMemberId == 0 || string.IsNullOrWhiteSpace(newAllowance.Name) || newAllowance.Amount <= 0)
+            return;
+
+        newAllowance.StartDate = allowanceStartDate ?? DateTime.Today;
+        await ChildAllowanceService.CreateAllowanceAsync(newAllowance);
+        await LoadData();
+        CloseCreateAllowanceDialog();
+    }
+
+    private void OpenCreateTaskDialog()
+    {
+        newTask = new AllowanceTask();
+        if (allowances.Any())
+        {
+            newTask.ChildAllowanceId = allowances.First().ChildAllowanceId;
+        }
+        taskDueDate = DateTime.Today.AddDays(7);
+        showCreateTaskDialog = true;
+    }
+
+    private void CloseCreateTaskDialog()
+    {
+        showCreateTaskDialog = false;
+    }
+
+    private async Task CreateTask()
+    {
+        if (newTask.ChildAllowanceId == 0 || string.IsNullOrWhiteSpace(newTask.Name) || newTask.RewardAmount <= 0)
+            return;
+
+        newTask.DueDate = taskDueDate ?? DateTime.Today.AddDays(7);
+        await ChildAllowanceService.CreateTaskAsync(newTask);
+        
+        if (selectedAllowanceId.HasValue)
+        {
+            await LoadAllowanceDetails(selectedAllowanceId.Value);
+        }
+        
+        CloseCreateTaskDialog();
+    }
+
+    private async Task ViewAllowanceDetails(int allowanceId)
+    {
+        await LoadAllowanceDetails(allowanceId);
+    }
+
+    private async Task ManageTasks(int allowanceId)
+    {
+        await LoadAllowanceDetails(allowanceId);
+    }
+
+    private async Task CompleteTask(int taskId)
+    {
+        await ChildAllowanceService.CompleteTaskAsync(taskId);
+        if (selectedAllowanceId.HasValue)
+        {
+            await LoadAllowanceDetails(selectedAllowanceId.Value);
+        }
+    }
+
+    private async Task ApproveTask(int taskId)
+    {
+        await ChildAllowanceService.ApproveTaskAsync(taskId, "Parent"); // In a real app, use actual user name
+        if (selectedAllowanceId.HasValue)
+        {
+            await LoadAllowanceDetails(selectedAllowanceId.Value);
+        }
+        await LoadData(); // Reload to update balance
+    }
+
+    private async Task RejectTask(int taskId)
+    {
+        await ChildAllowanceService.RejectTaskAsync(taskId);
+        if (selectedAllowanceId.HasValue)
+        {
+            await LoadAllowanceDetails(selectedAllowanceId.Value);
+        }
+    }
+
+    private async Task DeleteTask(int taskId)
+    {
+        await ChildAllowanceService.DeleteTaskAsync(taskId);
+        if (selectedAllowanceId.HasValue)
+        {
+            await LoadAllowanceDetails(selectedAllowanceId.Value);
+        }
+    }
+
+    private void OpenTransactionDialog(AllowanceTransactionType type)
+    {
+        transactionType = type;
+        transactionAmount = 0;
+        transactionDescription = string.Empty;
+        showTransactionDialog = true;
+    }
+
+    private void CloseTransactionDialog()
+    {
+        showTransactionDialog = false;
+    }
+
+    private async Task AddTransaction()
+    {
+        if (!selectedAllowanceId.HasValue || transactionAmount <= 0)
+            return;
+
+        var transaction = new AllowanceTransaction
+        {
+            ChildAllowanceId = selectedAllowanceId.Value,
+            Amount = transactionAmount,
+            Type = transactionType,
+            Description = string.IsNullOrWhiteSpace(transactionDescription) 
+                ? (transactionType == AllowanceTransactionType.Deposit ? "Insättning" : "Uttag")
+                : transactionDescription,
+            TransactionDate = DateTime.Now
+        };
+
+        await ChildAllowanceService.AddTransactionAsync(transaction);
+        await LoadAllowanceDetails(selectedAllowanceId.Value);
+        await LoadData(); // Reload to update balance
+        CloseTransactionDialog();
+    }
+
+    private async Task ProcessScheduledAllowance()
+    {
+        if (!selectedAllowanceId.HasValue)
+            return;
+
+        await ChildAllowanceService.ProcessScheduledAllowanceAsync(selectedAllowanceId.Value);
+        await LoadAllowanceDetails(selectedAllowanceId.Value);
+        await LoadData(); // Reload to update balance
+    }
+
+    private string GetFrequencyText(AllowanceFrequency frequency)
+    {
+        return frequency switch
+        {
+            AllowanceFrequency.Weekly => "Varje vecka",
+            AllowanceFrequency.BiWeekly => "Varannan vecka",
+            AllowanceFrequency.Monthly => "Månatligen",
+            _ => frequency.ToString()
+        };
+    }
+
+    private string GetTaskStatusText(AllowanceTaskStatus status)
+    {
+        return status switch
+        {
+            AllowanceTaskStatus.Pending => "Väntande",
+            AllowanceTaskStatus.InProgress => "Pågående",
+            AllowanceTaskStatus.Completed => "Klar",
+            AllowanceTaskStatus.Approved => "Godkänd",
+            AllowanceTaskStatus.Rejected => "Avvisad",
+            _ => status.ToString()
+        };
+    }
+
+    private Color GetTaskStatusColor(AllowanceTaskStatus status)
+    {
+        return status switch
+        {
+            AllowanceTaskStatus.Pending => Color.Default,
+            AllowanceTaskStatus.InProgress => Color.Info,
+            AllowanceTaskStatus.Completed => Color.Warning,
+            AllowanceTaskStatus.Approved => Color.Success,
+            AllowanceTaskStatus.Rejected => Color.Error,
+            _ => Color.Default
+        };
+    }
+
+    private string GetTransactionTypeText(AllowanceTransactionType type)
+    {
+        return type switch
+        {
+            AllowanceTransactionType.Deposit => "Insättning",
+            AllowanceTransactionType.TaskReward => "Belöning",
+            AllowanceTransactionType.Withdrawal => "Uttag",
+            AllowanceTransactionType.Adjustment => "Justering",
+            _ => type.ToString()
+        };
+    }
+
+    private Color GetTransactionTypeColor(AllowanceTransactionType type)
+    {
+        return type switch
+        {
+            AllowanceTransactionType.Deposit => Color.Success,
+            AllowanceTransactionType.TaskReward => Color.Primary,
+            AllowanceTransactionType.Withdrawal => Color.Warning,
+            AllowanceTransactionType.Adjustment => Color.Info,
+            _ => Color.Default
+        };
+    }
+}
