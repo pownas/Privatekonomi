@@ -267,7 +267,8 @@ public static class TestDataSeeder
                 PurchaseDate = DateTime.Now.AddMonths(-6),
                 LastUpdated = DateTime.Now.AddDays(-1),
                 Market = "Stockholm",
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                UserId = userId
             },
             new Investment
             {
@@ -281,7 +282,8 @@ public static class TestDataSeeder
                 PurchaseDate = DateTime.Now.AddMonths(-8),
                 LastUpdated = DateTime.Now.AddDays(-2),
                 Market = "Stockholm",
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                UserId = userId
             },
             new Investment
             {
@@ -295,7 +297,8 @@ public static class TestDataSeeder
                 PurchaseDate = DateTime.Now.AddMonths(-4),
                 LastUpdated = DateTime.Now.AddDays(-1),
                 Market = "Stockholm",
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                UserId = userId
             },
             new Investment
             {
@@ -307,7 +310,8 @@ public static class TestDataSeeder
                 CurrentPrice = 138.40m,
                 PurchaseDate = DateTime.Now.AddMonths(-12),
                 LastUpdated = DateTime.Now.AddDays(-3),
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                UserId = userId
             },
             new Investment
             {
@@ -319,7 +323,8 @@ public static class TestDataSeeder
                 CurrentPrice = 104.80m,
                 PurchaseDate = DateTime.Now.AddMonths(-10),
                 LastUpdated = DateTime.Now.AddDays(-1),
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                UserId = userId
             },
             new Investment
             {
@@ -331,7 +336,8 @@ public static class TestDataSeeder
                 CurrentPrice = 232.90m,
                 PurchaseDate = DateTime.Now.AddMonths(-9),
                 LastUpdated = DateTime.Now.AddDays(-2),
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                UserId = userId
             },
             new Investment
             {
@@ -345,7 +351,8 @@ public static class TestDataSeeder
                 PurchaseDate = DateTime.Now.AddMonths(-5),
                 LastUpdated = DateTime.Now,
                 Market = "Stockholm",
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                UserId = userId
             },
             new Investment
             {
@@ -359,7 +366,8 @@ public static class TestDataSeeder
                 PurchaseDate = DateTime.Now.AddMonths(-3),
                 LastUpdated = DateTime.Now.AddDays(-1),
                 Market = "Stockholm",
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                UserId = userId
             }
         };
 
@@ -626,7 +634,8 @@ public static class TestDataSeeder
                 PurchaseDate = DateTime.Now.AddYears(-5),
                 Location = "Stockholm, Södermalm",
                 Currency = "SEK",
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                UserId = userId
             },
             new Asset
             {
@@ -639,7 +648,8 @@ public static class TestDataSeeder
                 PurchaseDate = DateTime.Now.AddYears(-3),
                 Location = "Stockholm",
                 Currency = "SEK",
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                UserId = userId
             },
             new Asset
             {
@@ -652,7 +662,8 @@ public static class TestDataSeeder
                 PurchaseDate = DateTime.Now.AddMonths(-6),
                 Location = "Hemkontor",
                 Currency = "SEK",
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                UserId = userId
             },
             new Asset
             {
@@ -665,7 +676,8 @@ public static class TestDataSeeder
                 PurchaseDate = DateTime.Now.AddYears(-2),
                 Location = "Lägenheten",
                 Currency = "SEK",
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                UserId = userId
             },
             new Asset
             {
@@ -678,7 +690,8 @@ public static class TestDataSeeder
                 PurchaseDate = DateTime.Now.AddYears(-1),
                 Location = "Vardagsrum",
                 Currency = "SEK",
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                UserId = userId
             },
             new Asset
             {
@@ -691,7 +704,8 @@ public static class TestDataSeeder
                 PurchaseDate = DateTime.Now.AddYears(-10),
                 Location = "Bankfack",
                 Currency = "SEK",
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                UserId = userId
             }
         };
 
@@ -714,7 +728,8 @@ public static class TestDataSeeder
                 Currency = "SEK",
                 StartDate = DateTime.Now.AddYears(-5),
                 MaturityDate = DateTime.Now.AddYears(25),
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                UserId = userId
             },
             new Loan
             {
@@ -727,7 +742,8 @@ public static class TestDataSeeder
                 Currency = "SEK",
                 StartDate = DateTime.Now.AddYears(-3),
                 MaturityDate = DateTime.Now.AddYears(2),
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                UserId = userId
             },
             new Loan
             {
@@ -740,7 +756,8 @@ public static class TestDataSeeder
                 Currency = "SEK",
                 StartDate = DateTime.Now.AddYears(-8),
                 MaturityDate = DateTime.Now.AddYears(17),
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                UserId = userId
             }
         };
 
