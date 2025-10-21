@@ -108,6 +108,8 @@ public class PrivatekonomyContext : DbContext
             entity.Property(e => e.Description).HasMaxLength(500);
             entity.Property(e => e.CaseSensitive).IsRequired();
             entity.Property(e => e.Field).IsRequired();
+            entity.Property(e => e.RuleType).IsRequired();
+            entity.Property(e => e.UserId).HasMaxLength(100);
             entity.Property(e => e.CreatedAt).IsRequired();
             
             entity.HasOne(e => e.Category)
@@ -115,9 +117,18 @@ public class PrivatekonomyContext : DbContext
                 .HasForeignKey(e => e.CategoryId)
                 .OnDelete(DeleteBehavior.Cascade);
             
+            // Self-referencing relationship for rule overrides
+            entity.HasOne(e => e.OverridesSystemRule)
+                .WithMany()
+                .HasForeignKey(e => e.OverridesSystemRuleId)
+                .OnDelete(DeleteBehavior.Restrict);
+            
             entity.HasIndex(e => e.Priority);
             entity.HasIndex(e => e.IsActive);
             entity.HasIndex(e => new { e.IsActive, e.Priority });
+            entity.HasIndex(e => e.RuleType);
+            entity.HasIndex(e => e.UserId);
+            entity.HasIndex(e => new { e.RuleType, e.UserId });
         });
 
         modelBuilder.Entity<Transaction>(entity =>

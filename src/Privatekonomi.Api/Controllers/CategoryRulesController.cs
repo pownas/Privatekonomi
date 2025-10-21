@@ -146,6 +146,57 @@ public class CategoryRulesController : ControllerBase
         var results = await _categoryRuleService.ApplyRulesToTransactionsAsync(transactionIds);
         return Ok(results);
     }
+
+    /// <summary>
+    /// Creates a user override for a system rule.
+    /// </summary>
+    [HttpPost("override/{systemRuleId}")]
+    public async Task<ActionResult<CategoryRule>> CreateOverride(
+        int systemRuleId, 
+        [FromBody] CategoryRule overrideRule,
+        [FromQuery] string? userId = null)
+    {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+
+        if (string.IsNullOrEmpty(userId))
+        {
+            return BadRequest("User ID is required");
+        }
+
+        try
+        {
+            var createdOverride = await _categoryRuleService.CreateOverrideAsync(systemRuleId, overrideRule, userId);
+            return CreatedAtAction(nameof(GetRule), new { id = createdOverride.CategoryRuleId }, createdOverride);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(ex.Message);
+        }
+    }
+
+    /// <summary>
+    /// Restores a system rule by removing the user's override.
+    /// </summary>
+    [HttpDelete("override/{systemRuleId}")]
+    public async Task<IActionResult> RestoreSystemRule(
+        int systemRuleId,
+        [FromQuery] string? userId = null)
+    {
+        if (string.IsNullOrEmpty(userId))
+        {
+            return BadRequest("User ID is required");
+        }
+
+        await _categoryRuleService.RestoreSystemRuleAsync(systemRuleId, userId);
+        return NoContent();
+    }
 }
 
 /// <summary>

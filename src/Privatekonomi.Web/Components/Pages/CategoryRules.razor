@@ -129,6 +129,7 @@
     {
         <MudTable Items="_rules" Hover="true" Breakpoint="Breakpoint.Sm" Dense="true">
             <HeaderContent>
+                <MudTh>Typ</MudTh>
                 <MudTh>Prioritet</MudTh>
                 <MudTh>Mönster</MudTh>
                 <MudTh>Matchning</MudTh>
@@ -138,6 +139,20 @@
                 <MudTh>Åtgärder</MudTh>
             </HeaderContent>
             <RowTemplate>
+                <MudTd DataLabel="Typ">
+                    @if (context.RuleType == RuleType.System)
+                    {
+                        <MudChip T="string" Size="Size.Small" Color="Color.Secondary" Icon="@Icons.Material.Filled.AdminPanelSettings">System</MudChip>
+                    }
+                    else if (context.OverridesSystemRuleId != null)
+                    {
+                        <MudChip T="string" Size="Size.Small" Color="Color.Warning" Icon="@Icons.Material.Filled.Edit">Användarändring</MudChip>
+                    }
+                    else
+                    {
+                        <MudChip T="string" Size="Size.Small" Color="Color.Primary" Icon="@Icons.Material.Filled.Person">Användare</MudChip>
+                    }
+                </MudTd>
                 <MudTd DataLabel="Prioritet">
                     <MudChip T="string" Size="Size.Small" Color="Color.Info">@context.Priority</MudChip>
                 </MudTd>
@@ -146,6 +161,10 @@
                     @if (!string.IsNullOrEmpty(context.Description))
                     {
                         <MudText Typo="Typo.caption" Color="Color.Secondary">@context.Description</MudText>
+                    }
+                    @if (context.OverridesSystemRuleId != null)
+                    {
+                        <MudText Typo="Typo.caption" Color="Color.Warning">Skriver över systemregel #@context.OverridesSystemRuleId</MudText>
                     }
                 </MudTd>
                 <MudTd DataLabel="Matchning">
@@ -171,14 +190,49 @@
                 </MudTd>
                 <MudTd DataLabel="Åtgärder">
                     <div class="d-flex gap-1">
-                        <MudIconButton Icon="@Icons.Material.Filled.Edit" 
-                                     Color="Color.Primary" 
-                                     Size="Size.Small"
-                                     OnClick="@(() => EditRule(context))" />
-                        <MudIconButton Icon="@Icons.Material.Filled.Delete" 
-                                     Color="Color.Error" 
-                                     Size="Size.Small"
-                                     OnClick="@(() => DeleteRule(context))" />
+                        @if (context.RuleType == RuleType.System)
+                        {
+                            <MudTooltip Text="Skapa användarändring av systemregel">
+                                <MudIconButton Icon="@Icons.Material.Filled.ContentCopy" 
+                                             Color="Color.Warning" 
+                                             Size="Size.Small"
+                                             OnClick="@(() => OverrideSystemRule(context))" />
+                            </MudTooltip>
+                            <MudTooltip Text="Systemregler kan endast ändras av administratörer">
+                                <MudIconButton Icon="@Icons.Material.Filled.Lock" 
+                                             Color="Color.Secondary" 
+                                             Size="Size.Small"
+                                             Disabled="true" />
+                            </MudTooltip>
+                        }
+                        else if (context.OverridesSystemRuleId != null)
+                        {
+                            <MudTooltip Text="Återställ till systemstandard">
+                                <MudIconButton Icon="@Icons.Material.Filled.Restore" 
+                                             Color="Color.Warning" 
+                                             Size="Size.Small"
+                                             OnClick="@(() => RestoreSystemRule(context))" />
+                            </MudTooltip>
+                            <MudIconButton Icon="@Icons.Material.Filled.Edit" 
+                                         Color="Color.Primary" 
+                                         Size="Size.Small"
+                                         OnClick="@(() => EditRule(context))" />
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" 
+                                         Color="Color.Error" 
+                                         Size="Size.Small"
+                                         OnClick="@(() => DeleteRule(context))" />
+                        }
+                        else
+                        {
+                            <MudIconButton Icon="@Icons.Material.Filled.Edit" 
+                                         Color="Color.Primary" 
+                                         Size="Size.Small"
+                                         OnClick="@(() => EditRule(context))" />
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" 
+                                         Color="Color.Error" 
+                                         Size="Size.Small"
+                                         OnClick="@(() => DeleteRule(context))" />
+                        }
                     </div>
                 </MudTd>
             </RowTemplate>
@@ -343,6 +397,51 @@
             catch (Exception ex)
             {
                 Snackbar.Add($"Fel vid borttagning av regel: {ex.Message}", Severity.Error);
+            }
+        }
+    }
+
+    private void OverrideSystemRule(CategoryRule systemRule)
+    {
+        // Copy the system rule settings as a starting point for the override
+        _formPattern = systemRule.Pattern;
+        _formMatchType = systemRule.MatchType;
+        _formCategoryId = systemRule.CategoryId;
+        _formField = systemRule.Field;
+        _formPriority = systemRule.Priority;
+        _formIsActive = systemRule.IsActive;
+        _formCaseSensitive = systemRule.CaseSensitive;
+        _formDescription = $"Användarändring av: {systemRule.Description ?? systemRule.Pattern}";
+        
+        _editingRule = null;
+        _showCreateForm = true;
+        
+        Snackbar.Add($"Skapa en användarändring för systemregeln '{systemRule.Pattern}'. Ändra inställningarna och spara.", Severity.Info);
+    }
+
+    private async Task RestoreSystemRule(CategoryRule overrideRule)
+    {
+        if (overrideRule.OverridesSystemRuleId == null)
+        {
+            return;
+        }
+
+        var result = await DialogService.ShowMessageBox(
+            "Återställ systemregel",
+            $"Är du säker på att du vill återställa systemregeln? Din användarändring kommer att tas bort.",
+            yesText: "Återställ", cancelText: "Avbryt");
+
+        if (result == true)
+        {
+            try
+            {
+                await CategoryRuleService.RestoreSystemRuleAsync(overrideRule.OverridesSystemRuleId.Value, "current-user");
+                Snackbar.Add("Systemregel återställd!", Severity.Success);
+                await LoadData();
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Fel vid återställning: {ex.Message}", Severity.Error);
             }
         }
     }

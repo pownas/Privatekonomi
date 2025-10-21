@@ -49,6 +49,26 @@ public class CategoryRule
     /// </summary>
     public MatchField Field { get; set; } = MatchField.Both;
     
+    /// <summary>
+    /// Type of rule - System (predefined, admin-only) or User (user-created).
+    /// </summary>
+    public RuleType RuleType { get; set; } = RuleType.User;
+    
+    /// <summary>
+    /// User ID who created this rule (null for system rules).
+    /// </summary>
+    public string? UserId { get; set; }
+    
+    /// <summary>
+    /// For user rules that override system rules - references the system rule being overridden.
+    /// </summary>
+    public int? OverridesSystemRuleId { get; set; }
+    
+    /// <summary>
+    /// Navigation property to the system rule being overridden.
+    /// </summary>
+    public CategoryRule? OverridesSystemRule { get; set; }
+    
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
     
@@ -105,4 +125,21 @@ public enum MatchField
     /// Match against both description and payee (rule matches if either field matches).
     /// </summary>
     Both
+}
+
+/// <summary>
+/// Type of categorization rule.
+/// </summary>
+public enum RuleType
+{
+    /// <summary>
+    /// System rule - predefined by the system, can only be modified by admins.
+    /// Users can override these rules but cannot delete them.
+    /// </summary>
+    System,
+    
+    /// <summary>
+    /// User rule - created by a user, can be modified or deleted by the user.
+    /// </summary>
+    User
 }

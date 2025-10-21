@@ -17,61 +17,161 @@ public class CategoryRuleService : ICategoryRuleService
         _context = context;
     }
 
-    public async Task<IEnumerable<CategoryRule>> GetAllRulesAsync()
+    public async Task<IEnumerable<CategoryRule>> GetAllRulesAsync(string? userId = null)
     {
-        return await _context.CategoryRules
+        var query = _context.CategoryRules
             .Include(r => r.Category)
+            .Include(r => r.OverridesSystemRule)
+            .AsQueryable();
+
+        if (!string.IsNullOrEmpty(userId))
+        {
+            // Get system rules not overridden by user + user's own rules (including overrides)
+            var userOverriddenSystemRuleIds = await _context.CategoryRules
+                .Where(r => r.UserId == userId && r.OverridesSystemRuleId != null)
+                .Select(r => r.OverridesSystemRuleId!.Value)
+                .ToListAsync();
+
+            query = query.Where(r => 
+                (r.RuleType == RuleType.System && !userOverriddenSystemRuleIds.Contains(r.CategoryRuleId)) ||
+                (r.RuleType == RuleType.User && r.UserId == userId));
+        }
+
+        return await query
             .OrderByDescending(r => r.Priority)
             .ThenBy(r => r.CategoryRuleId)
             .ToListAsync();
     }
 
-    public async Task<IEnumerable<CategoryRule>> GetActiveRulesAsync()
+    public async Task<IEnumerable<CategoryRule>> GetActiveRulesAsync(string? userId = null)
     {
-        return await _context.CategoryRules
-            .Include(r => r.Category)
-            .Where(r => r.IsActive)
-            .OrderByDescending(r => r.Priority)
-            .ThenBy(r => r.CategoryRuleId)
-            .ToListAsync();
+        var allRules = await GetAllRulesAsync(userId);
+        return allRules.Where(r => r.IsActive);
     }
 
     public async Task<CategoryRule?> GetRuleByIdAsync(int id)
     {
         return await _context.CategoryRules
             .Include(r => r.Category)
+            .Include(r => r.OverridesSystemRule)
             .FirstOrDefaultAsync(r => r.CategoryRuleId == id);
     }
 
-    public async Task<CategoryRule> CreateRuleAsync(CategoryRule rule)
+    public async Task<CategoryRule> CreateRuleAsync(CategoryRule rule, string? userId = null, bool isAdmin = false)
     {
+        // Set rule type and user ID
+        if (isAdmin && rule.RuleType == RuleType.System)
+        {
+            rule.UserId = null; // System rules have no user
+        }
+        else
+        {
+            rule.RuleType = RuleType.User;
+            rule.UserId = userId;
+        }
+
         rule.CreatedAt = DateTime.UtcNow;
         _context.CategoryRules.Add(rule);
         await _context.SaveChangesAsync();
         return rule;
     }
 
-    public async Task<CategoryRule> UpdateRuleAsync(CategoryRule rule)
+    public async Task<CategoryRule> UpdateRuleAsync(CategoryRule rule, string? userId = null, bool isAdmin = false)
     {
+        var existingRule = await _context.CategoryRules.FindAsync(rule.CategoryRuleId);
+        if (existingRule == null)
+        {
+            throw new ArgumentException($"Rule with ID {rule.CategoryRuleId} not found");
+        }
+
+        // Check permissions
+        if (existingRule.RuleType == RuleType.System && !isAdmin)
+        {
+            throw new UnauthorizedAccessException("Only administrators can modify system rules");
+        }
+
+        if (existingRule.RuleType == RuleType.User && existingRule.UserId != userId && !isAdmin)
+        {
+            throw new UnauthorizedAccessException("You can only modify your own rules");
+        }
+
         rule.UpdatedAt = DateTime.UtcNow;
         _context.Entry(rule).State = EntityState.Modified;
         await _context.SaveChangesAsync();
         return rule;
     }
 
-    public async Task DeleteRuleAsync(int id)
+    public async Task DeleteRuleAsync(int id, string? userId = null, bool isAdmin = false)
     {
         var rule = await _context.CategoryRules.FindAsync(id);
-        if (rule != null)
+        if (rule == null)
         {
-            _context.CategoryRules.Remove(rule);
+            return;
+        }
+
+        // System rules cannot be deleted, only overridden
+        if (rule.RuleType == RuleType.System && !isAdmin)
+        {
+            throw new UnauthorizedAccessException("System rules cannot be deleted. Create an override instead.");
+        }
+
+        // Check permissions for user rules
+        if (rule.RuleType == RuleType.User && rule.UserId != userId && !isAdmin)
+        {
+            throw new UnauthorizedAccessException("You can only delete your own rules");
+        }
+
+        _context.CategoryRules.Remove(rule);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task<CategoryRule> CreateOverrideAsync(int systemRuleId, CategoryRule overrideRule, string userId)
+    {
+        var systemRule = await _context.CategoryRules.FindAsync(systemRuleId);
+        if (systemRule == null)
+        {
+            throw new ArgumentException($"System rule with ID {systemRuleId} not found");
+        }
+
+        if (systemRule.RuleType != RuleType.System)
+        {
+            throw new ArgumentException("Can only override system rules");
+        }
+
+        // Check if user already has an override for this system rule
+        var existingOverride = await _context.CategoryRules
+            .FirstOrDefaultAsync(r => r.OverridesSystemRuleId == systemRuleId && r.UserId == userId);
+
+        if (existingOverride != null)
+        {
+            throw new InvalidOperationException("An override for this system rule already exists");
+        }
+
+        overrideRule.RuleType = RuleType.User;
+        overrideRule.UserId = userId;
+        overrideRule.OverridesSystemRuleId = systemRuleId;
+        overrideRule.CreatedAt = DateTime.UtcNow;
+
+        _context.CategoryRules.Add(overrideRule);
+        await _context.SaveChangesAsync();
+        return overrideRule;
+    }
+
+    public async Task RestoreSystemRuleAsync(int systemRuleId, string userId)
+    {
+        var userOverride = await _context.CategoryRules
+            .FirstOrDefaultAsync(r => r.OverridesSystemRuleId == systemRuleId && r.UserId == userId);
+
+        if (userOverride != null)
+        {
+            _context.CategoryRules.Remove(userOverride);
             await _context.SaveChangesAsync();
         }
     }
 
-    public async Task<CategoryRule?> FindMatchingRuleAsync(string description, string? payee = null)
+    public async Task<CategoryRule?> FindMatchingRuleAsync(string description, string? payee = null, string? userId = null)
     {
-        var rules = await GetActiveRulesAsync();
+        var rules = await GetActiveRulesAsync(userId);
         
         foreach (var rule in rules)
         {
@@ -84,20 +184,20 @@ public class CategoryRuleService : ICategoryRuleService
         return null;
     }
 
-    public async Task<int?> ApplyCategoryRulesAsync(string description, string? payee = null)
+    public async Task<int?> ApplyCategoryRulesAsync(string description, string? payee = null, string? userId = null)
     {
-        var matchingRule = await FindMatchingRuleAsync(description, payee);
+        var matchingRule = await FindMatchingRuleAsync(description, payee, userId);
         return matchingRule?.CategoryId;
     }
 
-    public async Task<Dictionary<int, int>> ApplyRulesToTransactionsAsync(IEnumerable<int> transactionIds)
+    public async Task<Dictionary<int, int>> ApplyRulesToTransactionsAsync(IEnumerable<int> transactionIds, string? userId = null)
     {
         var results = new Dictionary<int, int>();
         var transactions = await _context.Transactions
             .Where(t => transactionIds.Contains(t.TransactionId))
             .ToListAsync();
         
-        var rules = await GetActiveRulesAsync();
+        var rules = await GetActiveRulesAsync(userId);
         
         foreach (var transaction in transactions)
         {
