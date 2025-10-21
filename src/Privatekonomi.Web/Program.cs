@@ -36,6 +36,12 @@ builder.Services.AddScoped<IAuditLogService, AuditLogService>();
 builder.Services.AddScoped<IBankConnectionService, BankConnectionService>();
 builder.Services.AddScoped<ThemeService>();
 
+// Swedish-specific services
+builder.Services.AddScoped<ISieExporter, SieExporter>();
+builder.Services.AddScoped<IK4Generator, K4Generator>();
+builder.Services.AddScoped<ITaxDeductionService, TaxDeductionService>();
+builder.Services.AddScoped<IISKTaxCalculator, ISKTaxCalculator>();
+
 // Add HttpClient for API calls (if needed later)
 builder.Services.AddHttpClient("api", client =>
 {

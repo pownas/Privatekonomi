@@ -21,6 +21,24 @@ public class Investment
     public string? Country { get; set; }
     public string? Market { get; set; }
     
+    // Swedish account type specific fields
+    /// <summary>
+    /// Type of investment account: "ISK" (Investeringssparkonto), "KF" (Kapitalförsäkring), 
+    /// "AF" (Aktie- och fondkonto), "Depå" (regular depot), or null if not specified
+    /// </summary>
+    public string? AccountType { get; set; }
+    
+    /// <summary>
+    /// Calculated schablon tax for ISK/KF accounts (schablonintäkt)
+    /// Based on Swedish tax rules: typically 0.375% of capital base per quarter
+    /// </summary>
+    public decimal? SchablonTax { get; set; }
+    
+    /// <summary>
+    /// Tax year for the schablon tax calculation
+    /// </summary>
+    public int? SchablonTaxYear { get; set; }
+    
     // Audit fields
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }

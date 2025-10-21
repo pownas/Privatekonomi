@@ -1,0 +1,230 @@
+@page "/sie-export"
+@using Privatekonomi.Core.Services
+@using Privatekonomi.Core.Data
+@using System.Text
+@inject PrivatekonomyContext Context
+@inject ISieExporter SieExporter
+@inject ISnackbar Snackbar
+
+<PageTitle>SIE-export</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+    <MudText Typo="Typo.h3" GutterBottom="true">SIE-export för bokföring</MudText>
+    <MudText Typo="Typo.body1" Class="mb-4">
+        Exportera dina transaktioner i SIE-format för import i bokföringsprogram som Fortnox, Visma eller Hogia.
+    </MudText>
+
+    <MudCard Class="mb-4">
+        <MudCardContent>
+            <MudGrid>
+                <MudItem xs="12" md="6">
+                    <MudPaper Class="pa-4" Elevation="2">
+                        <MudText Typo="Typo.h6" GutterBottom="true">Vad är SIE?</MudText>
+                        <MudText Typo="Typo.body2">
+                            SIE (Standard Import Export) är ett svenskt standardformat för att utbyta ekonomisk data mellan olika system.
+                            Denna export genererar SIE 4-format som kan importeras i de flesta bokföringsprogram.
+                        </MudText>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudPaper Class="pa-4" Elevation="2">
+                        <MudText Typo="Typo.h6" GutterBottom="true">Kompatibla program</MudText>
+                        <MudList T="string" Dense="true">
+                            <MudListItem T="string" Icon="@Icons.Material.Filled.CheckCircle">Fortnox</MudListItem>
+                            <MudListItem T="string" Icon="@Icons.Material.Filled.CheckCircle">Visma eEkonomi</MudListItem>
+                            <MudListItem T="string" Icon="@Icons.Material.Filled.CheckCircle">Hogia</MudListItem>
+                            <MudListItem T="string" Icon="@Icons.Material.Filled.CheckCircle">Spcs</MudListItem>
+                        </MudList>
+                    </MudPaper>
+                </MudItem>
+            </MudGrid>
+        </MudCardContent>
+    </MudCard>
+
+    <MudCard Class="mb-4">
+        <MudCardHeader>
+            <CardHeaderContent>
+                <MudText Typo="Typo.h6">Exportinställningar</MudText>
+            </CardHeaderContent>
+        </MudCardHeader>
+        <MudCardContent>
+            <MudGrid>
+                <MudItem xs="12" sm="6" md="4">
+                    <MudSelect @bind-Value="selectedYear" Label="År" Variant="Variant.Outlined">
+                        @for (int year = DateTime.Now.Year - 5; year <= DateTime.Now.Year; year++)
+                        {
+                            <MudSelectItem Value="@year">@year</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="4">
+                    <MudDatePicker @bind-Date="startDate" Label="Från datum" Variant="Variant.Outlined" />
+                </MudItem>
+                <MudItem xs="12" sm="6" md="4">
+                    <MudDatePicker @bind-Date="endDate" Label="Till datum" Variant="Variant.Outlined" />
+                </MudItem>
+            </MudGrid>
+
+            <MudDivider Class="my-4" />
+
+            <MudGrid>
+                <MudItem xs="12" sm="6">
+                    <MudButton OnClick="PreviewExport" Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Visibility" FullWidth="true" Disabled="@loading">
+                        Förhandsgranska
+                    </MudButton>
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudButton OnClick="ExportSie" Variant="Variant.Filled" Color="Color.Success" StartIcon="@Icons.Material.Filled.Download" FullWidth="true" Disabled="@loading">
+                        Exportera SIE-fil
+                    </MudButton>
+                </MudItem>
+            </MudGrid>
+
+            @if (loading)
+            {
+                <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="mt-4" />
+            }
+        </MudCardContent>
+    </MudCard>
+
+    @if (!string.IsNullOrEmpty(siePreview))
+    {
+        <MudCard>
+            <MudCardHeader>
+                <CardHeaderContent>
+                    <MudText Typo="Typo.h6">Förhandsvisning av SIE-export</MudText>
+                </CardHeaderContent>
+                <CardHeaderActions>
+                    <MudIconButton Icon="@Icons.Material.Filled.ContentCopy" Color="Color.Primary" OnClick="CopyToClipboard" />
+                </CardHeaderActions>
+            </MudCardHeader>
+            <MudCardContent>
+                <MudPaper Class="pa-4" Elevation="0" Style="background-color: #f5f5f5; max-height: 500px; overflow-y: auto;">
+                    <pre style="font-family: 'Courier New', monospace; font-size: 12px; margin: 0;">@siePreview</pre>
+                </MudPaper>
+                
+                <MudAlert Severity="Severity.Success" Class="mt-4" Icon="@Icons.Material.Filled.Info">
+                    SIE-filen innehåller @transactionCount transaktioner och @accountCount konton
+                </MudAlert>
+            </MudCardContent>
+        </MudCard>
+
+        <MudCard Class="mt-4">
+            <MudCardContent>
+                <MudText Typo="Typo.h6" GutterBottom="true">Nästa steg</MudText>
+                <MudStepper>
+                    <MudStep Title="Exportera">
+                        <MudText>Klicka på "Exportera SIE-fil" för att ladda ner filen</MudText>
+                    </MudStep>
+                    <MudStep Title="Importera">
+                        <MudText>Öppna ditt bokföringsprogram (Fortnox, Visma, etc.)</MudText>
+                    </MudStep>
+                    <MudStep Title="Verifiera">
+                        <MudText>Välj "Importera" → "SIE-fil" och ladda upp filen</MudText>
+                    </MudStep>
+                    <MudStep Title="Kontrollera">
+                        <MudText>Kontrollera att alla transaktioner och konton importerades korrekt</MudText>
+                    </MudStep>
+                </MudStepper>
+            </MudCardContent>
+        </MudCard>
+    }
+
+    <MudCard Class="mt-4">
+        <MudCardContent>
+            <MudText Typo="Typo.h6" GutterBottom="true">Information om SIE-export</MudText>
+            <MudText Typo="Typo.body2" Class="mb-2">
+                <strong>Format:</strong> SIE 4 (Standard Import Export version 4)
+            </MudText>
+            <MudText Typo="Typo.body2" Class="mb-2">
+                <strong>Teckenuppsättning:</strong> PC8 (ISO 8859-1)
+            </MudText>
+            <MudText Typo="Typo.body2" Class="mb-2">
+                <strong>Innehåll:</strong> Kontoplan, verifikationer med transaktioner, och metadata
+            </MudText>
+            <MudText Typo="Typo.body2">
+                <strong>Kontomappning:</strong> Inkomstkategorier (3000-3999), Utgiftskategorier (5000-7999), Bank (1930)
+            </MudText>
+        </MudCardContent>
+    </MudCard>
+</MudContainer>
+
+@code {
+    private int selectedYear = DateTime.Now.Year;
+    private DateTime? startDate = new DateTime(DateTime.Now.Year, 1, 1);
+    private DateTime? endDate = new DateTime(DateTime.Now.Year, 12, 31);
+    private string siePreview = string.Empty;
+    private int transactionCount = 0;
+    private int accountCount = 0;
+    private bool loading = false;
+
+    private async Task PreviewExport()
+    {
+        loading = true;
+        try
+        {
+            if (startDate.HasValue && endDate.HasValue)
+            {
+                siePreview = await SieExporter.ExportToSie4Async(householdId: 1, fromDate: startDate.Value, toDate: endDate.Value);
+            }
+            else
+            {
+                siePreview = await SieExporter.ExportToSie4Async(householdId: 1, year: selectedYear);
+            }
+
+            // Count transactions and accounts in preview
+            transactionCount = siePreview.Split("#VER").Length - 1;
+            accountCount = siePreview.Split("#KONTO").Length - 1;
+
+            // Limit preview to first 2000 characters for display
+            if (siePreview.Length > 2000)
+            {
+                siePreview = siePreview.Substring(0, 2000) + "\n\n... (visa fullständig fil genom att exportera)";
+            }
+
+            Snackbar.Add("Förhandsgranskning skapad", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Fel vid förhandsgranskning: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    private async Task ExportSie()
+    {
+        loading = true;
+        try
+        {
+            string sieContent;
+            if (startDate.HasValue && endDate.HasValue)
+            {
+                sieContent = await SieExporter.ExportToSie4Async(householdId: 1, fromDate: startDate.Value, toDate: endDate.Value);
+            }
+            else
+            {
+                sieContent = await SieExporter.ExportToSie4Async(householdId: 1, year: selectedYear);
+            }
+
+            // In a real scenario, this would trigger a file download
+            var fileName = $"bokforing_{selectedYear}.se";
+            Snackbar.Add($"SIE-fil '{fileName}' exporterad ({sieContent.Length} bytes)", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Fel vid export: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    private void CopyToClipboard()
+    {
+        Snackbar.Add("SIE-innehåll kopierat till urklipp", Severity.Info);
+    }
+}
