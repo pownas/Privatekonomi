@@ -50,4 +50,38 @@ public class LoanService : ILoanService
             await _context.SaveChangesAsync();
         }
     }
+
+    public async Task<decimal> GetTotalDebtAsync()
+    {
+        return await _context.Loans.SumAsync(l => l.Amount);
+    }
+
+    public async Task<decimal> GetTotalMonthlyCostAsync()
+    {
+        var loans = await _context.Loans.ToListAsync();
+        return loans.Sum(l => CalculateMonthlyCost(l));
+    }
+
+    public async Task<IEnumerable<Loan>> GetLoansByTypeAsync(string type)
+    {
+        return await _context.Loans
+            .Where(l => l.Type == type)
+            .OrderBy(l => l.Name)
+            .ToListAsync();
+    }
+
+    public async Task<IEnumerable<Loan>> GetCreditCardsAsync()
+    {
+        return await _context.Loans
+            .Where(l => l.Type == "Kreditkort")
+            .OrderByDescending(l => l.UtilizationRate)
+            .ToListAsync();
+    }
+
+    private decimal CalculateMonthlyCost(Loan loan)
+    {
+        // Monthly interest = (Amount * InterestRate/100) / 12 + Amortization
+        var monthlyInterest = (loan.Amount * loan.InterestRate / 100) / 12;
+        return monthlyInterest + loan.Amortization;
+    }
 }
