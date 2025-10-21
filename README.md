@@ -294,6 +294,23 @@ builder.Services.AddDbContext<PrivatekonomyContext>(options =>
 - **[STOCK_PRICE_API_GUIDE.md](wiki/STOCK_PRICE_API_GUIDE.md)**: Guide för automatisk uppdatering av aktiekurser via API
 - **[BUDGET_GUIDE.md](wiki/BUDGET_GUIDE.md)**: Guide för budgethantering
 
+### Sverige-specifika integrationer (NYT!)
+
+- **[SWEDISH_INTEGRATIONS_SUMMARY.md](wiki/SWEDISH_INTEGRATIONS_SUMMARY.md)**: Sammanfattning av Sverige-specifika funktioner
+- **[SWEDISH_INTEGRATIONS_EVALUATION.md](wiki/SWEDISH_INTEGRATIONS_EVALUATION.md)**: Utvärdering av genomförbarhet
+- **[SWEDISH_INTEGRATIONS_IMPLEMENTATION.md](wiki/SWEDISH_INTEGRATIONS_IMPLEMENTATION.md)**: Implementationsguide
+
+**Funktioner:**
+- ✅ ROT/RUT-avdrag
+- ✅ K4 kapitalvinstrapport
+- ✅ ISK/KF schablonbeskattning
+- ✅ SIE-export för bokföring
+- ✅ Bolån med bindningstid
+- ✅ CSN-lån
+- ✅ Reseavdrag
+- ⚠️ BankID (planerad)
+- ⚠️ Fortnox/Visma integration (planerad)
+
 ### Teknisk dokumentation
 
 - **[ProgramSpecifikation.md](wiki/ProgramSpecifikation.md)**: Övergripande programspecifikation
