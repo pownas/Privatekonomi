@@ -13,6 +13,7 @@ public class Transaction
     public string Currency { get; set; } = "SEK"; // Default to Swedish Krona
     public string? Payee { get; set; } // Who received/sent the payment
     public string? Tags { get; set; } // Comma-separated tags for flexible categorization
+    public string? Notes { get; set; } // User notes/comments about the transaction
     public int? RecurringId { get; set; } // Link to recurring transaction template
     public bool Imported { get; set; } // Whether transaction was imported from CSV/API
     public string? ImportSource { get; set; } // Source of import (e.g., "ICA-banken CSV", "Swedbank API")
