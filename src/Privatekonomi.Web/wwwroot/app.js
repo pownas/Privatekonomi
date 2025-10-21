@@ -28,5 +28,8 @@ window.themeManager = {
     },
     setTheme: function(isDarkMode) {
         localStorage.setItem('darkMode', isDarkMode.toString());
+    },
+    hasPreference: function() {
+        return localStorage.getItem('darkMode') !== null;
     }
 };
