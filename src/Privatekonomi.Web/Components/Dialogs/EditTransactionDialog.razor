@@ -1,0 +1,100 @@
+@using Privatekonomi.Core.Models
+@using Privatekonomi.Core.Services
+@inject ITransactionService TransactionService
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        @if (_transaction != null)
+        {
+            <MudGrid>
+                <MudItem xs="12">
+                    <MudTextField @bind-Value="_transaction.Description" Label="Beskrivning" Variant="Variant.Outlined" />
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudDatePicker @bind-Date="_transactionDate" Label="Datum" Variant="Variant.Outlined" />
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudNumericField @bind-Value="_transaction.Amount" Label="Belopp" Variant="Variant.Outlined" Format="N2" />
+                </MudItem>
+                <MudItem xs="12">
+                    <MudTextField @bind-Value="_transaction.Tags" Label="Taggar (kommaseparerade)" 
+                                  Variant="Variant.Outlined" 
+                                  HelperText="Exempel: mat, shopping, nödvändigt" />
+                </MudItem>
+                <MudItem xs="12">
+                    <MudTextField @bind-Value="_transaction.Notes" Label="Noteringar" 
+                                  Variant="Variant.Outlined" 
+                                  Lines="4"
+                                  HelperText="Lägg till anteckningar eller kommentarer om transaktionen" />
+                </MudItem>
+            </MudGrid>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Avbryt</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Save">Spara</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] 
+    public required IMudDialogInstance MudDialog { get; set; }
+
+    [Parameter]
+    public Transaction Transaction { get; set; } = null!;
+
+    private Transaction _transaction = null!;
+    private DateTime? _transactionDate;
+
+    protected override void OnInitialized()
+    {
+        // Create a copy to avoid modifying the original until saved
+        _transaction = new Transaction
+        {
+            TransactionId = Transaction.TransactionId,
+            Description = Transaction.Description,
+            Amount = Transaction.Amount,
+            Date = Transaction.Date,
+            IsIncome = Transaction.IsIncome,
+            BankSourceId = Transaction.BankSourceId,
+            Currency = Transaction.Currency,
+            Payee = Transaction.Payee,
+            Tags = Transaction.Tags,
+            Notes = Transaction.Notes,
+            RecurringId = Transaction.RecurringId,
+            Imported = Transaction.Imported,
+            ImportSource = Transaction.ImportSource,
+            Cleared = Transaction.Cleared,
+            CreatedAt = Transaction.CreatedAt,
+            UpdatedAt = Transaction.UpdatedAt
+        };
+        _transactionDate = _transaction.Date;
+    }
+
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+
+    private async Task Save()
+    {
+        try
+        {
+            if (_transactionDate.HasValue)
+            {
+                _transaction.Date = _transactionDate.Value;
+            }
+            
+            _transaction.UpdatedAt = DateTime.UtcNow;
+            
+            await TransactionService.UpdateTransactionAsync(_transaction);
+            Snackbar.Add("Transaktionen har uppdaterats", Severity.Success);
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Ett fel uppstod: {ex.Message}", Severity.Error);
+        }
+    }
+}

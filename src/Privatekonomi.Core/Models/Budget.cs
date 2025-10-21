@@ -8,6 +8,8 @@ public class Budget
     public DateTime StartDate { get; set; }
     public DateTime EndDate { get; set; }
     public BudgetPeriod Period { get; set; }
+    public BudgetTemplateType? TemplateType { get; set; }
+    public bool RolloverUnspent { get; set; } = false;
     public int? HouseholdId { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
@@ -20,4 +22,12 @@ public enum BudgetPeriod
 {
     Monthly,
     Yearly
+}
+
+public enum BudgetTemplateType
+{
+    Custom = 0,
+    ZeroBased = 1,
+    FiftyThirtyTwenty = 2,
+    Envelope = 3
 }

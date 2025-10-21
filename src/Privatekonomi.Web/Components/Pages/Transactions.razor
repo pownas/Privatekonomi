@@ -1,9 +1,11 @@
 @page "/transactions"
 @rendermode InteractiveServer
 @inject ITransactionService TransactionService
+@inject IExportService ExportService
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
 @inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
 
 <PageTitle>Transaktioner - Privatekonomi</PageTitle>
 
@@ -16,6 +18,14 @@
                        OnClick="@(() => Navigation.NavigateTo("/transactions/new"))">
                 Ny Transaktion
             </MudButton>
+            <MudButtonGroup Color="Color.Primary" Variant="Variant.Outlined">
+                <MudButton StartIcon="@Icons.Material.Filled.Download" OnClick="ExportToCsv">
+                    Exportera CSV
+                </MudButton>
+                <MudButton StartIcon="@Icons.Material.Filled.Download" OnClick="ExportToJson">
+                    Exportera JSON
+                </MudButton>
+            </MudButtonGroup>
         </MudItem>
     </MudGrid>
 
@@ -44,7 +54,38 @@
             </HeaderContent>
             <RowTemplate>
                 <MudTd DataLabel="Datum">@context.Date.ToString("yyyy-MM-dd")</MudTd>
-                <MudTd DataLabel="Beskrivning">@context.Description</MudTd>
+                <MudTd DataLabel="Beskrivning">
+                    <div class="d-flex align-center">
+                        @context.Description
+                        @if (!string.IsNullOrWhiteSpace(context.Notes) || !string.IsNullOrWhiteSpace(context.Tags))
+                        {
+                            <MudIconButton Icon="@Icons.Material.Filled.Info" Size="Size.Small" Color="Color.Info"
+                                           OnClick="@(() => ToggleDetails(context.TransactionId))" />
+                        }
+                    </div>
+                    @if (_expandedTransactionId == context.TransactionId)
+                    {
+                        <MudPaper Class="pa-2 mt-2" Elevation="0" Style="background-color: #f5f5f5;">
+                            @if (!string.IsNullOrWhiteSpace(context.Tags))
+                            {
+                                <div class="mb-2">
+                                    <MudText Typo="Typo.caption" Style="font-weight: 600;">Taggar:</MudText>
+                                    @foreach (var tag in context.Tags.Split(',', StringSplitOptions.RemoveEmptyEntries))
+                                    {
+                                        <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Outlined">@tag.Trim()</MudChip>
+                                    }
+                                </div>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(context.Notes))
+                            {
+                                <div>
+                                    <MudText Typo="Typo.caption" Style="font-weight: 600;">Noteringar:</MudText>
+                                    <MudText Typo="Typo.body2">@context.Notes</MudText>
+                                </div>
+                            }
+                        </MudPaper>
+                    }
+                </MudTd>
                 <MudTd DataLabel="Bank">
                     @if (context.BankSource != null)
                     {
@@ -70,6 +111,8 @@
                     </MudText>
                 </MudTd>
                 <MudTd DataLabel="Åtgärder">
+                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small"
+                                   OnClick="@(() => EditTransaction(context))" />
                     <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small"
                                    OnClick="@(() => DeleteTransaction(context.TransactionId))" />
                 </MudTd>
@@ -82,6 +125,7 @@
     private bool _loading = true;
     private IEnumerable<Transaction> _transactions = new List<Transaction>();
     private string _searchString = "";
+    private int? _expandedTransactionId = null;
 
     protected override async Task OnInitializedAsync()
     {
@@ -105,7 +149,37 @@
             return true;
         if (transaction.BankSource != null && transaction.BankSource.Name.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
             return true;
+        if (!string.IsNullOrWhiteSpace(transaction.Tags) && transaction.Tags.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+        if (!string.IsNullOrWhiteSpace(transaction.Notes) && transaction.Notes.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
         return false;
+    }
+
+    private void ToggleDetails(int transactionId)
+    {
+        _expandedTransactionId = _expandedTransactionId == transactionId ? null : transactionId;
+    }
+
+    private async Task EditTransaction(Transaction transaction)
+    {
+        var parameters = new DialogParameters<EditTransactionDialog>
+        {
+            { x => x.Transaction, transaction }
+        };
+
+        var dialog = await DialogService.ShowAsync<EditTransactionDialog>("Redigera transaktion", parameters, new DialogOptions 
+        { 
+            MaxWidth = MaxWidth.Medium, 
+            FullWidth = true 
+        });
+        
+        var result = await dialog.Result;
+        
+        if (!result.Canceled)
+        {
+            await LoadData();
+        }
     }
 
     private async Task DeleteTransaction(int id)
@@ -121,5 +195,43 @@
             Snackbar.Add("Transaktion borttagen", Severity.Success);
             await LoadData();
         }
+    }
+
+    private async Task ExportToCsv()
+    {
+        try
+        {
+            var csvData = await ExportService.ExportTransactionsToCsvAsync();
+            var fileName = $"transaktioner_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
+            
+            await DownloadFile(csvData, fileName, "text/csv");
+            Snackbar.Add("Transaktioner exporterade till CSV", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Ett fel uppstod vid export: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task ExportToJson()
+    {
+        try
+        {
+            var jsonData = await ExportService.ExportTransactionsToJsonAsync();
+            var fileName = $"transaktioner_{DateTime.Now:yyyyMMdd_HHmmss}.json";
+            
+            await DownloadFile(jsonData, fileName, "application/json");
+            Snackbar.Add("Transaktioner exporterade till JSON", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Ett fel uppstod vid export: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task DownloadFile(byte[] fileData, string fileName, string contentType)
+    {
+        var base64 = Convert.ToBase64String(fileData);
+        await JSRuntime.InvokeVoidAsync("downloadFile", fileName, contentType, base64);
     }
 }
