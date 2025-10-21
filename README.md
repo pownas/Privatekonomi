@@ -12,7 +12,12 @@ En privatekonomi-applikation byggd med .NET 9, Blazor Server och MudBlazor för 
 - **Automatisk kursuppdatering**: Uppdatera aktiekurser via Yahoo Finance API med ett knapptryck
 - **Kategorisystem**: Förkonfigurerade kategorier med färgkodning och hierarkisk struktur
 - **Split-kategorisering**: Möjlighet att dela upp transaktioner i flera kategorier
-- **Automatisk kategorisering**: Systemet föreslår kategorier baserat på tidigare transaktioner
+- **Automatisk kategorisering**: 
+  - Regelbaserad kategorisering med 44+ förkonfigurerade regler
+  - Stöd för olika matchningstyper (innehåller, exakt, börjar med, slutar med, regex)
+  - Prioritetsbaserad regelutvärdering
+  - Användarvänligt gränssnitt för att hantera kategoriseringsregler
+  - Systemet föreslår också kategorier baserat på tidigare transaktioner
 - **Responsiv design**: Fungerar på desktop och mobila enheter
 - **In-memory databas**: Använder Entity Framework Core InMemory för snabb utveckling
 - **CSV-import**: 
@@ -293,6 +298,7 @@ builder.Services.AddDbContext<PrivatekonomyContext>(options =>
 - **[AVANZA_IMPORT_GUIDE.md](wiki/AVANZA_IMPORT_GUIDE.md)**: Guide för import av investeringar från Avanza Bank
 - **[STOCK_PRICE_API_GUIDE.md](wiki/STOCK_PRICE_API_GUIDE.md)**: Guide för automatisk uppdatering av aktiekurser via API
 - **[BUDGET_GUIDE.md](wiki/BUDGET_GUIDE.md)**: Guide för budgethantering
+- **[AUTOMATIC_CATEGORIZATION.md](docs/AUTOMATIC_CATEGORIZATION.md)**: Guide för automatisk kategorisering av transaktioner
 
 ### Teknisk dokumentation
 
