@@ -58,7 +58,51 @@
             </MudItem>
         </MudGrid>
 
-        <MudText Typo="Typo.h6" Class="mb-3 mt-4">Budgetposter per kategori</MudText>
+        <MudDivider Class="my-4" />
+
+        <MudText Typo="Typo.h6" Class="mb-3">Budgetmall</MudText>
+        <MudGrid>
+            <MudItem xs="12" md="6">
+                <MudSelect @bind-Value="_selectedTemplate" Label="Välj budgetmall" Variant="Variant.Outlined" 
+                           T="BudgetTemplateType" Class="mb-3">
+                    <MudSelectItem Value="@BudgetTemplateType.Custom">Anpassad (tom mall)</MudSelectItem>
+                    <MudSelectItem Value="@BudgetTemplateType.FiftyThirtyTwenty">50/30/20-regeln</MudSelectItem>
+                    <MudSelectItem Value="@BudgetTemplateType.ZeroBased">Zero-based budgeting</MudSelectItem>
+                    <MudSelectItem Value="@BudgetTemplateType.Envelope">Kuvertbudget</MudSelectItem>
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudNumericField @bind-Value="_totalIncome" 
+                                Label="Total månadsinkomst" 
+                                Variant="Variant.Outlined"
+                                Format="N2"
+                                Adornment="Adornment.Start"
+                                AdornmentText="kr"
+                                Min="0"
+                                Step="1000M"
+                                HideSpinButtons="false"
+                                Class="mb-3"
+                                HelperText="Används för att beräkna budgetmallar" />
+            </MudItem>
+            <MudItem xs="12">
+                <MudAlert Severity="Severity.Info" Class="mb-3">
+                    @BudgetTemplateService.GetTemplateDescription(_selectedTemplate)
+                </MudAlert>
+            </MudItem>
+            <MudItem xs="12">
+                <MudButton Variant="Variant.Outlined" 
+                           Color="Color.Primary" 
+                           OnClick="ApplyTemplate"
+                           Disabled="@(_totalIncome <= 0)"
+                           StartIcon="@Icons.Material.Filled.AutoAwesome">
+                    Använd mall
+                </MudButton>
+            </MudItem>
+        </MudGrid>
+
+        <MudDivider Class="my-4" />
+
+        <MudText Typo="Typo.h6" Class="mb-3">Budgetposter per kategori</MudText>
         <MudGrid>
             @foreach (var category in _categories)
             {
@@ -240,6 +284,8 @@
     private string _newBudgetEndDateString = DateTime.Now.AddMonths(1).ToString("yyyy-MM-dd");
     private Dictionary<int, decimal> _categoryBudgets = new();
     private Dictionary<int, Dictionary<int, decimal>> _budgetActualAmounts = new();
+    private BudgetTemplateType _selectedTemplate = BudgetTemplateType.Custom;
+    private decimal _totalIncome = 30000m; // Default Swedish median income
 
     protected override async Task OnInitializedAsync()
     {
@@ -277,6 +323,27 @@
             _newBudgetStartDateString = DateTime.Now.ToString("yyyy-MM-dd");
             _newBudgetEndDateString = DateTime.Now.AddMonths(1).ToString("yyyy-MM-dd");
             _categoryBudgets = _categories.ToDictionary(c => c.CategoryId, c => 0m);
+            _selectedTemplate = BudgetTemplateType.Custom;
+        }
+    }
+
+    private void ApplyTemplate()
+    {
+        if (_totalIncome <= 0)
+        {
+            Snackbar.Add("Ange total månadsinkomst först", Severity.Warning);
+            return;
+        }
+
+        try
+        {
+            _categoryBudgets = BudgetTemplateService.ApplyTemplate(_selectedTemplate, _totalIncome, _categories);
+            _newBudget.TemplateType = _selectedTemplate;
+            Snackbar.Add($"Budgetmall '{_selectedTemplate}' tillämpad", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Ett fel uppstod: {ex.Message}", Severity.Error);
         }
     }
 
