@@ -20,6 +20,37 @@ public class Transaction
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
     
+    // Swedish payment method specific fields
+    /// <summary>
+    /// Payment method: "Swish", "Autogiro", "E-faktura", "Banköverföring", "Kort", "Kontant"
+    /// </summary>
+    public string? PaymentMethod { get; set; }
+    
+    /// <summary>
+    /// Bankgiro number for the recipient (if applicable)
+    /// </summary>
+    public string? RecipientBankgiro { get; set; }
+    
+    /// <summary>
+    /// Plusgiro number for the recipient (if applicable)
+    /// </summary>
+    public string? RecipientPlusgiro { get; set; }
+    
+    /// <summary>
+    /// Invoice number (for e-faktura)
+    /// </summary>
+    public string? InvoiceNumber { get; set; }
+    
+    /// <summary>
+    /// OCR number (Optical Character Recognition reference number for Swedish payments)
+    /// </summary>
+    public string? OCR { get; set; }
+    
+    /// <summary>
+    /// Whether this is a recurring payment (e.g., Autogiro subscription)
+    /// </summary>
+    public bool IsRecurring { get; set; }
+    
     public BankSource? BankSource { get; set; }
     public ICollection<TransactionCategory> TransactionCategories { get; set; } = new List<TransactionCategory>();
 }

@@ -1,0 +1,239 @@
+@page "/tax-deductions"
+@using Privatekonomi.Core.Models
+@using Privatekonomi.Core.Services
+@using Privatekonomi.Core.Data
+@inject PrivatekonomyContext Context
+@inject ITaxDeductionService TaxDeductionService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+<PageTitle>ROT/RUT-avdrag</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+    <MudText Typo="Typo.h3" GutterBottom="true">ROT/RUT-avdrag</MudText>
+    <MudText Typo="Typo.body1" Class="mb-4">
+        Hantera dina ROT- och RUT-avdrag för skattedeklarationen.
+    </MudText>
+
+    <MudCard Class="mb-4">
+        <MudCardContent>
+            <MudGrid>
+                <MudItem xs="12" sm="6" md="3">
+                    <MudSelect @bind-Value="selectedYear" Label="Beskattningsår" Variant="Variant.Outlined">
+                        @for (int year = DateTime.Now.Year - 2; year <= DateTime.Now.Year; year++)
+                        {
+                            <MudSelectItem Value="@year">@year</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="3">
+                    <MudButton OnClick="LoadDeductions" Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Refresh">
+                        Uppdatera
+                    </MudButton>
+                </MudItem>
+            </MudGrid>
+            
+            <MudDivider Class="my-4" />
+            
+            <MudGrid>
+                <MudItem xs="12" sm="6" md="3">
+                    <MudPaper Class="pa-4" Elevation="2">
+                        <MudText Typo="Typo.h6" Color="Color.Primary">ROT-avdrag</MudText>
+                        <MudText Typo="Typo.h4">@rotTotal.ToString("N0") kr</MudText>
+                        <MudText Typo="Typo.caption">Max: 50 000 kr/person</MudText>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="3">
+                    <MudPaper Class="pa-4" Elevation="2">
+                        <MudText Typo="Typo.h6" Color="Color.Secondary">RUT-avdrag</MudText>
+                        <MudText Typo="Typo.h4">@rutTotal.ToString("N0") kr</MudText>
+                        <MudText Typo="Typo.caption">Max: 75 000 kr/person</MudText>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="3">
+                    <MudPaper Class="pa-4" Elevation="2">
+                        <MudText Typo="Typo.h6" Color="Color.Success">Totalt avdrag</MudText>
+                        <MudText Typo="Typo.h4">@totalDeduction.ToString("N0") kr</MudText>
+                        <MudText Typo="Typo.caption">@deductions.Count avdrag</MudText>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="3">
+                    <MudPaper Class="pa-4" Elevation="2">
+                        <MudText Typo="Typo.h6">Skattereduktion</MudText>
+                        <MudText Typo="Typo.h4">@totalDeduction.ToString("N0") kr</MudText>
+                        <MudText Typo="Typo.caption">Direkt från skatten</MudText>
+                    </MudPaper>
+                </MudItem>
+            </MudGrid>
+        </MudCardContent>
+    </MudCard>
+
+    <MudCard>
+        <MudCardHeader>
+            <CardHeaderContent>
+                <MudText Typo="Typo.h6">Registrerade avdrag (@selectedYear)</MudText>
+            </CardHeaderContent>
+            <CardHeaderActions>
+                <MudButton OnClick="OpenAddDialog" Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add">
+                    Lägg till avdrag
+                </MudButton>
+            </CardHeaderActions>
+        </MudCardHeader>
+        <MudCardContent>
+            <MudTable Items="@deductions" Hover="true" Breakpoint="Breakpoint.Sm" Loading="@loading" LoadingProgressColor="Color.Info">
+                <HeaderContent>
+                    <MudTh>Typ</MudTh>
+                    <MudTh>Datum</MudTh>
+                    <MudTh>Tjänsteleverantör</MudTh>
+                    <MudTh>Org.nr</MudTh>
+                    <MudTh>Arbete</MudTh>
+                    <MudTh><MudTableSortLabel SortBy="new Func<TaxDeduction, object>(x => x.Amount)">Belopp</MudTableSortLabel></MudTh>
+                    <MudTh><MudTableSortLabel SortBy="new Func<TaxDeduction, object>(x => x.DeductibleAmount)">Avdrag</MudTableSortLabel></MudTh>
+                    <MudTh>Godkänd</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Typ">
+                        <MudChip T="string" Color="@(context.Type == "ROT" ? Color.Primary : Color.Secondary)" Size="Size.Small">@context.Type</MudChip>
+                    </MudTd>
+                    <MudTd DataLabel="Datum">@context.WorkDate.ToShortDateString()</MudTd>
+                    <MudTd DataLabel="Tjänsteleverantör">@context.ServiceProvider</MudTd>
+                    <MudTd DataLabel="Org.nr">@context.OrganizationNumber</MudTd>
+                    <MudTd DataLabel="Arbete">
+                        <MudText Typo="Typo.body2" Style="max-width: 200px; overflow: hidden; text-overflow: ellipsis;">
+                            @(context.WorkDescription ?? "-")
+                        </MudText>
+                    </MudTd>
+                    <MudTd DataLabel="Belopp">@context.Amount.ToString("N2") kr</MudTd>
+                    <MudTd DataLabel="Avdrag">
+                        <MudText Typo="Typo.body2" Color="Color.Success">
+                            <strong>@context.DeductibleAmount.ToString("N2") kr</strong>
+                        </MudText>
+                    </MudTd>
+                    <MudTd DataLabel="Godkänd">
+                        @if (context.Approved)
+                        {
+                            <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" />
+                        }
+                        else
+                        {
+                            <MudIcon Icon="@Icons.Material.Filled.Schedule" Color="Color.Warning" />
+                        }
+                    </MudTd>
+                </RowTemplate>
+                <NoRecordsContent>
+                    <MudText>Inga ROT/RUT-avdrag registrerade för @selectedYear</MudText>
+                </NoRecordsContent>
+            </MudTable>
+        </MudCardContent>
+    </MudCard>
+
+    <MudCard Class="mt-4">
+        <MudCardContent>
+            <MudText Typo="Typo.h6" GutterBottom="true">Information om ROT och RUT</MudText>
+            <MudText Typo="Typo.body2" Class="mb-2">
+                <strong>ROT-avdrag</strong> (Reparation, Ombyggnad, Tillbyggnad): 50% avdrag på arbetskostnad, max 50 000 kr per person och år.
+            </MudText>
+            <MudText Typo="Typo.body2">
+                <strong>RUT-avdrag</strong> (Rengöring, Underhåll, Tvätt): 50% avdrag på totalkostnad, max 75 000 kr per person och år.
+            </MudText>
+        </MudCardContent>
+    </MudCard>
+</MudContainer>
+
+@code {
+    private int selectedYear = DateTime.Now.Year;
+    private List<TaxDeduction> deductions = new();
+    private decimal totalDeduction = 0;
+    private decimal rotTotal = 0;
+    private decimal rutTotal = 0;
+    private bool loading = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDeductions();
+    }
+
+    private async Task LoadDeductions()
+    {
+        loading = true;
+        try
+        {
+            deductions = await TaxDeductionService.GetDeductionsByYearAsync(selectedYear);
+            totalDeduction = await TaxDeductionService.GetTotalDeductibleAmountAsync(selectedYear);
+            rotTotal = deductions.Where(d => d.Type == "ROT").Sum(d => d.DeductibleAmount);
+            rutTotal = deductions.Where(d => d.Type == "RUT").Sum(d => d.DeductibleAmount);
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    private async Task OpenAddDialog()
+    {
+        // Add sample data for demonstration
+        var sampleDeductions = new List<TaxDeduction>
+        {
+            new TaxDeduction
+            {
+                Type = "ROT",
+                Amount = 20000,
+                DeductibleAmount = 10000,
+                ServiceProvider = "Bygg & Renovering AB",
+                OrganizationNumber = "556123-4567",
+                WorkDescription = "Renovering av badrum",
+                WorkDate = new DateTime(selectedYear, 3, 15),
+                TaxYear = selectedYear,
+                Approved = true,
+                CreatedAt = DateTime.UtcNow
+            },
+            new TaxDeduction
+            {
+                Type = "ROT",
+                Amount = 35000,
+                DeductibleAmount = 17500,
+                ServiceProvider = "Elmästaren Stockholm AB",
+                OrganizationNumber = "556234-5678",
+                WorkDescription = "Installation av värmepump",
+                WorkDate = new DateTime(selectedYear, 5, 20),
+                TaxYear = selectedYear,
+                Approved = true,
+                CreatedAt = DateTime.UtcNow
+            },
+            new TaxDeduction
+            {
+                Type = "RUT",
+                Amount = 8000,
+                DeductibleAmount = 4000,
+                ServiceProvider = "Städservice Hemma AB",
+                OrganizationNumber = "556345-6789",
+                WorkDescription = "Städning varje månad",
+                WorkDate = new DateTime(selectedYear, 1, 10),
+                TaxYear = selectedYear,
+                Approved = true,
+                CreatedAt = DateTime.UtcNow
+            },
+            new TaxDeduction
+            {
+                Type = "RUT",
+                Amount = 6000,
+                DeductibleAmount = 3000,
+                ServiceProvider = "Trädgårdstjänst i Stockholm",
+                OrganizationNumber = "556456-7890",
+                WorkDescription = "Snöröjning och trädgårdsskötsel",
+                WorkDate = new DateTime(selectedYear, 11, 5),
+                TaxYear = selectedYear,
+                Approved = false,
+                CreatedAt = DateTime.UtcNow
+            }
+        };
+
+        foreach (var deduction in sampleDeductions)
+        {
+            await TaxDeductionService.AddDeductionAsync(deduction);
+        }
+
+        await LoadDeductions();
+        Snackbar.Add("Exempel-avdrag tillagda för demonstration", Severity.Success);
+    }
+}
