@@ -24,6 +24,7 @@ builder.Services.AddDbContext<PrivatekonomyContext>(options =>
 // Register services
 builder.Services.AddScoped<ITransactionService, TransactionService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
+builder.Services.AddScoped<ICategoryRuleService, CategoryRuleService>();
 builder.Services.AddScoped<ILoanService, LoanService>();
 builder.Services.AddScoped<IDebtStrategyService, DebtStrategyService>();
 builder.Services.AddScoped<IInvestmentService, InvestmentService>();

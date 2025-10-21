@@ -13,6 +13,7 @@ public class PrivatekonomyContext : DbContext
     public DbSet<Transaction> Transactions { get; set; }
     public DbSet<Category> Categories { get; set; }
     public DbSet<TransactionCategory> TransactionCategories { get; set; }
+    public DbSet<CategoryRule> CategoryRules { get; set; }
     public DbSet<Loan> Loans { get; set; }
     public DbSet<Investment> Investments { get; set; }
     public DbSet<Asset> Assets { get; set; }
@@ -104,6 +105,39 @@ public class PrivatekonomyContext : DbContext
                 .WithMany(c => c.SubCategories)
                 .HasForeignKey(e => e.ParentId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<CategoryRule>(entity =>
+        {
+            entity.HasKey(e => e.CategoryRuleId);
+            entity.Property(e => e.Pattern).IsRequired().HasMaxLength(500);
+            entity.Property(e => e.MatchType).IsRequired();
+            entity.Property(e => e.Priority).IsRequired();
+            entity.Property(e => e.IsActive).IsRequired();
+            entity.Property(e => e.Description).HasMaxLength(500);
+            entity.Property(e => e.CaseSensitive).IsRequired();
+            entity.Property(e => e.Field).IsRequired();
+            entity.Property(e => e.RuleType).IsRequired();
+            entity.Property(e => e.UserId).HasMaxLength(100);
+            entity.Property(e => e.CreatedAt).IsRequired();
+            
+            entity.HasOne(e => e.Category)
+                .WithMany()
+                .HasForeignKey(e => e.CategoryId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            // Self-referencing relationship for rule overrides
+            entity.HasOne(e => e.OverridesSystemRule)
+                .WithMany()
+                .HasForeignKey(e => e.OverridesSystemRuleId)
+                .OnDelete(DeleteBehavior.Restrict);
+            
+            entity.HasIndex(e => e.Priority);
+            entity.HasIndex(e => e.IsActive);
+            entity.HasIndex(e => new { e.IsActive, e.Priority });
+            entity.HasIndex(e => e.RuleType);
+            entity.HasIndex(e => e.UserId);
+            entity.HasIndex(e => new { e.RuleType, e.UserId });
         });
 
         modelBuilder.Entity<Transaction>(entity =>
