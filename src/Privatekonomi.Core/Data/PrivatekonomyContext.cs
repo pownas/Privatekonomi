@@ -159,6 +159,15 @@ public class PrivatekonomyContext : DbContext
             entity.Property(e => e.Amortization).HasPrecision(18, 2);
             entity.Property(e => e.Currency).IsRequired().HasMaxLength(3);
             entity.Property(e => e.CreatedAt).IsRequired();
+            entity.Property(e => e.CreditLimit).HasPrecision(18, 2);
+            entity.Property(e => e.MinimumPayment).HasPrecision(18, 2);
+            entity.Property(e => e.InstallmentFee).HasPrecision(18, 2);
+            entity.Property(e => e.ExtraMonthlyPayment).HasPrecision(18, 2);
+            entity.Property(e => e.Priority).IsRequired();
+            
+            // Ignore computed properties
+            entity.Ignore(e => e.CurrentBalance);
+            entity.Ignore(e => e.UtilizationRate);
         });
         
         modelBuilder.Entity<Asset>(entity =>
