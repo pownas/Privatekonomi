@@ -10,7 +10,7 @@ public class TransactionService : ITransactionService
     private readonly ICurrentUserService? _currentUserService;
     private readonly ICategoryRuleService _categoryRuleService;
 
-    public TransactionService(PrivatekonomyContext context, ICurrentUserService? currentUserService = null, ICategoryRuleService categoryRuleService)
+    public TransactionService(PrivatekonomyContext context, ICategoryRuleService categoryRuleService, ICurrentUserService? currentUserService = null)
     {
         _context = context;
         _currentUserService = currentUserService;

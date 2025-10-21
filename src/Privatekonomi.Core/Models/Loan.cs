@@ -92,6 +92,10 @@ public class Loan
     // Priority for debt payoff strategies
     public int Priority { get; set; } = 0; // 0 = ingen prioritet, högre nummer = högre prioritet
     
+    // User ownership
+    public string? UserId { get; set; }
+    public ApplicationUser? User { get; set; }
+    
     // Computed properties (not stored in DB)
     public decimal CurrentBalance => Amount; // För framtida implementering av faktisk saldo
     public decimal? UtilizationRate => CreditLimit.HasValue && CreditLimit.Value > 0 

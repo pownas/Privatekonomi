@@ -217,6 +217,13 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
             entity.Property(e => e.ExtraMonthlyPayment).HasPrecision(18, 2);
             entity.Property(e => e.Priority).IsRequired();
             
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.HasIndex(e => e.UserId);
+            
             // Ignore computed properties
             entity.Ignore(e => e.CurrentBalance);
             entity.Ignore(e => e.UtilizationRate);
@@ -233,6 +240,13 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
             entity.Property(e => e.Currency).IsRequired().HasMaxLength(3);
             entity.Property(e => e.Location).HasMaxLength(200);
             entity.Property(e => e.CreatedAt).IsRequired();
+            
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.HasIndex(e => e.UserId);
             
             // Ignore computed properties
             entity.Ignore(e => e.ValueChange);
@@ -264,10 +278,16 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
                 .WithMany()
                 .HasForeignKey(e => e.BankSourceId)
                 .OnDelete(DeleteBehavior.SetNull);
+            
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
                 
             // Indexes for faster searching
             entity.HasIndex(e => e.ISIN);
             entity.HasIndex(e => e.AccountNumber);
+            entity.HasIndex(e => e.UserId);
             
             // Ignore computed properties
             entity.Ignore(e => e.TotalValue);

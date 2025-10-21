@@ -11,30 +11,35 @@ namespace Privatekonomi.Core.Services;
 public class CategoryRuleService : ICategoryRuleService
 {
     private readonly PrivatekonomyContext _context;
+    private readonly ICurrentUserService? _currentUserService;
 
-    public CategoryRuleService(PrivatekonomyContext context)
+    public CategoryRuleService(PrivatekonomyContext context, ICurrentUserService? currentUserService = null)
     {
         _context = context;
+        _currentUserService = currentUserService;
     }
 
     public async Task<IEnumerable<CategoryRule>> GetAllRulesAsync(string? userId = null)
     {
+        // Use provided userId or current user
+        var effectiveUserId = userId ?? _currentUserService?.UserId;
+        
         var query = _context.CategoryRules
             .Include(r => r.Category)
             .Include(r => r.OverridesSystemRule)
             .AsQueryable();
 
-        if (!string.IsNullOrEmpty(userId))
+        if (!string.IsNullOrEmpty(effectiveUserId))
         {
             // Get system rules not overridden by user + user's own rules (including overrides)
             var userOverriddenSystemRuleIds = await _context.CategoryRules
-                .Where(r => r.UserId == userId && r.OverridesSystemRuleId != null)
+                .Where(r => r.UserId == effectiveUserId && r.OverridesSystemRuleId != null)
                 .Select(r => r.OverridesSystemRuleId!.Value)
                 .ToListAsync();
 
             query = query.Where(r => 
                 (r.RuleType == RuleType.System && !userOverriddenSystemRuleIds.Contains(r.CategoryRuleId)) ||
-                (r.RuleType == RuleType.User && r.UserId == userId));
+                (r.RuleType == RuleType.User && r.UserId == effectiveUserId));
         }
 
         return await query
@@ -51,14 +56,25 @@ public class CategoryRuleService : ICategoryRuleService
 
     public async Task<CategoryRule?> GetRuleByIdAsync(int id)
     {
-        return await _context.CategoryRules
+        var query = _context.CategoryRules
             .Include(r => r.Category)
             .Include(r => r.OverridesSystemRule)
-            .FirstOrDefaultAsync(r => r.CategoryRuleId == id);
+            .AsQueryable();
+
+        // Filter by current user if authenticated (users can only see their own rules and system rules)
+        if (_currentUserService?.IsAuthenticated == true && _currentUserService.UserId != null)
+        {
+            query = query.Where(r => r.RuleType == RuleType.System || r.UserId == _currentUserService.UserId);
+        }
+
+        return await query.FirstOrDefaultAsync(r => r.CategoryRuleId == id);
     }
 
     public async Task<CategoryRule> CreateRuleAsync(CategoryRule rule, string? userId = null, bool isAdmin = false)
     {
+        // Use provided userId or current user
+        var effectiveUserId = userId ?? _currentUserService?.UserId;
+        
         // Set rule type and user ID
         if (isAdmin && rule.RuleType == RuleType.System)
         {
@@ -67,7 +83,7 @@ public class CategoryRuleService : ICategoryRuleService
         else
         {
             rule.RuleType = RuleType.User;
-            rule.UserId = userId;
+            rule.UserId = effectiveUserId;
         }
 
         rule.CreatedAt = DateTime.UtcNow;

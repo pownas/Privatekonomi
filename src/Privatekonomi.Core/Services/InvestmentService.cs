@@ -11,10 +11,12 @@ public class InvestmentService : IInvestmentService
 {
     private readonly PrivatekonomyContext _context;
     private readonly List<IInvestmentCsvParser> _parsers;
+    private readonly ICurrentUserService? _currentUserService;
 
-    public InvestmentService(PrivatekonomyContext context)
+    public InvestmentService(PrivatekonomyContext context, ICurrentUserService? currentUserService = null)
     {
         _context = context;
+        _currentUserService = currentUserService;
         _parsers = new List<IInvestmentCsvParser>
         {
             new AvanzaHoldingsPerAccountParser(),
@@ -24,22 +26,44 @@ public class InvestmentService : IInvestmentService
 
     public async Task<IEnumerable<Investment>> GetAllInvestmentsAsync()
     {
-        return await _context.Investments
+        var query = _context.Investments
             .Include(i => i.BankSource)
-            .OrderByDescending(i => i.LastUpdated)
-            .ToListAsync();
+            .AsQueryable();
+
+        // Filter by current user if authenticated
+        if (_currentUserService?.IsAuthenticated == true && _currentUserService.UserId != null)
+        {
+            query = query.Where(i => i.UserId == _currentUserService.UserId);
+        }
+
+        return await query.OrderByDescending(i => i.LastUpdated).ToListAsync();
     }
 
     public async Task<Investment?> GetInvestmentByIdAsync(int id)
     {
-        return await _context.Investments
+        var query = _context.Investments
             .Include(i => i.BankSource)
-            .FirstOrDefaultAsync(i => i.InvestmentId == id);
+            .AsQueryable();
+
+        // Filter by current user if authenticated
+        if (_currentUserService?.IsAuthenticated == true && _currentUserService.UserId != null)
+        {
+            query = query.Where(i => i.UserId == _currentUserService.UserId);
+        }
+
+        return await query.FirstOrDefaultAsync(i => i.InvestmentId == id);
     }
 
     public async Task<Investment> AddInvestmentAsync(Investment investment)
     {
         investment.LastUpdated = DateTime.Now;
+        
+        // Set user ID for new investments
+        if (_currentUserService?.IsAuthenticated == true && _currentUserService.UserId != null)
+        {
+            investment.UserId = _currentUserService.UserId;
+        }
+        
         _context.Investments.Add(investment);
         await _context.SaveChangesAsync();
         return investment;

@@ -14,6 +14,10 @@ public class Asset
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
     
+    // User ownership
+    public string? UserId { get; set; }
+    public ApplicationUser? User { get; set; }
+    
     // Computed properties
     public decimal ValueChange => CurrentValue - PurchaseValue;
     public decimal ValueChangePercentage => PurchaseValue > 0 ? (ValueChange / PurchaseValue) * 100 : 0;
