@@ -20,6 +20,7 @@ public class PrivatekonomyContext : DbContext
     public DbSet<BudgetCategory> BudgetCategories { get; set; }
     public DbSet<BankSource> BankSources { get; set; }
     public DbSet<BankConnection> BankConnections { get; set; }
+    public DbSet<AuditLog> AuditLogs { get; set; }
     public DbSet<Household> Households { get; set; }
     public DbSet<HouseholdMember> HouseholdMembers { get; set; }
     public DbSet<SharedExpense> SharedExpenses { get; set; }
@@ -63,6 +64,21 @@ public class PrivatekonomyContext : DbContext
                 
             entity.HasIndex(e => e.BankSourceId);
             entity.HasIndex(e => e.ExternalAccountId);
+        });
+
+        modelBuilder.Entity<AuditLog>(entity =>
+        {
+            entity.HasKey(e => e.AuditLogId);
+            entity.Property(e => e.Action).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.EntityType).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.UserId).HasMaxLength(100);
+            entity.Property(e => e.IpAddress).HasMaxLength(50);
+            entity.Property(e => e.Details).HasMaxLength(2000);
+            entity.Property(e => e.CreatedAt).IsRequired();
+            
+            entity.HasIndex(e => e.Action);
+            entity.HasIndex(e => e.EntityType);
+            entity.HasIndex(e => e.CreatedAt);
         });
 
         modelBuilder.Entity<Category>(entity =>

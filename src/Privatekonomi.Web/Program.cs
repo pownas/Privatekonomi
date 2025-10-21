@@ -31,11 +31,23 @@ builder.Services.AddScoped<IBudgetService, BudgetService>();
 builder.Services.AddScoped<IBankSourceService, BankSourceService>();
 builder.Services.AddScoped<IHouseholdService, HouseholdService>();
 builder.Services.AddScoped<IGoalService, GoalService>();
+builder.Services.AddScoped<IAuditLogService, AuditLogService>();
 builder.Services.AddScoped<IBankConnectionService, BankConnectionService>();
 builder.Services.AddScoped<ThemeService>();
 
 // Add HttpClient for API calls (if needed later)
-builder.Services.AddHttpClient();
+builder.Services.AddHttpClient("api", client =>
+{
+    // This will be configured by Aspire service discovery
+    client.BaseAddress = new Uri(builder.Configuration["services:api:http:0"] ?? "http://localhost:5001");
+});
+
+// Configure default HttpClient to use the API base address
+builder.Services.AddScoped<HttpClient>(sp =>
+{
+    var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
+    return httpClientFactory.CreateClient("api");
+});
 
 // Register stock price service with HttpClient
 builder.Services.AddHttpClient<IStockPriceService, YahooFinanceStockPriceService>();
