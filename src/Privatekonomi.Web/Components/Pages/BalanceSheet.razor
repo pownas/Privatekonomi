@@ -229,6 +229,276 @@ else
             </MudItem>
         </MudGrid>
     </MudPaper>
+
+    <!-- Financial Key Metrics -->
+    <MudPaper Class="pa-4 mt-4">
+        <MudText Typo="Typo.h5" Class="mb-4">
+            <MudIcon Icon="@Icons.Material.Filled.Analytics" /> Ekonomiska Nyckeltal
+        </MudText>
+        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">
+            Dessa nyckeltal hjälper dig att förstå din ekonomiska situation och jämföra den över tid.
+        </MudText>
+        
+        <MudGrid>
+            <!-- Sparandegrad -->
+            <MudItem xs="12" md="6">
+                <MudCard Elevation="2">
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.h6">Sparandegrad</MudText>
+                        </CardHeaderContent>
+                        <CardHeaderActions>
+                            <MudIconButton Icon="@Icons.Material.Filled.Info" 
+                                         Color="Color.Primary" 
+                                         OnClick="@(() => ToggleExplanation("sparandegrad"))" />
+                        </CardHeaderActions>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudText Typo="Typo.h4" Color="@GetSavingsRateColor()">
+                            @GetSavingsRate().ToString("F1")%
+                        </MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-2">
+                            Månatligt sparande: @_monthlySavings.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))
+                        </MudText>
+                        @if (_showExplanation.Contains("sparandegrad"))
+                        {
+                            <MudDivider Class="my-3" />
+                            <MudText Typo="Typo.body2" Class="mb-2">
+                                <strong>Vad betyder det?</strong>
+                            </MudText>
+                            <MudText Typo="Typo.body2" Class="mb-2">
+                                Sparandegraden visar hur stor del av dina inkomster du sparar varje månad. 
+                                Den beräknas som: (Inkomster - Utgifter) / Inkomster × 100%
+                            </MudText>
+                            <MudText Typo="Typo.body2" Class="mb-2">
+                                <strong>Vad är bra?</strong>
+                            </MudText>
+                            <MudText Typo="Typo.body2">
+                                • <span style="color: #4caf50;">20% eller mer:</span> Utmärkt! Du bygger en stark ekonomisk framtid.<br/>
+                                • <span style="color: #ff9800;">10-20%:</span> Bra! Du är på rätt väg.<br/>
+                                • <span style="color: #f44336;">Under 10%:</span> Försök öka ditt sparande för bättre framtidssäkerhet.<br/>
+                            </MudText>
+                        }
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+            <!-- Skuldsättningsgrad -->
+            <MudItem xs="12" md="6">
+                <MudCard Elevation="2">
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.h6">Skuldsättningsgrad</MudText>
+                        </CardHeaderContent>
+                        <CardHeaderActions>
+                            <MudIconButton Icon="@Icons.Material.Filled.Info" 
+                                         Color="Color.Primary" 
+                                         OnClick="@(() => ToggleExplanation("skuldsattningsgrad"))" />
+                        </CardHeaderActions>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudText Typo="Typo.h4" Color="@GetDebtRatioColor()">
+                            @GetDebtRatio().ToString("F1")%
+                        </MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-2">
+                            Skulder: @_totalLiabilities.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))
+                        </MudText>
+                        @if (_showExplanation.Contains("skuldsattningsgrad"))
+                        {
+                            <MudDivider Class="my-3" />
+                            <MudText Typo="Typo.body2" Class="mb-2">
+                                <strong>Vad betyder det?</strong>
+                            </MudText>
+                            <MudText Typo="Typo.body2" Class="mb-2">
+                                Skuldsättningsgraden visar hur stor del av dina tillgångar som finansieras med lån. 
+                                Den beräknas som: Skulder / Tillgångar × 100%
+                            </MudText>
+                            <MudText Typo="Typo.body2" Class="mb-2">
+                                <strong>Vad är bra?</strong>
+                            </MudText>
+                            <MudText Typo="Typo.body2">
+                                • <span style="color: #4caf50;">Under 50%:</span> Mycket bra! Du har god kontroll över din ekonomi.<br/>
+                                • <span style="color: #ff9800;">50-70%:</span> Okej, men var medveten om dina lån.<br/>
+                                • <span style="color: #f44336;">Över 70%:</span> Hög skuldsättning. Försök minska dina lån.<br/>
+                            </MudText>
+                        }
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+            <!-- Kassalikviditet -->
+            <MudItem xs="12" md="6">
+                <MudCard Elevation="2">
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.h6">Kassalikviditet</MudText>
+                        </CardHeaderContent>
+                        <CardHeaderActions>
+                            <MudIconButton Icon="@Icons.Material.Filled.Info" 
+                                         Color="Color.Primary" 
+                                         OnClick="@(() => ToggleExplanation("kassalikviditet"))" />
+                        </CardHeaderActions>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudText Typo="Typo.h4" Color="@GetCashLiquidityColor()">
+                            @GetCashLiquidity().ToString("F1")%
+                        </MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-2">
+                            Likvida medel: @_totalBankBalance.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))
+                        </MudText>
+                        @if (_showExplanation.Contains("kassalikviditet"))
+                        {
+                            <MudDivider Class="my-3" />
+                            <MudText Typo="Typo.body2" Class="mb-2">
+                                <strong>Vad betyder det?</strong>
+                            </MudText>
+                            <MudText Typo="Typo.body2" Class="mb-2">
+                                Kassalikviditeten visar hur stor del av dina tillgångar som finns tillgängliga som kontanter på bankkonton. 
+                                Den beräknas som: Bankkonton / Totala Tillgångar × 100%
+                            </MudText>
+                            <MudText Typo="Typo.body2" Class="mb-2">
+                                <strong>Vad är bra?</strong>
+                            </MudText>
+                            <MudText Typo="Typo.body2">
+                                • <span style="color: #4caf50;">15-30%:</span> Utmärkt balans mellan likviditet och investeringar.<br/>
+                                • <span style="color: #ff9800;">10-15% eller 30-50%:</span> Okej, men kanske justera något.<br/>
+                                • <span style="color: #f44336;">Under 10% eller över 50%:</span> För lite/mycket kontanter tillgängliga.<br/>
+                            </MudText>
+                        }
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+            <!-- Soliditet -->
+            <MudItem xs="12" md="6">
+                <MudCard Elevation="2">
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.h6">Soliditet</MudText>
+                        </CardHeaderContent>
+                        <CardHeaderActions>
+                            <MudIconButton Icon="@Icons.Material.Filled.Info" 
+                                         Color="Color.Primary" 
+                                         OnClick="@(() => ToggleExplanation("soliditet"))" />
+                        </CardHeaderActions>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudText Typo="Typo.h4" Color="@GetEquityRatioColor()">
+                            @GetEquityRatio().ToString("F1")%
+                        </MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-2">
+                            Eget kapital: @_netWorth.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))
+                        </MudText>
+                        @if (_showExplanation.Contains("soliditet"))
+                        {
+                            <MudDivider Class="my-3" />
+                            <MudText Typo="Typo.body2" Class="mb-2">
+                                <strong>Vad betyder det?</strong>
+                            </MudText>
+                            <MudText Typo="Typo.body2" Class="mb-2">
+                                Soliditeten visar hur stor del av dina tillgångar som du verkligen äger (inte finansieras med lån). 
+                                Den beräknas som: Eget Kapital (Tillgångar - Skulder) / Tillgångar × 100%
+                            </MudText>
+                            <MudText Typo="Typo.body2" Class="mb-2">
+                                <strong>Vad är bra?</strong>
+                            </MudText>
+                            <MudText Typo="Typo.body2">
+                                • <span style="color: #4caf50;">Över 50%:</span> Mycket bra! Du äger mer än hälften av dina tillgångar.<br/>
+                                • <span style="color: #ff9800;">30-50%:</span> Okej ekonomisk stabilitet.<br/>
+                                • <span style="color: #f44336;">Under 30%:</span> Låg soliditet. Försök öka ditt eget kapital.<br/>
+                            </MudText>
+                        }
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+            <!-- Belåningsgrad -->
+            <MudItem xs="12" md="6">
+                <MudCard Elevation="2">
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.h6">Belåningsgrad</MudText>
+                        </CardHeaderContent>
+                        <CardHeaderActions>
+                            <MudIconButton Icon="@Icons.Material.Filled.Info" 
+                                         Color="Color.Primary" 
+                                         OnClick="@(() => ToggleExplanation("belaningsgrad"))" />
+                        </CardHeaderActions>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudText Typo="Typo.h4" Color="@GetLoanToValueColor()">
+                            @GetLoanToValue().ToString("F1")%
+                        </MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-2">
+                            Lån: @_totalLiabilities.ToString("C0", new System.Globalization.CultureInfo("sv-SE")) av @_totalAssets.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))
+                        </MudText>
+                        @if (_showExplanation.Contains("belaningsgrad"))
+                        {
+                            <MudDivider Class="my-3" />
+                            <MudText Typo="Typo.body2" Class="mb-2">
+                                <strong>Vad betyder det?</strong>
+                            </MudText>
+                            <MudText Typo="Typo.body2" Class="mb-2">
+                                Belåningsgraden visar hur mycket du har lånat i förhållande till värdet på dina tillgångar. 
+                                Den beräknas som: Totala Lån / Totala Tillgångar × 100%
+                            </MudText>
+                            <MudText Typo="Typo.body2" Class="mb-2">
+                                <strong>Vad är bra?</strong>
+                            </MudText>
+                            <MudText Typo="Typo.body2">
+                                • <span style="color: #4caf50;">Under 50%:</span> Mycket bra! Låg risk.<br/>
+                                • <span style="color: #ff9800;">50-70%:</span> Acceptabel belåningsgrad för de flesta.<br/>
+                                • <span style="color: #f44336;">Över 85%:</span> Hög belåningsgrad. Var försiktig med nya lån.<br/>
+                            </MudText>
+                        }
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+            <!-- Investeringsgrad -->
+            <MudItem xs="12" md="6">
+                <MudCard Elevation="2">
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.h6">Investeringsgrad</MudText>
+                        </CardHeaderContent>
+                        <CardHeaderActions>
+                            <MudIconButton Icon="@Icons.Material.Filled.Info" 
+                                         Color="Color.Primary" 
+                                         OnClick="@(() => ToggleExplanation("investeringsgrad"))" />
+                        </CardHeaderActions>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudText Typo="Typo.h4" Color="@GetInvestmentRateColor()">
+                            @GetInvestmentRate().ToString("F1")%
+                        </MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-2">
+                            Investeringar: @_totalInvestmentValue.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))
+                        </MudText>
+                        @if (_showExplanation.Contains("investeringsgrad"))
+                        {
+                            <MudDivider Class="my-3" />
+                            <MudText Typo="Typo.body2" Class="mb-2">
+                                <strong>Vad betyder det?</strong>
+                            </MudText>
+                            <MudText Typo="Typo.body2" Class="mb-2">
+                                Investeringsgraden visar hur stor del av dina tillgångar som är investerade i aktier, fonder och andra värdepapper. 
+                                Den beräknas som: Investeringar / Totala Tillgångar × 100%
+                            </MudText>
+                            <MudText Typo="Typo.body2" Class="mb-2">
+                                <strong>Vad är bra?</strong>
+                            </MudText>
+                            <MudText Typo="Typo.body2">
+                                • <span style="color: #4caf50;">30-70%:</span> Bra balans mellan säkerhet och tillväxt.<br/>
+                                • <span style="color: #ff9800;">10-30% eller 70-85%:</span> Okej, men överväg din riskaptit.<br/>
+                                • <span style="color: #f44336;">Under 10% eller över 85%:</span> Antingen för lite eller för mycket risk.<br/>
+                            </MudText>
+                        }
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
 }
 
 @code {
@@ -250,6 +520,14 @@ else
     
     // Net Worth
     private decimal _netWorth = 0;
+    
+    // Income/Expense data for metrics
+    private decimal _monthlyIncome = 0;
+    private decimal _monthlyExpenses = 0;
+    private decimal _monthlySavings = 0;
+    
+    // UI state
+    private HashSet<string> _showExplanation = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -281,7 +559,25 @@ else
         // Calculate net worth
         _netWorth = _totalAssets - _totalLiabilities;
 
+        // Calculate monthly income and expenses (last 30 days average)
+        await CalculateMonthlyAverages();
+
         _loading = false;
+    }
+    
+    private async Task CalculateMonthlyAverages()
+    {
+        var transactions = await TransactionService.GetAllTransactionsAsync();
+        var threeMonthsAgo = DateTime.Now.AddMonths(-3);
+        var recentTransactions = transactions.Where(t => t.Date >= threeMonthsAgo).ToList();
+        
+        if (recentTransactions.Any())
+        {
+            var monthsCount = 3;
+            _monthlyIncome = recentTransactions.Where(t => t.IsIncome).Sum(t => t.Amount) / monthsCount;
+            _monthlyExpenses = recentTransactions.Where(t => !t.IsIncome).Sum(t => t.Amount) / monthsCount;
+            _monthlySavings = _monthlyIncome - _monthlyExpenses;
+        }
     }
 
     private double GetAssetPercentage()
@@ -300,5 +596,97 @@ else
     {
         if (_totalAssets == 0) return 0;
         return (double)(_totalLiabilities / _totalAssets * 100);
+    }
+
+    // Key Metrics Calculations
+    private double GetSavingsRate()
+    {
+        if (_monthlyIncome == 0) return 0;
+        return (double)(_monthlySavings / _monthlyIncome * 100);
+    }
+
+    private double GetCashLiquidity()
+    {
+        if (_totalAssets == 0) return 0;
+        return (double)(_totalBankBalance / _totalAssets * 100);
+    }
+
+    private double GetEquityRatio()
+    {
+        if (_totalAssets == 0) return 0;
+        return (double)(_netWorth / _totalAssets * 100);
+    }
+
+    private double GetLoanToValue()
+    {
+        if (_totalAssets == 0) return 0;
+        return (double)(_totalLiabilities / _totalAssets * 100);
+    }
+
+    private double GetInvestmentRate()
+    {
+        if (_totalAssets == 0) return 0;
+        return (double)(_totalInvestmentValue / _totalAssets * 100);
+    }
+
+    // Color helpers for metrics
+    private Color GetSavingsRateColor()
+    {
+        var rate = GetSavingsRate();
+        if (rate >= 20) return Color.Success;
+        if (rate >= 10) return Color.Warning;
+        return Color.Error;
+    }
+
+    private Color GetDebtRatioColor()
+    {
+        var ratio = GetDebtRatio();
+        if (ratio < 50) return Color.Success;
+        if (ratio < 70) return Color.Warning;
+        return Color.Error;
+    }
+
+    private Color GetCashLiquidityColor()
+    {
+        var liquidity = GetCashLiquidity();
+        if (liquidity >= 15 && liquidity <= 30) return Color.Success;
+        if ((liquidity >= 10 && liquidity < 15) || (liquidity > 30 && liquidity <= 50)) return Color.Warning;
+        return Color.Error;
+    }
+
+    private Color GetEquityRatioColor()
+    {
+        var equity = GetEquityRatio();
+        if (equity > 50) return Color.Success;
+        if (equity >= 30) return Color.Warning;
+        return Color.Error;
+    }
+
+    private Color GetLoanToValueColor()
+    {
+        var ltv = GetLoanToValue();
+        if (ltv < 50) return Color.Success;
+        if (ltv < 85) return Color.Warning;
+        return Color.Error;
+    }
+
+    private Color GetInvestmentRateColor()
+    {
+        var rate = GetInvestmentRate();
+        if (rate >= 30 && rate <= 70) return Color.Success;
+        if ((rate >= 10 && rate < 30) || (rate > 70 && rate <= 85)) return Color.Warning;
+        return Color.Error;
+    }
+
+    private void ToggleExplanation(string metric)
+    {
+        if (_showExplanation.Contains(metric))
+        {
+            _showExplanation.Remove(metric);
+        }
+        else
+        {
+            _showExplanation.Add(metric);
+        }
     }
 }
