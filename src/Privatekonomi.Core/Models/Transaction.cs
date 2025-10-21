@@ -20,6 +20,10 @@ public class Transaction
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
     
+    // User ownership
+    public string? UserId { get; set; }
+    public ApplicationUser? User { get; set; }
+    
     public BankSource? BankSource { get; set; }
     public ICollection<TransactionCategory> TransactionCategories { get; set; } = new List<TransactionCategory>();
 }

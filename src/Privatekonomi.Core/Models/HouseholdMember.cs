@@ -10,6 +10,10 @@ public class HouseholdMember
     public DateTime JoinedDate { get; set; }
     public DateTime? LeftDate { get; set; }
     
+    // Link to user account (optional - member may exist without user account)
+    public string? UserId { get; set; }
+    public ApplicationUser? User { get; set; }
+    
     public Household? Household { get; set; }
     public ICollection<ExpenseShare> ExpenseShares { get; set; } = new List<ExpenseShare>();
 }

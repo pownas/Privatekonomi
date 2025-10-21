@@ -1,0 +1,129 @@
+@page "/Account/Register"
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Identity
+@using Privatekonomi.Core.Models
+
+@inject UserManager<ApplicationUser> UserManager
+@inject SignInManager<ApplicationUser> SignInManager
+@inject NavigationManager NavigationManager
+
+<PageTitle>Registrera</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Small" Class="mt-8">
+    <MudPaper Elevation="3" Class="pa-6">
+        <MudText Typo="Typo.h4" Align="Align.Center" GutterBottom="true">
+            Skapa konto
+        </MudText>
+        
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <MudAlert Severity="Severity.Error" Class="mb-4">@errorMessage</MudAlert>
+        }
+        
+        <EditForm Model="Input" OnValidSubmit="RegisterUser" FormName="register">
+            <DataAnnotationsValidator />
+            
+            <MudTextField Label="Förnamn" 
+                          @bind-Value="Input.FirstName" 
+                          For="@(() => Input.FirstName)"
+                          Variant="Variant.Outlined"
+                          Margin="Margin.Dense"
+                          Class="mb-4" />
+            
+            <MudTextField Label="Efternamn" 
+                          @bind-Value="Input.LastName" 
+                          For="@(() => Input.LastName)"
+                          Variant="Variant.Outlined"
+                          Margin="Margin.Dense"
+                          Class="mb-4" />
+            
+            <MudTextField Label="E-post" 
+                          @bind-Value="Input.Email" 
+                          For="@(() => Input.Email)"
+                          Variant="Variant.Outlined"
+                          Margin="Margin.Dense"
+                          Class="mb-4" />
+            
+            <MudTextField Label="Lösenord" 
+                          @bind-Value="Input.Password" 
+                          For="@(() => Input.Password)"
+                          InputType="InputType.Password"
+                          Variant="Variant.Outlined"
+                          Margin="Margin.Dense"
+                          Class="mb-4" />
+            
+            <MudTextField Label="Bekräfta lösenord" 
+                          @bind-Value="Input.ConfirmPassword" 
+                          For="@(() => Input.ConfirmPassword)"
+                          InputType="InputType.Password"
+                          Variant="Variant.Outlined"
+                          Margin="Margin.Dense"
+                          Class="mb-4" />
+            
+            <MudButton ButtonType="ButtonType.Submit" 
+                       Variant="Variant.Filled" 
+                       Color="Color.Primary" 
+                       FullWidth="true"
+                       Class="mb-4">
+                Registrera
+            </MudButton>
+        </EditForm>
+        
+        <MudText Align="Align.Center">
+            Har du redan ett konto? <MudLink Href="/Account/Login">Logga in</MudLink>
+        </MudText>
+    </MudPaper>
+</MudContainer>
+
+@code {
+    [SupplyParameterFromForm]
+    private InputModel Input { get; set; } = new();
+
+    private string? errorMessage;
+
+    private async Task RegisterUser()
+    {
+        var user = new ApplicationUser
+        {
+            UserName = Input.Email,
+            Email = Input.Email,
+            FirstName = Input.FirstName,
+            LastName = Input.LastName,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        var result = await UserManager.CreateAsync(user, Input.Password);
+
+        if (result.Succeeded)
+        {
+            await SignInManager.SignInAsync(user, isPersistent: false);
+            NavigationManager.NavigateTo("/");
+        }
+        else
+        {
+            errorMessage = string.Join(", ", result.Errors.Select(e => e.Description));
+        }
+    }
+
+    private sealed class InputModel
+    {
+        [Required(ErrorMessage = "Förnamn krävs")]
+        public string FirstName { get; set; } = "";
+
+        [Required(ErrorMessage = "Efternamn krävs")]
+        public string LastName { get; set; } = "";
+
+        [Required(ErrorMessage = "E-post krävs")]
+        [EmailAddress(ErrorMessage = "Ogiltig e-postadress")]
+        public string Email { get; set; } = "";
+
+        [Required(ErrorMessage = "Lösenord krävs")]
+        [StringLength(100, ErrorMessage = "Lösenordet måste vara minst {2} tecken långt.", MinimumLength = 6)]
+        [DataType(DataType.Password)]
+        public string Password { get; set; } = "";
+
+        [DataType(DataType.Password)]
+        [Compare("Password", ErrorMessage = "Lösenorden matchar inte.")]
+        public string ConfirmPassword { get; set; } = "";
+    }
+}

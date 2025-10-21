@@ -1,8 +1,12 @@
+using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using MudBlazor.Services;
 using Privatekonomi.Core.Data;
+using Privatekonomi.Core.Models;
 using Privatekonomi.Core.Services;
 using Privatekonomi.Web.Components;
+using Privatekonomi.Web.Components.Account;
 using Privatekonomi.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -20,6 +24,29 @@ builder.Services.AddMudServices();
 // Configure DbContext with InMemory database
 builder.Services.AddDbContext<PrivatekonomyContext>(options =>
     options.UseInMemoryDatabase("PrivatekonomyDb"));
+
+// Add Identity services
+builder.Services.AddAuthentication(IdentityConstants.ApplicationScheme)
+    .AddIdentityCookies();
+builder.Services.AddAuthorizationBuilder();
+
+builder.Services.AddIdentityCore<ApplicationUser>(options =>
+{
+    options.SignIn.RequireConfirmedAccount = false;
+    options.Password.RequireDigit = false;
+    options.Password.RequireLowercase = false;
+    options.Password.RequireUppercase = false;
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequiredLength = 6;
+})
+    .AddEntityFrameworkStores<PrivatekonomyContext>()
+    .AddSignInManager()
+    .AddDefaultTokenProviders();
+
+builder.Services.AddCascadingAuthenticationState();
+builder.Services.AddScoped<IdentityUserAccessor>();
+builder.Services.AddScoped<IdentityRedirectManager>();
+builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>();
 
 // Register services
 builder.Services.AddScoped<ITransactionService, TransactionService>();
@@ -94,10 +121,11 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<PrivatekonomyContext>();
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
     context.Database.EnsureCreated();
     
     // Seed test data
-    TestDataSeeder.SeedTestData(context);
+    await TestDataSeeder.SeedTestDataAsync(context, userManager);
 }
 
 // Configure the HTTP request pipeline.
@@ -116,8 +144,14 @@ app.UseAntiforgery();
 // Map Aspire default endpoints (health checks, etc.)
 app.MapDefaultEndpoints();
 
+app.UseAuthentication();
+app.UseAuthorization();
+
 app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
+
+// Add Identity endpoints
+app.MapGroup("/Account").MapIdentityApi<ApplicationUser>();
 
 app.Run();

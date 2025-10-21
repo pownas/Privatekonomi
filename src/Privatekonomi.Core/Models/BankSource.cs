@@ -17,6 +17,10 @@ public class BankSource
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
     
+    // User ownership
+    public string? UserId { get; set; }
+    public ApplicationUser? User { get; set; }
+    
     public ICollection<Transaction> Transactions { get; set; } = new List<Transaction>();
     
     // Computed property for current balance (not stored in DB)

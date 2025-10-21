@@ -11,6 +11,10 @@ public class Budget
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
     
+    // User ownership
+    public string? UserId { get; set; }
+    public ApplicationUser? User { get; set; }
+    
     public ICollection<BudgetCategory> BudgetCategories { get; set; } = new List<BudgetCategory>();
 }
 
