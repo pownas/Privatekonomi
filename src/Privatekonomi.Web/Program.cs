@@ -35,6 +35,7 @@ builder.Services.AddScoped<IGoalService, GoalService>();
 builder.Services.AddScoped<IAuditLogService, AuditLogService>();
 builder.Services.AddScoped<IBankConnectionService, BankConnectionService>();
 builder.Services.AddScoped<IExportService, ExportService>();
+builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<ThemeService>();
 
 // Add HttpClient for API calls (if needed later)

@@ -3,6 +3,7 @@
 @inject ITransactionService TransactionService
 @inject ICategoryService CategoryService
 @inject IBudgetService BudgetService
+@inject IReportService ReportService
 @inject ISnackbar Snackbar
 
 <PageTitle>Dashboard - Privatekonomi</PageTitle>
@@ -112,6 +113,25 @@ else
                     else
                     {
                         <MudText>Inga inkomster för vald period.</MudText>
+                    }
+                </MudPaper>
+            </MudItem>
+
+            <MudItem xs="12">
+                <MudPaper Class="pa-4" Elevation="2">
+                    <MudText Typo="Typo.h6" Class="mb-4">Kassaflöde över tid</MudText>
+                    @if (_cashFlowSeries.Any())
+                    {
+                        <MudChart ChartType="ChartType.Line" 
+                                  ChartSeries="@_cashFlowSeries" 
+                                  XAxisLabels="@_cashFlowLabels"
+                                  Width="100%" 
+                                  Height="350px"
+                                  ChartOptions="@_chartOptions" />
+                    }
+                    else
+                    {
+                        <MudText>Inga kassaflödesdata att visa.</MudText>
                     }
                 </MudPaper>
             </MudItem>
@@ -357,6 +377,8 @@ else
     private string[] _incomePieLabels = Array.Empty<string>();
     private List<ChartSeries> _barChartSeries = new();
     private string[] _barChartLabels = Array.Empty<string>();
+    private List<ChartSeries> _cashFlowSeries = new();
+    private string[] _cashFlowLabels = Array.Empty<string>();
     private ChartOptions _chartOptions = new ChartOptions
     {
         YAxisTicks = 1000,
@@ -384,7 +406,7 @@ else
         
         _totalIncome = _transactions.Where(t => t.IsIncome).Sum(t => t.Amount);
         _totalExpenses = _transactions.Where(t => !t.IsIncome).Sum(t => t.Amount);
-        UpdateChartData();
+        await UpdateChartData();
         _loading = false;
     }
 
@@ -400,13 +422,13 @@ else
         }
     }
 
-    private void ChangePeriod(int months)
+    private async Task ChangePeriod(int months)
     {
         _selectedMonths = months;
-        UpdateChartData();
+        await UpdateChartData();
     }
 
-    private void UpdateChartData()
+    private async Task UpdateChartData()
     {
         var cutoffDate = DateTime.Now.AddMonths(-_selectedMonths);
         var filteredTransactions = _transactions.Where(t => t.Date >= cutoffDate).ToList();
@@ -459,5 +481,38 @@ else
             Name = category,
             Data = monthlyData.Select(m => m.Categories.ContainsKey(category) ? (double)m.Categories[category] : 0).ToArray()
         }).ToList();
+
+        // Cash flow chart
+        try
+        {
+            var cashFlowReport = await ReportService.GetCashFlowReportAsync(cutoffDate, DateTime.Now);
+            
+            _cashFlowLabels = cashFlowReport.Periods.Select(p => p.Period).ToArray();
+            
+            _cashFlowSeries = new List<ChartSeries>
+            {
+                new ChartSeries
+                {
+                    Name = "Inkomster",
+                    Data = cashFlowReport.Periods.Select(p => (double)p.Income).ToArray()
+                },
+                new ChartSeries
+                {
+                    Name = "Utgifter",
+                    Data = cashFlowReport.Periods.Select(p => (double)p.Expenses).ToArray()
+                },
+                new ChartSeries
+                {
+                    Name = "Netto",
+                    Data = cashFlowReport.Periods.Select(p => (double)p.NetFlow).ToArray()
+                }
+            };
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Kunde inte ladda kassaflöde: {ex.Message}", Severity.Warning);
+            _cashFlowSeries = new List<ChartSeries>();
+            _cashFlowLabels = Array.Empty<string>();
+        }
     }
 }

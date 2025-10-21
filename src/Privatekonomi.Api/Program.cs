@@ -30,6 +30,7 @@ builder.Services.AddScoped<IAuditLogService, AuditLogService>();
 builder.Services.AddScoped<IBankConnectionService, BankConnectionService>();
 builder.Services.AddScoped<IGoalService, GoalService>();
 builder.Services.AddScoped<IExportService, ExportService>();
+builder.Services.AddScoped<IReportService, ReportService>();
 
 // Register HttpClient for bank API services
 builder.Services.AddHttpClient();
