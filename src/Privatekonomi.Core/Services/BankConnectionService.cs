@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Privatekonomi.Core.Data;
 using Privatekonomi.Core.Models;
 
@@ -11,13 +12,19 @@ public class BankConnectionService : IBankConnectionService
 {
     private readonly PrivatekonomyContext _context;
     private readonly Dictionary<string, IBankApiService> _bankApiServices;
+    private readonly IAuditLogService? _auditLogService;
+    private readonly ILogger<BankConnectionService> _logger;
 
     public BankConnectionService(
         PrivatekonomyContext context,
-        IEnumerable<IBankApiService> bankApiServices)
+        IEnumerable<IBankApiService> bankApiServices,
+        ILogger<BankConnectionService> logger,
+        IAuditLogService? auditLogService = null)
     {
         _context = context;
         _bankApiServices = bankApiServices.ToDictionary(s => s.BankName, s => s, StringComparer.OrdinalIgnoreCase);
+        _logger = logger;
+        _auditLogService = auditLogService;
     }
 
     public async Task<List<BankConnection>> GetConnectionsAsync(int? bankSourceId = null)
@@ -48,6 +55,17 @@ public class BankConnectionService : IBankConnectionService
         connection.CreatedAt = DateTime.UtcNow;
         _context.BankConnections.Add(connection);
         await _context.SaveChangesAsync();
+        
+        // Audit log
+        await _auditLogService?.LogAsync(
+            "BankConnectionCreated",
+            "BankConnection",
+            connection.BankConnectionId,
+            $"Created connection for bank source {connection.BankSourceId}")!;
+        
+        _logger.LogInformation("Bank connection {Id} created for bank source {BankSourceId}", 
+            connection.BankConnectionId, connection.BankSourceId);
+        
         return connection;
     }
 
@@ -56,6 +74,16 @@ public class BankConnectionService : IBankConnectionService
         connection.UpdatedAt = DateTime.UtcNow;
         _context.BankConnections.Update(connection);
         await _context.SaveChangesAsync();
+        
+        // Audit log
+        await _auditLogService?.LogAsync(
+            "BankConnectionUpdated",
+            "BankConnection",
+            connection.BankConnectionId,
+            $"Updated connection for bank source {connection.BankSourceId}")!;
+        
+        _logger.LogInformation("Bank connection {Id} updated", connection.BankConnectionId);
+        
         return connection;
     }
 
@@ -66,6 +94,15 @@ public class BankConnectionService : IBankConnectionService
         {
             _context.BankConnections.Remove(connection);
             await _context.SaveChangesAsync();
+            
+            // Audit log
+            await _auditLogService?.LogAsync(
+                "BankConnectionDeleted",
+                "BankConnection",
+                connectionId,
+                $"Deleted connection for bank source {connection.BankSourceId}")!;
+            
+            _logger.LogInformation("Bank connection {Id} deleted", connectionId);
         }
     }
 

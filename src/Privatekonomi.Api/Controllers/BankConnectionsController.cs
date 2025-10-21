@@ -226,6 +226,31 @@ public class BankConnectionsController : ControllerBase
     }
 
     /// <summary>
+    /// Updates an existing bank connection
+    /// </summary>
+    [HttpPut("{id}")]
+    public async Task<ActionResult<BankConnection>> UpdateConnection(int id, [FromBody] BankConnection connection)
+    {
+        try
+        {
+            if (id != connection.BankConnectionId)
+                return BadRequest(new { error = "ID matchar inte" });
+
+            var existing = await _bankConnectionService.GetConnectionAsync(id);
+            if (existing == null)
+                return NotFound(new { error = "Bankkoppling hittades inte" });
+
+            var updated = await _bankConnectionService.UpdateConnectionAsync(connection);
+            return Ok(updated);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating bank connection {Id}", id);
+            return StatusCode(500, new { error = "Ett fel uppstod vid uppdatering av bankkoppling" });
+        }
+    }
+
+    /// <summary>
     /// Deletes a bank connection
     /// </summary>
     [HttpDelete("{id}")]

@@ -1,0 +1,168 @@
+@inject IDialogService DialogService
+@inject HttpClient Http
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        @if (_loading)
+        {
+            <MudProgressCircular Indeterminate="true" />
+            <MudText Class="mt-2">Laddar banker...</MudText>
+        }
+        else if (_step == 1)
+        {
+            <MudText Typo="Typo.h6" Class="mb-4">Välj bank</MudText>
+            <MudForm @ref="_form" @bind-IsValid="@_formValid">
+                <MudSelect @bind-Value="_selectedBankSource" Label="Bank" Required="true"
+                           RequiredError="Du måste välja en bank">
+                    @foreach (var bank in _bankSources)
+                    {
+                        <MudSelectItem Value="@bank">@bank.Name</MudSelectItem>
+                    }
+                </MudSelect>
+                
+                <MudTextField @bind-Value="_accountId" Label="Konto-ID (valfritt)" 
+                              HelperText="Om du har flera konton hos banken" />
+                
+                <MudSwitch @bind-Value="_autoSyncEnabled" Label="Aktivera automatisk synkronisering" Color="Color.Primary" />
+                
+                <MudAlert Severity="Severity.Info" Class="mt-4">
+                    Du kommer att omdirigeras till bankens inloggningssida för att godkänna åtkomst till dina kontouppgifter.
+                </MudAlert>
+            </MudForm>
+        }
+        else if (_step == 2)
+        {
+            <MudProgressCircular Indeterminate="true" />
+            <MudText Class="mt-2">Initierar anslutning till @(_selectedBankSource?.Name)...</MudText>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Avbryt</MudButton>
+        @if (_step == 1)
+        {
+            <MudButton Color="Color.Primary" OnClick="InitiateConnection" Disabled="@(!_formValid)">
+                Anslut
+            </MudButton>
+        }
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    public required IMudDialogInstance MudDialog { get; set; }
+
+    private MudForm? _form;
+    private bool _formValid;
+    private bool _loading = true;
+    private int _step = 1;
+    private List<BankSource> _bankSources = new();
+    private BankSource? _selectedBankSource;
+    private string? _accountId;
+    private bool _autoSyncEnabled = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadBankSources();
+    }
+
+    private async Task LoadBankSources()
+    {
+        try
+        {
+            _loading = true;
+            var response = await Http.GetFromJsonAsync<List<BankSource>>("api/banksources");
+            if (response != null)
+            {
+                _bankSources = response;
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Fel vid laddning av banker: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task InitiateConnection()
+    {
+        if (_selectedBankSource == null) return;
+
+        try
+        {
+            _step = 2;
+            StateHasChanged();
+
+            // First check if this bank has API support
+            var availableBanksResponse = await Http.GetFromJsonAsync<List<string>>("api/bankconnections/available-banks");
+            
+            if (availableBanksResponse == null || !availableBanksResponse.Contains(_selectedBankSource.Name, StringComparer.OrdinalIgnoreCase))
+            {
+                Snackbar.Add($"{_selectedBankSource.Name} stöder ännu inte API-integration. Du kan fortfarande importera transaktioner via CSV.", Severity.Warning);
+                MudDialog.Close(DialogResult.Ok(false));
+                return;
+            }
+
+            // Initiate OAuth flow
+            var authRequest = new { BankName = _selectedBankSource.Name };
+            var authResponse = await Http.PostAsJsonAsync("api/bankconnections/authorize", authRequest);
+            
+            if (authResponse.IsSuccessStatusCode)
+            {
+                var authResult = await authResponse.Content.ReadFromJsonAsync<AuthorizationResponse>();
+                if (authResult != null && !string.IsNullOrEmpty(authResult.AuthorizationUrl))
+                {
+                    // Store connection details for later
+                    var connectionData = new
+                    {
+                        BankSourceId = _selectedBankSource.BankSourceId,
+                        AccountId = _accountId,
+                        AutoSyncEnabled = _autoSyncEnabled,
+                        State = authResult.State
+                    };
+                    
+                    // In a real app, we'd store this in session/local storage
+                    // For now, we'll pass it back and let the page handle the redirect
+                    MudDialog.Close(DialogResult.Ok(new { authResult.AuthorizationUrl, connectionData }));
+                }
+                else
+                {
+                    Snackbar.Add("Kunde inte initiera anslutning till banken", Severity.Error);
+                    MudDialog.Cancel();
+                }
+            }
+            else
+            {
+                var error = await authResponse.Content.ReadAsStringAsync();
+                Snackbar.Add($"Fel vid anslutning: {error}", Severity.Error);
+                MudDialog.Cancel();
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Fel vid initiering av bankanslutning: {ex.Message}", Severity.Error);
+            MudDialog.Cancel();
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    // DTO classes
+    public class AuthorizationResponse
+    {
+        public string AuthorizationUrl { get; set; } = string.Empty;
+        public string State { get; set; } = string.Empty;
+        public string RedirectUri { get; set; } = string.Empty;
+    }
+
+    public class BankSource
+    {
+        public int BankSourceId { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string Color { get; set; } = string.Empty;
+        public string? Logo { get; set; }
+    }
+}

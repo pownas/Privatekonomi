@@ -3,6 +3,8 @@
 @inject ISnackbar Snackbar
 @inject NavigationManager Navigation
 @inject HttpClient Http
+@inject IDialogService DialogService
+@inject IJSRuntime JS
 @using Privatekonomi.Core.Models
 @using Privatekonomi.Core.Services
 
@@ -75,6 +77,11 @@ else
                         @(context.AutoSyncEnabled ? "Ja" : "Nej")
                     </MudTd>
                     <MudTd DataLabel="Åtgärder">
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit" 
+                                      Color="Color.Primary" 
+                                      Size="Size.Small"
+                                      OnClick="@(() => EditConnection(context))"
+                                      Title="Redigera" />
                         <MudIconButton Icon="@Icons.Material.Filled.Sync" 
                                       Color="Color.Primary" 
                                       Size="Size.Small"
@@ -114,6 +121,22 @@ else
 
     protected override async Task OnInitializedAsync()
     {
+        // Check if we're returning from OAuth callback
+        var uri = new Uri(Navigation.Uri);
+        var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
+        var code = query["code"];
+        var state = query["state"];
+        var error = query["error"];
+
+        if (!string.IsNullOrEmpty(error))
+        {
+            Snackbar.Add($"Fel vid anslutning till bank: {error}", Severity.Error);
+        }
+        else if (!string.IsNullOrEmpty(code))
+        {
+            await CompleteConnection(code, state);
+        }
+
         await LoadConnections();
     }
 
@@ -122,15 +145,13 @@ else
         _loading = true;
         try
         {
-            // TODO: Call API endpoint to get connections
-            // For now, we'll initialize empty list
-            _connections = new List<BankConnection>();
-            
-            Snackbar.Add("Bankkopplingar laddade", Severity.Success);
+            var response = await Http.GetFromJsonAsync<List<BankConnection>>("api/bankconnections");
+            _connections = response ?? new List<BankConnection>();
         }
         catch (Exception ex)
         {
             Snackbar.Add($"Fel vid laddning av bankkopplingar: {ex.Message}", Severity.Error);
+            _connections = new List<BankConnection>();
         }
         finally
         {
@@ -140,14 +161,100 @@ else
 
     private async Task ShowAddConnectionDialog()
     {
-        Snackbar.Add("Lägg till bank-funktionalitet kommer snart!", Severity.Info);
+        var dialog = await DialogService.ShowAsync<AddBankConnectionDialog>("Lägg till bankkoppling", new DialogOptions 
+        { 
+            MaxWidth = MaxWidth.Small, 
+            FullWidth = true 
+        });
         
-        // TODO: Show dialog to select bank and initiate OAuth flow
-        // 1. Get available banks from API
-        // 2. User selects bank
-        // 3. Initiate OAuth authorization
-        // 4. Redirect to bank's login page
-        // 5. Handle callback and save connection
+        var result = await dialog.Result;
+        
+        if (!result.Canceled && result.Data != null)
+        {
+            // Handle OAuth redirect
+            dynamic authData = result.Data;
+            if (!string.IsNullOrEmpty(authData.AuthorizationUrl))
+            {
+                // Redirect to bank's OAuth page
+                Navigation.NavigateTo(authData.AuthorizationUrl, forceLoad: true);
+            }
+        }
+    }
+
+    private async Task CompleteConnection(string? code, string? state)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(code))
+            {
+                Snackbar.Add("Auktoriseringskod saknas", Severity.Error);
+                return;
+            }
+
+            Snackbar.Add("Slutför bankanslutning...", Severity.Info);
+            
+            // In a real implementation, we would retrieve the stored connection data
+            // For now, we'll show a message
+            Snackbar.Add("Bank ansluten! Funktionaliteten är under utveckling.", Severity.Success);
+            
+            // Clean up URL
+            Navigation.NavigateTo("/bank-connections", replace: true);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Fel vid slutförande av anslutning: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task EditConnection(BankConnection connection)
+    {
+        var parameters = new DialogParameters<EditBankConnectionDialog>
+        {
+            { x => x.Connection, new EditBankConnectionDialog.BankConnection 
+                { 
+                    BankConnectionId = connection.BankConnectionId,
+                    ExternalAccountId = connection.ExternalAccountId,
+                    AutoSyncEnabled = connection.AutoSyncEnabled,
+                    Status = connection.Status
+                } 
+            }
+        };
+
+        var dialog = await DialogService.ShowAsync<EditBankConnectionDialog>("Redigera bankkoppling", parameters, new DialogOptions 
+        { 
+            MaxWidth = MaxWidth.Small, 
+            FullWidth = true 
+        });
+        
+        var result = await dialog.Result;
+        
+        if (!result.Canceled && result.Data is EditBankConnectionDialog.BankConnection updatedConnection)
+        {
+            try
+            {
+                // Update the connection via API
+                connection.AutoSyncEnabled = updatedConnection.AutoSyncEnabled;
+                connection.Status = updatedConnection.Status;
+                connection.UpdatedAt = DateTime.UtcNow;
+
+                var response = await Http.PutAsJsonAsync($"api/bankconnections/{connection.BankConnectionId}", connection);
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    Snackbar.Add("Bankkoppling uppdaterad", Severity.Success);
+                    await LoadConnections();
+                }
+                else
+                {
+                    var errorMsg = await response.Content.ReadAsStringAsync();
+                    Snackbar.Add($"Fel vid uppdatering: {errorMsg}", Severity.Error);
+                }
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Fel vid uppdatering: {ex.Message}", Severity.Error);
+            }
+        }
     }
 
     private async Task SyncConnection(BankConnection connection)
@@ -156,13 +263,40 @@ else
         {
             Snackbar.Add($"Synkroniserar {connection.BankSource?.Name}...", Severity.Info);
             
-            // TODO: Call API endpoint to sync transactions
-            // For now, just show a message
+            // Get accounts for this connection
+            var accountsResponse = await Http.GetFromJsonAsync<List<BankApiAccount>>($"api/bankconnections/{connection.BankConnectionId}/accounts");
             
-            await Task.Delay(1000); // Simulate API call
+            if (accountsResponse == null || !accountsResponse.Any())
+            {
+                Snackbar.Add("Inga konton hittades för denna anslutning", Severity.Warning);
+                return;
+            }
+
+            // Use the first account or the stored ExternalAccountId
+            var accountId = connection.ExternalAccountId ?? accountsResponse.First().AccountId;
             
-            Snackbar.Add("Synkronisering slutförd", Severity.Success);
-            await LoadConnections();
+            // Import transactions
+            var importRequest = new
+            {
+                AccountId = accountId,
+                FromDate = connection.LastSyncedAt ?? DateTime.Now.AddDays(-90),
+                ToDate = DateTime.Now,
+                SkipDuplicates = true
+            };
+
+            var importResponse = await Http.PostAsJsonAsync($"api/bankconnections/{connection.BankConnectionId}/import", importRequest);
+            
+            if (importResponse.IsSuccessStatusCode)
+            {
+                var result = await importResponse.Content.ReadFromJsonAsync<BankApiImportResult>();
+                Snackbar.Add($"Synkronisering slutförd: {result?.ImportedCount ?? 0} nya transaktioner", Severity.Success);
+                await LoadConnections();
+            }
+            else
+            {
+                var errorMsg = await importResponse.Content.ReadAsStringAsync();
+                Snackbar.Add($"Fel vid synkronisering: {errorMsg}", Severity.Error);
+            }
         }
         catch (Exception ex)
         {
@@ -172,22 +306,48 @@ else
 
     private async Task DeleteConnection(BankConnection connection)
     {
-        try
-        {
-            // Show confirmation message
-            Snackbar.Add(
-                $"Är du säker på att du vill ta bort kopplingen till {connection.BankSource?.Name}? (Funktionen är inte implementerad ännu)",
-                Severity.Warning
-            );
+        var result = await DialogService.ShowMessageBox(
+            "Bekräfta borttagning",
+            $"Är du säker på att du vill ta bort kopplingen till {connection.BankSource?.Name}? Denna åtgärd kan inte ångras.",
+            yesText: "Ta bort", 
+            cancelText: "Avbryt");
 
-            // TODO: Implement proper confirmation dialog
-            // TODO: Call API endpoint to delete connection
-            // Snackbar.Add("Bankkoppling borttagen", Severity.Success);
-            // await LoadConnections();
-        }
-        catch (Exception ex)
+        if (result == true)
         {
-            Snackbar.Add($"Fel vid borttagning: {ex.Message}", Severity.Error);
+            try
+            {
+                var response = await Http.DeleteAsync($"api/bankconnections/{connection.BankConnectionId}");
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    Snackbar.Add("Bankkoppling borttagen", Severity.Success);
+                    await LoadConnections();
+                }
+                else
+                {
+                    var errorMsg = await response.Content.ReadAsStringAsync();
+                    Snackbar.Add($"Fel vid borttagning: {errorMsg}", Severity.Error);
+                }
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Fel vid borttagning: {ex.Message}", Severity.Error);
+            }
         }
+    }
+
+    // DTO classes for API responses
+    public class BankApiAccount
+    {
+        public string AccountId { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public decimal Balance { get; set; }
+    }
+
+    public class BankApiImportResult
+    {
+        public int ImportedCount { get; set; }
+        public int SkippedCount { get; set; }
+        public List<string>? Errors { get; set; }
     }
 }
