@@ -2,16 +2,25 @@
 # Startup script for Privatekonomi application in Codespaces
 # This script starts the .NET Aspire Dashboard which orchestrates all services
 
-set -e
-
 echo "🚀 Starting Privatekonomi with .NET Aspire Dashboard..."
 echo ""
 
 # Check if .NET is installed
 if ! command -v dotnet &> /dev/null; then
-    echo "❌ Error: .NET SDK is not installed"
-    echo "Please install .NET 9 SDK: https://dotnet.microsoft.com/download/dotnet/9.0"
-    exit 1
+    echo "⚠️  .NET SDK is not installed"
+    echo "Installing .NET 9 SDK..."
+    
+    # Install .NET SDK
+    if ! bash <(curl -sSL https://dot.net/v1/dotnet-install.sh) --channel 9.0 --install-dir "$HOME/.dotnet"; then
+        echo "❌ Failed to install .NET SDK"
+        exit 1
+    fi
+    
+    # Add to current session
+    export DOTNET_ROOT="$HOME/.dotnet"
+    export PATH="$HOME/.dotnet:$PATH"
+    
+    echo "✅ .NET SDK installed successfully"
 fi
 
 # Check .NET version
@@ -22,8 +31,7 @@ echo "✅ .NET SDK version: $DOTNET_VERSION"
 if ! dotnet workload list | grep -q "aspire"; then
     echo "⚠️  Aspire workload is not installed"
     echo "Installing Aspire workload..."
-    dotnet workload install aspire
-    if [ $? -ne 0 ]; then
+    if ! dotnet workload install aspire; then
         echo "❌ Failed to install Aspire workload"
         exit 1
     fi
