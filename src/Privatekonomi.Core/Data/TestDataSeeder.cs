@@ -25,6 +25,7 @@ public static class TestDataSeeder
         SeedCategoryRules(context);
         SeedHouseholds(context);
         SeedGoals(context, testUserId);
+        SeedSalaryHistory(context, testUserId);
     }
     
     private static async Task<string> SeedUsers(UserManager<ApplicationUser> userManager)
@@ -762,6 +763,113 @@ public static class TestDataSeeder
         };
 
         context.Loans.AddRange(loans);
+        context.SaveChanges();
+    }
+
+    private static void SeedSalaryHistory(PrivatekonomyContext context, string userId)
+    {
+        // Create realistic salary history showing career progression over 5 years
+        var salaryHistories = new List<SalaryHistory>
+        {
+            // Year 1 - Junior Developer
+            new SalaryHistory
+            {
+                SalaryHistoryId = 1,
+                MonthlySalary = 28000m,
+                Period = new DateTime(2020, 1, 1),
+                JobTitle = "Junior Utvecklare",
+                Employer = "Tech Startup AB",
+                EmploymentType = "Heltid",
+                WorkPercentage = 100,
+                Notes = "Första jobbet efter examen",
+                Currency = "SEK",
+                IsCurrent = false,
+                CreatedAt = DateTime.UtcNow,
+                UserId = userId
+            },
+            // Year 2 - Salary revision
+            new SalaryHistory
+            {
+                SalaryHistoryId = 2,
+                MonthlySalary = 30000m,
+                Period = new DateTime(2021, 1, 1),
+                JobTitle = "Junior Utvecklare",
+                Employer = "Tech Startup AB",
+                EmploymentType = "Heltid",
+                WorkPercentage = 100,
+                Notes = "Årlig lönerevision",
+                Currency = "SEK",
+                IsCurrent = false,
+                CreatedAt = DateTime.UtcNow,
+                UserId = userId
+            },
+            // Year 3 - Promotion
+            new SalaryHistory
+            {
+                SalaryHistoryId = 3,
+                MonthlySalary = 35000m,
+                Period = new DateTime(2022, 7, 1),
+                JobTitle = "Utvecklare",
+                Employer = "Tech Startup AB",
+                EmploymentType = "Heltid",
+                WorkPercentage = 100,
+                Notes = "Befordran till Utvecklare",
+                Currency = "SEK",
+                IsCurrent = false,
+                CreatedAt = DateTime.UtcNow,
+                UserId = userId
+            },
+            // Year 4 - New job
+            new SalaryHistory
+            {
+                SalaryHistoryId = 4,
+                MonthlySalary = 42000m,
+                Period = new DateTime(2023, 3, 1),
+                JobTitle = "Senior Utvecklare",
+                Employer = "Innovation Tech Group",
+                EmploymentType = "Heltid",
+                WorkPercentage = 100,
+                Notes = "Nytt jobb med högre lön",
+                Currency = "SEK",
+                IsCurrent = false,
+                CreatedAt = DateTime.UtcNow,
+                UserId = userId
+            },
+            // Year 4.5 - Salary revision
+            new SalaryHistory
+            {
+                SalaryHistoryId = 5,
+                MonthlySalary = 44000m,
+                Period = new DateTime(2024, 1, 1),
+                JobTitle = "Senior Utvecklare",
+                Employer = "Innovation Tech Group",
+                EmploymentType = "Heltid",
+                WorkPercentage = 100,
+                Notes = "Årlig lönerevision",
+                Currency = "SEK",
+                IsCurrent = false,
+                CreatedAt = DateTime.UtcNow,
+                UserId = userId
+            },
+            // Year 5 - Current position
+            new SalaryHistory
+            {
+                SalaryHistoryId = 6,
+                MonthlySalary = 48000m,
+                Period = new DateTime(2025, 1, 1),
+                JobTitle = "Senior Utvecklare",
+                Employer = "Innovation Tech Group",
+                EmploymentType = "Heltid",
+                WorkPercentage = 100,
+                Notes = "Lönerevision 2025",
+                Currency = "SEK",
+                IsCurrent = true,
+                CreatedAt = DateTime.UtcNow,
+                UserId = userId
+            }
+        };
+
+        context.SalaryHistories.AddRange(salaryHistories);
         context.SaveChanges();
     }
 }
