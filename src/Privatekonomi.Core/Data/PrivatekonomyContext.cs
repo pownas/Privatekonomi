@@ -25,6 +25,9 @@ public class PrivatekonomyContext : DbContext
     public DbSet<HouseholdMember> HouseholdMembers { get; set; }
     public DbSet<SharedExpense> SharedExpenses { get; set; }
     public DbSet<ExpenseShare> ExpenseShares { get; set; }
+    public DbSet<ChildAllowance> ChildAllowances { get; set; }
+    public DbSet<AllowanceTransaction> AllowanceTransactions { get; set; }
+    public DbSet<AllowanceTask> AllowanceTasks { get; set; }
     public DbSet<Goal> Goals { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -218,6 +221,11 @@ public class PrivatekonomyContext : DbContext
             entity.Property(e => e.EndDate).IsRequired();
             entity.Property(e => e.Period).IsRequired();
             entity.Property(e => e.CreatedAt).IsRequired();
+            
+            entity.HasOne(e => e.Household)
+                .WithMany()
+                .HasForeignKey(e => e.HouseholdId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
 
         modelBuilder.Entity<BudgetCategory>(entity =>
@@ -332,6 +340,61 @@ public class PrivatekonomyContext : DbContext
                 .WithMany(hm => hm.ExpenseShares)
                 .HasForeignKey(e => e.HouseholdMemberId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // Child Allowance configuration
+        modelBuilder.Entity<ChildAllowance>(entity =>
+        {
+            entity.HasKey(e => e.ChildAllowanceId);
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(200);
+            entity.Property(e => e.Amount).HasPrecision(18, 2);
+            entity.Property(e => e.CurrentBalance).HasPrecision(18, 2);
+            entity.Property(e => e.Frequency).IsRequired();
+            entity.Property(e => e.StartDate).IsRequired();
+            entity.Property(e => e.IsActive).IsRequired();
+            entity.Property(e => e.CreatedAt).IsRequired();
+            
+            entity.HasOne(e => e.HouseholdMember)
+                .WithMany()
+                .HasForeignKey(e => e.HouseholdMemberId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<AllowanceTransaction>(entity =>
+        {
+            entity.HasKey(e => e.AllowanceTransactionId);
+            entity.Property(e => e.Amount).HasPrecision(18, 2);
+            entity.Property(e => e.Description).IsRequired().HasMaxLength(500);
+            entity.Property(e => e.Type).IsRequired();
+            entity.Property(e => e.TransactionDate).IsRequired();
+            entity.Property(e => e.CreatedAt).IsRequired();
+            
+            entity.HasOne(e => e.ChildAllowance)
+                .WithMany(ca => ca.AllowanceTransactions)
+                .HasForeignKey(e => e.ChildAllowanceId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.HasOne(e => e.AllowanceTask)
+                .WithMany(at => at.AllowanceTransactions)
+                .HasForeignKey(e => e.AllowanceTaskId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<AllowanceTask>(entity =>
+        {
+            entity.HasKey(e => e.AllowanceTaskId);
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(200);
+            entity.Property(e => e.Description).HasMaxLength(500);
+            entity.Property(e => e.RewardAmount).HasPrecision(18, 2);
+            entity.Property(e => e.Status).IsRequired();
+            entity.Property(e => e.DueDate).IsRequired();
+            entity.Property(e => e.ApprovedBy).HasMaxLength(100);
+            entity.Property(e => e.CreatedAt).IsRequired();
+            
+            entity.HasOne(e => e.ChildAllowance)
+                .WithMany(ca => ca.AllowanceTasks)
+                .HasForeignKey(e => e.ChildAllowanceId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }
