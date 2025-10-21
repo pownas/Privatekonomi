@@ -1,8 +1,10 @@
 @page "/loans"
 @rendermode InteractiveServer
 @inject ILoanService LoanService
+@inject IDebtStrategyService DebtStrategyService
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
+@using Privatekonomi.Core.Models
 
 <PageTitle>Lån & Krediter - Privatekonomi</PageTitle>
 
@@ -31,6 +33,7 @@
             <MudRadio Value="@("CSN-lån")" Color="Color.Primary">CSN-lån</MudRadio>
             <MudRadio Value="@("Privatlån")" Color="Color.Primary">Privatlån</MudRadio>
             <MudRadio Value="@("Kreditkort")" Color="Color.Primary">Kreditkort</MudRadio>
+            <MudRadio Value="@("BNPL/Avbetalning")" Color="Color.Primary">BNPL/Avbetalning</MudRadio>
         </MudRadioGroup>
         <MudDivider Class="mb-3 mt-3" />
 
@@ -59,6 +62,51 @@
                          Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
                          Class="mb-3" />
 
+        <MudNumericField @bind-Value="_formLoan.ExtraMonthlyPayment" 
+                         Label="Extra amortering per månad (kr) - valfritt" 
+                         Variant="Variant.Outlined"
+                         Min="0"
+                         Format="N2"
+                         Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                         Class="mb-3" />
+
+        @if (_formLoan.Type == "Kreditkort")
+        {
+            <MudNumericField @bind-Value="_formLoan.CreditLimit" 
+                             Label="Kreditgräns (kr)" 
+                             Variant="Variant.Outlined"
+                             Min="0"
+                             Format="N2"
+                             Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                             Class="mb-3" />
+            
+            <MudNumericField @bind-Value="_formLoan.MinimumPayment" 
+                             Label="Minimibetalning per månad (kr)" 
+                             Variant="Variant.Outlined"
+                             Min="0"
+                             Format="N2"
+                             Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                             Class="mb-3" />
+        }
+
+        @if (_formLoan.Type == "BNPL/Avbetalning")
+        {
+            <MudNumericField @bind-Value="_formLoan.InstallmentMonths" 
+                             Label="Antal månader" 
+                             Variant="Variant.Outlined"
+                             Min="1"
+                             Max="120"
+                             Class="mb-3" />
+            
+            <MudNumericField @bind-Value="_formLoan.InstallmentFee" 
+                             Label="Fast avgift (kr)" 
+                             Variant="Variant.Outlined"
+                             Min="0"
+                             Format="N2"
+                             Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                             Class="mb-3" />
+        }
+
         <div class="d-flex gap-2">
             <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveLoan">
                 @(_editingLoan != null ? "Uppdatera" : "Lägg till")
@@ -76,7 +124,7 @@ else
 {
     <MudPaper Class="pa-4 mb-4">
         <MudGrid>
-            <MudItem xs="12" md="4">
+            <MudItem xs="12" md="3">
                 <MudCard Elevation="2" Class="pa-4">
                     <MudCardContent>
                         <MudText Typo="Typo.h6">Total Belåning</MudText>
@@ -84,7 +132,7 @@ else
                     </MudCardContent>
                 </MudCard>
             </MudItem>
-            <MudItem xs="12" md="4">
+            <MudItem xs="12" md="3">
                 <MudCard Elevation="2" Class="pa-4">
                     <MudCardContent>
                         <MudText Typo="Typo.h6">Total Månadskostnad</MudText>
@@ -92,7 +140,7 @@ else
                     </MudCardContent>
                 </MudCard>
             </MudItem>
-            <MudItem xs="12" md="4">
+            <MudItem xs="12" md="3">
                 <MudCard Elevation="2" Class="pa-4">
                     <MudCardContent>
                         <MudText Typo="Typo.h6">Antal Lån/Krediter</MudText>
@@ -100,46 +148,78 @@ else
                     </MudCardContent>
                 </MudCard>
             </MudItem>
+            <MudItem xs="12" md="3">
+                <MudCard Elevation="2" Class="pa-4">
+                    <MudCardContent>
+                        <MudText Typo="Typo.h6">Skuldfri Datum</MudText>
+                        @if (_debtFreeDate.HasValue)
+                        {
+                            <MudText Typo="Typo.h4" Color="Color.Success">@_debtFreeDate.Value.ToString("yyyy-MM-dd")</MudText>
+                        }
+                        else
+                        {
+                            <MudText Typo="Typo.h6">-</MudText>
+                        }
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
         </MudGrid>
     </MudPaper>
 
-    <MudPaper Class="pa-4">
-        @if (!_loans.Any())
-        {
-            <MudText>Inga lån eller krediter registrerade än.</MudText>
-        }
-        else
-        {
-            <MudTable Items="@_loans" Hover="true" Striped="true">
-                <HeaderContent>
-                    <MudTh>Namn</MudTh>
-                    <MudTh>Typ</MudTh>
-                    <MudTh Style="text-align: right">Belopp</MudTh>
-                    <MudTh Style="text-align: right">Ränta</MudTh>
-                    <MudTh Style="text-align: right">Amortering/mån</MudTh>
-                    <MudTh Style="text-align: right">Månadskostnad</MudTh>
-                    <MudTh>Åtgärder</MudTh>
-                </HeaderContent>
-                <RowTemplate>
-                    <MudTd DataLabel="Namn">@context.Name</MudTd>
-                    <MudTd DataLabel="Typ">
-                        <MudChip T="string" Size="Size.Small" Color="GetLoanTypeColor(context.Type)">
-                            @context.Type
-                        </MudChip>
-                    </MudTd>
-                    <MudTd DataLabel="Belopp" Style="text-align: right">
-                        @context.Amount.ToString("C", new System.Globalization.CultureInfo("sv-SE"))
-                    </MudTd>
-                    <MudTd DataLabel="Ränta" Style="text-align: right">
-                        @context.InterestRate.ToString("F2")%
-                    </MudTd>
-                    <MudTd DataLabel="Amortering/mån" Style="text-align: right">
+    <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-6">
+        <MudTabPanel Text="Översikt" Icon="@Icons.Material.Filled.List">
+
+            @if (!_loans.Any())
+            {
+                <MudText>Inga lån eller krediter registrerade än.</MudText>
+            }
+            else
+            {
+                <MudTable Items="@_loans" Hover="true" Striped="true">
+                    <HeaderContent>
+                        <MudTh>Namn</MudTh>
+                        <MudTh>Typ</MudTh>
+                        <MudTh Style="text-align: right">Belopp</MudTh>
+                        <MudTh Style="text-align: right">Ränta</MudTh>
+                        <MudTh Style="text-align: right">Amortering/mån</MudTh>
+                        <MudTh Style="text-align: right">Månadskostnad</MudTh>
+                        <MudTh Style="text-align: right">Extra Info</MudTh>
+                        <MudTh>Åtgärder</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="Namn">@context.Name</MudTd>
+                        <MudTd DataLabel="Typ">
+                            <MudChip T="string" Size="Size.Small" Color="GetLoanTypeColor(context.Type)">
+                                @context.Type
+                            </MudChip>
+                        </MudTd>
+                        <MudTd DataLabel="Belopp" Style="text-align: right">
+                            @context.Amount.ToString("C", new System.Globalization.CultureInfo("sv-SE"))
+                        </MudTd>
+                        <MudTd DataLabel="Ränta" Style="text-align: right">
+                            @context.InterestRate.ToString("F2")%
+                        </MudTd>
+                        <MudTd DataLabel="Amortering/mån" Style="text-align: right">
                         @context.Amortization.ToString("C", new System.Globalization.CultureInfo("sv-SE"))
                     </MudTd>
                     <MudTd DataLabel="Månadskostnad" Style="text-align: right">
                         <MudText Color="Color.Warning">
                             @CalculateMonthlyCost(context).ToString("C", new System.Globalization.CultureInfo("sv-SE"))
                         </MudText>
+                    </MudTd>
+                    <MudTd DataLabel="Extra Info" Style="text-align: right">
+                        @if (context.Type == "Kreditkort" && context.UtilizationRate.HasValue)
+                        {
+                            <MudChip T="string" Size="Size.Small" Color="@GetUtilizationColor(context.UtilizationRate.Value)">
+                                Utnyttjande: @context.UtilizationRate.Value.ToString("F1")%
+                            </MudChip>
+                        }
+                        @if (context.ExtraMonthlyPayment.HasValue && context.ExtraMonthlyPayment.Value > 0)
+                        {
+                            <MudChip T="string" Size="Size.Small" Color="Color.Info">
+                                Extra: @context.ExtraMonthlyPayment.Value.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))
+                            </MudChip>
+                        }
                     </MudTd>
                     <MudTd DataLabel="Åtgärder">
                         <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small"
@@ -150,7 +230,102 @@ else
                 </RowTemplate>
             </MudTable>
         }
-    </MudPaper>
+        </MudTabPanel>
+        
+        <MudTabPanel Text="Amorteringsplan" Icon="@Icons.Material.Filled.CalendarMonth">
+            @if (_selectedLoanForSchedule != null && _amortizationSchedule.Any())
+            {
+                <MudText Typo="Typo.h6" Class="mb-4">Amorteringsplan för @_selectedLoanForSchedule.Name</MudText>
+                <MudTable Items="@_amortizationSchedule.Take(60)" Dense="true" Hover="true" Striped="true">
+                    <HeaderContent>
+                        <MudTh>Betalning</MudTh>
+                        <MudTh>Datum</MudTh>
+                        <MudTh Style="text-align: right">Ingående Saldo</MudTh>
+                        <MudTh Style="text-align: right">Betalning</MudTh>
+                        <MudTh Style="text-align: right">Ränta</MudTh>
+                        <MudTh Style="text-align: right">Amortering</MudTh>
+                        <MudTh Style="text-align: right">Utgående Saldo</MudTh>
+                        <MudTh Style="text-align: right">Tot. Ränta</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="Betalning">@context.PaymentNumber</MudTd>
+                        <MudTd DataLabel="Datum">@context.PaymentDate.ToString("yyyy-MM")</MudTd>
+                        <MudTd DataLabel="Ingående Saldo" Style="text-align: right">@context.BeginningBalance.ToString("N0")</MudTd>
+                        <MudTd DataLabel="Betalning" Style="text-align: right">@context.Payment.ToString("N0")</MudTd>
+                        <MudTd DataLabel="Ränta" Style="text-align: right">@context.Interest.ToString("N0")</MudTd>
+                        <MudTd DataLabel="Amortering" Style="text-align: right">@context.Principal.ToString("N0")</MudTd>
+                        <MudTd DataLabel="Utgående Saldo" Style="text-align: right">@context.EndingBalance.ToString("N0")</MudTd>
+                        <MudTd DataLabel="Tot. Ränta" Style="text-align: right">@context.TotalInterestPaid.ToString("N0")</MudTd>
+                    </RowTemplate>
+                </MudTable>
+                @if (_amortizationSchedule.Count > 60)
+                {
+                    <MudText Typo="Typo.body2" Class="mt-2">Visar första 60 av @_amortizationSchedule.Count betalningar</MudText>
+                }
+            }
+            else
+            {
+                <MudText>Välj ett lån från översikten för att se amorteringsplan.</MudText>
+            }
+        </MudTabPanel>
+        
+        <MudTabPanel Text="Avbetalningsstrategier" Icon="@Icons.Material.Filled.TrendingDown">
+            <MudText Typo="Typo.h6" Class="mb-4">Jämför avbetalningsstrategier</MudText>
+            <MudAlert Severity="Severity.Info" Class="mb-4">
+                Snöboll-metoden betalar av minsta skulden först för psykologiska vinster. 
+                Lavin-metoden betalar av högsta räntan först för att minimera räntekostnader.
+            </MudAlert>
+            
+            @if (_snowballStrategy != null && _avalancheStrategy != null)
+            {
+                <MudGrid>
+                    <MudItem xs="12" md="6">
+                        <MudCard Elevation="2">
+                            <MudCardHeader>
+                                <CardHeaderContent>
+                                    <MudText Typo="Typo.h6">⛷️ Snöboll-metoden</MudText>
+                                </CardHeaderContent>
+                            </MudCardHeader>
+                            <MudCardContent>
+                                <MudText>@_snowballStrategy.Description</MudText>
+                                <MudDivider Class="my-3" />
+                                <MudText><strong>Skuldfri:</strong> @_snowballStrategy.DebtFreeDate.ToString("yyyy-MM-dd")</MudText>
+                                <MudText><strong>Total ränta:</strong> @_snowballStrategy.TotalInterestPaid.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))</MudText>
+                                <MudText><strong>Antal månader:</strong> @_snowballStrategy.TotalMonths</MudText>
+                            </MudCardContent>
+                        </MudCard>
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudCard Elevation="2">
+                            <MudCardHeader>
+                                <CardHeaderContent>
+                                    <MudText Typo="Typo.h6">🏔️ Lavin-metoden</MudText>
+                                </CardHeaderContent>
+                            </MudCardHeader>
+                            <MudCardContent>
+                                <MudText>@_avalancheStrategy.Description</MudText>
+                                <MudDivider Class="my-3" />
+                                <MudText><strong>Skuldfri:</strong> @_avalancheStrategy.DebtFreeDate.ToString("yyyy-MM-dd")</MudText>
+                                <MudText><strong>Total ränta:</strong> @_avalancheStrategy.TotalInterestPaid.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))</MudText>
+                                <MudText><strong>Antal månader:</strong> @_avalancheStrategy.TotalMonths</MudText>
+                                
+                                @if (_avalancheStrategy.TotalInterestPaid < _snowballStrategy.TotalInterestPaid)
+                                {
+                                    <MudAlert Severity="Severity.Success" Class="mt-3" Dense="true">
+                                        Sparar @((_snowballStrategy.TotalInterestPaid - _avalancheStrategy.TotalInterestPaid).ToString("C0", new System.Globalization.CultureInfo("sv-SE"))) i ränta!
+                                    </MudAlert>
+                                }
+                            </MudCardContent>
+                        </MudCard>
+                    </MudItem>
+                </MudGrid>
+            }
+            else
+            {
+                <MudText>Lägg till lån för att se strategier.</MudText>
+            }
+        </MudTabPanel>
+    </MudTabs>
 }
 
 @code {
@@ -159,8 +334,17 @@ else
     private IEnumerable<Loan> _loans = new List<Loan>();
     private decimal _totalDebt = 0;
     private decimal _totalMonthlyCost = 0;
+    private DateTime? _debtFreeDate = null;
     private Loan _formLoan = new Loan();
     private Loan? _editingLoan = null;
+    
+    // Amortization schedule
+    private Loan? _selectedLoanForSchedule = null;
+    private List<AmortizationScheduleEntry> _amortizationSchedule = new();
+    
+    // Debt strategies
+    private DebtPayoffStrategy? _snowballStrategy = null;
+    private DebtPayoffStrategy? _avalancheStrategy = null;
 
     protected override async Task OnInitializedAsync()
     {
@@ -173,6 +357,26 @@ else
         _loans = await LoanService.GetAllLoansAsync();
         _totalDebt = _loans.Sum(l => l.Amount);
         _totalMonthlyCost = _loans.Sum(l => CalculateMonthlyCost(l));
+        
+        // Calculate debt-free date
+        _debtFreeDate = await DebtStrategyService.CalculateDebtFreeDate();
+        
+        // Load first loan's amortization schedule
+        if (_loans.Any())
+        {
+            _selectedLoanForSchedule = _loans.First();
+            _amortizationSchedule = DebtStrategyService.GenerateAmortizationSchedule(
+                _selectedLoanForSchedule, 
+                _selectedLoanForSchedule.ExtraMonthlyPayment ?? 0
+            );
+            
+            // Calculate strategies if we have loans
+            var totalMinPayment = _loans.Sum(l => l.Amortization + (l.Amount * l.InterestRate / 100 / 12));
+            var strategies = await DebtStrategyService.CompareStrategies(totalMinPayment);
+            _snowballStrategy = strategies.Snowball;
+            _avalancheStrategy = strategies.Avalanche;
+        }
+        
         _loading = false;
     }
 
@@ -191,8 +395,17 @@ else
             "CSN-lån" => Color.Info,
             "Privatlån" => Color.Warning,
             "Kreditkort" => Color.Secondary,
+            "BNPL/Avbetalning" => Color.Tertiary,
             _ => Color.Default
         };
+    }
+
+    private Color GetUtilizationColor(decimal utilizationRate)
+    {
+        if (utilizationRate < 30) return Color.Success;
+        if (utilizationRate < 50) return Color.Info;
+        if (utilizationRate < 70) return Color.Warning;
+        return Color.Error;
     }
 
     private void ToggleCreateForm()
@@ -215,7 +428,13 @@ else
             Type = loan.Type,
             Amount = loan.Amount,
             InterestRate = loan.InterestRate,
-            Amortization = loan.Amortization
+            Amortization = loan.Amortization,
+            ExtraMonthlyPayment = loan.ExtraMonthlyPayment,
+            CreditLimit = loan.CreditLimit,
+            MinimumPayment = loan.MinimumPayment,
+            InstallmentMonths = loan.InstallmentMonths,
+            InstallmentFee = loan.InstallmentFee,
+            Priority = loan.Priority
         };
         _showCreateForm = true;
     }
