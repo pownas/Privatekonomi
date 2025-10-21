@@ -123,18 +123,27 @@ else
     {
         // Check if we're returning from OAuth callback
         var uri = new Uri(Navigation.Uri);
-        var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
-        var code = query["code"];
-        var state = query["state"];
-        var error = query["error"];
+        var queryString = uri.Query;
+        
+        if (!string.IsNullOrEmpty(queryString) && queryString.StartsWith("?"))
+        {
+            var query = queryString.Substring(1).Split('&')
+                .Select(part => part.Split('='))
+                .Where(parts => parts.Length == 2)
+                .ToDictionary(parts => parts[0], parts => Uri.UnescapeDataString(parts[1]));
+            
+            var error = query.TryGetValue("error", out var errorValue) ? errorValue : null;
+            var code = query.TryGetValue("code", out var codeValue) ? codeValue : null;
+            var state = query.TryGetValue("state", out var stateValue) ? stateValue : null;
 
-        if (!string.IsNullOrEmpty(error))
-        {
-            Snackbar.Add($"Fel vid anslutning till bank: {error}", Severity.Error);
-        }
-        else if (!string.IsNullOrEmpty(code))
-        {
-            await CompleteConnection(code, state);
+            if (!string.IsNullOrEmpty(error))
+            {
+                Snackbar.Add($"Fel vid anslutning till bank: {error}", Severity.Error);
+            }
+            else if (!string.IsNullOrEmpty(code))
+            {
+                await CompleteConnection(code, state);
+            }
         }
 
         await LoadConnections();
