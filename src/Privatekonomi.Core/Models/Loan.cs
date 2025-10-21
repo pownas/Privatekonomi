@@ -13,4 +13,68 @@ public class Loan
     public DateTime? MaturityDate { get; set; } // When loan is expected to be fully paid
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
+    
+    // Bolån (Mortgage) specific fields
+    /// <summary>
+    /// Property address for mortgage loans
+    /// </summary>
+    public string? PropertyAddress { get; set; }
+    
+    /// <summary>
+    /// Property value (for calculating LTV)
+    /// </summary>
+    public decimal? PropertyValue { get; set; }
+    
+    /// <summary>
+    /// Loan-to-Value ratio (belåningsgrad) as percentage
+    /// </summary>
+    public decimal? LTV => PropertyValue.HasValue && PropertyValue.Value > 0 
+        ? (Amount / PropertyValue.Value) * 100 
+        : null;
+    
+    /// <summary>
+    /// Loan provider (bank name)
+    /// </summary>
+    public string? LoanProvider { get; set; }
+    
+    /// <summary>
+    /// Whether interest rate is fixed or variable
+    /// </summary>
+    public bool IsFixedRate { get; set; }
+    
+    /// <summary>
+    /// Date when fixed rate period ends (bindningstid)
+    /// </summary>
+    public DateTime? RateResetDate { get; set; }
+    
+    /// <summary>
+    /// Binding period in months (3, 12, 24, 36, 60 months, etc.)
+    /// </summary>
+    public int? BindingPeriodMonths { get; set; }
+    
+    // CSN-lån specific fields
+    /// <summary>
+    /// CSN loan type: "Studiemedel", "Studiemedelsränta"
+    /// </summary>
+    public string? CSN_LoanType { get; set; }
+    
+    /// <summary>
+    /// Study year when loan was taken
+    /// </summary>
+    public int? CSN_StudyYear { get; set; }
+    
+    /// <summary>
+    /// Monthly payment to CSN
+    /// </summary>
+    public decimal? CSN_MonthlyPayment { get; set; }
+    
+    /// <summary>
+    /// Remaining amount owed to CSN
+    /// </summary>
+    public decimal? CSN_RemainingAmount { get; set; }
+    
+    /// <summary>
+    /// Last date CSN information was updated
+    /// </summary>
+    public DateTime? CSN_LastUpdate { get; set; }
 }

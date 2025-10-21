@@ -26,6 +26,12 @@ public class PrivatekonomyContext : DbContext
     public DbSet<SharedExpense> SharedExpenses { get; set; }
     public DbSet<ExpenseShare> ExpenseShares { get; set; }
     public DbSet<Goal> Goals { get; set; }
+    
+    // Swedish-specific models
+    public DbSet<TaxDeduction> TaxDeductions { get; set; }
+    public DbSet<CapitalGain> CapitalGains { get; set; }
+    public DbSet<CommuteDeduction> CommuteDeductions { get; set; }
+    public DbSet<CreditRating> CreditRatings { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -275,6 +281,127 @@ public class PrivatekonomyContext : DbContext
             new BankSource { BankSourceId = 5, Name = "Handelsbanken", Color = "#003366", AccountType = "checking", Currency = "SEK", InitialBalance = 0, CreatedAt = DateTime.UtcNow }, // mörk blå
             new BankSource { BankSourceId = 6, Name = "Avanza", Color = "#006400", AccountType = "investment", Currency = "SEK", InitialBalance = 0, CreatedAt = DateTime.UtcNow } // mörkgrön (Dark Green)
         );
+
+        // Swedish-specific entities configuration
+        modelBuilder.Entity<TaxDeduction>(entity =>
+        {
+            entity.HasKey(e => e.TaxDeductionId);
+            entity.Property(e => e.Type).IsRequired().HasMaxLength(10);
+            entity.Property(e => e.Amount).HasPrecision(18, 2);
+            entity.Property(e => e.DeductibleAmount).HasPrecision(18, 2);
+            entity.Property(e => e.ServiceProvider).IsRequired().HasMaxLength(200);
+            entity.Property(e => e.OrganizationNumber).IsRequired().HasMaxLength(20);
+            entity.Property(e => e.WorkDescription).HasMaxLength(1000);
+            entity.Property(e => e.CreatedAt).IsRequired();
+            
+            entity.HasOne(e => e.Transaction)
+                .WithMany()
+                .HasForeignKey(e => e.TransactionId)
+                .OnDelete(DeleteBehavior.Cascade);
+                
+            entity.HasIndex(e => e.TaxYear);
+            entity.HasIndex(e => e.Type);
+        });
+        
+        modelBuilder.Entity<CapitalGain>(entity =>
+        {
+            entity.HasKey(e => e.CapitalGainId);
+            entity.Property(e => e.Quantity).HasPrecision(18, 4);
+            entity.Property(e => e.PurchasePricePerUnit).HasPrecision(18, 2);
+            entity.Property(e => e.TotalPurchasePrice).HasPrecision(18, 2);
+            entity.Property(e => e.SalePricePerUnit).HasPrecision(18, 2);
+            entity.Property(e => e.TotalSalePrice).HasPrecision(18, 2);
+            entity.Property(e => e.Gain).HasPrecision(18, 2);
+            entity.Property(e => e.SecurityType).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.SecurityName).IsRequired().HasMaxLength(200);
+            entity.Property(e => e.ISIN).HasMaxLength(12);
+            entity.Property(e => e.Currency).IsRequired().HasMaxLength(3);
+            entity.Property(e => e.ExchangeRate).HasPrecision(18, 6);
+            entity.Property(e => e.CreatedAt).IsRequired();
+            
+            entity.HasOne(e => e.Investment)
+                .WithMany()
+                .HasForeignKey(e => e.InvestmentId)
+                .OnDelete(DeleteBehavior.Restrict);
+                
+            entity.HasIndex(e => e.TaxYear);
+            entity.HasIndex(e => e.IsISK);
+            entity.HasIndex(e => e.SaleDate);
+        });
+        
+        modelBuilder.Entity<CommuteDeduction>(entity =>
+        {
+            entity.HasKey(e => e.CommuteDeductionId);
+            entity.Property(e => e.FromAddress).IsRequired().HasMaxLength(200);
+            entity.Property(e => e.ToAddress).IsRequired().HasMaxLength(200);
+            entity.Property(e => e.DistanceKm).HasPrecision(10, 2);
+            entity.Property(e => e.TransportMethod).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.Cost).HasPrecision(18, 2);
+            entity.Property(e => e.DeductibleAmount).HasPrecision(18, 2);
+            entity.Property(e => e.Notes).HasMaxLength(500);
+            entity.Property(e => e.CreatedAt).IsRequired();
+            
+            entity.HasIndex(e => e.TaxYear);
+            entity.HasIndex(e => e.Date);
+            
+            entity.Ignore(e => e.TotalDistanceKm);
+        });
+        
+        modelBuilder.Entity<CreditRating>(entity =>
+        {
+            entity.HasKey(e => e.CreditRatingId);
+            entity.Property(e => e.Provider).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.Rating).IsRequired().HasMaxLength(10);
+            entity.Property(e => e.TotalDebt).HasPrecision(18, 2);
+            entity.Property(e => e.CreditLimit).HasPrecision(18, 2);
+            entity.Property(e => e.CreditUtilization).HasPrecision(5, 2);
+            entity.Property(e => e.Notes).HasMaxLength(1000);
+            entity.Property(e => e.CreatedAt).IsRequired();
+            
+            entity.HasOne(e => e.Household)
+                .WithMany()
+                .HasForeignKey(e => e.HouseholdId)
+                .OnDelete(DeleteBehavior.Cascade);
+                
+            entity.HasIndex(e => e.CheckedDate);
+        });
+        
+        // Swedish-specific Investment properties
+        modelBuilder.Entity<Investment>(entity =>
+        {
+            entity.Property(e => e.AccountType).HasMaxLength(20);
+            entity.Property(e => e.SchablonTax).HasPrecision(18, 2);
+            
+            entity.HasIndex(e => e.AccountType);
+            entity.HasIndex(e => e.SchablonTaxYear);
+        });
+        
+        // Swedish-specific Transaction properties
+        modelBuilder.Entity<Transaction>(entity =>
+        {
+            entity.Property(e => e.PaymentMethod).HasMaxLength(50);
+            entity.Property(e => e.RecipientBankgiro).HasMaxLength(20);
+            entity.Property(e => e.RecipientPlusgiro).HasMaxLength(20);
+            entity.Property(e => e.InvoiceNumber).HasMaxLength(50);
+            entity.Property(e => e.OCR).HasMaxLength(50);
+            
+            entity.HasIndex(e => e.PaymentMethod);
+            entity.HasIndex(e => e.IsRecurring);
+        });
+        
+        // Swedish-specific Loan properties
+        modelBuilder.Entity<Loan>(entity =>
+        {
+            entity.Property(e => e.PropertyAddress).HasMaxLength(200);
+            entity.Property(e => e.PropertyValue).HasPrecision(18, 2);
+            entity.Property(e => e.LoanProvider).HasMaxLength(100);
+            entity.Property(e => e.CSN_LoanType).HasMaxLength(50);
+            entity.Property(e => e.CSN_MonthlyPayment).HasPrecision(18, 2);
+            entity.Property(e => e.CSN_RemainingAmount).HasPrecision(18, 2);
+            
+            entity.HasIndex(e => e.Type);
+            entity.Ignore(e => e.LTV);
+        });
 
         // Household configuration
         modelBuilder.Entity<Household>(entity =>
