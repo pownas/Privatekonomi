@@ -37,6 +37,12 @@ En privatekonomi-applikation byggd med .NET 9, Blazor Server och MudBlazor för 
   - Barnkonton med veckopeng och sparande
   - Uppdrag-till-belöning system för sysslor
   - Gemensamma budgetar för hela familjen
+- **Löneutveckling** (NYT!):
+  - Spåra och följa din lön över tid (hela karriären, 50+ år)
+  - Visualisera löneutveckling med interaktiv graf
+  - Beräkna genomsnittslön och lönetillväxt
+  - Dokumentera jobbbyten och löneförhöjningar
+  - Hantera befattning, arbetsgivare och anställningstyp
 
 ## 🏗️ Arkitektur
 
@@ -314,6 +320,7 @@ builder.Services.AddDbContext<PrivatekonomyContext>(options =>
 - **[BUDGET_GUIDE.md](wiki/BUDGET_GUIDE.md)**: Guide för budgethantering
 - **[AUTOMATIC_CATEGORIZATION.md](docs/AUTOMATIC_CATEGORIZATION.md)**: Guide för automatisk kategorisering av transaktioner
 - **[FAMILY_COLLABORATION_GUIDE.md](wiki/FAMILY_COLLABORATION_GUIDE.md)**: Guide för familjesamarbete, barnkonton och veckopeng
+- **[SALARY_HISTORY_GUIDE.md](wiki/SALARY_HISTORY_GUIDE.md)**: Guide för löneutveckling och lönehistorik
 
 ### Sverige-specifika integrationer (NYT!)
 
@@ -336,6 +343,7 @@ builder.Services.AddDbContext<PrivatekonomyContext>(options =>
 
 - **[ProgramSpecifikation.md](wiki/ProgramSpecifikation.md)**: Övergripande programspecifikation
 - **[ASPIRE_GUIDE.md](wiki/ASPIRE_GUIDE.md)**: Guide för .NET Aspire Orchestrator
+- **[Kravspecifikation_Loneutveckling.md](wiki/Kravspecifikation_Loneutveckling.md)**: Kravspecifikation för löneutvecklingsfunktionen
 - **[Kravspecifikation_CSV_Import.md](wiki/Kravspecifikation_CSV_Import.md)**: Kravspecifikation för CSV-import av transaktioner
 - **[Kravspecifikation_Avanza_Integration.md](wiki/Kravspecifikation_Avanza_Integration.md)**: Kravspecifikation för Avanza-integration
 - **[Implementationsguide_Avanza.md](wiki/Implementationsguide_Avanza.md)**: Implementationsguide för Avanza-funktionalitet
