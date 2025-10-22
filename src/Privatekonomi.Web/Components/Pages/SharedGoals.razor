@@ -1,0 +1,303 @@
+@page "/sharedgoals"
+@rendermode InteractiveServer
+@inject ISharedGoalService SharedGoalService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+@inject NavigationManager NavigationManager
+
+<PageTitle>Gemensamma Sparmål - Privatekonomi</PageTitle>
+
+<div class="d-flex justify-space-between align-center mb-4">
+    <MudText Typo="Typo.h4">Gemensamma Sparmål</MudText>
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenCreateDialog">
+        Nytt Gemensamt Sparmål
+    </MudButton>
+</div>
+
+@if (_unreadNotificationCount > 0)
+{
+    <MudAlert Severity="Severity.Info" Class="mb-4">
+        Du har @_unreadNotificationCount olästa notifieringar. <MudLink Href="/sharedgoals/notifications">Visa alla notifieringar</MudLink>
+    </MudAlert>
+}
+
+@if (_pendingInvitations.Any())
+{
+    <MudPaper Class="pa-4 mb-4">
+        <MudText Typo="Typo.h6" Class="mb-3">Väntande Inbjudningar</MudText>
+        @foreach (var invitation in _pendingInvitations)
+        {
+            <MudCard Class="mb-2">
+                <MudCardContent>
+                    <MudText Typo="Typo.subtitle1">@invitation.SharedGoal?.Name</MudText>
+                    <MudText Typo="Typo.body2">
+                        Inbjuden av @(invitation.InvitedByUser?.Email ?? "Unknown") 
+                        - @invitation.InvitedAt?.ToString("yyyy-MM-dd")
+                    </MudText>
+                    @if (!string.IsNullOrEmpty(invitation.SharedGoal?.Description))
+                    {
+                        <MudText Typo="Typo.body2" Class="mt-2">@invitation.SharedGoal.Description</MudText>
+                    }
+                </MudCardContent>
+                <MudCardActions>
+                    <MudButton Color="Color.Success" OnClick="() => AcceptInvitation(invitation.SharedGoalParticipantId)">Acceptera</MudButton>
+                    <MudButton Color="Color.Error" OnClick="() => RejectInvitation(invitation.SharedGoalParticipantId)">Avvisa</MudButton>
+                </MudCardActions>
+            </MudCard>
+        }
+    </MudPaper>
+}
+
+@if (_loading)
+{
+    <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+}
+else
+{
+    <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-4">
+        <MudTabPanel Text="Aktiva" Icon="@Icons.Material.Filled.AccountBalance">
+            @if (_activeGoals.Any())
+            {
+                <MudGrid>
+                    @foreach (var goal in _activeGoals)
+                    {
+                        <MudItem xs="12" md="6" lg="4">
+                            <MudCard Elevation="2" Class="cursor-pointer" @onclick="() => NavigateToDetails(goal.SharedGoalId)">
+                                <MudCardContent>
+                                    <MudText Typo="Typo.h6">@goal.Name</MudText>
+                                    @if (!string.IsNullOrEmpty(goal.Description))
+                                    {
+                                        <MudText Typo="Typo.body2" Color="Color.Default" Class="mb-2">@goal.Description</MudText>
+                                    }
+                                    
+                                    <MudProgressLinear Color="@GetProgressColor(goal)" 
+                                                       Rounded="true" 
+                                                       Size="Size.Large" 
+                                                       Value="@GetProgress(goal)" 
+                                                       Class="my-2" />
+                                    
+                                    <div class="d-flex justify-space-between">
+                                        <MudText Typo="Typo.body2">
+                                            @goal.CurrentAmount.ToString("C", new System.Globalization.CultureInfo("sv-SE"))
+                                        </MudText>
+                                        <MudText Typo="Typo.body2">
+                                            @goal.TargetAmount.ToString("C", new System.Globalization.CultureInfo("sv-SE"))
+                                        </MudText>
+                                    </div>
+                                    
+                                    <MudText Typo="Typo.caption" Class="mt-2">
+                                        @GetProgress(goal).ToString("F0")% - @goal.Participants.Count(p => p.InvitationStatus == InvitationStatus.Accepted) deltagare
+                                    </MudText>
+                                    
+                                    @if (goal.TargetDate.HasValue)
+                                    {
+                                        <MudText Typo="Typo.caption">
+                                            Mål: @goal.TargetDate.Value.ToString("yyyy-MM-dd")
+                                        </MudText>
+                                    }
+                                    
+                                    <MudChip T="string" Color="@GetPriorityColor(goal.Priority)" Size="Size.Small" Class="mt-2">
+                                        Prioritet @goal.Priority
+                                    </MudChip>
+                                </MudCardContent>
+                            </MudCard>
+                        </MudItem>
+                    }
+                </MudGrid>
+            }
+            else
+            {
+                <MudAlert Severity="Severity.Info">
+                    Inga aktiva gemensamma sparmål. Skapa ett nytt för att komma igång!
+                </MudAlert>
+            }
+        </MudTabPanel>
+        
+        <MudTabPanel Text="Avslutade" Icon="@Icons.Material.Filled.CheckCircle">
+            @if (_completedGoals.Any())
+            {
+                <MudGrid>
+                    @foreach (var goal in _completedGoals)
+                    {
+                        <MudItem xs="12" md="6" lg="4">
+                            <MudCard Elevation="2" Class="cursor-pointer" @onclick="() => NavigateToDetails(goal.SharedGoalId)">
+                                <MudCardContent>
+                                    <MudText Typo="Typo.h6">
+                                        @goal.Name
+                                        <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Size="Size.Small" />
+                                    </MudText>
+                                    <MudText Typo="Typo.body2" Color="Color.Success">
+                                        Uppnått @goal.CurrentAmount.ToString("C", new System.Globalization.CultureInfo("sv-SE"))
+                                    </MudText>
+                                </MudCardContent>
+                            </MudCard>
+                        </MudItem>
+                    }
+                </MudGrid>
+            }
+            else
+            {
+                <MudAlert Severity="Severity.Info">
+                    Inga avslutade sparmål än.
+                </MudAlert>
+            }
+        </MudTabPanel>
+        
+        <MudTabPanel Text="Arkiverade" Icon="@Icons.Material.Filled.Archive">
+            @if (_archivedGoals.Any())
+            {
+                <MudGrid>
+                    @foreach (var goal in _archivedGoals)
+                    {
+                        <MudItem xs="12" md="6" lg="4">
+                            <MudCard Elevation="2" Class="cursor-pointer" @onclick="() => NavigateToDetails(goal.SharedGoalId)">
+                                <MudCardContent>
+                                    <MudText Typo="Typo.h6">@goal.Name</MudText>
+                                    <MudText Typo="Typo.body2">Arkiverat</MudText>
+                                </MudCardContent>
+                            </MudCard>
+                        </MudItem>
+                    }
+                </MudGrid>
+            }
+            else
+            {
+                <MudAlert Severity="Severity.Info">
+                    Inga arkiverade sparmål.
+                </MudAlert>
+            }
+        </MudTabPanel>
+    </MudTabs>
+}
+
+@code {
+    private IEnumerable<SharedGoal> _allGoals = new List<SharedGoal>();
+    private IEnumerable<SharedGoal> _activeGoals = new List<SharedGoal>();
+    private IEnumerable<SharedGoal> _completedGoals = new List<SharedGoal>();
+    private IEnumerable<SharedGoal> _archivedGoals = new List<SharedGoal>();
+    private IEnumerable<SharedGoalParticipant> _pendingInvitations = new List<SharedGoalParticipant>();
+    private int _unreadNotificationCount = 0;
+    private bool _loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        _loading = true;
+        
+        _allGoals = await SharedGoalService.GetAllSharedGoalsAsync();
+        
+        _activeGoals = _allGoals.Where(g => g.Status == SharedGoalStatus.Active).ToList();
+        _completedGoals = _allGoals.Where(g => g.Status == SharedGoalStatus.Completed).ToList();
+        _archivedGoals = _allGoals.Where(g => g.Status == SharedGoalStatus.Archived).ToList();
+        
+        // Load pending invitations
+        var allParticipants = new List<SharedGoalParticipant>();
+        foreach (var goal in _allGoals)
+        {
+            var participants = await SharedGoalService.GetParticipantsAsync(goal.SharedGoalId);
+            allParticipants.AddRange(participants);
+        }
+        _pendingInvitations = allParticipants.Where(p => p.InvitationStatus == InvitationStatus.Pending).ToList();
+        
+        // Load unread notification count
+        var unreadNotifications = await SharedGoalService.GetUnreadNotificationsAsync();
+        _unreadNotificationCount = unreadNotifications.Count();
+        
+        _loading = false;
+    }
+
+    private async Task OpenCreateDialog()
+    {
+        var parameters = new DialogParameters<CreateSharedGoalDialog>();
+        var dialog = await DialogService.ShowAsync<CreateSharedGoalDialog>("Skapa Nytt Gemensamt Sparmål", parameters);
+        var result = await dialog.Result;
+
+        if (!result.Canceled && result.Data is SharedGoal newGoal)
+        {
+            try
+            {
+                await SharedGoalService.CreateSharedGoalAsync(newGoal);
+                Snackbar.Add("Gemensamt sparmål har skapats!", Severity.Success);
+                await LoadData();
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Fel vid skapande: {ex.Message}", Severity.Error);
+            }
+        }
+    }
+
+    private async Task AcceptInvitation(int participantId)
+    {
+        try
+        {
+            await SharedGoalService.AcceptInvitationAsync(participantId);
+            Snackbar.Add("Inbjudan accepterad!", Severity.Success);
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Fel: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task RejectInvitation(int participantId)
+    {
+        bool? confirm = await DialogService.ShowMessageBox(
+            "Bekräfta",
+            "Är du säker på att du vill avvisa denna inbjudan?",
+            yesText: "Ja", cancelText: "Avbryt");
+
+        if (confirm == true)
+        {
+            try
+            {
+                await SharedGoalService.RejectInvitationAsync(participantId);
+                Snackbar.Add("Inbjudan avvisad", Severity.Info);
+                await LoadData();
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Fel: {ex.Message}", Severity.Error);
+            }
+        }
+    }
+
+    private void NavigateToDetails(int sharedGoalId)
+    {
+        NavigationManager.NavigateTo($"/sharedgoals/{sharedGoalId}");
+    }
+
+    private double GetProgress(SharedGoal goal)
+    {
+        if (goal.TargetAmount == 0) return 0;
+        return Math.Min(100, (double)(goal.CurrentAmount / goal.TargetAmount * 100));
+    }
+
+    private Color GetProgressColor(SharedGoal goal)
+    {
+        var progress = GetProgress(goal);
+        if (progress >= 100) return Color.Success;
+        if (progress >= 75) return Color.Info;
+        if (progress >= 50) return Color.Primary;
+        if (progress >= 25) return Color.Warning;
+        return Color.Error;
+    }
+
+    private Color GetPriorityColor(int priority)
+    {
+        return priority switch
+        {
+            1 => Color.Error,
+            2 => Color.Warning,
+            3 => Color.Primary,
+            4 => Color.Info,
+            5 => Color.Default,
+            _ => Color.Default
+        };
+    }
+}

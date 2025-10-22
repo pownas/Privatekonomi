@@ -9,6 +9,13 @@ En privatekonomi-applikation byggd med .NET 9, Blazor Server och MudBlazor för 
 - **Transaktionshantering**: Registrera, visa och ta bort transaktioner
 - **Budgethantering**: Skapa och följa upp budgetar med visualisering av planerat vs faktiskt utfall
 - **Sparmål**: Sätt upp och följ sparmål med målbelopp, tidsgräns och prioritering
+- **Gemensamma Sparmål** (NYT!):
+  - Skapa sparmål tillsammans med andra användare
+  - Inbjudningssystem med accept/reject
+  - Förslagssystem med demokratiska ändringar
+  - Transaktionshistorik och notifieringar
+  - Rollbaserad åtkomstkontroll (Owner/Participant)
+  - Se [detaljerad dokumentation](wiki/README_Gemensamma_Sparmal.md)
 - **Investeringshantering**: Hantera aktier, fonder och certifikat med översikt över värde och avkastning
 - **Automatisk kursuppdatering**: Uppdatera aktiekurser via Yahoo Finance API med ett knapptryck
 - **Kategorisystem**: Förkonfigurerade kategorier med färgkodning och hierarkisk struktur
