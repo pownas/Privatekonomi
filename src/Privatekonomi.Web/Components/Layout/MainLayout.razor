@@ -122,10 +122,12 @@
     
     private async Task ToggleTheme()
     {
-        ThemeService.ToggleTheme();
+        _isDarkMode = !_isDarkMode;
+        ThemeService.IsDarkMode = _isDarkMode;
+        
         try
         {
-            await JSRuntime.InvokeVoidAsync("themeManager.setTheme", ThemeService.IsDarkMode);
+            await JSRuntime.InvokeVoidAsync("themeManager.setTheme", _isDarkMode);
         }
         catch
         {
