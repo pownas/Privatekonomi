@@ -33,6 +33,14 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
     public DbSet<AllowanceTask> AllowanceTasks { get; set; }
     public DbSet<Goal> Goals { get; set; }
     
+    // Shared Goals
+    public DbSet<SharedGoal> SharedGoals { get; set; }
+    public DbSet<SharedGoalParticipant> SharedGoalParticipants { get; set; }
+    public DbSet<SharedGoalProposal> SharedGoalProposals { get; set; }
+    public DbSet<SharedGoalProposalVote> SharedGoalProposalVotes { get; set; }
+    public DbSet<SharedGoalTransaction> SharedGoalTransactions { get; set; }
+    public DbSet<SharedGoalNotification> SharedGoalNotifications { get; set; }
+    
     // Swedish-specific models
     public DbSet<TaxDeduction> TaxDeductions { get; set; }
     public DbSet<CapitalGain> CapitalGains { get; set; }
@@ -633,6 +641,147 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
                 .WithMany(ca => ca.AllowanceTasks)
                 .HasForeignKey(e => e.ChildAllowanceId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // Shared Goals configuration
+        modelBuilder.Entity<SharedGoal>(entity =>
+        {
+            entity.HasKey(e => e.SharedGoalId);
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(200);
+            entity.Property(e => e.Description).HasMaxLength(500);
+            entity.Property(e => e.TargetAmount).HasPrecision(18, 2);
+            entity.Property(e => e.CurrentAmount).HasPrecision(18, 2);
+            entity.Property(e => e.Priority).IsRequired();
+            entity.Property(e => e.Status).IsRequired();
+            entity.Property(e => e.CreatedAt).IsRequired();
+            
+            entity.HasOne(e => e.CreatedByUser)
+                .WithMany()
+                .HasForeignKey(e => e.CreatedByUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+                
+            entity.HasIndex(e => e.CreatedByUserId);
+            entity.HasIndex(e => e.Status);
+        });
+
+        modelBuilder.Entity<SharedGoalParticipant>(entity =>
+        {
+            entity.HasKey(e => e.SharedGoalParticipantId);
+            entity.Property(e => e.Role).IsRequired();
+            entity.Property(e => e.InvitationStatus).IsRequired();
+            entity.Property(e => e.JoinedAt).IsRequired();
+            
+            entity.HasOne(e => e.SharedGoal)
+                .WithMany(sg => sg.Participants)
+                .HasForeignKey(e => e.SharedGoalId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.HasOne(e => e.InvitedByUser)
+                .WithMany()
+                .HasForeignKey(e => e.InvitedByUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+                
+            entity.HasIndex(e => e.SharedGoalId);
+            entity.HasIndex(e => e.UserId);
+            entity.HasIndex(e => e.InvitationStatus);
+            entity.HasIndex(e => new { e.SharedGoalId, e.UserId }).IsUnique();
+        });
+
+        modelBuilder.Entity<SharedGoalProposal>(entity =>
+        {
+            entity.HasKey(e => e.SharedGoalProposalId);
+            entity.Property(e => e.ProposalType).IsRequired();
+            entity.Property(e => e.CurrentValue).HasMaxLength(500);
+            entity.Property(e => e.ProposedValue).IsRequired().HasMaxLength(500);
+            entity.Property(e => e.Description).HasMaxLength(500);
+            entity.Property(e => e.Status).IsRequired();
+            entity.Property(e => e.CreatedAt).IsRequired();
+            
+            entity.HasOne(e => e.SharedGoal)
+                .WithMany(sg => sg.Proposals)
+                .HasForeignKey(e => e.SharedGoalId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.HasOne(e => e.ProposedByUser)
+                .WithMany()
+                .HasForeignKey(e => e.ProposedByUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+                
+            entity.HasIndex(e => e.SharedGoalId);
+            entity.HasIndex(e => e.Status);
+        });
+
+        modelBuilder.Entity<SharedGoalProposalVote>(entity =>
+        {
+            entity.HasKey(e => e.SharedGoalProposalVoteId);
+            entity.Property(e => e.Vote).IsRequired();
+            entity.Property(e => e.VotedAt).IsRequired();
+            entity.Property(e => e.Comment).HasMaxLength(500);
+            
+            entity.HasOne(e => e.SharedGoalProposal)
+                .WithMany(p => p.Votes)
+                .HasForeignKey(e => e.SharedGoalProposalId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+                
+            entity.HasIndex(e => e.SharedGoalProposalId);
+            entity.HasIndex(e => new { e.SharedGoalProposalId, e.UserId }).IsUnique();
+        });
+
+        modelBuilder.Entity<SharedGoalTransaction>(entity =>
+        {
+            entity.HasKey(e => e.SharedGoalTransactionId);
+            entity.Property(e => e.Amount).HasPrecision(18, 2);
+            entity.Property(e => e.Type).IsRequired();
+            entity.Property(e => e.Description).HasMaxLength(500);
+            entity.Property(e => e.TransactionDate).IsRequired();
+            entity.Property(e => e.CreatedAt).IsRequired();
+            
+            entity.HasOne(e => e.SharedGoal)
+                .WithMany(sg => sg.Transactions)
+                .HasForeignKey(e => e.SharedGoalId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+                
+            entity.HasIndex(e => e.SharedGoalId);
+            entity.HasIndex(e => e.TransactionDate);
+        });
+
+        modelBuilder.Entity<SharedGoalNotification>(entity =>
+        {
+            entity.HasKey(e => e.SharedGoalNotificationId);
+            entity.Property(e => e.Type).IsRequired();
+            entity.Property(e => e.Message).IsRequired().HasMaxLength(500);
+            entity.Property(e => e.IsRead).IsRequired();
+            entity.Property(e => e.CreatedAt).IsRequired();
+            
+            entity.HasOne(e => e.SharedGoal)
+                .WithMany(sg => sg.Notifications)
+                .HasForeignKey(e => e.SharedGoalId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+                
+            entity.HasIndex(e => e.SharedGoalId);
+            entity.HasIndex(e => e.UserId);
+            entity.HasIndex(e => e.IsRead);
+            entity.HasIndex(e => new { e.UserId, e.IsRead });
         });
     }
 }

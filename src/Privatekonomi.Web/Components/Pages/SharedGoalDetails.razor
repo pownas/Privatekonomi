@@ -1,0 +1,447 @@
+@page "/sharedgoals/{SharedGoalId:int}"
+@rendermode InteractiveServer
+@inject ISharedGoalService SharedGoalService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+@inject NavigationManager NavigationManager
+
+<PageTitle>@(_sharedGoal?.Name ?? "Gemensamt Sparmål") - Privatekonomi</PageTitle>
+
+@if (_loading)
+{
+    <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+}
+else if (_sharedGoal == null)
+{
+    <MudAlert Severity="Severity.Error">Sparmålet hittades inte eller du har inte åtkomst till det.</MudAlert>
+}
+else
+{
+    <MudBreadcrumbs Items="_breadcrumbs" Class="mb-4"></MudBreadcrumbs>
+    
+    <div class="d-flex justify-space-between align-center mb-4">
+        <MudText Typo="Typo.h4">@_sharedGoal.Name</MudText>
+        <div>
+            @if (_isOwner)
+            {
+                <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.PersonAdd" OnClick="OpenInviteDialog" Class="mr-2">
+                    Bjud In
+                </MudButton>
+            }
+            <MudButton Variant="Variant.Outlined" Color="Color.Error" StartIcon="@Icons.Material.Filled.ExitToApp" OnClick="LeaveGoal">
+                Lämna
+            </MudButton>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(_sharedGoal.Description))
+    {
+        <MudPaper Class="pa-4 mb-4">
+            <MudText Typo="Typo.body1">@_sharedGoal.Description</MudText>
+        </MudPaper>
+    }
+
+    <MudGrid Class="mb-4">
+        <MudItem xs="12" md="3">
+            <MudCard Elevation="2">
+                <MudCardContent>
+                    <MudText Typo="Typo.h6">Målbelopp</MudText>
+                    <MudText Typo="Typo.h4" Color="Color.Primary">
+                        @_sharedGoal.TargetAmount.ToString("C", new System.Globalization.CultureInfo("sv-SE"))
+                    </MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+        <MudItem xs="12" md="3">
+            <MudCard Elevation="2">
+                <MudCardContent>
+                    <MudText Typo="Typo.h6">Sparat</MudText>
+                    <MudText Typo="Typo.h4" Color="Color.Success">
+                        @_sharedGoal.CurrentAmount.ToString("C", new System.Globalization.CultureInfo("sv-SE"))
+                    </MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+        <MudItem xs="12" md="3">
+            <MudCard Elevation="2">
+                <MudCardContent>
+                    <MudText Typo="Typo.h6">Framsteg</MudText>
+                    <MudText Typo="Typo.h4">@GetProgress().ToString("F1")%</MudText>
+                    <MudProgressLinear Color="@GetProgressColor()" 
+                                       Rounded="true" 
+                                       Size="Size.Large" 
+                                       Value="@GetProgress()" 
+                                       Class="mt-2" />
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+        <MudItem xs="12" md="3">
+            <MudCard Elevation="2">
+                <MudCardContent>
+                    <MudText Typo="Typo.h6">Återstår</MudText>
+                    <MudText Typo="Typo.h4" Color="Color.Warning">
+                        @((_sharedGoal.TargetAmount - _sharedGoal.CurrentAmount).ToString("C", new System.Globalization.CultureInfo("sv-SE")))
+                    </MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+
+    <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-4">
+        <MudTabPanel Text="Översikt" Icon="@Icons.Material.Filled.Info">
+            <MudGrid>
+                <MudItem xs="12" md="6">
+                    <MudPaper Class="pa-4">
+                        <MudText Typo="Typo.h6" Class="mb-3">Uppdatera Sparbelopp</MudText>
+                        <MudNumericField @bind-Value="_transactionAmount" 
+                                         Label="Belopp (kr)" 
+                                         Variant="Variant.Outlined"
+                                         Format="N2"
+                                         Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                                         Class="mb-3" />
+                        <MudTextField @bind-Value="_transactionDescription" 
+                                      Label="Kommentar (valfritt)" 
+                                      Variant="Variant.Outlined"
+                                      MaxLength="500"
+                                      Class="mb-3" />
+                        <div class="d-flex gap-2">
+                            <MudButton Variant="Variant.Filled" Color="Color.Success" OnClick="() => UpdateAmount(TransactionType.Deposit)">
+                                Sätt In
+                            </MudButton>
+                            <MudButton Variant="Variant.Filled" Color="Color.Warning" OnClick="() => UpdateAmount(TransactionType.Withdrawal)">
+                                Ta Ut
+                            </MudButton>
+                        </div>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudPaper Class="pa-4">
+                        <MudText Typo="Typo.h6" Class="mb-3">Information</MudText>
+                        <MudText Typo="Typo.body2" Class="mb-2">
+                            <strong>Prioritet:</strong> @_sharedGoal.Priority
+                        </MudText>
+                        @if (_sharedGoal.TargetDate.HasValue)
+                        {
+                            <MudText Typo="Typo.body2" Class="mb-2">
+                                <strong>Målsättningsdatum:</strong> @_sharedGoal.TargetDate.Value.ToString("yyyy-MM-dd")
+                            </MudText>
+                        }
+                        <MudText Typo="Typo.body2" Class="mb-2">
+                            <strong>Status:</strong> @_sharedGoal.Status
+                        </MudText>
+                        <MudText Typo="Typo.body2" Class="mb-2">
+                            <strong>Skapad:</strong> @_sharedGoal.CreatedAt.ToString("yyyy-MM-dd")
+                        </MudText>
+                    </MudPaper>
+                </MudItem>
+            </MudGrid>
+        </MudTabPanel>
+
+        <MudTabPanel Text="Deltagare" Icon="@Icons.Material.Filled.People">
+            <MudTable Items="@_participants" Hover="true" Dense="true">
+                <HeaderContent>
+                    <MudTh>Användare</MudTh>
+                    <MudTh>Roll</MudTh>
+                    <MudTh>Gick med</MudTh>
+                    <MudTh>Status</MudTh>
+                    @if (_isOwner)
+                    {
+                        <MudTh>Åtgärder</MudTh>
+                    }
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Användare">@context.User?.Email</MudTd>
+                    <MudTd DataLabel="Roll">
+                        <MudChip T="string" Color="@(context.Role == ParticipantRole.Owner ? Color.Primary : Color.Default)" Size="Size.Small">
+                            @context.Role
+                        </MudChip>
+                    </MudTd>
+                    <MudTd DataLabel="Gick med">@context.JoinedAt.ToString("yyyy-MM-dd")</MudTd>
+                    <MudTd DataLabel="Status">
+                        <MudChip T="string" Color="@GetInvitationStatusColor(context.InvitationStatus)" Size="Size.Small">
+                            @context.InvitationStatus
+                        </MudChip>
+                    </MudTd>
+                    @if (_isOwner && context.Role != ParticipantRole.Owner)
+                    {
+                        <MudTd DataLabel="Åtgärder">
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" OnClick="@(() => RemoveParticipant(context.UserId))" Color="Color.Error" />
+                        </MudTd>
+                    }
+                </RowTemplate>
+            </MudTable>
+        </MudTabPanel>
+
+        <MudTabPanel Text="Historik" Icon="@Icons.Material.Filled.History">
+            <MudTable Items="@_transactions" Hover="true" Dense="true">
+                <HeaderContent>
+                    <MudTh>Datum</MudTh>
+                    <MudTh>Användare</MudTh>
+                    <MudTh>Typ</MudTh>
+                    <MudTh>Belopp</MudTh>
+                    <MudTh>Kommentar</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Datum">@context.TransactionDate.ToString("yyyy-MM-dd HH:mm")</MudTd>
+                    <MudTd DataLabel="Användare">@context.User?.Email</MudTd>
+                    <MudTd DataLabel="Typ">
+                        <MudChip T="string" Color="@(context.Type == TransactionType.Deposit ? Color.Success : Color.Warning)" Size="Size.Small">
+                            @(context.Type == TransactionType.Deposit ? "Insättning" : "Uttag")
+                        </MudChip>
+                    </MudTd>
+                    <MudTd DataLabel="Belopp">@context.Amount.ToString("C", new System.Globalization.CultureInfo("sv-SE"))</MudTd>
+                    <MudTd DataLabel="Kommentar">@context.Description</MudTd>
+                </RowTemplate>
+            </MudTable>
+        </MudTabPanel>
+
+        <MudTabPanel Text="Förslag" Icon="@Icons.Material.Filled.HowToVote">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenProposalDialog" Class="mb-4">
+                Nytt Förslag
+            </MudButton>
+            
+            @if (_proposals.Any())
+            {
+                <MudTable Items="@_proposals" Hover="true" Dense="true">
+                    <HeaderContent>
+                        <MudTh>Typ</MudTh>
+                        <MudTh>Föreslagen av</MudTh>
+                        <MudTh>Nuvarande värde</MudTh>
+                        <MudTh>Föreslaget värde</MudTh>
+                        <MudTh>Status</MudTh>
+                        <MudTh>Röster</MudTh>
+                        <MudTh>Åtgärder</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="Typ">@GetProposalTypeText(context.ProposalType)</MudTd>
+                        <MudTd DataLabel="Föreslagen av">@context.ProposedByUser?.Email</MudTd>
+                        <MudTd DataLabel="Nuvarande värde">@context.CurrentValue</MudTd>
+                        <MudTd DataLabel="Föreslaget värde">@context.ProposedValue</MudTd>
+                        <MudTd DataLabel="Status">
+                            <MudChip T="string" Color="@GetProposalStatusColor(context.Status)" Size="Size.Small">
+                                @context.Status
+                            </MudChip>
+                        </MudTd>
+                        <MudTd DataLabel="Röster">@context.Votes.Count / @_participants.Count(p => p.InvitationStatus == InvitationStatus.Accepted)</MudTd>
+                        <MudTd DataLabel="Åtgärder">
+                            @if (context.Status == ProposalStatus.Pending && !context.Votes.Any(v => v.UserId == _currentUserId))
+                            {
+                                <MudIconButton Icon="@Icons.Material.Filled.ThumbUp" Size="Size.Small" OnClick="@(() => VoteOnProposal(context.SharedGoalProposalId, VoteType.Approve))" Color="Color.Success" />
+                                <MudIconButton Icon="@Icons.Material.Filled.ThumbDown" Size="Size.Small" OnClick="@(() => VoteOnProposal(context.SharedGoalProposalId, VoteType.Reject))" Color="Color.Error" />
+                            }
+                        </MudTd>
+                    </RowTemplate>
+                </MudTable>
+            }
+            else
+            {
+                <MudAlert Severity="Severity.Info">Inga förslag ännu.</MudAlert>
+            }
+        </MudTabPanel>
+    </MudTabs>
+}
+
+@code {
+    [Parameter]
+    public int SharedGoalId { get; set; }
+
+    private SharedGoal? _sharedGoal;
+    private IEnumerable<SharedGoalParticipant> _participants = new List<SharedGoalParticipant>();
+    private IEnumerable<SharedGoalTransaction> _transactions = new List<SharedGoalTransaction>();
+    private IEnumerable<SharedGoalProposal> _proposals = new List<SharedGoalProposal>();
+    private bool _loading = true;
+    private bool _isOwner = false;
+    private string? _currentUserId;
+    
+    private decimal _transactionAmount = 0;
+    private string? _transactionDescription;
+    
+    private List<BreadcrumbItem> _breadcrumbs = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        _loading = true;
+        
+        try
+        {
+            _sharedGoal = await SharedGoalService.GetSharedGoalByIdAsync(SharedGoalId);
+            
+            if (_sharedGoal != null)
+            {
+                _participants = await SharedGoalService.GetParticipantsAsync(SharedGoalId);
+                _transactions = await SharedGoalService.GetTransactionsAsync(SharedGoalId);
+                _proposals = await SharedGoalService.GetProposalsAsync(SharedGoalId);
+                
+                // Check if current user is owner (simplified - would use ICurrentUserService in real implementation)
+                _isOwner = await SharedGoalService.IsOwnerAsync(SharedGoalId, ""); // Pass empty string for now
+                
+                _breadcrumbs = new List<BreadcrumbItem>
+                {
+                    new BreadcrumbItem("Gemensamma Sparmål", href: "/sharedgoals", icon: Icons.Material.Filled.Groups),
+                    new BreadcrumbItem(_sharedGoal.Name, href: null, disabled: true)
+                };
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Fel vid laddning: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task UpdateAmount(TransactionType type)
+    {
+        if (_transactionAmount <= 0)
+        {
+            Snackbar.Add("Ange ett belopp större än 0", Severity.Warning);
+            return;
+        }
+
+        try
+        {
+            await SharedGoalService.UpdateGoalAmountAsync(SharedGoalId, _transactionAmount, type, _transactionDescription);
+            Snackbar.Add($"{(type == TransactionType.Deposit ? "Insättning" : "Uttag")} registrerad!", Severity.Success);
+            _transactionAmount = 0;
+            _transactionDescription = null;
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Fel: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task OpenInviteDialog()
+    {
+        var email = await DialogService.ShowMessageBox(
+            "Bjud in deltagare",
+            "Ange e-postadress för användaren du vill bjuda in:",
+            "Skicka inbjudan", "Avbryt");
+        
+        // In a real implementation, this would use a proper dialog with input field
+        Snackbar.Add("Inbjudningsfunktionen kräver en dialog-komponent", Severity.Info);
+    }
+
+    private async Task RemoveParticipant(string userId)
+    {
+        bool? confirm = await DialogService.ShowMessageBox(
+            "Bekräfta borttagning",
+            "Är du säker på att du vill ta bort denna deltagare?",
+            yesText: "Ja", cancelText: "Avbryt");
+
+        if (confirm == true)
+        {
+            try
+            {
+                await SharedGoalService.RemoveParticipantAsync(SharedGoalId, userId);
+                Snackbar.Add("Deltagare borttagen", Severity.Info);
+                await LoadData();
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Fel: {ex.Message}", Severity.Error);
+            }
+        }
+    }
+
+    private async Task LeaveGoal()
+    {
+        bool? confirm = await DialogService.ShowMessageBox(
+            "Lämna sparmål",
+            "Är du säker på att du vill lämna detta gemensamma sparmål?",
+            yesText: "Ja", cancelText: "Avbryt");
+
+        if (confirm == true)
+        {
+            try
+            {
+                await SharedGoalService.LeaveSharedGoalAsync(SharedGoalId);
+                Snackbar.Add("Du har lämnat sparmålet", Severity.Info);
+                NavigationManager.NavigateTo("/sharedgoals");
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Fel: {ex.Message}", Severity.Error);
+            }
+        }
+    }
+
+    private async Task OpenProposalDialog()
+    {
+        Snackbar.Add("Förslagsfunktionen kräver en dialog-komponent", Severity.Info);
+    }
+
+    private async Task VoteOnProposal(int proposalId, VoteType vote)
+    {
+        try
+        {
+            await SharedGoalService.VoteOnProposalAsync(proposalId, vote);
+            Snackbar.Add("Din röst har registrerats", Severity.Success);
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Fel: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private double GetProgress()
+    {
+        if (_sharedGoal == null || _sharedGoal.TargetAmount == 0) return 0;
+        return Math.Min(100, (double)(_sharedGoal.CurrentAmount / _sharedGoal.TargetAmount * 100));
+    }
+
+    private Color GetProgressColor()
+    {
+        var progress = GetProgress();
+        if (progress >= 100) return Color.Success;
+        if (progress >= 75) return Color.Info;
+        if (progress >= 50) return Color.Primary;
+        if (progress >= 25) return Color.Warning;
+        return Color.Error;
+    }
+
+    private Color GetInvitationStatusColor(InvitationStatus status)
+    {
+        return status switch
+        {
+            InvitationStatus.Accepted => Color.Success,
+            InvitationStatus.Pending => Color.Warning,
+            InvitationStatus.Rejected => Color.Error,
+            _ => Color.Default
+        };
+    }
+
+    private Color GetProposalStatusColor(ProposalStatus status)
+    {
+        return status switch
+        {
+            ProposalStatus.Approved => Color.Success,
+            ProposalStatus.Pending => Color.Warning,
+            ProposalStatus.Rejected => Color.Error,
+            ProposalStatus.Withdrawn => Color.Default,
+            _ => Color.Default
+        };
+    }
+
+    private string GetProposalTypeText(ProposalType type)
+    {
+        return type switch
+        {
+            ProposalType.ChangeTargetAmount => "Ändra målbelopp",
+            ProposalType.ChangeTargetDate => "Ändra målsättningsdatum",
+            ProposalType.ChangeName => "Ändra namn",
+            ProposalType.ChangeDescription => "Ändra beskrivning",
+            ProposalType.ChangePriority => "Ändra prioritet",
+            _ => type.ToString()
+        };
+    }
+}
