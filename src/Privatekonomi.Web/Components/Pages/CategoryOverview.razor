@@ -17,27 +17,45 @@ else
 {
     <MudPaper Class="pa-4 mb-4">
         <MudGrid>
-            <MudItem xs="12" md="6">
-                <MudSelect @bind-Value="_selectedCategoryId" Label="Välj Kategori" Variant="Variant.Outlined" Required="true">
+            <MudItem xs="12">
+                <MudText Typo="Typo.h6" Class="mb-3">Välj Kategori</MudText>
+                <MudChipSet T="string" @bind-SelectedChip="_selectedChip" Filter="true" Mandatory="false">
                     @foreach (var category in _categories)
                     {
-                        <MudSelectItem Value="@category.CategoryId">
-                            <div class="d-flex align-center gap-2">
-                                <div style="@($"width: 20px; height: 20px; background-color: {category.Color}; border-radius: 50%;")" />
-                                @category.Name
-                            </div>
-                        </MudSelectItem>
+                        <MudChip T="string" 
+                                 Value="@category.CategoryId.ToString()" 
+                                 Color="Color.Primary"
+                                 Style="@($"background-color: {category.Color}; color: white;")"
+                                 OnClick="@(() => OnCategoryChanged(category.CategoryId))">
+                            @category.Name
+                        </MudChip>
                     }
-                </MudSelect>
+                </MudChipSet>
             </MudItem>
-            <MudItem xs="12" md="6">
-                <MudSelect @bind-Value="_selectedMonths" Label="Tidsperiod" Variant="Variant.Outlined">
-                    <MudSelectItem Value="1">Senaste månaden</MudSelectItem>
-                    <MudSelectItem Value="3">Senaste 3 månaderna</MudSelectItem>
-                    <MudSelectItem Value="6">Senaste 6 månaderna</MudSelectItem>
-                    <MudSelectItem Value="12">Senaste 12 månaderna</MudSelectItem>
-                    <MudSelectItem Value="24">Senaste 24 månaderna</MudSelectItem>
-                </MudSelect>
+            <MudItem xs="12">
+                <MudText Typo="Typo.subtitle2" Class="mb-2">Tidsperiod</MudText>
+                <MudButtonGroup Color="Color.Primary" Variant="Variant.Outlined">
+                    <MudButton OnClick="@(() => OnMonthsChanged(1))" 
+                               Variant="@(_selectedMonths == 1 ? Variant.Filled : Variant.Outlined)">
+                        1 månad
+                    </MudButton>
+                    <MudButton OnClick="@(() => OnMonthsChanged(3))" 
+                               Variant="@(_selectedMonths == 3 ? Variant.Filled : Variant.Outlined)">
+                        3 månader
+                    </MudButton>
+                    <MudButton OnClick="@(() => OnMonthsChanged(6))" 
+                               Variant="@(_selectedMonths == 6 ? Variant.Filled : Variant.Outlined)">
+                        6 månader
+                    </MudButton>
+                    <MudButton OnClick="@(() => OnMonthsChanged(12))" 
+                               Variant="@(_selectedMonths == 12 ? Variant.Filled : Variant.Outlined)">
+                        12 månader
+                    </MudButton>
+                    <MudButton OnClick="@(() => OnMonthsChanged(24))" 
+                               Variant="@(_selectedMonths == 24 ? Variant.Filled : Variant.Outlined)">
+                        24 månader
+                    </MudButton>
+                </MudButtonGroup>
             </MudItem>
         </MudGrid>
     </MudPaper>
@@ -237,6 +255,7 @@ else
     private int _selectedMonths = 12;
     private CategoryStatistics? _statistics;
     private IEnumerable<Transaction> _recentTransactions = new List<Transaction>();
+    private MudChip<string>? _selectedChip;
     
     private List<ChartSeries> _monthlyChartSeries = new();
     private string[] _monthlyChartLabels = Array.Empty<string>();
@@ -259,8 +278,15 @@ else
         _categories = (await CategoryService.GetAllCategoriesAsync()).ToList();
     }
 
-    protected override async Task OnParametersSetAsync()
+    private async Task OnCategoryChanged(int categoryId)
     {
+        _selectedCategoryId = categoryId;
+        await LoadCategoryData();
+    }
+
+    private async Task OnMonthsChanged(int months)
+    {
+        _selectedMonths = months;
         if (_selectedCategoryId > 0)
         {
             await LoadCategoryData();
