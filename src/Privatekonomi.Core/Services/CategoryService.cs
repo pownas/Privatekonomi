@@ -191,4 +191,26 @@ public class CategoryService : ICategoryService
 
         return statistics;
     }
+
+    public async Task<IEnumerable<CategoryStatistics>> GetAllCategoryStatisticsAsync(int months)
+    {
+        var categories = await GetAllCategoriesAsync();
+        var statisticsList = new List<CategoryStatistics>();
+
+        foreach (var category in categories)
+        {
+            try
+            {
+                var stats = await GetCategoryStatisticsAsync(category.CategoryId, months);
+                statisticsList.Add(stats);
+            }
+            catch (Exception)
+            {
+                // Skip categories that have errors
+                continue;
+            }
+        }
+
+        return statisticsList.OrderByDescending(s => Math.Abs(s.NetAmount));
+    }
 }

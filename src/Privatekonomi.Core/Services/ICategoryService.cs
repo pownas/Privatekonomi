@@ -11,4 +11,5 @@ public interface ICategoryService
     Task DeleteCategoryAsync(int id);
     Task<IEnumerable<Transaction>> GetTransactionsByCategoryAsync(int categoryId, DateTime? from = null, DateTime? to = null);
     Task<CategoryStatistics> GetCategoryStatisticsAsync(int categoryId, int months);
+    Task<IEnumerable<CategoryStatistics>> GetAllCategoryStatisticsAsync(int months);
 }
