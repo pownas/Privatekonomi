@@ -33,6 +33,10 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
     public DbSet<AllowanceTask> AllowanceTasks { get; set; }
     public DbSet<Goal> Goals { get; set; }
     
+    // Pockets for savings accounts
+    public DbSet<Pocket> Pockets { get; set; }
+    public DbSet<PocketTransaction> PocketTransactions { get; set; }
+    
     // Shared Goals
     public DbSet<SharedGoal> SharedGoals { get; set; }
     public DbSet<SharedGoalParticipant> SharedGoalParticipants { get; set; }
@@ -371,6 +375,64 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
                 .OnDelete(DeleteBehavior.Cascade);
             
             entity.HasIndex(e => e.UserId);
+        });
+
+        // Pocket configuration
+        modelBuilder.Entity<Pocket>(entity =>
+        {
+            entity.HasKey(e => e.PocketId);
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(200);
+            entity.Property(e => e.Description).HasMaxLength(500);
+            entity.Property(e => e.TargetAmount).HasPrecision(18, 2);
+            entity.Property(e => e.CurrentAmount).HasPrecision(18, 2);
+            entity.Property(e => e.Priority).IsRequired();
+            entity.Property(e => e.CreatedAt).IsRequired();
+            
+            entity.HasOne(e => e.BankSource)
+                .WithMany()
+                .HasForeignKey(e => e.BankSourceId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.HasIndex(e => e.UserId);
+            entity.HasIndex(e => e.BankSourceId);
+            
+            // Ignore computed properties
+            entity.Ignore(e => e.ProgressPercentage);
+            entity.Ignore(e => e.RemainingAmount);
+        });
+
+        // PocketTransaction configuration
+        modelBuilder.Entity<PocketTransaction>(entity =>
+        {
+            entity.HasKey(e => e.PocketTransactionId);
+            entity.Property(e => e.Amount).HasPrecision(18, 2);
+            entity.Property(e => e.Type).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.Description).HasMaxLength(500);
+            entity.Property(e => e.TransactionDate).IsRequired();
+            entity.Property(e => e.CreatedAt).IsRequired();
+            
+            entity.HasOne(e => e.Pocket)
+                .WithMany(p => p.PocketTransactions)
+                .HasForeignKey(e => e.PocketId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.HasOne(e => e.RelatedPocket)
+                .WithMany()
+                .HasForeignKey(e => e.RelatedPocketId)
+                .OnDelete(DeleteBehavior.Restrict);
+            
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.HasIndex(e => e.PocketId);
+            entity.HasIndex(e => e.TransactionDate);
         });
 
         // Seed initial categories

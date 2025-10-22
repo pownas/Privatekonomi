@@ -1,0 +1,389 @@
+@page "/pockets"
+@rendermode InteractiveServer
+@inject IPocketService PocketService
+@inject IBankSourceService BankSourceService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+<PageTitle>Sparfickor - Privatekonomi</PageTitle>
+
+<div class="d-flex justify-space-between align-center mb-4">
+    <MudText Typo="Typo.h4">Sparfickor</MudText>
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="ToggleCreateForm">
+        Ny Sparficka
+    </MudButton>
+</div>
+
+<MudText Typo="Typo.body1" Class="mb-4">
+    Skapa virtuella fickor på dina sparkonton för att öronmärka pengar för olika ändamål. 
+    Pengarna stannar kvar på sparkontot, men du kan se hur mycket som är allokerat till varje ficka.
+</MudText>
+
+@if (_showCreateForm)
+{
+    <MudPaper Class="pa-4 mb-4">
+        <MudText Typo="Typo.h6" Class="mb-3">@(_editingPocket != null ? "Redigera Sparficka" : "Lägg till Ny Sparficka")</MudText>
+        
+        <MudTextField @bind-Value="_formPocket.Name" 
+                      Label="Namn" 
+                      Variant="Variant.Outlined"
+                      Required="true"
+                      MaxLength="200"
+                      HelperText="T.ex. Bilköp, Teknikinköp, Framtida resor"
+                      Class="mb-3" />
+        
+        <MudTextField @bind-Value="_formPocket.Description" 
+                      Label="Beskrivning" 
+                      Variant="Variant.Outlined"
+                      Lines="3"
+                      MaxLength="500"
+                      Class="mb-3" />
+
+        <MudSelect @bind-Value="_formPocket.BankSourceId" 
+                   Label="Sparkonto" 
+                   Variant="Variant.Outlined" 
+                   Class="mb-3"
+                   Required="true">
+            @foreach (var bankSource in _bankSources.Where(bs => bs.AccountType == "savings" || bs.AccountType == "checking"))
+            {
+                <MudSelectItem Value="@bankSource.BankSourceId">@bankSource.Name</MudSelectItem>
+            }
+        </MudSelect>
+
+        <MudNumericField @bind-Value="_formPocket.TargetAmount" 
+                         Label="Målbelopp (kr)" 
+                         Variant="Variant.Outlined"
+                         Min="0"
+                         Format="N2"
+                         Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                         Class="mb-3" />
+
+        <MudNumericField @bind-Value="_formPocket.CurrentAmount" 
+                         Label="Aktuellt saldo (kr)" 
+                         Variant="Variant.Outlined"
+                         Min="0"
+                         Format="N2"
+                         Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                         Class="mb-3" />
+
+        <MudSelect @bind-Value="_formPocket.Priority" Label="Prioritet" Variant="Variant.Outlined" Class="mb-3">
+            <MudSelectItem Value="1">1 - Högst</MudSelectItem>
+            <MudSelectItem Value="2">2 - Hög</MudSelectItem>
+            <MudSelectItem Value="3">3 - Normal</MudSelectItem>
+            <MudSelectItem Value="4">4 - Låg</MudSelectItem>
+            <MudSelectItem Value="5">5 - Lägst</MudSelectItem>
+        </MudSelect>
+
+        <div class="d-flex gap-2">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SavePocket">
+                @(_editingPocket != null ? "Uppdatera" : "Lägg till")
+            </MudButton>
+            <MudButton Variant="Variant.Outlined" OnClick="CancelForm">Avbryt</MudButton>
+        </div>
+    </MudPaper>
+}
+
+@if (_loading)
+{
+    <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+}
+else
+{
+    <MudPaper Class="pa-4 mb-4">
+        <MudGrid>
+            <MudItem xs="12" md="4">
+                <MudCard Elevation="2" Class="pa-4">
+                    <MudCardContent>
+                        <MudText Typo="Typo.h6">Totalt Målbelopp</MudText>
+                        <MudText Typo="Typo.h4" Color="Color.Primary">@_totalTargetAmount.ToString("C", new System.Globalization.CultureInfo("sv-SE"))</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <MudCard Elevation="2" Class="pa-4">
+                    <MudCardContent>
+                        <MudText Typo="Typo.h6">Totalt Allokerat</MudText>
+                        <MudText Typo="Typo.h4" Color="Color.Success">@_totalCurrentAmount.ToString("C", new System.Globalization.CultureInfo("sv-SE"))</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <MudCard Elevation="2" Class="pa-4">
+                    <MudCardContent>
+                        <MudText Typo="Typo.h6">Genomsnittligt Framsteg</MudText>
+                        <MudText Typo="Typo.h4">@_averageProgress.ToString("F1")%</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+
+    @if (_pocketsByBankSource.Any())
+    {
+        @foreach (var bankSourceGroup in _pocketsByBankSource)
+        {
+            var bankSource = _bankSources.FirstOrDefault(bs => bs.BankSourceId == bankSourceGroup.Key);
+            if (bankSource != null)
+            {
+                <MudPaper Class="pa-4 mb-4">
+                    <div class="d-flex justify-space-between align-center mb-3">
+                        <MudText Typo="Typo.h5">
+                            <MudChip T="string" Size="Size.Medium" Style="@($"background-color: {bankSource.Color}; color: white;")">
+                                @bankSource.Name
+                            </MudChip>
+                        </MudText>
+                        <MudText Typo="Typo.body1">
+                            Totalt allokerat: <strong>@bankSourceGroup.Sum(p => p.CurrentAmount).ToString("C", new System.Globalization.CultureInfo("sv-SE"))</strong>
+                        </MudText>
+                    </div>
+
+                    <MudTable Items="@bankSourceGroup" Hover="true" Striped="true" Dense="true">
+                        <HeaderContent>
+                            <MudTh>Namn</MudTh>
+                            <MudTh>Beskrivning</MudTh>
+                            <MudTh>Målbelopp</MudTh>
+                            <MudTh>Allokerat</MudTh>
+                            <MudTh>Framsteg</MudTh>
+                            <MudTh>Prioritet</MudTh>
+                            <MudTh>Åtgärder</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataLabel="Namn">@context.Name</MudTd>
+                            <MudTd DataLabel="Beskrivning">@context.Description</MudTd>
+                            <MudTd DataLabel="Målbelopp">@context.TargetAmount.ToString("C", new System.Globalization.CultureInfo("sv-SE"))</MudTd>
+                            <MudTd DataLabel="Allokerat">@context.CurrentAmount.ToString("C", new System.Globalization.CultureInfo("sv-SE"))</MudTd>
+                            <MudTd DataLabel="Framsteg">
+                                <div class="d-flex align-center gap-2">
+                                    <MudProgressLinear Color="@GetProgressColor(context)" 
+                                                       Rounded="true" 
+                                                       Size="Size.Large" 
+                                                       Value="@GetProgress(context)" 
+                                                       Class="flex-grow-1" />
+                                    <MudText Typo="Typo.body2">@GetProgress(context).ToString("F0")%</MudText>
+                                </div>
+                            </MudTd>
+                            <MudTd DataLabel="Prioritet">
+                                <MudChip T="string" Color="@GetPriorityColor(context.Priority)" Size="Size.Small">
+                                    Prioritet @context.Priority
+                                </MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="Åtgärder">
+                                <MudTooltip Text="Sätt in">
+                                    <MudIconButton Icon="@Icons.Material.Filled.Add" Size="Size.Small" OnClick="@(() => ShowAllocateDialog(context))" Color="Color.Success" />
+                                </MudTooltip>
+                                <MudTooltip Text="Ta ut">
+                                    <MudIconButton Icon="@Icons.Material.Filled.Remove" Size="Size.Small" OnClick="@(() => ShowWithdrawDialog(context))" Color="Color.Warning" />
+                                </MudTooltip>
+                                <MudTooltip Text="Redigera">
+                                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" OnClick="@(() => EditPocket(context))" Color="Color.Primary" />
+                                </MudTooltip>
+                                <MudTooltip Text="Ta bort">
+                                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" OnClick="@(() => DeletePocket(context.PocketId))" Color="Color.Error" />
+                                </MudTooltip>
+                            </MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                </MudPaper>
+            }
+        }
+    }
+    else
+    {
+        <MudAlert Severity="Severity.Info" Class="mt-4">
+            Inga sparfickor har lagts till än. Klicka på "Ny Sparficka" för att komma igång!
+        </MudAlert>
+    }
+}
+
+@code {
+    private IEnumerable<Pocket> _pockets = new List<Pocket>();
+    private IEnumerable<BankSource> _bankSources = new List<BankSource>();
+    private ILookup<int, Pocket>? _pocketsByBankSource;
+    private bool _loading = true;
+    private bool _showCreateForm = false;
+    private Pocket _formPocket = new();
+    private Pocket? _editingPocket;
+
+    private decimal _totalTargetAmount;
+    private decimal _totalCurrentAmount;
+    private double _averageProgress;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadPockets();
+        await LoadBankSources();
+    }
+
+    private async Task LoadPockets()
+    {
+        _loading = true;
+        _pockets = await PocketService.GetAllPocketsAsync();
+        
+        _pocketsByBankSource = _pockets.ToLookup(p => p.BankSourceId);
+        
+        _totalTargetAmount = _pockets.Sum(p => p.TargetAmount);
+        _totalCurrentAmount = _pockets.Sum(p => p.CurrentAmount);
+        _averageProgress = _pockets.Any() ? _pockets.Average(p => GetProgress(p)) : 0;
+        
+        _loading = false;
+    }
+
+    private async Task LoadBankSources()
+    {
+        _bankSources = await BankSourceService.GetAllBankSourcesAsync();
+    }
+
+    private void ToggleCreateForm()
+    {
+        _showCreateForm = !_showCreateForm;
+        if (_showCreateForm)
+        {
+            _formPocket = new Pocket { Priority = 3, CurrentAmount = 0, BankSourceId = _bankSources.FirstOrDefault()?.BankSourceId ?? 0 };
+            _editingPocket = null;
+        }
+    }
+
+    private void EditPocket(Pocket pocket)
+    {
+        _editingPocket = pocket;
+        _formPocket = new Pocket
+        {
+            PocketId = pocket.PocketId,
+            Name = pocket.Name,
+            Description = pocket.Description,
+            TargetAmount = pocket.TargetAmount,
+            CurrentAmount = pocket.CurrentAmount,
+            Priority = pocket.Priority,
+            BankSourceId = pocket.BankSourceId
+        };
+        _showCreateForm = true;
+    }
+
+    private async Task SavePocket()
+    {
+        try
+        {
+            if (_editingPocket != null)
+            {
+                await PocketService.UpdatePocketAsync(_formPocket);
+                Snackbar.Add("Sparfickan har uppdaterats!", Severity.Success);
+            }
+            else
+            {
+                await PocketService.CreatePocketAsync(_formPocket);
+                Snackbar.Add("Sparfickan har lagts till!", Severity.Success);
+            }
+
+            await LoadPockets();
+            CancelForm();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Ett fel uppstod: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void CancelForm()
+    {
+        _showCreateForm = false;
+        _formPocket = new();
+        _editingPocket = null;
+    }
+
+    private async Task DeletePocket(int pocketId)
+    {
+        bool? result = await DialogService.ShowMessageBox(
+            "Bekräfta borttagning",
+            "Är du säker på att du vill ta bort denna sparficka?",
+            yesText: "Ja", cancelText: "Avbryt");
+
+        if (result == true)
+        {
+            await PocketService.DeletePocketAsync(pocketId);
+            Snackbar.Add("Sparfickan har tagits bort", Severity.Info);
+            await LoadPockets();
+        }
+    }
+
+    private async Task ShowAllocateDialog(Pocket pocket)
+    {
+        var parameters = new DialogParameters<AllocateMoneyDialog>
+        {
+            { x => x.PocketName, pocket.Name },
+            { x => x.IsDeposit, true }
+        };
+
+        var dialog = await DialogService.ShowAsync<AllocateMoneyDialog>("Sätt in pengar", parameters);
+        var result = await dialog.Result;
+
+        if (!result.Canceled && result.Data is (decimal amount, string description))
+        {
+            try
+            {
+                await PocketService.AllocateMoneyAsync(pocket.PocketId, amount, description);
+                Snackbar.Add($"{amount:C} har satts in i {pocket.Name}", Severity.Success);
+                await LoadPockets();
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Ett fel uppstod: {ex.Message}", Severity.Error);
+            }
+        }
+    }
+
+    private async Task ShowWithdrawDialog(Pocket pocket)
+    {
+        var parameters = new DialogParameters<AllocateMoneyDialog>
+        {
+            { x => x.PocketName, pocket.Name },
+            { x => x.IsDeposit, false },
+            { x => x.MaxAmount, pocket.CurrentAmount }
+        };
+
+        var dialog = await DialogService.ShowAsync<AllocateMoneyDialog>("Ta ut pengar", parameters);
+        var result = await dialog.Result;
+
+        if (!result.Canceled && result.Data is (decimal amount, string description))
+        {
+            try
+            {
+                await PocketService.WithdrawMoneyAsync(pocket.PocketId, amount, description);
+                Snackbar.Add($"{amount:C} har tagits ut från {pocket.Name}", Severity.Success);
+                await LoadPockets();
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Ett fel uppstod: {ex.Message}", Severity.Error);
+            }
+        }
+    }
+
+    private double GetProgress(Pocket pocket)
+    {
+        if (pocket.TargetAmount == 0) return 0;
+        return Math.Min(100, (double)(pocket.CurrentAmount / pocket.TargetAmount * 100));
+    }
+
+    private Color GetProgressColor(Pocket pocket)
+    {
+        var progress = GetProgress(pocket);
+        if (progress >= 100) return Color.Success;
+        if (progress >= 75) return Color.Info;
+        if (progress >= 50) return Color.Primary;
+        if (progress >= 25) return Color.Warning;
+        return Color.Error;
+    }
+
+    private Color GetPriorityColor(int priority)
+    {
+        return priority switch
+        {
+            1 => Color.Error,
+            2 => Color.Warning,
+            3 => Color.Primary,
+            4 => Color.Info,
+            5 => Color.Default,
+            _ => Color.Default
+        };
+    }
+}
