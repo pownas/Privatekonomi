@@ -25,6 +25,7 @@ public static class TestDataSeeder
         SeedCategoryRules(context);
         SeedHouseholds(context);
         SeedGoals(context, testUserId);
+        SeedNetWorthSnapshots(context, testUserId);
     }
     
     private static async Task<string> SeedUsers(UserManager<ApplicationUser> userManager)
@@ -762,6 +763,63 @@ public static class TestDataSeeder
         };
 
         context.Loans.AddRange(loans);
+        context.SaveChanges();
+    }
+
+    private static void SeedNetWorthSnapshots(PrivatekonomyContext context, string userId)
+    {
+        // Create historical net worth snapshots for the last 24 months
+        var snapshots = new List<NetWorthSnapshot>();
+        var random = new Random(42); // Fixed seed for consistent test data
+        
+        // Starting values
+        decimal startNetWorth = 150000m;
+        decimal bankBalance = 50000m;
+        decimal investmentValue = 450000m;
+        decimal physicalAssetValue = 150000m;
+        decimal loanBalance = 500000m;
+        
+        // Generate monthly snapshots for the last 24 months
+        for (int i = 24; i >= 0; i--)
+        {
+            var date = DateTime.Today.AddMonths(-i);
+            
+            // Simulate realistic growth/changes
+            // Net worth typically grows over time with some volatility
+            var monthlyChange = (decimal)(random.NextDouble() * 0.04 - 0.01); // -1% to +3% monthly change
+            
+            // Update values
+            bankBalance += (decimal)(random.Next(-5000, 8000)); // Random cash flow
+            bankBalance = Math.Max(10000m, bankBalance); // Keep minimum balance
+            
+            investmentValue *= (1 + monthlyChange); // Market volatility
+            
+            physicalAssetValue -= 200m; // Slow depreciation
+            
+            loanBalance -= 2000m; // Amortization
+            loanBalance = Math.Max(300000m, loanBalance); // Don't go below a certain amount
+            
+            var totalAssets = bankBalance + investmentValue + physicalAssetValue;
+            var netWorth = totalAssets - loanBalance;
+            
+            snapshots.Add(new NetWorthSnapshot
+            {
+                Date = date,
+                TotalAssets = totalAssets,
+                TotalLiabilities = loanBalance,
+                NetWorth = netWorth,
+                BankBalance = bankBalance,
+                InvestmentValue = investmentValue,
+                PhysicalAssetValue = physicalAssetValue,
+                LoanBalance = loanBalance,
+                IsManual = false,
+                Notes = $"Automatisk snapshot för {date:yyyy-MM-dd}",
+                CreatedAt = date,
+                UserId = userId
+            });
+        }
+        
+        context.NetWorthSnapshots.AddRange(snapshots);
         context.SaveChanges();
     }
 }

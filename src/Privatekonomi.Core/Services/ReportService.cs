@@ -250,4 +250,154 @@ public class ReportService : IReportService
         var parts = cleaned.Split(new[] { ' ', ',', '-' }, StringSplitOptions.RemoveEmptyEntries);
         return parts.Length > 0 ? parts[0] : description;
     }
+
+    public async Task<NetWorthHistoryReport> GetNetWorthHistoryAsync(string groupBy = "month", DateTime? fromDate = null, DateTime? toDate = null)
+    {
+        // Default date range to last 12 months if not specified
+        var endDate = toDate ?? DateTime.Today;
+        var startDate = fromDate ?? endDate.AddMonths(-12);
+
+        // Get snapshots within date range
+        var snapshots = await _context.NetWorthSnapshots
+            .Where(s => s.Date >= startDate && s.Date <= endDate)
+            .OrderBy(s => s.Date)
+            .ToListAsync();
+
+        var periods = new List<NetWorthHistoryPeriod>();
+
+        if (groupBy.ToLower() == "month")
+        {
+            // Group snapshots by month and take the latest snapshot per month
+            var monthlyGroups = snapshots
+                .GroupBy(s => new { s.Date.Year, s.Date.Month })
+                .OrderBy(g => g.Key.Year)
+                .ThenBy(g => g.Key.Month);
+
+            foreach (var group in monthlyGroups)
+            {
+                // Take the last snapshot of the month
+                var snapshot = group.OrderByDescending(s => s.Date).First();
+                
+                periods.Add(new NetWorthHistoryPeriod
+                {
+                    Period = $"{group.Key.Year}-{group.Key.Month:D2}",
+                    Date = snapshot.Date,
+                    NetWorth = snapshot.NetWorth,
+                    TotalAssets = snapshot.TotalAssets,
+                    TotalLiabilities = snapshot.TotalLiabilities,
+                    BankBalance = snapshot.BankBalance,
+                    InvestmentValue = snapshot.InvestmentValue,
+                    PhysicalAssetValue = snapshot.PhysicalAssetValue,
+                    LoanBalance = snapshot.LoanBalance
+                });
+            }
+        }
+        else if (groupBy.ToLower() == "quarter")
+        {
+            // Group by quarter
+            var quarterlyGroups = snapshots
+                .GroupBy(s => new { s.Date.Year, Quarter = (s.Date.Month - 1) / 3 + 1 })
+                .OrderBy(g => g.Key.Year)
+                .ThenBy(g => g.Key.Quarter);
+
+            foreach (var group in quarterlyGroups)
+            {
+                var snapshot = group.OrderByDescending(s => s.Date).First();
+                
+                periods.Add(new NetWorthHistoryPeriod
+                {
+                    Period = $"{group.Key.Year}-Q{group.Key.Quarter}",
+                    Date = snapshot.Date,
+                    NetWorth = snapshot.NetWorth,
+                    TotalAssets = snapshot.TotalAssets,
+                    TotalLiabilities = snapshot.TotalLiabilities,
+                    BankBalance = snapshot.BankBalance,
+                    InvestmentValue = snapshot.InvestmentValue,
+                    PhysicalAssetValue = snapshot.PhysicalAssetValue,
+                    LoanBalance = snapshot.LoanBalance
+                });
+            }
+        }
+        else if (groupBy.ToLower() == "year")
+        {
+            // Group by year
+            var yearlyGroups = snapshots
+                .GroupBy(s => s.Date.Year)
+                .OrderBy(g => g.Key);
+
+            foreach (var group in yearlyGroups)
+            {
+                var snapshot = group.OrderByDescending(s => s.Date).First();
+                
+                periods.Add(new NetWorthHistoryPeriod
+                {
+                    Period = $"{group.Key}",
+                    Date = snapshot.Date,
+                    NetWorth = snapshot.NetWorth,
+                    TotalAssets = snapshot.TotalAssets,
+                    TotalLiabilities = snapshot.TotalLiabilities,
+                    BankBalance = snapshot.BankBalance,
+                    InvestmentValue = snapshot.InvestmentValue,
+                    PhysicalAssetValue = snapshot.PhysicalAssetValue,
+                    LoanBalance = snapshot.LoanBalance
+                });
+            }
+        }
+
+        var currentNetWorth = periods.Any() ? periods.Last().NetWorth : 0;
+        var startNetWorth = periods.Any() ? periods.First().NetWorth : 0;
+        var netWorthChange = currentNetWorth - startNetWorth;
+        var netWorthChangePercentage = startNetWorth != 0 ? (netWorthChange / Math.Abs(startNetWorth)) * 100 : 0;
+
+        return new NetWorthHistoryReport
+        {
+            Periods = periods,
+            CurrentNetWorth = currentNetWorth,
+            StartNetWorth = startNetWorth,
+            NetWorthChange = netWorthChange,
+            NetWorthChangePercentage = netWorthChangePercentage,
+            StartDate = startDate,
+            EndDate = endDate,
+            GroupBy = groupBy
+        };
+    }
+
+    public async Task<NetWorthSnapshot> CreateNetWorthSnapshotAsync(bool isManual = false, string? notes = null)
+    {
+        // Calculate current net worth
+        var investments = await _context.Investments.ToListAsync();
+        var assets = await _context.Assets.ToListAsync();
+        var loans = await _context.Loans.ToListAsync();
+        var bankSources = await _context.BankSources.ToListAsync();
+
+        var bankBalance = bankSources.Sum(b => b.CurrentBalance);
+        var investmentValue = investments.Sum(i => i.TotalValue);
+        var physicalAssetValue = assets.Sum(a => a.CurrentValue);
+        var totalAssets = bankBalance + investmentValue + physicalAssetValue;
+
+        var loanBalance = loans.Sum(l => l.Amount);
+        var totalLiabilities = loanBalance;
+
+        var netWorth = totalAssets - totalLiabilities;
+
+        var snapshot = new NetWorthSnapshot
+        {
+            Date = DateTime.Today,
+            TotalAssets = totalAssets,
+            TotalLiabilities = totalLiabilities,
+            NetWorth = netWorth,
+            BankBalance = bankBalance,
+            InvestmentValue = investmentValue,
+            PhysicalAssetValue = physicalAssetValue,
+            LoanBalance = loanBalance,
+            IsManual = isManual,
+            Notes = notes,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        _context.NetWorthSnapshots.Add(snapshot);
+        await _context.SaveChangesAsync();
+
+        return snapshot;
+    }
 }
