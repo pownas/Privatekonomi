@@ -190,6 +190,11 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
                 .HasForeignKey(e => e.BankSourceId)
                 .OnDelete(DeleteBehavior.SetNull);
             
+            entity.HasOne(e => e.Pocket)
+                .WithMany()
+                .HasForeignKey(e => e.PocketId)
+                .OnDelete(DeleteBehavior.SetNull);
+            
             entity.HasOne(e => e.User)
                 .WithMany()
                 .HasForeignKey(e => e.UserId)
@@ -198,6 +203,7 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
             // Indexes for performance optimization
             entity.HasIndex(e => e.Date);
             entity.HasIndex(e => e.UserId);
+            entity.HasIndex(e => e.PocketId);
             entity.HasIndex(e => new { e.BankSourceId, e.Date });
             entity.HasIndex(e => e.Payee);
         });
@@ -385,6 +391,7 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
             entity.Property(e => e.Description).HasMaxLength(500);
             entity.Property(e => e.TargetAmount).HasPrecision(18, 2);
             entity.Property(e => e.CurrentAmount).HasPrecision(18, 2);
+            entity.Property(e => e.MonthlyAllocation).HasPrecision(18, 2);
             entity.Property(e => e.Priority).IsRequired();
             entity.Property(e => e.CreatedAt).IsRequired();
             

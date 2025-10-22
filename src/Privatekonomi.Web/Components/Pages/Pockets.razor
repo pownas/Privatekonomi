@@ -56,6 +56,7 @@
                          Min="0"
                          Format="N2"
                          Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                         HelperText="Du kan spara mer än målbeloppet"
                          Class="mb-3" />
 
         <MudNumericField @bind-Value="_formPocket.CurrentAmount" 
@@ -64,6 +65,15 @@
                          Min="0"
                          Format="N2"
                          Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                         Class="mb-3" />
+
+        <MudNumericField @bind-Value="_formPocket.MonthlyAllocation" 
+                         Label="Månadssparande (kr)" 
+                         Variant="Variant.Outlined"
+                         Min="0"
+                         Format="N2"
+                         Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                         HelperText="Automatisk månatlig avsättning (valfritt)"
                          Class="mb-3" />
 
         <MudSelect @bind-Value="_formPocket.Priority" Label="Prioritet" Variant="Variant.Outlined" Class="mb-3">
@@ -143,6 +153,7 @@ else
                             <MudTh>Beskrivning</MudTh>
                             <MudTh>Målbelopp</MudTh>
                             <MudTh>Allokerat</MudTh>
+                            <MudTh>Månadssparande</MudTh>
                             <MudTh>Framsteg</MudTh>
                             <MudTh>Prioritet</MudTh>
                             <MudTh>Åtgärder</MudTh>
@@ -151,15 +162,31 @@ else
                             <MudTd DataLabel="Namn">@context.Name</MudTd>
                             <MudTd DataLabel="Beskrivning">@context.Description</MudTd>
                             <MudTd DataLabel="Målbelopp">@context.TargetAmount.ToString("C", new System.Globalization.CultureInfo("sv-SE"))</MudTd>
-                            <MudTd DataLabel="Allokerat">@context.CurrentAmount.ToString("C", new System.Globalization.CultureInfo("sv-SE"))</MudTd>
+                            <MudTd DataLabel="Allokerat">
+                                @context.CurrentAmount.ToString("C", new System.Globalization.CultureInfo("sv-SE"))
+                                @if (context.CurrentAmount > context.TargetAmount)
+                                {
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Success" Class="ml-2">Översparat!</MudChip>
+                                }
+                            </MudTd>
+                            <MudTd DataLabel="Månadssparande">
+                                @if (context.MonthlyAllocation > 0)
+                                {
+                                    @context.MonthlyAllocation.ToString("C", new System.Globalization.CultureInfo("sv-SE"))
+                                }
+                                else
+                                {
+                                    <span>-</span>
+                                }
+                            </MudTd>
                             <MudTd DataLabel="Framsteg">
                                 <div class="d-flex align-center gap-2">
                                     <MudProgressLinear Color="@GetProgressColor(context)" 
                                                        Rounded="true" 
                                                        Size="Size.Large" 
-                                                       Value="@GetProgress(context)" 
+                                                       Value="@GetProgressCapped(context)" 
                                                        Class="flex-grow-1" />
-                                    <MudText Typo="Typo.body2">@GetProgress(context).ToString("F0")%</MudText>
+                                    <MudText Typo="Typo.body2">@GetProgressActual(context).ToString("F0")%</MudText>
                                 </div>
                             </MudTd>
                             <MudTd DataLabel="Prioritet">
@@ -223,7 +250,7 @@ else
         
         _totalTargetAmount = _pockets.Sum(p => p.TargetAmount);
         _totalCurrentAmount = _pockets.Sum(p => p.CurrentAmount);
-        _averageProgress = _pockets.Any() ? _pockets.Average(p => GetProgress(p)) : 0;
+        _averageProgress = _pockets.Any() ? _pockets.Average(p => GetProgressActual(p)) : 0;
         
         _loading = false;
     }
@@ -253,6 +280,7 @@ else
             Description = pocket.Description,
             TargetAmount = pocket.TargetAmount,
             CurrentAmount = pocket.CurrentAmount,
+            MonthlyAllocation = pocket.MonthlyAllocation,
             Priority = pocket.Priority,
             BankSourceId = pocket.BankSourceId
         };
@@ -358,7 +386,13 @@ else
         }
     }
 
-    private double GetProgress(Pocket pocket)
+    private double GetProgressActual(Pocket pocket)
+    {
+        if (pocket.TargetAmount == 0) return 0;
+        return (double)(pocket.CurrentAmount / pocket.TargetAmount * 100);
+    }
+
+    private double GetProgressCapped(Pocket pocket)
     {
         if (pocket.TargetAmount == 0) return 0;
         return Math.Min(100, (double)(pocket.CurrentAmount / pocket.TargetAmount * 100));
@@ -366,7 +400,7 @@ else
 
     private Color GetProgressColor(Pocket pocket)
     {
-        var progress = GetProgress(pocket);
+        var progress = GetProgressActual(pocket);
         if (progress >= 100) return Color.Success;
         if (progress >= 75) return Color.Info;
         if (progress >= 50) return Color.Primary;

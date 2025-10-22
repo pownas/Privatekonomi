@@ -9,6 +9,7 @@ public class Pocket
     public decimal CurrentAmount { get; set; }
     public int BankSourceId { get; set; }
     public int Priority { get; set; } = 3; // 1 (highest) to 5 (lowest)
+    public decimal MonthlyAllocation { get; set; } = 0; // Automatic monthly contribution
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
     
