@@ -32,6 +32,7 @@ builder.Services.AddScoped<IChildAllowanceService, ChildAllowanceService>();
 builder.Services.AddScoped<IAuditLogService, AuditLogService>();
 builder.Services.AddScoped<IBankConnectionService, BankConnectionService>();
 builder.Services.AddScoped<IGoalService, GoalService>();
+builder.Services.AddScoped<IPocketService, PocketService>();
 builder.Services.AddScoped<IExportService, ExportService>();
 builder.Services.AddScoped<IReportService, ReportService>();
 
