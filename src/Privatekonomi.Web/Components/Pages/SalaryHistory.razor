@@ -20,73 +20,75 @@
     <MudPaper Class="pa-4 mb-4">
         <MudText Typo="Typo.h6" Class="mb-3">@(_editingSalary != null ? "Redigera Lönepost" : "Lägg till Ny Lönepost")</MudText>
         
-        <MudNumericField @bind-Value="_formSalary.MonthlySalary" 
-                         Label="Månadslön (kr)" 
-                         Variant="Variant.Outlined"
-                         Min="0"
-                         Format="N2"
-                         Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
-                         Required="true"
+        <EditForm Model="@_formSalary">
+            <MudNumericField @bind-Value="_formSalary.MonthlySalary" 
+                             Label="Månadslön (kr)" 
+                             Variant="Variant.Outlined"
+                             Min="0"
+                             Format="N2"
+                             Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                             Required="true"
+                             Class="mb-3" />
+
+            <MudDatePicker @bind-Date="_formSalaryPeriod"
+                           Label="Period (månad/år)"
+                           Variant="Variant.Outlined"
+                           DateFormat="yyyy-MM"
+                           OpenTo="OpenTo.Month"
+                           Required="true"
+                           Class="mb-3" />
+            
+            <MudTextField @bind-Value="_formSalary.JobTitle" 
+                          Label="Befattning" 
+                          Variant="Variant.Outlined"
+                          MaxLength="200"
+                          Class="mb-3" />
+            
+            <MudTextField @bind-Value="_formSalary.Employer" 
+                          Label="Arbetsgivare" 
+                          Variant="Variant.Outlined"
+                          MaxLength="200"
+                          Class="mb-3" />
+
+            <MudSelect @bind-Value="_formSalary.EmploymentType" 
+                       Label="Anställningstyp" 
+                       Variant="Variant.Outlined" 
+                       Class="mb-3"
+                       Clearable="true">
+                <MudSelectItem Value="@("Heltid")">Heltid</MudSelectItem>
+                <MudSelectItem Value="@("Deltid")">Deltid</MudSelectItem>
+                <MudSelectItem Value="@("Timavlönad")">Timavlönad</MudSelectItem>
+                <MudSelectItem Value="@("Konsult")">Konsult</MudSelectItem>
+                <MudSelectItem Value="@("Praktik")">Praktik</MudSelectItem>
+            </MudSelect>
+
+            <MudNumericField @bind-Value="_formSalary.WorkPercentage" 
+                             Label="Tjänstegrad (%)" 
+                             Variant="Variant.Outlined"
+                             Min="0"
+                             Max="100"
+                             Class="mb-3" />
+
+            <MudTextField @bind-Value="_formSalary.Notes" 
+                          Label="Anteckningar" 
+                          Variant="Variant.Outlined"
+                          Lines="3"
+                          MaxLength="1000"
+                          HelperText="T.ex. Lönerevision, Nytt jobb, Befordran"
+                          Class="mb-3" />
+
+            <MudCheckBox @bind-Value="_formSalary.IsCurrent" 
+                         Label="Detta är min nuvarande lön" 
+                         Color="Color.Primary" 
                          Class="mb-3" />
 
-        <MudDatePicker @bind-Date="_formSalaryPeriod"
-                       Label="Period (månad/år)"
-                       Variant="Variant.Outlined"
-                       DateFormat="yyyy-MM"
-                       OpenTo="OpenTo.Month"
-                       Required="true"
-                       Class="mb-3" />
-        
-        <MudTextField @bind-Value="_formSalary.JobTitle" 
-                      Label="Befattning" 
-                      Variant="Variant.Outlined"
-                      MaxLength="200"
-                      Class="mb-3" />
-        
-        <MudTextField @bind-Value="_formSalary.Employer" 
-                      Label="Arbetsgivare" 
-                      Variant="Variant.Outlined"
-                      MaxLength="200"
-                      Class="mb-3" />
-
-        <MudSelect @bind-Value="_formSalary.EmploymentType" 
-                   Label="Anställningstyp" 
-                   Variant="Variant.Outlined" 
-                   Class="mb-3"
-                   Clearable="true">
-            <MudSelectItem Value="@("Heltid")">Heltid</MudSelectItem>
-            <MudSelectItem Value="@("Deltid")">Deltid</MudSelectItem>
-            <MudSelectItem Value="@("Timavlönad")">Timavlönad</MudSelectItem>
-            <MudSelectItem Value="@("Konsult")">Konsult</MudSelectItem>
-            <MudSelectItem Value="@("Praktik")">Praktik</MudSelectItem>
-        </MudSelect>
-
-        <MudNumericField @bind-Value="_formSalary.WorkPercentage" 
-                         Label="Tjänstegrad (%)" 
-                         Variant="Variant.Outlined"
-                         Min="0"
-                         Max="100"
-                         Class="mb-3" />
-
-        <MudTextField @bind-Value="_formSalary.Notes" 
-                      Label="Anteckningar" 
-                      Variant="Variant.Outlined"
-                      Lines="3"
-                      MaxLength="1000"
-                      HelperText="T.ex. Lönerevision, Nytt jobb, Befordran"
-                      Class="mb-3" />
-
-        <MudCheckBox @bind-Value="_formSalary.IsCurrent" 
-                     Label="Detta är min nuvarande lön" 
-                     Color="Color.Primary" 
-                     Class="mb-3" />
-
-        <div class="d-flex gap-2">
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveSalary">
-                @(_editingSalary != null ? "Uppdatera" : "Lägg till")
-            </MudButton>
-            <MudButton Variant="Variant.Outlined" OnClick="CancelForm">Avbryt</MudButton>
-        </div>
+            <div class="d-flex gap-2">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveSalary">
+                    @(_editingSalary != null ? "Uppdatera" : "Lägg till")
+                </MudButton>
+                <MudButton Variant="Variant.Outlined" OnClick="CancelForm">Avbryt</MudButton>
+            </div>
+        </EditForm>
     </MudPaper>
 }
 
