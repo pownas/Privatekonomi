@@ -44,6 +44,11 @@ En privatekonomi-applikation byggd med .NET 9, Blazor Server och MudBlazor för 
   - Barnkonton med veckopeng och sparande
   - Uppdrag-till-belöning system för sysslor
   - Gemensamma budgetar för hela familjen
+- **Dark Mode & Tillgänglighet**:
+  - MudBlazor Dark Mode med systempreferens-detektering
+  - WCAG 2.1 Nivå AA compliance
+  - Tangentbordsnavigation och fokusindikatorer
+  - Optimerade färgkontraster för ljust och mörkt läge
 
 ## 🏗️ Arkitektur
 
@@ -321,6 +326,8 @@ builder.Services.AddDbContext<PrivatekonomyContext>(options =>
 - **[BUDGET_GUIDE.md](wiki/BUDGET_GUIDE.md)**: Guide för budgethantering
 - **[AUTOMATIC_CATEGORIZATION.md](docs/AUTOMATIC_CATEGORIZATION.md)**: Guide för automatisk kategorisering av transaktioner
 - **[FAMILY_COLLABORATION_GUIDE.md](wiki/FAMILY_COLLABORATION_GUIDE.md)**: Guide för familjesamarbete, barnkonton och veckopeng
+- **[DARK_MODE_IMPLEMENTATION.md](docs/DARK_MODE_IMPLEMENTATION.md)**: Guide för MudBlazor Dark Mode och WCAG-compliance
+- **[DARK_MODE_TESTING.md](docs/DARK_MODE_TESTING.md)**: Testguide för dark mode och tillgänglighet
 
 ### Sverige-specifika integrationer (NYT!)
 

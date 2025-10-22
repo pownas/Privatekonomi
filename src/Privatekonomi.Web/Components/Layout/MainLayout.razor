@@ -79,11 +79,26 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender)
+        if (firstRender && _mudThemeProvider != null)
         {
             try
             {
-                _isDarkMode = await JSRuntime.InvokeAsync<bool>("themeManager.getTheme");
+                // Check if user has a saved preference
+                var hasSavedPreference = await JSRuntime.InvokeAsync<bool>("themeManager.hasPreference");
+                
+                if (hasSavedPreference)
+                {
+                    // Use saved preference
+                    _isDarkMode = await JSRuntime.InvokeAsync<bool>("themeManager.getTheme");
+                }
+                else
+                {
+                    // Use system preference if no saved preference
+                    _isDarkMode = await _mudThemeProvider.GetSystemDarkModeAsync();
+                    // Save the system preference
+                    await JSRuntime.InvokeVoidAsync("themeManager.setTheme", _isDarkMode);
+                }
+                
                 ThemeService.IsDarkMode = _isDarkMode;
                 StateHasChanged();
             }
@@ -107,10 +122,12 @@
     
     private async Task ToggleTheme()
     {
-        ThemeService.ToggleTheme();
+        _isDarkMode = !_isDarkMode;
+        ThemeService.IsDarkMode = _isDarkMode;
+        
         try
         {
-            await JSRuntime.InvokeVoidAsync("themeManager.setTheme", ThemeService.IsDarkMode);
+            await JSRuntime.InvokeVoidAsync("themeManager.setTheme", _isDarkMode);
         }
         catch
         {
