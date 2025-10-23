@@ -1,6 +1,7 @@
 @using Privatekonomi.Core.Models
 @using Privatekonomi.Core.Services
 @inject ITransactionService TransactionService
+@inject IHouseholdService HouseholdService
 @inject ISnackbar Snackbar
 
 <MudDialog>
@@ -16,6 +17,15 @@
                 </MudItem>
                 <MudItem xs="12" md="6">
                     <MudNumericField @bind-Value="_transaction.Amount" Label="Belopp" Variant="Variant.Outlined" Format="N2" />
+                </MudItem>
+                <MudItem xs="12">
+                    <MudSelect T="int?" @bind-Value="_transaction.HouseholdId" Label="Hushåll" Variant="Variant.Outlined" 
+                               Clearable="true" HelperText="Välj ett hushåll eller lämna tomt för personlig transaktion">
+                        @foreach (var household in _households)
+                        {
+                            <MudSelectItem Value="@((int?)household.HouseholdId)">@household.Name</MudSelectItem>
+                        }
+                    </MudSelect>
                 </MudItem>
                 <MudItem xs="12">
                     <MudTextField @bind-Value="_transaction.Tags" Label="Taggar (kommaseparerade)" 
@@ -46,9 +56,14 @@
 
     private Transaction _transaction = null!;
     private DateTime? _transactionDate;
+    private List<Household> _households = new();
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
+        // Load available households
+        var households = await HouseholdService.GetAllHouseholdsAsync();
+        _households = households.ToList();
+        
         // Create a copy to avoid modifying the original until saved
         _transaction = new Transaction
         {
@@ -58,6 +73,7 @@
             Date = Transaction.Date,
             IsIncome = Transaction.IsIncome,
             BankSourceId = Transaction.BankSourceId,
+            HouseholdId = Transaction.HouseholdId,
             Currency = Transaction.Currency,
             Payee = Transaction.Payee,
             Tags = Transaction.Tags,

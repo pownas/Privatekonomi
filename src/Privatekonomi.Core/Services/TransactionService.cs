@@ -23,6 +23,7 @@ public class TransactionService : ITransactionService
             .Include(t => t.BankSource)
             .Include(t => t.TransactionCategories)
             .ThenInclude(tc => tc.Category)
+            .Include(t => t.Household)
             .AsQueryable();
 
         // Filter by current user if authenticated
@@ -40,6 +41,7 @@ public class TransactionService : ITransactionService
             .Include(t => t.BankSource)
             .Include(t => t.TransactionCategories)
             .ThenInclude(tc => tc.Category)
+            .Include(t => t.Household)
             .AsQueryable();
 
         // Filter by current user if authenticated
@@ -122,6 +124,7 @@ public class TransactionService : ITransactionService
             .Include(t => t.BankSource)
             .Include(t => t.TransactionCategories)
             .ThenInclude(tc => tc.Category)
+            .Include(t => t.Household)
             .Where(t => t.Date >= from && t.Date <= to)
             .AsQueryable();
 
@@ -174,6 +177,7 @@ public class TransactionService : ITransactionService
             .Include(t => t.BankSource)
             .Include(t => t.TransactionCategories)
             .ThenInclude(tc => tc.Category)
+            .Include(t => t.Household)
             .Where(t => !t.TransactionCategories.Any())
             .AsQueryable();
 
