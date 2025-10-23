@@ -10,15 +10,26 @@
 
 <div class="d-flex justify-space-between align-center mb-4">
     <MudText Typo="Typo.h4">Budgethantering</MudText>
-    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="ToggleCreateForm">
-        Ny Budget
-    </MudButton>
+    <div class="d-flex gap-2">
+        <MudButton Variant="Variant.Outlined" 
+                   Color="Color.Secondary" 
+                   StartIcon="@Icons.Material.Filled.AutoMode"
+                   OnClick="CreateNextMonthBudgets">
+            Skapa Nästa Månads Budgetar
+        </MudButton>
+        <MudButton Variant="Variant.Filled" 
+                   Color="Color.Primary" 
+                   StartIcon="@Icons.Material.Filled.Add" 
+                   OnClick="ToggleCreateForm">
+            Ny Budget
+        </MudButton>
+    </div>
 </div>
 
-@if (_showCreateForm)
+@if (_showCreateForm || _editingBudget != null)
 {
     <MudPaper Class="pa-4 mb-4">
-        <MudText Typo="Typo.h6" Class="mb-3">Skapa Ny Budget</MudText>
+        <MudText Typo="Typo.h6" Class="mb-3">@(_editingBudget != null ? "Redigera Budget" : "Skapa Ny Budget")</MudText>
         <MudGrid>
             <MudItem xs="12" md="6">
                 <MudTextField @bind-Value="_newBudget.Name" 
@@ -136,8 +147,10 @@
         </MudGrid>
 
         <div class="d-flex gap-2 mt-4">
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="CreateBudget">Skapa</MudButton>
-            <MudButton Variant="Variant.Outlined" OnClick="ToggleCreateForm">Avbryt</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(_editingBudget != null ? SaveEditedBudget : CreateBudget)">
+                @(_editingBudget != null ? "Spara" : "Skapa")
+            </MudButton>
+            <MudButton Variant="Variant.Outlined" OnClick="CancelEdit">Avbryt</MudButton>
         </div>
     </MudPaper>
 }
@@ -181,6 +194,10 @@
                                     {
                                         <MudChip T="string" Color="Color.Info" Size="Size.Small">Kommande</MudChip>
                                     }
+                                    <MudIconButton Icon="@Icons.Material.Filled.Edit" 
+                                                 Color="Color.Primary" 
+                                                 Size="Size.Small"
+                                                 OnClick="@(() => StartEditBudget(budget))" />
                                     <MudIconButton Icon="@Icons.Material.Filled.Delete" 
                                                  Color="Color.Error" 
                                                  Size="Size.Small"
@@ -292,6 +309,7 @@
 @code {
     private bool _loading = true;
     private bool _showCreateForm = false;
+    private Budget? _editingBudget = null;
     private IEnumerable<Budget> _budgets = new List<Budget>();
     private IEnumerable<Category> _categories = new List<Category>();
     private IEnumerable<Household> _households = new List<Household>();
@@ -331,6 +349,7 @@
     private void ToggleCreateForm()
     {
         _showCreateForm = !_showCreateForm;
+        _editingBudget = null;
         if (_showCreateForm)
         {
             _newBudget = new Budget
@@ -341,6 +360,116 @@
             _newBudgetEndDateString = DateTime.Now.AddMonths(1).ToString("yyyy-MM-dd");
             _categoryBudgets = _categories.ToDictionary(c => c.CategoryId, c => 0m);
             _selectedTemplate = BudgetTemplateType.Custom;
+        }
+    }
+
+    private void StartEditBudget(Budget budget)
+    {
+        _editingBudget = budget;
+        _showCreateForm = false;
+        
+        // Pre-fill the form with existing budget data
+        _newBudget = new Budget
+        {
+            BudgetId = budget.BudgetId,
+            Name = budget.Name,
+            Description = budget.Description,
+            Period = budget.Period,
+            HouseholdId = budget.HouseholdId,
+            TemplateType = budget.TemplateType,
+            RolloverUnspent = budget.RolloverUnspent,
+            UserId = budget.UserId
+        };
+        
+        _newBudgetStartDateString = budget.StartDate.ToString("yyyy-MM-dd");
+        _newBudgetEndDateString = budget.EndDate.ToString("yyyy-MM-dd");
+        
+        // Pre-fill category budgets
+        _categoryBudgets = _categories.ToDictionary(c => c.CategoryId, c => 0m);
+        foreach (var bc in budget.BudgetCategories)
+        {
+            _categoryBudgets[bc.CategoryId] = bc.PlannedAmount;
+        }
+        
+        _selectedTemplate = budget.TemplateType ?? BudgetTemplateType.Custom;
+    }
+
+    private void CancelEdit()
+    {
+        _showCreateForm = false;
+        _editingBudget = null;
+        _newBudget = new Budget();
+    }
+
+    private async Task SaveEditedBudget()
+    {
+        if (string.IsNullOrWhiteSpace(_newBudget.Name))
+        {
+            Snackbar.Add("Budgetnamn är obligatoriskt", Severity.Error);
+            return;
+        }
+
+        if (!DateTime.TryParse(_newBudgetStartDateString, out var startDate) || 
+            !DateTime.TryParse(_newBudgetEndDateString, out var endDate))
+        {
+            Snackbar.Add("Ogiltigt datumformat. Använd ÅÅÅÅ-MM-DD", Severity.Error);
+            return;
+        }
+
+        if (endDate < startDate)
+        {
+            Snackbar.Add("Slutdatum måste vara efter startdatum", Severity.Error);
+            return;
+        }
+
+        try
+        {
+            _newBudget.StartDate = startDate;
+            _newBudget.EndDate = endDate;
+            
+            // Get the existing budget from database to update it properly
+            var existingBudget = await BudgetService.GetBudgetByIdAsync(_newBudget.BudgetId);
+            if (existingBudget == null)
+            {
+                Snackbar.Add("Budgeten kunde inte hittas", Severity.Error);
+                return;
+            }
+
+            // Update basic properties
+            existingBudget.Name = _newBudget.Name;
+            existingBudget.Description = _newBudget.Description;
+            existingBudget.StartDate = startDate;
+            existingBudget.EndDate = endDate;
+            existingBudget.Period = _newBudget.Period;
+            existingBudget.HouseholdId = _newBudget.HouseholdId;
+            existingBudget.TemplateType = _selectedTemplate;
+
+            // Update budget categories
+            existingBudget.BudgetCategories.Clear();
+            existingBudget.BudgetCategories = _categoryBudgets
+                .Where(kvp => kvp.Value > 0)
+                .Select(kvp => new BudgetCategory
+                {
+                    BudgetId = existingBudget.BudgetId,
+                    CategoryId = kvp.Key,
+                    PlannedAmount = kvp.Value
+                })
+                .ToList();
+
+            if (!existingBudget.BudgetCategories.Any())
+            {
+                Snackbar.Add("Lägg till minst en budgetpost", Severity.Warning);
+                return;
+            }
+
+            await BudgetService.UpdateBudgetAsync(existingBudget);
+            Snackbar.Add("Budget uppdaterad!", Severity.Success);
+            _editingBudget = null;
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Fel vid uppdatering av budget: {ex.Message}", Severity.Error);
         }
     }
 
@@ -443,5 +572,27 @@
     {
         var now = DateTime.Now;
         return budget.StartDate <= now && budget.EndDate >= now;
+    }
+
+    private async Task CreateNextMonthBudgets()
+    {
+        try
+        {
+            var createdBudgets = await BudgetService.CreateNextMonthBudgetsForAllActiveAsync();
+            
+            if (createdBudgets.Any())
+            {
+                Snackbar.Add($"{createdBudgets.Count()} budget(ar) skapade för nästa månad!", Severity.Success);
+                await LoadData();
+            }
+            else
+            {
+                Snackbar.Add("Inga budgetar behöver skapas. Budgetar skapas automatiskt under de sista 3 dagarna av månaden.", Severity.Info);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Fel vid skapande av nästa månads budgetar: {ex.Message}", Severity.Error);
+        }
     }
 }
