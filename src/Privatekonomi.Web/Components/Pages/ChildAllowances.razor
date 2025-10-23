@@ -93,7 +93,7 @@ else
                         <RowTemplate>
                             <MudTd DataLabel="Uppdrag">@context.Name</MudTd>
                             <MudTd DataLabel="Belöning">@context.RewardAmount.ToString("N2") kr</MudTd>
-                            <MudTd DataLabel="Förfallodatum">@context.DueDate.ToShortDateString()</MudTd>
+                            <MudTd DataLabel="Förfallodatum">@context.DueDate.ToString("yyyy-MM-dd")</MudTd>
                             <MudTd DataLabel="Status">
                                 <MudChip T="string" Size="Size.Small" Color="@GetTaskStatusColor(context.Status)">@GetTaskStatusText(context.Status)</MudChip>
                             </MudTd>
@@ -145,7 +145,7 @@ else
                             <MudTh>Belopp</MudTh>
                         </HeaderContent>
                         <RowTemplate>
-                            <MudTd DataLabel="Datum">@context.TransactionDate.ToShortDateString()</MudTd>
+                            <MudTd DataLabel="Datum">@context.TransactionDate.ToString("yyyy-MM-dd")</MudTd>
                             <MudTd DataLabel="Beskrivning">@context.Description</MudTd>
                             <MudTd DataLabel="Typ">
                                 <MudChip T="string" Size="Size.Small" Color="@GetTransactionTypeColor(context.Type)">@GetTransactionTypeText(context.Type)</MudChip>

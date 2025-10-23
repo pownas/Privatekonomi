@@ -53,7 +53,7 @@
                             <MudIcon Icon="@Icons.Material.Filled.Receipt" Size="Size.Small" /> @household.SharedExpenses.Count utgift(er)
                         </MudText>
                         <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-2">
-                            Skapad: @household.CreatedDate.ToShortDateString()
+                            Skapad: @household.CreatedDate.ToString("yyyy-MM-dd")
                         </MudText>
                     </MudCardContent>
                     <MudCardActions>
