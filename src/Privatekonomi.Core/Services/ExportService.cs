@@ -67,7 +67,13 @@ public class ExportService : IExportService
                           $"{transaction.Currency}");
         }
 
-        return Encoding.UTF8.GetBytes(csv.ToString());
+        // Use UTF-8 with BOM for proper Excel compatibility with Swedish characters
+        var preamble = Encoding.UTF8.GetPreamble();
+        var content = Encoding.UTF8.GetBytes(csv.ToString());
+        var result = new byte[preamble.Length + content.Length];
+        Buffer.BlockCopy(preamble, 0, result, 0, preamble.Length);
+        Buffer.BlockCopy(content, 0, result, preamble.Length, content.Length);
+        return result;
     }
 
     public async Task<byte[]> ExportTransactionsToJsonAsync(DateTime? fromDate = null, DateTime? toDate = null)
@@ -128,7 +134,14 @@ public class ExportService : IExportService
         };
 
         var json = JsonSerializer.Serialize(exportData, options);
-        return Encoding.UTF8.GetBytes(json);
+        
+        // Use UTF-8 with BOM for proper character encoding
+        var preamble = Encoding.UTF8.GetPreamble();
+        var content = Encoding.UTF8.GetBytes(json);
+        var result = new byte[preamble.Length + content.Length];
+        Buffer.BlockCopy(preamble, 0, result, 0, preamble.Length);
+        Buffer.BlockCopy(content, 0, result, preamble.Length, content.Length);
+        return result;
     }
 
     public async Task<byte[]> ExportBudgetToCsvAsync(int budgetId)
@@ -160,7 +173,13 @@ public class ExportService : IExportService
             csv.AppendLine($"\"{EscapeCsv(bc.Category.Name)}\",{bc.PlannedAmount:F2}");
         }
 
-        return Encoding.UTF8.GetBytes(csv.ToString());
+        // Use UTF-8 with BOM for proper Excel compatibility with Swedish characters
+        var preamble = Encoding.UTF8.GetPreamble();
+        var content = Encoding.UTF8.GetBytes(csv.ToString());
+        var result = new byte[preamble.Length + content.Length];
+        Buffer.BlockCopy(preamble, 0, result, 0, preamble.Length);
+        Buffer.BlockCopy(content, 0, result, preamble.Length, content.Length);
+        return result;
     }
 
     public async Task<byte[]> ExportFullBackupAsync()
@@ -201,7 +220,14 @@ public class ExportService : IExportService
         };
 
         var json = JsonSerializer.Serialize(backup, options);
-        return Encoding.UTF8.GetBytes(json);
+        
+        // Use UTF-8 with BOM for proper character encoding
+        var preamble = Encoding.UTF8.GetPreamble();
+        var content = Encoding.UTF8.GetBytes(json);
+        var result = new byte[preamble.Length + content.Length];
+        Buffer.BlockCopy(preamble, 0, result, 0, preamble.Length);
+        Buffer.BlockCopy(content, 0, result, preamble.Length, content.Length);
+        return result;
     }
 
     private static string EscapeCsv(string value)
