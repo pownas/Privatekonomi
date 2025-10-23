@@ -13,4 +13,6 @@ public interface IBudgetService
     Task<Dictionary<int, decimal>> GetActualAmountsByCategoryAsync(int budgetId);
     Task<IEnumerable<Transaction>> GetTransactionsForBudgetAsync(int budgetId);
     Task<Dictionary<int, List<Transaction>>> GetTransactionsByCategoryForBudgetAsync(int budgetId);
+    Task<Budget?> GetBudgetForCategoryAndMonthAsync(int categoryId, DateTime date);
+    Task<Budget> CreateOrUpdateCategoryBudgetAsync(int categoryId, DateTime monthDate, decimal plannedAmount);
 }

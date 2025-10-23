@@ -2,6 +2,7 @@
 @rendermode InteractiveServer
 @inject ICategoryService CategoryService
 @inject ITransactionService TransactionService
+@inject IBudgetService BudgetService
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 @inject NavigationManager NavigationManager
@@ -149,6 +150,58 @@ else
         </MudGrid>
 
         <MudPaper Class="pa-4 mt-4" Elevation="2">
+            <div class="d-flex justify-space-between align-center mb-3">
+                <MudText Typo="Typo.h6">Budgethantering för kategori</MudText>
+            </div>
+            
+            <MudGrid>
+                <MudItem xs="12" md="6">
+                    <MudDatePicker Label="Välj månad" 
+                                   @bind-Date="_selectedBudgetMonth" 
+                                   DateFormat="yyyy-MM"
+                                   OpenTo="OpenTo.Month"
+                                   PickerVariant="PickerVariant.Dialog"
+                                   Variant="Variant.Outlined" />
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudNumericField @bind-Value="_plannedBudgetAmount"
+                                    Label="Planerat belopp"
+                                    Variant="Variant.Outlined"
+                                    Format="N2"
+                                    Adornment="Adornment.Start"
+                                    AdornmentText="kr"
+                                    Min="0"
+                                    Step="100M"
+                                    HideSpinButtons="false" />
+                </MudItem>
+                <MudItem xs="12">
+                    <div class="d-flex gap-2">
+                        <MudButton Variant="Variant.Filled" 
+                                   Color="Color.Primary" 
+                                   StartIcon="@Icons.Material.Filled.Save"
+                                   OnClick="SaveCategoryBudget">
+                            Spara Budget
+                        </MudButton>
+                        <MudButton Variant="Variant.Outlined" 
+                                   Color="Color.Primary" 
+                                   StartIcon="@Icons.Material.Filled.Refresh"
+                                   OnClick="LoadCurrentMonthBudget">
+                            Visa Nuvarande Månad
+                        </MudButton>
+                    </div>
+                </MudItem>
+                @if (_currentBudgetInfo != null)
+                {
+                    <MudItem xs="12">
+                        <MudAlert Severity="Severity.Info">
+                            <MudText>Befintlig budget för @_selectedBudgetMonth?.ToString("MMMM yyyy"): @_currentBudgetInfo</MudText>
+                        </MudAlert>
+                    </MudItem>
+                }
+            </MudGrid>
+        </MudPaper>
+
+        <MudPaper Class="pa-4 mt-4" Elevation="2">
             <MudText Typo="Typo.h6" Class="mb-4">Månadsvis Översikt</MudText>
             @if (_statistics.MonthlyBreakdown.Any(m => m.TransactionCount > 0))
             {
@@ -258,6 +311,11 @@ else
     private IEnumerable<Transaction> _recentTransactions = new List<Transaction>();
     private MudChip<string>? _selectedChip;
     
+    // Budget management fields
+    private DateTime? _selectedBudgetMonth = DateTime.Today;
+    private decimal _plannedBudgetAmount = 0m;
+    private string? _currentBudgetInfo = null;
+    
     private List<ChartSeries> _monthlyChartSeries = new();
     private string[] _monthlyChartLabels = Array.Empty<string>();
     private ChartOptions _chartOptions = new ChartOptions
@@ -307,6 +365,7 @@ else
     {
         _selectedCategoryId = categoryId;
         await LoadCategoryData();
+        await LoadCurrentMonthBudget();
     }
 
     private async Task OnMonthsChanged(int months)
@@ -415,6 +474,75 @@ else
         catch (Exception ex)
         {
             Snackbar.Add($"Fel vid flytt av transaktion: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task LoadCurrentMonthBudget()
+    {
+        if (_selectedCategoryId <= 0 || _selectedBudgetMonth == null)
+        {
+            return;
+        }
+
+        try
+        {
+            var budget = await BudgetService.GetBudgetForCategoryAndMonthAsync(_selectedCategoryId, _selectedBudgetMonth.Value);
+            
+            if (budget != null)
+            {
+                var budgetCategory = budget.BudgetCategories.FirstOrDefault(bc => bc.CategoryId == _selectedCategoryId);
+                if (budgetCategory != null)
+                {
+                    _plannedBudgetAmount = budgetCategory.PlannedAmount;
+                    _currentBudgetInfo = $"{budgetCategory.PlannedAmount.ToString("C", new System.Globalization.CultureInfo("sv-SE"))} i budget '{budget.Name}'";
+                }
+                else
+                {
+                    _plannedBudgetAmount = 0m;
+                    _currentBudgetInfo = "Ingen budget satt för denna kategori i vald månad";
+                }
+            }
+            else
+            {
+                _plannedBudgetAmount = 0m;
+                _currentBudgetInfo = "Ingen budget finns för vald månad";
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Fel vid hämtning av budget: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task SaveCategoryBudget()
+    {
+        if (_selectedCategoryId <= 0)
+        {
+            Snackbar.Add("Välj en kategori först", Severity.Warning);
+            return;
+        }
+
+        if (_selectedBudgetMonth == null)
+        {
+            Snackbar.Add("Välj en månad först", Severity.Warning);
+            return;
+        }
+
+        if (_plannedBudgetAmount < 0)
+        {
+            Snackbar.Add("Budgetbeloppet kan inte vara negativt", Severity.Error);
+            return;
+        }
+
+        try
+        {
+            await BudgetService.CreateOrUpdateCategoryBudgetAsync(_selectedCategoryId, _selectedBudgetMonth.Value, _plannedBudgetAmount);
+            Snackbar.Add("Budget sparad!", Severity.Success);
+            await LoadCurrentMonthBudget();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Fel vid sparande av budget: {ex.Message}", Severity.Error);
         }
     }
 }
