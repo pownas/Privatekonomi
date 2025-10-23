@@ -178,7 +178,6 @@ setup_scripts() {
     log_info "Making project scripts executable..."
     chmod +x ./app-start.sh
     chmod +x ./app-install.sh
-    chmod +x ./app-start.ps1 2>/dev/null || true
     
     log_success "Project scripts are now executable"
 }
