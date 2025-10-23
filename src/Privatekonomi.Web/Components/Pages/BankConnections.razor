@@ -81,17 +81,17 @@ else
                                       Color="Color.Primary" 
                                       Size="Size.Small"
                                       OnClick="@(() => EditConnection(context))"
-                                      Title="Redigera" />
+                                      title="Redigera" />
                         <MudIconButton Icon="@Icons.Material.Filled.Sync" 
                                       Color="Color.Primary" 
                                       Size="Size.Small"
                                       OnClick="@(() => SyncConnection(context))"
-                                      Title="Synkronisera nu" />
+                                      title="Synkronisera nu" />
                         <MudIconButton Icon="@Icons.Material.Filled.Delete" 
                                       Color="Color.Error" 
                                       Size="Size.Small"
                                       OnClick="@(() => DeleteConnection(context))"
-                                      Title="Ta bort" />
+                                      title="Ta bort" />
                     </MudTd>
                 </RowTemplate>
             </MudTable>
@@ -178,7 +178,7 @@ else
         
         var result = await dialog.Result;
         
-        if (!result.Canceled && result.Data != null)
+        if (result is not null && !result.Canceled && result.Data != null)
         {
             // Handle OAuth redirect
             dynamic authData = result.Data;
@@ -190,14 +190,14 @@ else
         }
     }
 
-    private async Task CompleteConnection(string? code, string? state)
+    private Task CompleteConnection(string? code, string? state)
     {
         try
         {
             if (string.IsNullOrEmpty(code))
             {
                 Snackbar.Add("Auktoriseringskod saknas", Severity.Error);
-                return;
+                return Task.CompletedTask;
             }
 
             Snackbar.Add("Slutför bankanslutning...", Severity.Info);
@@ -213,6 +213,8 @@ else
         {
             Snackbar.Add($"Fel vid slutförande av anslutning: {ex.Message}", Severity.Error);
         }
+        
+        return Task.CompletedTask;
     }
 
     private async Task EditConnection(BankConnection connection)
@@ -237,7 +239,7 @@ else
         
         var result = await dialog.Result;
         
-        if (!result.Canceled && result.Data is EditBankConnectionDialog.BankConnection updatedConnection)
+        if (result is not null && !result.Canceled && result.Data is EditBankConnectionDialog.BankConnection updatedConnection)
         {
             try
             {

@@ -128,7 +128,7 @@ else
         </MudGrid>
     </MudPaper>
 
-    @if (_pocketsByBankSource.Any())
+    @if (_pocketsByBankSource?.Any() == true)
     {
         @foreach (var bankSourceGroup in _pocketsByBankSource)
         {
@@ -344,7 +344,7 @@ else
         var dialog = await DialogService.ShowAsync<AllocateMoneyDialog>("Sätt in pengar", parameters);
         var result = await dialog.Result;
 
-        if (!result.Canceled && result.Data is (decimal amount, string description))
+        if (result is not null && !result.Canceled && result.Data is (decimal amount, string description))
         {
             try
             {
@@ -371,7 +371,7 @@ else
         var dialog = await DialogService.ShowAsync<AllocateMoneyDialog>("Ta ut pengar", parameters);
         var result = await dialog.Result;
 
-        if (!result.Canceled && result.Data is (decimal amount, string description))
+        if (result is not null && !result.Canceled && result.Data is (decimal amount, string description))
         {
             try
             {

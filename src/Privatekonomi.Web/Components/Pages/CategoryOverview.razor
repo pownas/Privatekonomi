@@ -20,7 +20,7 @@ else
         <MudGrid>
             <MudItem xs="12">
                 <MudText Typo="Typo.h6" Class="mb-3">Välj Kategori</MudText>
-                <MudChipSet T="string" @bind-SelectedChip="_selectedChip" Filter="true" Mandatory="false">
+                <MudChipSet T="string" @bind-selectedchip="_selectedChip" filter="true" mandatory="false">
                     @foreach (var category in _categories)
                     {
                         <MudChip T="string" 
@@ -229,7 +229,7 @@ else
                             <MudIconButton Icon="@Icons.Material.Filled.SwapHoriz" 
                                          Color="Color.Primary" 
                                          Size="Size.Small"
-                                         Title="Flytta till annan kategori"
+                                         title="Flytta till annan kategori"
                                          OnClick="@(() => OpenMoveCategoryDialog(context))" />
                         </MudTd>
                     </RowTemplate>
@@ -385,7 +385,7 @@ else
         var dialog = await DialogService.ShowAsync<MoveCategoryDialog>("Flytta till annan kategori", parameters);
         var result = await dialog.Result;
 
-        if (!result.Canceled && result.Data is int newCategoryId)
+        if (result is not null && !result.Canceled && result.Data is int newCategoryId)
         {
             await MoveTransactionToCategory(transaction, newCategoryId);
         }

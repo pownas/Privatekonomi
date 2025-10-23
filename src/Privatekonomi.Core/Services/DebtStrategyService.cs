@@ -65,14 +65,14 @@ public class DebtStrategyService : IDebtStrategyService
     public async Task<DebtPayoffStrategy> CalculateSnowballStrategy(decimal availableMonthlyPayment)
     {
         var loans = await _context.Loans.OrderBy(l => l.Amount).ToListAsync();
-        return await CalculatePayoffStrategy(loans, availableMonthlyPayment, "Snöboll", 
+        return CalculatePayoffStrategy(loans, availableMonthlyPayment, "Snöboll", 
             "Betala av minsta skulden först för psykologiska vinster och momentum");
     }
 
     public async Task<DebtPayoffStrategy> CalculateAvalancheStrategy(decimal availableMonthlyPayment)
     {
         var loans = await _context.Loans.OrderByDescending(l => l.InterestRate).ToListAsync();
-        return await CalculatePayoffStrategy(loans, availableMonthlyPayment, "Lavin", 
+        return CalculatePayoffStrategy(loans, availableMonthlyPayment, "Lavin", 
             "Betala av skulden med högst ränta först för att minimera totala räntekostnader");
     }
 
@@ -129,7 +129,7 @@ public class DebtStrategyService : IDebtStrategyService
         return (snowball, avalanche);
     }
 
-    private async Task<DebtPayoffStrategy> CalculatePayoffStrategy(List<Loan> loans, decimal availableMonthlyPayment, 
+    private DebtPayoffStrategy CalculatePayoffStrategy(List<Loan> loans, decimal availableMonthlyPayment, 
         string strategyName, string description)
     {
         var strategy = new DebtPayoffStrategy
