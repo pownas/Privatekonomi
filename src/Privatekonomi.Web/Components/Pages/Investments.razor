@@ -394,7 +394,7 @@ else
         var dialog = await DialogService.ShowAsync<QuickPriceUpdateDialog>($"Uppdatera kurs", parameters, options);
         var result = await dialog.Result;
 
-        if (!result.Canceled && result.Data is decimal newPrice && newPrice > 0)
+        if (result is not null && !result.Canceled && result.Data is decimal newPrice && newPrice > 0)
         {
             investment.CurrentPrice = newPrice;
             investment.LastUpdated = DateTime.Now;
@@ -414,7 +414,7 @@ else
         var dialog = await DialogService.ShowAsync<InvestmentDialog>("Lägg till investering", parameters);
         var result = await dialog.Result;
 
-        if (!result.Canceled && result.Data is Investment investment)
+        if (result is not null && !result.Canceled && result.Data is Investment investment)
         {
             await InvestmentService.AddInvestmentAsync(investment);
             Snackbar.Add("Investering tillagd", Severity.Success);
@@ -444,7 +444,7 @@ else
         var dialog = await DialogService.ShowAsync<InvestmentDialog>("Redigera investering", parameters);
         var result = await dialog.Result;
 
-        if (!result.Canceled && result.Data is Investment updatedInvestment)
+        if (result is not null && !result.Canceled && result.Data is Investment updatedInvestment)
         {
             await InvestmentService.UpdateInvestmentAsync(updatedInvestment);
             Snackbar.Add("Investering uppdaterad", Severity.Success);
@@ -478,7 +478,7 @@ else
         var dialog = await DialogService.ShowAsync<UpdateAllPricesDialog>("Uppdatera alla kurser", parameters, options);
         var result = await dialog.Result;
 
-        if (!result.Canceled)
+        if (result is not null && !result.Canceled)
         {
             Snackbar.Add("Kurser uppdaterade", Severity.Success);
             await LoadData();

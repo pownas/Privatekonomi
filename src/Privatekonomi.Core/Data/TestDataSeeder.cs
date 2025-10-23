@@ -1156,7 +1156,6 @@ public static class TestDataSeeder
         var random = new Random(42); // Fixed seed for consistent test data
         
         // Starting values
-        decimal startNetWorth = 150000m;
         decimal bankBalance = 50000m;
         decimal investmentValue = 450000m;
         decimal physicalAssetValue = 150000m;

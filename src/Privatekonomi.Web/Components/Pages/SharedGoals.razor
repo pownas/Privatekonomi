@@ -216,7 +216,7 @@ else
         var dialog = await DialogService.ShowAsync<CreateSharedGoalDialog>("Skapa Nytt Gemensamt Sparmål", parameters);
         var result = await dialog.Result;
 
-        if (!result.Canceled && result.Data is SharedGoal newGoal)
+        if (result is not null && !result.Canceled && result.Data is SharedGoal newGoal)
         {
             try
             {

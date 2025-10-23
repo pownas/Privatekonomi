@@ -224,7 +224,7 @@ else
                         </MudTd>
                         <MudTd DataLabel="Röster">@context.Votes.Count / @_participants.Count(p => p.InvitationStatus == InvitationStatus.Accepted)</MudTd>
                         <MudTd DataLabel="Åtgärder">
-                            @if (context.Status == ProposalStatus.Pending && !context.Votes.Any(v => v.UserId == _currentUserId))
+                            @if (context.Status == ProposalStatus.Pending)
                             {
                                 <MudIconButton Icon="@Icons.Material.Filled.ThumbUp" Size="Size.Small" OnClick="@(() => VoteOnProposal(context.SharedGoalProposalId, VoteType.Approve))" Color="Color.Success" />
                                 <MudIconButton Icon="@Icons.Material.Filled.ThumbDown" Size="Size.Small" OnClick="@(() => VoteOnProposal(context.SharedGoalProposalId, VoteType.Reject))" Color="Color.Error" />
@@ -251,7 +251,6 @@ else
     private IEnumerable<SharedGoalProposal> _proposals = new List<SharedGoalProposal>();
     private bool _loading = true;
     private bool _isOwner = false;
-    private string? _currentUserId;
     
     private decimal _transactionAmount = 0;
     private string? _transactionDescription;
@@ -374,9 +373,10 @@ else
         }
     }
 
-    private async Task OpenProposalDialog()
+    private Task OpenProposalDialog()
     {
         Snackbar.Add("Förslagsfunktionen kräver en dialog-komponent", Severity.Info);
+        return Task.CompletedTask;
     }
 
     private async Task VoteOnProposal(int proposalId, VoteType vote)

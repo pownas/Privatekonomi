@@ -385,7 +385,7 @@ else
         var dialog = await DialogService.ShowAsync<MoveCategoryDialog>("Flytta till annan kategori", parameters);
         var result = await dialog.Result;
 
-        if (!result.Canceled && result.Data is int newCategoryId)
+        if (result is not null && !result.Canceled && result.Data is int newCategoryId)
         {
             await MoveTransactionToCategory(transaction, newCategoryId);
         }

@@ -91,18 +91,22 @@ builder.Services.AddScoped<IK4Generator, K4Generator>();
 builder.Services.AddScoped<ITaxDeductionService, TaxDeductionService>();
 builder.Services.AddScoped<IISKTaxCalculator, ISKTaxCalculator>();
 
-// Add HttpClient for API calls (if needed later)
+// Add HttpClient for API calls (if needed later) using Aspire service discovery
 builder.Services.AddHttpClient("api", client =>
 {
-    // This will be configured by Aspire service discovery
-    client.BaseAddress = new Uri(builder.Configuration["services:api:http:0"] ?? "http://localhost:5001");
+    // Aspire will configure this automatically through service discovery
+
+    // // This will be configured by Aspire service discovery
+    // client.BaseAddress = new Uri(builder.Configuration["services:api:http:0"] ?? "http://localhost:5001");
 });
 
-// Configure default HttpClient to use the API base address
+// Configure default HttpClient 
 builder.Services.AddScoped<HttpClient>(sp =>
 {
     var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
-    return httpClientFactory.CreateClient("api");
+    return httpClientFactory.CreateClient();
+    //// to use the API base address
+    //return httpClientFactory.CreateClient("api");
 });
 
 // Register stock price service with HttpClient
