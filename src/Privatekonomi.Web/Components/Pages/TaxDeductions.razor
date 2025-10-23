@@ -95,7 +95,7 @@
                     <MudTd DataLabel="Typ">
                         <MudChip T="string" Color="@(context.Type == "ROT" ? Color.Primary : Color.Secondary)" Size="Size.Small">@context.Type</MudChip>
                     </MudTd>
-                    <MudTd DataLabel="Datum">@context.WorkDate.ToShortDateString()</MudTd>
+                    <MudTd DataLabel="Datum">@context.WorkDate.ToString("yyyy-MM-dd")</MudTd>
                     <MudTd DataLabel="Tjänsteleverantör">@context.ServiceProvider</MudTd>
                     <MudTd DataLabel="Org.nr">@context.OrganizationNumber</MudTd>
                     <MudTd DataLabel="Arbete">
