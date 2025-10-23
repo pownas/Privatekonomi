@@ -18,6 +18,15 @@ builder.AddServiceDefaults();
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
+// Configure Blazor Server options for better error handling
+builder.Services.Configure<Microsoft.AspNetCore.Components.Server.CircuitOptions>(options =>
+{
+    if (builder.Environment.IsDevelopment())
+    {
+        options.DetailedErrors = true;
+    }
+});
+
 // Add MudBlazor services with configuration for better accessibility
 builder.Services.AddMudServices(config =>
 {
@@ -150,14 +159,28 @@ builder.Services.AddScoped<IBankApiService>(sp =>
 var app = builder.Build();
 
 // Seed the database
-using (var scope = app.Services.CreateScope())
+try
 {
-    var context = scope.ServiceProvider.GetRequiredService<PrivatekonomyContext>();
-    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-    context.Database.EnsureCreated();
-    
-    // Seed test data
-    await TestDataSeeder.SeedTestDataAsync(context, userManager);
+    using (var scope = app.Services.CreateScope())
+    {
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+        logger.LogInformation("Starting database seeding...");
+        
+        var context = scope.ServiceProvider.GetRequiredService<PrivatekonomyContext>();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        context.Database.EnsureCreated();
+        
+        // Seed test data
+        await TestDataSeeder.SeedTestDataAsync(context, userManager);
+        
+        logger.LogInformation("Database seeding completed successfully");
+    }
+}
+catch (Exception ex)
+{
+    // Log the error but don't crash the application
+    var logger = app.Services.GetRequiredService<ILogger<Program>>();
+    logger.LogError(ex, "An error occurred while seeding the database. Application will continue without test data.");
 }
 
 // Configure the HTTP request pipeline.

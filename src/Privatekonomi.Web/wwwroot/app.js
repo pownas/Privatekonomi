@@ -1,4 +1,4 @@
-// Download file function for CSV export
+// Download file function for CSV exports
 window.downloadFile = function(filename, contentType, base64Content) {
     const blob = base64ToBlob(base64Content, contentType);
     const url = URL.createObjectURL(blob);
@@ -11,6 +11,7 @@ window.downloadFile = function(filename, contentType, base64Content) {
     URL.revokeObjectURL(url);
 };
 
+// Helper function to convert base64 to Blob
 function base64ToBlob(base64, contentType) {
     const byteCharacters = atob(base64);
     const byteNumbers = new Array(byteCharacters.length);

@@ -308,6 +308,14 @@ else
             return;
         }
 
+        // Check if we have enough data points for line charts (minimum 4 required for MudChart Line)
+        if (_salaries.Count() < 4)
+        {
+            _chartSeries = new List<ChartSeries>();
+            _chartLabels = Array.Empty<string>();
+            return;
+        }
+
         var orderedSalaries = _salaries.OrderBy(s => s.Period).ToList();
         
         _chartLabels = orderedSalaries.Select(s => s.Period.ToString("yyyy-MM")).ToArray();

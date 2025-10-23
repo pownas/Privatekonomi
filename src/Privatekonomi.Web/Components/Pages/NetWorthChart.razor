@@ -285,6 +285,16 @@ else
             return;
         }
 
+        // Check if we have enough data points for line charts (minimum 4 required for MudChart Line)
+        if (_report.Periods.Count < 4)
+        {
+            _chartSeries = new List<ChartSeries>();
+            _assetChartSeries = new List<ChartSeries>();
+            _liabilityChartSeries = new List<ChartSeries>();
+            _xAxisLabels = Array.Empty<string>();
+            return;
+        }
+
         _xAxisLabels = _report.Periods.Select(p => p.Period).ToArray();
 
         // Net worth line chart
