@@ -9,10 +9,12 @@ namespace Privatekonomi.Core.Services;
 public class ExportService : IExportService
 {
     private readonly PrivatekonomyContext _context;
+    private readonly ICurrentUserService? _currentUserService;
 
-    public ExportService(PrivatekonomyContext context)
+    public ExportService(PrivatekonomyContext context, ICurrentUserService? currentUserService = null)
     {
         _context = context;
+        _currentUserService = currentUserService;
     }
 
     public async Task<byte[]> ExportTransactionsToCsvAsync(DateTime? fromDate = null, DateTime? toDate = null)
@@ -22,6 +24,12 @@ public class ExportService : IExportService
             .Include(t => t.TransactionCategories)
             .ThenInclude(tc => tc.Category)
             .AsQueryable();
+
+        // Filter by current user if authenticated
+        if (_currentUserService?.IsAuthenticated == true && _currentUserService.UserId != null)
+        {
+            query = query.Where(t => t.UserId == _currentUserService.UserId);
+        }
 
         if (fromDate.HasValue)
         {
@@ -69,6 +77,12 @@ public class ExportService : IExportService
             .Include(t => t.TransactionCategories)
             .ThenInclude(tc => tc.Category)
             .AsQueryable();
+
+        // Filter by current user if authenticated
+        if (_currentUserService?.IsAuthenticated == true && _currentUserService.UserId != null)
+        {
+            query = query.Where(t => t.UserId == _currentUserService.UserId);
+        }
 
         if (fromDate.HasValue)
         {
