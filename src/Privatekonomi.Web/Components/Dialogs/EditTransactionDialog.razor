@@ -1,6 +1,7 @@
 @using Privatekonomi.Core.Models
 @using Privatekonomi.Core.Services
 @inject ITransactionService TransactionService
+@inject ICategoryService CategoryService
 @inject ISnackbar Snackbar
 
 <MudDialog>
@@ -16,6 +17,40 @@
                 </MudItem>
                 <MudItem xs="12" md="6">
                     <MudNumericField @bind-Value="_transaction.Amount" Label="Belopp" Variant="Variant.Outlined" Format="N2" />
+                </MudItem>
+                <MudItem xs="12">
+                    <MudText Typo="Typo.subtitle2" Class="mb-2">Kategori</MudText>
+                    @if (_availableCategories != null && _availableCategories.Any())
+                    {
+                        <MudSelect @bind-Value="_selectedCategoryId" Label="Välj kategori" Variant="Variant.Outlined" 
+                                   T="int?" Clearable="true" HelperText="Välj en kategori för transaktionen">
+                            @foreach (var category in _availableCategories)
+                            {
+                                <MudSelectItem T="int?" Value="@category.CategoryId">
+                                    <div style="display: flex; align-items: center;">
+                                        <div style="width: 16px; height: 16px; border-radius: 50%; background-color: @category.Color; margin-right: 8px;"></div>
+                                        @category.Name
+                                    </div>
+                                </MudSelectItem>
+                            }
+                        </MudSelect>
+                        @if (_selectedCategoryId.HasValue)
+                        {
+                            var selectedCat = _availableCategories.FirstOrDefault(c => c.CategoryId == _selectedCategoryId.Value);
+                            if (selectedCat != null)
+                            {
+                                <MudChip T="string" Size="Size.Small" 
+                                         Style="@($"background-color: {selectedCat.Color}; color: white; margin-top: 8px;")" 
+                                         OnClose="() => _selectedCategoryId = null">
+                                    @selectedCat.Name
+                                </MudChip>
+                            }
+                        }
+                    }
+                    else
+                    {
+                        <MudProgressCircular Color="Color.Primary" Size="Size.Small" Indeterminate="true" />
+                    }
                 </MudItem>
                 <MudItem xs="12">
                     <MudTextField @bind-Value="_transaction.Tags" Label="Taggar (kommaseparerade)" 
@@ -46,9 +81,14 @@
 
     private Transaction _transaction = null!;
     private DateTime? _transactionDate;
+    private IEnumerable<Category> _availableCategories = new List<Category>();
+    private int? _selectedCategoryId;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
+        // Load all available categories
+        _availableCategories = await CategoryService.GetAllCategoriesAsync();
+        
         // Create a copy to avoid modifying the original until saved
         _transaction = new Transaction
         {
@@ -70,6 +110,12 @@
             UpdatedAt = Transaction.UpdatedAt
         };
         _transactionDate = _transaction.Date;
+        
+        // Set the currently selected category if exists
+        if (Transaction.TransactionCategories.Any())
+        {
+            _selectedCategoryId = Transaction.TransactionCategories.First().CategoryId;
+        }
     }
 
     private void Cancel()
@@ -89,6 +135,28 @@
             _transaction.UpdatedAt = DateTime.UtcNow;
             
             await TransactionService.UpdateTransactionAsync(_transaction);
+            
+            // Update categories if changed
+            if (_selectedCategoryId.HasValue)
+            {
+                var newCategories = new List<TransactionCategory>
+                {
+                    new TransactionCategory
+                    {
+                        TransactionId = _transaction.TransactionId,
+                        CategoryId = _selectedCategoryId.Value,
+                        Amount = _transaction.Amount,
+                        Percentage = 100
+                    }
+                };
+                await TransactionService.UpdateTransactionCategoriesAsync(_transaction.TransactionId, newCategories);
+            }
+            else
+            {
+                // Clear all categories if none selected
+                await TransactionService.UpdateTransactionCategoriesAsync(_transaction.TransactionId, new List<TransactionCategory>());
+            }
+            
             Snackbar.Add("Transaktionen har uppdaterats", Severity.Success);
             MudDialog.Close(DialogResult.Ok(true));
         }

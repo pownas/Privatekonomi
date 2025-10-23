@@ -89,9 +89,14 @@
                 <MudTd DataLabel="Bank">
                     @if (context.BankSource != null)
                     {
-                        <MudChip T="string" Size="Size.Small" Style="@($"background-color: {context.BankSource.Color}; color: white;")">
-                            <MudIcon Icon="@Icons.Material.Filled.AccountBalance" Size="Size.Small" /> @context.BankSource.Name
+                        <MudChip T="string" Size="Size.Small" Variant="Variant.Filled"
+                                 Style="@($"background-color: {context.BankSource.Color}; color: white;")">
+                            @context.BankSource.Name
                         </MudChip>
+                    }
+                    else
+                    {
+                        <MudText Typo="Typo.body2" Color="Color.Default">-</MudText>
                     }
                 </MudTd>
                 <MudTd DataLabel="Kategori">
@@ -99,22 +104,33 @@
                     {
                         @foreach (var tc in context.TransactionCategories)
                         {
-                            <MudChip T="string" Size="Size.Small" Style="@($"background-color: {tc.Category.Color}; color: white;")">
+                            <MudChip T="string" Size="Size.Small" Variant="Variant.Filled"
+                                     Style="@($"background-color: {tc.Category.Color}; color: white; margin: 2px;")">
                                 @tc.Category.Name
                             </MudChip>
                         }
                     }
+                    else
+                    {
+                        <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Default">
+                            Okategoriserad
+                        </MudChip>
+                    }
                 </MudTd>
                 <MudTd DataLabel="Belopp" Style="text-align: right">
-                    <MudText Color="@(context.IsIncome ? Color.Success : Color.Error)">
-                        @(context.IsIncome ? "+" : "-")@context.Amount.ToString("C", new System.Globalization.CultureInfo("sv-SE"))
+                    <MudText Typo="Typo.body1" Style="@($"font-weight: 600; color: {(context.IsIncome ? "#2e7d32" : "#d32f2f")};")">
+                        @(context.IsIncome ? "+" : "")@context.Amount.ToString("N2", new System.Globalization.CultureInfo("sv-SE")) kr
                     </MudText>
                 </MudTd>
                 <MudTd DataLabel="Åtgärder">
-                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small"
-                                   OnClick="@(() => EditTransaction(context))" />
-                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small"
-                                   OnClick="@(() => DeleteTransaction(context.TransactionId))" />
+                    <MudTooltip Text="Redigera transaktion">
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small"
+                                       OnClick="@(() => EditTransaction(context))" />
+                    </MudTooltip>
+                    <MudTooltip Text="Ta bort transaktion">
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small"
+                                       OnClick="@(() => DeleteTransaction(context.TransactionId))" />
+                    </MudTooltip>
                 </MudTd>
             </RowTemplate>
         </MudTable>
