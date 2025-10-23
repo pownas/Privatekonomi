@@ -57,6 +57,12 @@ public class Transaction
     /// </summary>
     public bool IsRecurring { get; set; }
     
+    /// <summary>
+    /// Link to pocket if this transaction is from a specific savings pocket
+    /// </summary>
+    public int? PocketId { get; set; }
+    
     public BankSource? BankSource { get; set; }
+    public Pocket? Pocket { get; set; }
     public ICollection<TransactionCategory> TransactionCategories { get; set; } = new List<TransactionCategory>();
 }

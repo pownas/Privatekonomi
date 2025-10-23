@@ -26,6 +26,7 @@ public static class TestDataSeeder
         SeedHouseholds(context);
         SeedGoals(context, testUserId);
         SeedNetWorthSnapshots(context, testUserId);
+        SeedPockets(context, testUserId);
     }
     
     private static async Task<string> SeedUsers(UserManager<ApplicationUser> userManager)
@@ -763,6 +764,280 @@ public static class TestDataSeeder
         };
 
         context.Loans.AddRange(loans);
+        context.SaveChanges();
+    }
+  
+    private static void SeedPockets(PrivatekonomyContext context, string userId)
+    {
+        // Create sample pockets on different savings accounts
+        var pockets = new List<Pocket>
+        {
+            // Pockets on ICA-banken (BankSourceId = 1)
+            new Pocket
+            {
+                PocketId = 1,
+                Name = "Bilköp",
+                Description = "Spara till ny bil - siktar på en elbil",
+                TargetAmount = 450000m,
+                CurrentAmount = 125000m,
+                MonthlyAllocation = 25000m,
+                BankSourceId = 1,
+                Priority = 1,
+                CreatedAt = DateTime.UtcNow.AddMonths(-6),
+                UserId = userId
+            },
+            new Pocket
+            {
+                PocketId = 2,
+                Name = "Teknikinköp",
+                Description = "Ny laptop, telefon och surfplatta",
+                TargetAmount = 35000m,
+                CurrentAmount = 28500m,
+                MonthlyAllocation = 5000m,
+                BankSourceId = 1,
+                Priority = 2,
+                CreatedAt = DateTime.UtcNow.AddMonths(-4),
+                UserId = userId
+            },
+            new Pocket
+            {
+                PocketId = 3,
+                Name = "Resor",
+                Description = "Sommarlov i Italien och vinterresa till Japan (kan spara extra för lyxresa)",
+                TargetAmount = 75000m,
+                CurrentAmount = 42000m,
+                MonthlyAllocation = 8000m,
+                BankSourceId = 1,
+                Priority = 2,
+                CreatedAt = DateTime.UtcNow.AddMonths(-3),
+                UserId = userId
+            },
+
+            // Pockets on Swedbank (BankSourceId = 2)
+            new Pocket
+            {
+                PocketId = 4,
+                Name = "Renovering",
+                Description = "Renovera kök och badrum",
+                TargetAmount = 250000m,
+                CurrentAmount = 85000m,
+                MonthlyAllocation = 15000m,
+                BankSourceId = 2,
+                Priority = 1,
+                CreatedAt = DateTime.UtcNow.AddMonths(-8),
+                UserId = userId
+            },
+            new Pocket
+            {
+                PocketId = 5,
+                Name = "Trädgård",
+                Description = "Altandäck, utemöbler och plantering",
+                TargetAmount = 60000m,
+                CurrentAmount = 15000m,
+                MonthlyAllocation = 3000m,
+                BankSourceId = 2,
+                Priority = 3,
+                CreatedAt = DateTime.UtcNow.AddMonths(-2),
+                UserId = userId
+            },
+            new Pocket
+            {
+                PocketId = 6,
+                Name = "Kläder",
+                Description = "Vår- och höstgarderob",
+                TargetAmount = 15000m,
+                CurrentAmount = 12500m,
+                BankSourceId = 2,
+                Priority = 4,
+                CreatedAt = DateTime.UtcNow.AddMonths(-1),
+                UserId = userId
+            },
+            new Pocket
+            {
+                PocketId = 7,
+                Name = "Mat & Uppläggning",
+                Description = "Extra buffert för matinköp och storkok",
+                TargetAmount = 8000m,
+                CurrentAmount = 8000m,
+                BankSourceId = 2,
+                Priority = 2,
+                CreatedAt = DateTime.UtcNow.AddMonths(-5),
+                UserId = userId
+            }
+        };
+
+        // Create some pocket transactions to show history
+        var pocketTransactions = new List<PocketTransaction>
+        {
+            // Transactions for "Bilköp" pocket
+            new PocketTransaction
+            {
+                PocketTransactionId = 1,
+                PocketId = 1,
+                Amount = 50000m,
+                Type = "Deposit",
+                Description = "Initial insättning från bonus",
+                TransactionDate = DateTime.UtcNow.AddMonths(-6),
+                CreatedAt = DateTime.UtcNow.AddMonths(-6),
+                UserId = userId
+            },
+            new PocketTransaction
+            {
+                PocketTransactionId = 2,
+                PocketId = 1,
+                Amount = 25000m,
+                Type = "Deposit",
+                Description = "Månadssparande",
+                TransactionDate = DateTime.UtcNow.AddMonths(-5),
+                CreatedAt = DateTime.UtcNow.AddMonths(-5),
+                UserId = userId
+            },
+            new PocketTransaction
+            {
+                PocketTransactionId = 3,
+                PocketId = 1,
+                Amount = 25000m,
+                Type = "Deposit",
+                Description = "Månadssparande",
+                TransactionDate = DateTime.UtcNow.AddMonths(-4),
+                CreatedAt = DateTime.UtcNow.AddMonths(-4),
+                UserId = userId
+            },
+            new PocketTransaction
+            {
+                PocketTransactionId = 4,
+                PocketId = 1,
+                Amount = 25000m,
+                Type = "Deposit",
+                Description = "Månadssparande",
+                TransactionDate = DateTime.UtcNow.AddMonths(-3),
+                CreatedAt = DateTime.UtcNow.AddMonths(-3),
+                UserId = userId
+            },
+
+            // Transactions for "Teknikinköp" pocket
+            new PocketTransaction
+            {
+                PocketTransactionId = 5,
+                PocketId = 2,
+                Amount = 15000m,
+                Type = "Deposit",
+                Description = "Startkapital",
+                TransactionDate = DateTime.UtcNow.AddMonths(-4),
+                CreatedAt = DateTime.UtcNow.AddMonths(-4),
+                UserId = userId
+            },
+            new PocketTransaction
+            {
+                PocketTransactionId = 6,
+                PocketId = 2,
+                Amount = 6500m,
+                Type = "Deposit",
+                Description = "Extra sparande",
+                TransactionDate = DateTime.UtcNow.AddMonths(-3),
+                CreatedAt = DateTime.UtcNow.AddMonths(-3),
+                UserId = userId
+            },
+            new PocketTransaction
+            {
+                PocketTransactionId = 7,
+                PocketId = 2,
+                Amount = 7000m,
+                Type = "Deposit",
+                Description = "Sparande från extrainkomst",
+                TransactionDate = DateTime.UtcNow.AddMonths(-1),
+                CreatedAt = DateTime.UtcNow.AddMonths(-1),
+                UserId = userId
+            },
+
+            // Transactions for "Resor" pocket
+            new PocketTransaction
+            {
+                PocketTransactionId = 8,
+                PocketId = 3,
+                Amount = 30000m,
+                Type = "Deposit",
+                Description = "Första insättningen för resefond",
+                TransactionDate = DateTime.UtcNow.AddMonths(-3),
+                CreatedAt = DateTime.UtcNow.AddMonths(-3),
+                UserId = userId
+            },
+            new PocketTransaction
+            {
+                PocketTransactionId = 9,
+                PocketId = 3,
+                Amount = 12000m,
+                Type = "Deposit",
+                Description = "Månadssparande",
+                TransactionDate = DateTime.UtcNow.AddMonths(-2),
+                CreatedAt = DateTime.UtcNow.AddMonths(-2),
+                UserId = userId
+            },
+
+            // Transactions for "Renovering" pocket
+            new PocketTransaction
+            {
+                PocketTransactionId = 10,
+                PocketId = 4,
+                Amount = 40000m,
+                Type = "Deposit",
+                Description = "Initial insättning för renovering",
+                TransactionDate = DateTime.UtcNow.AddMonths(-8),
+                CreatedAt = DateTime.UtcNow.AddMonths(-8),
+                UserId = userId
+            },
+            new PocketTransaction
+            {
+                PocketTransactionId = 11,
+                PocketId = 4,
+                Amount = 15000m,
+                Type = "Deposit",
+                Description = "Månadssparande",
+                TransactionDate = DateTime.UtcNow.AddMonths(-6),
+                CreatedAt = DateTime.UtcNow.AddMonths(-6),
+                UserId = userId
+            },
+            new PocketTransaction
+            {
+                PocketTransactionId = 12,
+                PocketId = 4,
+                Amount = 30000m,
+                Type = "Deposit",
+                Description = "Extra sparande från försäljning",
+                TransactionDate = DateTime.UtcNow.AddMonths(-4),
+                CreatedAt = DateTime.UtcNow.AddMonths(-4),
+                UserId = userId
+            },
+
+            // Transaction for "Kläder" pocket (fully funded)
+            new PocketTransaction
+            {
+                PocketTransactionId = 13,
+                PocketId = 6,
+                Amount = 12500m,
+                Type = "Deposit",
+                Description = "Klädbudget för året",
+                TransactionDate = DateTime.UtcNow.AddMonths(-1),
+                CreatedAt = DateTime.UtcNow.AddMonths(-1),
+                UserId = userId
+            },
+
+            // Transaction for "Mat & Uppläggning" pocket (fully funded)
+            new PocketTransaction
+            {
+                PocketTransactionId = 14,
+                PocketId = 7,
+                Amount = 8000m,
+                Type = "Deposit",
+                Description = "Matbuffert för månad",
+                TransactionDate = DateTime.UtcNow.AddMonths(-5),
+                CreatedAt = DateTime.UtcNow.AddMonths(-5),
+                UserId = userId
+            }
+        };
+
+        context.Pockets.AddRange(pockets);
+        context.PocketTransactions.AddRange(pocketTransactions);
         context.SaveChanges();
     }
 
