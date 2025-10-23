@@ -9,7 +9,7 @@ En privatekonomi-applikation byggd med .NET 9, Blazor Server och MudBlazor för 
 - **Transaktionshantering**: Registrera, visa och ta bort transaktioner
 - **Budgethantering**: Skapa och följa upp budgetar med visualisering av planerat vs faktiskt utfall
 - **Sparmål**: Sätt upp och följ sparmål med målbelopp, tidsgräns och prioritering
-- **Gemensamma Sparmål** (NYT!):
+- **Gemensamma Sparmål**:
   - Skapa sparmål tillsammans med andra användare
   - Inbjudningssystem med accept/reject
   - Förslagssystem med demokratiska ändringar
@@ -38,7 +38,7 @@ En privatekonomi-applikation byggd med .NET 9, Blazor Server och MudBlazor för 
   - Realtidsdata från banken
 - **CSV-export**: Exportera investeringar för analys och rapportering
 - **Förbättrad datamodell**: Utökade modeller med audit trail, valutastöd och mer
-- **Familjesamarbete** (NYT!):
+- **Familjesamarbete**:
   - Hushållshantering med flera medlemmar
   - Delade utgifter med flexibel andelsfördelning
   - Barnkonton med veckopeng och sparande
@@ -49,6 +49,12 @@ En privatekonomi-applikation byggd med .NET 9, Blazor Server och MudBlazor för 
   - WCAG 2.1 Nivå AA compliance
   - Tangentbordsnavigation och fokusindikatorer
   - Optimerade färgkontraster för ljust och mörkt läge
+- **Löneutveckling**:
+  - Spåra och följa din lön över tid (hela karriären, 50+ år)
+  - Visualisera löneutveckling med interaktiv graf
+  - Beräkna genomsnittslön och lönetillväxt
+  - Dokumentera jobbbyten och löneförhöjningar
+  - Hantera befattning, arbetsgivare och anställningstyp
 
 ## 🏗️ Arkitektur
 
@@ -328,6 +334,7 @@ builder.Services.AddDbContext<PrivatekonomyContext>(options =>
 - **[FAMILY_COLLABORATION_GUIDE.md](wiki/FAMILY_COLLABORATION_GUIDE.md)**: Guide för familjesamarbete, barnkonton och veckopeng
 - **[DARK_MODE_IMPLEMENTATION.md](docs/DARK_MODE_IMPLEMENTATION.md)**: Guide för MudBlazor Dark Mode och WCAG-compliance
 - **[DARK_MODE_TESTING.md](docs/DARK_MODE_TESTING.md)**: Testguide för dark mode och tillgänglighet
+- **[SALARY_HISTORY_GUIDE.md](wiki/SALARY_HISTORY_GUIDE.md)**: Guide för löneutveckling och lönehistorik
 
 ### Sverige-specifika integrationer (NYT!)
 
@@ -350,6 +357,7 @@ builder.Services.AddDbContext<PrivatekonomyContext>(options =>
 
 - **[ProgramSpecifikation.md](wiki/ProgramSpecifikation.md)**: Övergripande programspecifikation
 - **[ASPIRE_GUIDE.md](wiki/ASPIRE_GUIDE.md)**: Guide för .NET Aspire Orchestrator
+- **[Kravspecifikation_Loneutveckling.md](wiki/Kravspecifikation_Loneutveckling.md)**: Kravspecifikation för löneutvecklingsfunktionen
 - **[Kravspecifikation_CSV_Import.md](wiki/Kravspecifikation_CSV_Import.md)**: Kravspecifikation för CSV-import av transaktioner
 - **[Kravspecifikation_Avanza_Integration.md](wiki/Kravspecifikation_Avanza_Integration.md)**: Kravspecifikation för Avanza-integration
 - **[Implementationsguide_Avanza.md](wiki/Implementationsguide_Avanza.md)**: Implementationsguide för Avanza-funktionalitet

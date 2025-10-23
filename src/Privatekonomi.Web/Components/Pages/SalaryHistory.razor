@@ -1,0 +1,424 @@
+@page "/salary-history"
+@rendermode InteractiveServer
+@using Privatekonomi.Core.Models
+@using Privatekonomi.Core.Services
+@inject ISalaryHistoryService SalaryHistoryService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+<PageTitle>Löneutveckling - Privatekonomi</PageTitle>
+
+<div class="d-flex justify-space-between align-center mb-4">
+    <MudText Typo="Typo.h4">Löneutveckling</MudText>
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="ToggleCreateForm">
+        Ny Lönepost
+    </MudButton>
+</div>
+
+@if (_showCreateForm)
+{
+    <MudPaper Class="pa-4 mb-4">
+        <MudText Typo="Typo.h6" Class="mb-3">@(_editingSalary != null ? "Redigera Lönepost" : "Lägg till Ny Lönepost")</MudText>
+        
+        <EditForm Model="@_formSalary">
+            <MudNumericField @bind-Value="_formSalary.MonthlySalary" 
+                             Label="Månadslön (kr)" 
+                             Variant="Variant.Outlined"
+                             Min="0"
+                             Format="N2"
+                             Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                             Required="true"
+                             Class="mb-3" />
+
+            <MudDatePicker @bind-Date="_formSalaryPeriod"
+                           Label="Period (månad/år)"
+                           Variant="Variant.Outlined"
+                           DateFormat="yyyy-MM"
+                           OpenTo="OpenTo.Month"
+                           Required="true"
+                           Class="mb-3" />
+            
+            <MudTextField @bind-Value="_formSalary.JobTitle" 
+                          Label="Befattning" 
+                          Variant="Variant.Outlined"
+                          MaxLength="200"
+                          Class="mb-3" />
+            
+            <MudTextField @bind-Value="_formSalary.Employer" 
+                          Label="Arbetsgivare" 
+                          Variant="Variant.Outlined"
+                          MaxLength="200"
+                          Class="mb-3" />
+
+            <MudSelect @bind-Value="_formSalary.EmploymentType" 
+                       Label="Anställningstyp" 
+                       Variant="Variant.Outlined" 
+                       Class="mb-3"
+                       Clearable="true">
+                <MudSelectItem Value="@("Heltid")">Heltid</MudSelectItem>
+                <MudSelectItem Value="@("Deltid")">Deltid</MudSelectItem>
+                <MudSelectItem Value="@("Timavlönad")">Timavlönad</MudSelectItem>
+                <MudSelectItem Value="@("Konsult")">Konsult</MudSelectItem>
+                <MudSelectItem Value="@("Praktik")">Praktik</MudSelectItem>
+            </MudSelect>
+
+            <MudNumericField @bind-Value="_formSalary.WorkPercentage" 
+                             Label="Tjänstegrad (%)" 
+                             Variant="Variant.Outlined"
+                             Min="0"
+                             Max="100"
+                             Class="mb-3" />
+
+            <MudTextField @bind-Value="_formSalary.Notes" 
+                          Label="Anteckningar" 
+                          Variant="Variant.Outlined"
+                          Lines="3"
+                          MaxLength="1000"
+                          HelperText="T.ex. Lönerevision, Nytt jobb, Befordran"
+                          Class="mb-3" />
+
+            <MudCheckBox @bind-Value="_formSalary.IsCurrent" 
+                         Label="Detta är min nuvarande lön" 
+                         Color="Color.Primary" 
+                         Class="mb-3" />
+
+            <div class="d-flex gap-2">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveSalary">
+                    @(_editingSalary != null ? "Uppdatera" : "Lägg till")
+                </MudButton>
+                <MudButton Variant="Variant.Outlined" OnClick="CancelForm">Avbryt</MudButton>
+            </div>
+        </EditForm>
+    </MudPaper>
+}
+
+@if (_loading)
+{
+    <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+}
+else
+{
+    @* Statistics Cards *@
+    <MudPaper Class="pa-4 mb-4">
+        <MudGrid>
+            <MudItem xs="12" md="3">
+                <MudCard Elevation="2" Class="pa-4">
+                    <MudCardContent>
+                        <MudText Typo="Typo.h6">Nuvarande Lön</MudText>
+                        <MudText Typo="Typo.h4" Color="Color.Primary">@_currentSalary.ToString("C", new System.Globalization.CultureInfo("sv-SE"))</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            <MudItem xs="12" md="3">
+                <MudCard Elevation="2" Class="pa-4">
+                    <MudCardContent>
+                        <MudText Typo="Typo.h6">Genomsnitt (12 mån)</MudText>
+                        <MudText Typo="Typo.h4" Color="Color.Info">@_averageSalary12.ToString("C", new System.Globalization.CultureInfo("sv-SE"))</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            <MudItem xs="12" md="3">
+                <MudCard Elevation="2" Class="pa-4">
+                    <MudCardContent>
+                        <MudText Typo="Typo.h6">Tillväxt (12 mån)</MudText>
+                        <MudText Typo="Typo.h4" Color="@(_growth12 >= 0 ? Color.Success : Color.Error)">
+                            @(_growth12.ToString("N2"))%
+                        </MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            <MudItem xs="12" md="3">
+                <MudCard Elevation="2" Class="pa-4">
+                    <MudCardContent>
+                        <MudText Typo="Typo.h6">Antal Poster</MudText>
+                        <MudText Typo="Typo.h4" Color="Color.Secondary">@_salaries.Count()</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+
+    @* Chart *@
+    @if (_salaries.Any())
+    {
+        <MudPaper Class="pa-4 mb-4">
+            <MudText Typo="Typo.h6" Class="mb-3">Löneutveckling över tid</MudText>
+            <MudChart ChartType="ChartType.Line" 
+                      ChartSeries="@_chartSeries" 
+                      XAxisLabels="@_chartLabels"
+                      Width="100%" 
+                      Height="350px"
+                      ChartOptions="@_chartOptions" />
+        </MudPaper>
+    }
+
+    @* Data Table *@
+    <MudTable Items="@_salaries" Hover="true" Breakpoint="Breakpoint.Sm" Class="mb-4">
+        <ToolBarContent>
+            <MudText Typo="Typo.h6">Lönehistorik</MudText>
+            <MudSpacer />
+            <MudTextField @bind-Value="_searchString" 
+                          Placeholder="Sök..." 
+                          Adornment="Adornment.Start" 
+                          AdornmentIcon="@Icons.Material.Filled.Search" 
+                          IconSize="Size.Medium" 
+                          Class="mt-0" />
+        </ToolBarContent>
+        <HeaderContent>
+            <MudTh>Period</MudTh>
+            <MudTh>Månadslön</MudTh>
+            <MudTh>Befattning</MudTh>
+            <MudTh>Arbetsgivare</MudTh>
+            <MudTh>Anställningstyp</MudTh>
+            <MudTh>Tjänstegrad</MudTh>
+            <MudTh>Nuvarande</MudTh>
+            <MudTh>Åtgärder</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            @{
+                var matchesSearch = string.IsNullOrWhiteSpace(_searchString) ||
+                    context.Period.ToString("yyyy-MM").Contains(_searchString, StringComparison.OrdinalIgnoreCase) ||
+                    (context.JobTitle?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                    (context.Employer?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                    (context.Notes?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) ?? false);
+            }
+            @if (matchesSearch)
+            {
+                <MudTd DataLabel="Period">@context.Period.ToString("yyyy-MM")</MudTd>
+                <MudTd DataLabel="Månadslön">
+                    <strong>@context.MonthlySalary.ToString("C", new System.Globalization.CultureInfo("sv-SE"))</strong>
+                </MudTd>
+                <MudTd DataLabel="Befattning">@(context.JobTitle ?? "-")</MudTd>
+                <MudTd DataLabel="Arbetsgivare">@(context.Employer ?? "-")</MudTd>
+                <MudTd DataLabel="Anställningstyp">@(context.EmploymentType ?? "-")</MudTd>
+                <MudTd DataLabel="Tjänstegrad">
+                    @if (context.WorkPercentage.HasValue)
+                    {
+                        @context.WorkPercentage.Value.ToString("N0")
+                        <text>%</text>
+                    }
+                    else
+                    {
+                        <text>-</text>
+                    }
+                </MudTd>
+                <MudTd DataLabel="Nuvarande">
+                    @if (context.IsCurrent)
+                    {
+                        <MudChip T="string" Color="Color.Success" Size="Size.Small">Ja</MudChip>
+                    }
+                </MudTd>
+                <MudTd DataLabel="Åtgärder">
+                    <MudIconButton Icon="@Icons.Material.Filled.Edit" 
+                                   Color="Color.Primary" 
+                                   Size="Size.Small" 
+                                   OnClick="() => EditSalary(context)" />
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete" 
+                                   Color="Color.Error" 
+                                   Size="Size.Small" 
+                                   OnClick="() => DeleteSalary(context)" />
+                </MudTd>
+            }
+        </RowTemplate>
+        <PagerContent>
+            <MudTablePager PageSizeOptions="new int[] { 10, 25, 50, 100 }" />
+        </PagerContent>
+    </MudTable>
+
+    @if (!_salaries.Any())
+    {
+        <MudPaper Class="pa-8 d-flex flex-column align-center justify-center" Elevation="0">
+            <MudIcon Icon="@Icons.Material.Filled.TrendingUp" Size="Size.Large" Color="Color.Default" Class="mb-4" Style="font-size: 5rem;" />
+            <MudText Typo="Typo.h5" Class="mb-2">Ingen lönehistorik ännu</MudText>
+            <MudText Typo="Typo.body1" Color="Color.Default" Class="mb-4">Börja spåra din löneutveckling genom att lägga till din första lönepost.</MudText>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="ToggleCreateForm">
+                Lägg till Lönepost
+            </MudButton>
+        </MudPaper>
+    }
+}
+
+@code {
+    private bool _loading = true;
+    private bool _showCreateForm = false;
+    private IEnumerable<Core.Models.SalaryHistory> _salaries = new List<Core.Models.SalaryHistory>();
+    private Core.Models.SalaryHistory _formSalary = new();
+    private DateTime? _formSalaryPeriod;
+    private Core.Models.SalaryHistory? _editingSalary;
+    private string _searchString = "";
+
+    // Statistics
+    private decimal _currentSalary = 0;
+    private decimal _averageSalary12 = 0;
+    private decimal _growth12 = 0;
+
+    // Chart data
+    private List<ChartSeries> _chartSeries = new();
+    private string[] _chartLabels = Array.Empty<string>();
+    private ChartOptions _chartOptions = new ChartOptions
+    {
+        YAxisTicks = 5000,
+        YAxisLines = true,
+        XAxisLines = false,
+        InterpolationOption = InterpolationOption.NaturalSpline,
+        LineStrokeWidth = 3
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        _loading = true;
+        StateHasChanged();
+
+        try
+        {
+            _salaries = await SalaryHistoryService.GetAllSalaryHistoriesAsync(string.Empty);
+            
+            // Load statistics
+            var currentSalary = await SalaryHistoryService.GetCurrentSalaryAsync(string.Empty);
+            _currentSalary = currentSalary?.MonthlySalary ?? 0;
+            
+            _averageSalary12 = await SalaryHistoryService.GetAverageSalaryAsync(string.Empty, 12);
+            _growth12 = await SalaryHistoryService.GetSalaryGrowthPercentageAsync(string.Empty, 12);
+
+            // Prepare chart data
+            PrepareChartData();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Fel vid laddning av data: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void PrepareChartData()
+    {
+        if (!_salaries.Any())
+        {
+            _chartSeries = new List<ChartSeries>();
+            _chartLabels = Array.Empty<string>();
+            return;
+        }
+
+        var orderedSalaries = _salaries.OrderBy(s => s.Period).ToList();
+        
+        _chartLabels = orderedSalaries.Select(s => s.Period.ToString("yyyy-MM")).ToArray();
+        
+        var salaryData = orderedSalaries.Select(s => (double)s.MonthlySalary).ToArray();
+        
+        _chartSeries = new List<ChartSeries>
+        {
+            new ChartSeries
+            {
+                Name = "Månadslön (kr)",
+                Data = salaryData
+            }
+        };
+    }
+
+    private void ToggleCreateForm()
+    {
+        _showCreateForm = !_showCreateForm;
+        if (_showCreateForm)
+        {
+            _formSalary = new Core.Models.SalaryHistory
+            {
+                Currency = "SEK",
+                IsCurrent = false
+            };
+            _formSalaryPeriod = DateTime.Now;
+            _editingSalary = null;
+        }
+        StateHasChanged();
+    }
+
+    private void EditSalary(Core.Models.SalaryHistory salary)
+    {
+        _editingSalary = salary;
+        _formSalary = new Core.Models.SalaryHistory
+        {
+            SalaryHistoryId = salary.SalaryHistoryId,
+            MonthlySalary = salary.MonthlySalary,
+            Period = salary.Period,
+            JobTitle = salary.JobTitle,
+            Employer = salary.Employer,
+            EmploymentType = salary.EmploymentType,
+            WorkPercentage = salary.WorkPercentage,
+            Notes = salary.Notes,
+            Currency = salary.Currency,
+            IsCurrent = salary.IsCurrent,
+            UserId = salary.UserId
+        };
+        _formSalaryPeriod = salary.Period;
+        _showCreateForm = true;
+        StateHasChanged();
+    }
+
+    private async Task SaveSalary()
+    {
+        try
+        {
+            if (_formSalaryPeriod.HasValue)
+            {
+                _formSalary.Period = new DateTime(_formSalaryPeriod.Value.Year, _formSalaryPeriod.Value.Month, 1);
+            }
+
+            if (_editingSalary != null)
+            {
+                await SalaryHistoryService.UpdateSalaryHistoryAsync(_formSalary);
+                Snackbar.Add("Lönepost uppdaterad!", Severity.Success);
+            }
+            else
+            {
+                await SalaryHistoryService.AddSalaryHistoryAsync(_formSalary);
+                Snackbar.Add("Lönepost tillagd!", Severity.Success);
+            }
+
+            await LoadData();
+            CancelForm();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Fel vid sparande: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task DeleteSalary(Core.Models.SalaryHistory salary)
+    {
+        var result = await DialogService.ShowMessageBox(
+            "Bekräfta borttagning",
+            $"Är du säker på att du vill ta bort löneposten för {salary.Period:yyyy-MM}?",
+            yesText: "Ta bort", cancelText: "Avbryt");
+
+        if (result == true)
+        {
+            try
+            {
+                await SalaryHistoryService.DeleteSalaryHistoryAsync(salary.SalaryHistoryId, string.Empty);
+                Snackbar.Add("Lönepost borttagen!", Severity.Success);
+                await LoadData();
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Fel vid borttagning: {ex.Message}", Severity.Error);
+            }
+        }
+    }
+
+    private void CancelForm()
+    {
+        _showCreateForm = false;
+        _editingSalary = null;
+        _formSalary = new Core.Models.SalaryHistory();
+        _formSalaryPeriod = null;
+        StateHasChanged();
+    }
+}

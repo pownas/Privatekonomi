@@ -32,6 +32,7 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
     public DbSet<AllowanceTransaction> AllowanceTransactions { get; set; }
     public DbSet<AllowanceTask> AllowanceTasks { get; set; }
     public DbSet<Goal> Goals { get; set; }
+    public DbSet<SalaryHistory> SalaryHistories { get; set; }
     
     // Pockets for savings accounts
     public DbSet<Pocket> Pockets { get; set; }
@@ -384,6 +385,37 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
                 .OnDelete(DeleteBehavior.Cascade);
             
             entity.HasIndex(e => e.UserId);
+        });
+        
+        // SalaryHistory configuration
+        modelBuilder.Entity<SalaryHistory>(entity =>
+        {
+            entity.HasKey(e => e.SalaryHistoryId);
+            entity.Property(e => e.MonthlySalary).HasPrecision(18, 2).IsRequired();
+            entity.Property(e => e.Period).IsRequired();
+            entity.Property(e => e.JobTitle).HasMaxLength(200);
+            entity.Property(e => e.Employer).HasMaxLength(200);
+            entity.Property(e => e.EmploymentType).HasMaxLength(50);
+            entity.Property(e => e.WorkPercentage).HasPrecision(5, 2);
+            entity.Property(e => e.Notes).HasMaxLength(1000);
+            entity.Property(e => e.Currency).IsRequired().HasMaxLength(3);
+            entity.Property(e => e.IsCurrent).IsRequired();
+            entity.Property(e => e.CreatedAt).IsRequired();
+            
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.HasIndex(e => e.UserId);
+            entity.HasIndex(e => e.Period);
+            entity.HasIndex(e => new { e.UserId, e.Period });
+            entity.HasIndex(e => e.IsCurrent);
+            entity.HasIndex(e => e.BankSourceId);
+            
+            // Ignore computed properties
+            entity.Ignore(e => e.ProgressPercentage);
+            entity.Ignore(e => e.RemainingAmount);
         });
 
         // Pocket configuration
