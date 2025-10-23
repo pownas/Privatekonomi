@@ -1,0 +1,298 @@
+@page "/categories-summary"
+@rendermode InteractiveServer
+@inject ICategoryService CategoryService
+@inject ISnackbar Snackbar
+@inject NavigationManager NavigationManager
+
+<PageTitle>Kategorisammanfattning - Privatekonomi</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-4">Kategorisammanfattning</MudText>
+
+@if (_loading)
+{
+    <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+}
+else
+{
+    <MudPaper Class="pa-4 mb-4">
+        <MudText Typo="Typo.subtitle2" Class="mb-2">Tidsperiod</MudText>
+        <MudButtonGroup Color="Color.Primary" Variant="Variant.Outlined">
+            <MudButton OnClick="@(() => OnMonthsChanged(6))" 
+                       Variant="@(_selectedMonths == 6 ? Variant.Filled : Variant.Outlined)">
+                6 månader
+            </MudButton>
+            <MudButton OnClick="@(() => OnMonthsChanged(12))" 
+                       Variant="@(_selectedMonths == 12 ? Variant.Filled : Variant.Outlined)">
+                12 månader
+            </MudButton>
+            <MudButton OnClick="@(() => OnMonthsChanged(24))" 
+                       Variant="@(_selectedMonths == 24 ? Variant.Filled : Variant.Outlined)">
+                24 månader
+            </MudButton>
+        </MudButtonGroup>
+    </MudPaper>
+
+    @if (_allStatistics.Any())
+    {
+        <MudPaper Class="pa-4 mb-4" Elevation="2">
+            <MudText Typo="Typo.h6" Class="mb-4">Översikt per Kategori</MudText>
+            <MudTable Items="@_allStatistics" Dense="true" Hover="true" FixedHeader="true" Height="600px">
+                <HeaderContent>
+                    <MudTh>Kategori</MudTh>
+                    <MudTh Style="text-align: right">Totalt Inkomster</MudTh>
+                    <MudTh Style="text-align: right">Totalt Utgifter</MudTh>
+                    <MudTh Style="text-align: right">Netto</MudTh>
+                    @if (_selectedMonths >= 12)
+                    {
+                        <MudTh Style="text-align: right">12-mån Genomsnitt</MudTh>
+                    }
+                    @if (_selectedMonths >= 24)
+                    {
+                        <MudTh Style="text-align: right">24-mån Genomsnitt</MudTh>
+                    }
+                    <MudTh Style="text-align: right">Trend</MudTh>
+                    <MudTh Style="text-align: right">Åtgärder</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Kategori">
+                        <div class="d-flex align-center gap-2">
+                            <div style="@($"width: 20px; height: 20px; background-color: {context.CategoryColor}; border-radius: 50%;")" />
+                            @context.CategoryName
+                        </div>
+                    </MudTd>
+                    <MudTd DataLabel="Totalt Inkomster" Style="text-align: right">
+                        @context.TotalIncome.ToString("C", new System.Globalization.CultureInfo("sv-SE"))
+                    </MudTd>
+                    <MudTd DataLabel="Totalt Utgifter" Style="text-align: right">
+                        @context.TotalExpenses.ToString("C", new System.Globalization.CultureInfo("sv-SE"))
+                    </MudTd>
+                    <MudTd DataLabel="Netto" Style="text-align: right">
+                        <MudText Color="@(context.NetAmount >= 0 ? Color.Success : Color.Error)">
+                            @context.NetAmount.ToString("C", new System.Globalization.CultureInfo("sv-SE"))
+                        </MudText>
+                    </MudTd>
+                    @if (_selectedMonths >= 12)
+                    {
+                        <MudTd DataLabel="12-mån Genomsnitt" Style="text-align: right">
+                            @context.Average12Months.ToString("C", new System.Globalization.CultureInfo("sv-SE"))
+                        </MudTd>
+                    }
+                    @if (_selectedMonths >= 24)
+                    {
+                        <MudTd DataLabel="24-mån Genomsnitt" Style="text-align: right">
+                            @context.Average24Months.ToString("C", new System.Globalization.CultureInfo("sv-SE"))
+                        </MudTd>
+                    }
+                    <MudTd DataLabel="Trend" Style="text-align: right">
+                        <div class="d-flex align-center justify-end gap-1">
+                            @if (context.IsIncreasing)
+                            {
+                                <MudIcon Icon="@Icons.Material.Filled.TrendingUp" Color="Color.Warning" Size="Size.Small" />
+                                <MudText Color="Color.Warning">+@context.TrendPercentage.ToString("F1")%</MudText>
+                            }
+                            else
+                            {
+                                <MudIcon Icon="@Icons.Material.Filled.TrendingDown" Color="Color.Success" Size="Size.Small" />
+                                <MudText Color="Color.Success">@context.TrendPercentage.ToString("F1")%</MudText>
+                            }
+                        </div>
+                    </MudTd>
+                    <MudTd DataLabel="Åtgärder" Style="text-align: right">
+                        <MudIconButton Icon="@Icons.Material.Filled.Visibility" 
+                                     Color="Color.Primary" 
+                                     Size="Size.Small"
+                                     Title="Visa detaljer"
+                                     OnClick="@(() => NavigateToCategory(context.CategoryId))" />
+                    </MudTd>
+                </RowTemplate>
+            </MudTable>
+        </MudPaper>
+
+        <MudPaper Class="pa-4 mt-4" Elevation="2">
+            <MudText Typo="Typo.h6" Class="mb-4">Månadsvis Jämförelse - Alla Kategorier</MudText>
+            @if (_monthlyChartSeries.Any())
+            {
+                <MudChart ChartType="ChartType.Bar" 
+                          ChartSeries="@_monthlyChartSeries" 
+                          XAxisLabels="@_monthlyChartLabels"
+                          Width="100%" 
+                          Height="500px"
+                          ChartOptions="@_chartOptions" />
+            }
+            else
+            {
+                <MudText Color="Color.Secondary">Inga data att visa för vald period.</MudText>
+            }
+        </MudPaper>
+
+        <MudPaper Class="pa-4 mt-4" Elevation="2">
+            <MudText Typo="Typo.h6" Class="mb-4">Detaljerad Månadsöversikt</MudText>
+            @if (_allMonthlyData.Any())
+            {
+                <MudTable Items="@_allMonthlyData" Dense="true" Hover="true" FixedHeader="true" Height="600px">
+                    <HeaderContent>
+                        <MudTh>Månad</MudTh>
+                        @foreach (var category in _allStatistics)
+                        {
+                            <MudTh Style="text-align: right">@category.CategoryName</MudTh>
+                        }
+                        <MudTh Style="text-align: right"><strong>Totalt</strong></MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="Månad">@context.MonthLabel</MudTd>
+                        @foreach (var category in _allStatistics)
+                        {
+                            var monthData = category.MonthlyBreakdown.FirstOrDefault(m => m.MonthLabel == context.MonthLabel);
+                            var netAmount = monthData?.NetAmount ?? 0;
+                            <MudTd DataLabel="@category.CategoryName" Style="text-align: right">
+                                <MudText Color="@(netAmount >= 0 ? Color.Success : Color.Error)">
+                                    @netAmount.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))
+                                </MudText>
+                            </MudTd>
+                        }
+                        <MudTd DataLabel="Totalt" Style="text-align: right">
+                            <MudText Color="@(context.TotalNet >= 0 ? Color.Success : Color.Error)">
+                                <strong>@context.TotalNet.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))</strong>
+                            </MudText>
+                        </MudTd>
+                    </RowTemplate>
+                </MudTable>
+            }
+            else
+            {
+                <MudText Color="Color.Secondary">Inga data att visa för vald period.</MudText>
+            }
+        </MudPaper>
+    }
+    else
+    {
+        <MudPaper Class="pa-4 mt-4">
+            <MudText Color="Color.Secondary">Inga kategorier med data för vald period.</MudText>
+        </MudPaper>
+    }
+}
+
+@code {
+    private bool _loading = true;
+    private int _selectedMonths = 12;
+    private List<CategoryStatistics> _allStatistics = new();
+    private List<MonthlyTotalData> _allMonthlyData = new();
+    
+    private List<ChartSeries> _monthlyChartSeries = new();
+    private string[] _monthlyChartLabels = Array.Empty<string>();
+    private ChartOptions _chartOptions = new ChartOptions
+    {
+        YAxisTicks = 1000,
+        MaxNumYAxisTicks = 10,
+        YAxisFormat = "C0",
+        InterpolationOption = InterpolationOption.Straight
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAllCategoryStatistics();
+        _loading = false;
+    }
+
+    private async Task OnMonthsChanged(int months)
+    {
+        _selectedMonths = months;
+        await LoadAllCategoryStatistics();
+    }
+
+    private async Task LoadAllCategoryStatistics()
+    {
+        _loading = true;
+        StateHasChanged();
+
+        try
+        {
+            var statistics = await CategoryService.GetAllCategoryStatisticsAsync(_selectedMonths);
+            _allStatistics = statistics.Where(s => s.TotalIncome > 0 || s.TotalExpenses > 0).ToList();
+            
+            PrepareChartData();
+            PrepareMonthlyData();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Fel vid hämtning av kategoristatistik: {ex.Message}", Severity.Error);
+        }
+
+        _loading = false;
+    }
+
+    private void PrepareChartData()
+    {
+        if (!_allStatistics.Any())
+        {
+            _monthlyChartSeries = new List<ChartSeries>();
+            _monthlyChartLabels = Array.Empty<string>();
+            return;
+        }
+
+        // Get all unique months
+        var allMonths = _allStatistics
+            .SelectMany(s => s.MonthlyBreakdown)
+            .Select(m => m.MonthLabel)
+            .Distinct()
+            .OrderBy(m => m)
+            .ToList();
+
+        _monthlyChartLabels = allMonths.ToArray();
+
+        // Create a series for each category
+        _monthlyChartSeries = _allStatistics.Select(stats => new ChartSeries
+        {
+            Name = stats.CategoryName,
+            Data = allMonths.Select(month =>
+            {
+                var monthData = stats.MonthlyBreakdown.FirstOrDefault(m => m.MonthLabel == month);
+                return (double)Math.Abs(monthData?.NetAmount ?? 0);
+            }).ToArray()
+        }).ToList();
+    }
+
+    private void PrepareMonthlyData()
+    {
+        if (!_allStatistics.Any())
+        {
+            _allMonthlyData = new List<MonthlyTotalData>();
+            return;
+        }
+
+        // Get all unique months
+        var allMonths = _allStatistics
+            .SelectMany(s => s.MonthlyBreakdown)
+            .Where(m => m.TransactionCount > 0)
+            .Select(m => m.MonthLabel)
+            .Distinct()
+            .OrderByDescending(m => m)
+            .ToList();
+
+        _allMonthlyData = allMonths.Select(month =>
+        {
+            var totalNet = _allStatistics.Sum(stats =>
+            {
+                var monthData = stats.MonthlyBreakdown.FirstOrDefault(m => m.MonthLabel == month);
+                return monthData?.NetAmount ?? 0;
+            });
+
+            return new MonthlyTotalData
+            {
+                MonthLabel = month,
+                TotalNet = totalNet
+            };
+        }).ToList();
+    }
+
+    private void NavigateToCategory(int categoryId)
+    {
+        NavigationManager.NavigateTo($"/category-overview?categoryId={categoryId}&months={_selectedMonths}");
+    }
+
+    private class MonthlyTotalData
+    {
+        public string MonthLabel { get; set; } = string.Empty;
+        public decimal TotalNet { get; set; }
+    }
+}

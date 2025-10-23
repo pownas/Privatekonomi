@@ -1,0 +1,393 @@
+@page "/networth-chart"
+@rendermode InteractiveServer
+@inject IReportService ReportService
+@inject ISnackbar Snackbar
+@inject IJSRuntime JSRuntime
+
+<PageTitle>Nettoförmögenhetskurva - Privatekonomi</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-4">Nettoförmögenhetskurva</MudText>
+
+@if (_loading)
+{
+    <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+}
+else
+{
+    <!-- Summary Cards -->
+    <MudGrid Class="mb-4">
+        <MudItem xs="12" md="3">
+            <MudCard Elevation="2" Class="pa-4">
+                <MudCardContent>
+                    <MudText Typo="Typo.h6" Color="Color.Info">Nuvarande Nettoförmögenhet</MudText>
+                    <MudText Typo="Typo.h4" Color="@(_report.CurrentNetWorth >= 0 ? Color.Success : Color.Error)">
+                        @_report.CurrentNetWorth.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))
+                    </MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+        
+        <MudItem xs="12" md="3">
+            <MudCard Elevation="2" Class="pa-4">
+                <MudCardContent>
+                    <MudText Typo="Typo.h6">Startförmögenhet</MudText>
+                    <MudText Typo="Typo.h4">
+                        @_report.StartNetWorth.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))
+                    </MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+        
+        <MudItem xs="12" md="3">
+            <MudCard Elevation="2" Class="pa-4">
+                <MudCardContent>
+                    <MudText Typo="Typo.h6">Förändring</MudText>
+                    <MudText Typo="Typo.h4" Color="@(_report.NetWorthChange >= 0 ? Color.Success : Color.Error)">
+                        @(_report.NetWorthChange >= 0 ? "+" : "")@_report.NetWorthChange.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))
+                    </MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+        
+        <MudItem xs="12" md="3">
+            <MudCard Elevation="2" Class="pa-4">
+                <MudCardContent>
+                    <MudText Typo="Typo.h6">Förändring (%)</MudText>
+                    <MudText Typo="Typo.h4" Color="@(_report.NetWorthChangePercentage >= 0 ? Color.Success : Color.Error)">
+                        @(_report.NetWorthChangePercentage >= 0 ? "+" : "")@_report.NetWorthChangePercentage.ToString("F1")%
+                    </MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+
+    <!-- Filters -->
+    <MudPaper Class="pa-4 mb-4">
+        <MudGrid>
+            <MudItem xs="12" md="4">
+                <MudText Typo="Typo.subtitle1" Class="mb-2">Tidsperiod</MudText>
+                <MudButtonGroup Color="Color.Primary" Variant="Variant.Outlined">
+                    <MudButton OnClick="@(() => LoadPredefinedPeriod(12))" 
+                               Variant="@(_selectedPeriodMonths == 12 ? Variant.Filled : Variant.Outlined)">
+                        Senaste året
+                    </MudButton>
+                    <MudButton OnClick="@(() => LoadPredefinedPeriod(24))" 
+                               Variant="@(_selectedPeriodMonths == 24 ? Variant.Filled : Variant.Outlined)">
+                        2 år
+                    </MudButton>
+                    <MudButton OnClick="@(() => LoadPredefinedPeriod(60))" 
+                               Variant="@(_selectedPeriodMonths == 60 ? Variant.Filled : Variant.Outlined)">
+                        5 år
+                    </MudButton>
+                    <MudButton OnClick="@(() => LoadAllHistory())" 
+                               Variant="@(_selectedPeriodMonths == null ? Variant.Filled : Variant.Outlined)">
+                        All historik
+                    </MudButton>
+                </MudButtonGroup>
+            </MudItem>
+            
+            <MudItem xs="12" md="4">
+                <MudText Typo="Typo.subtitle1" Class="mb-2">Gruppering</MudText>
+                <MudButtonGroup Color="Color.Primary" Variant="Variant.Outlined">
+                    <MudButton OnClick="@(() => ChangeGrouping("month"))" 
+                               Variant="@(_selectedGroupBy == "month" ? Variant.Filled : Variant.Outlined)">
+                        Månadsvis
+                    </MudButton>
+                    <MudButton OnClick="@(() => ChangeGrouping("quarter"))" 
+                               Variant="@(_selectedGroupBy == "quarter" ? Variant.Filled : Variant.Outlined)">
+                        Kvartalsvis
+                    </MudButton>
+                    <MudButton OnClick="@(() => ChangeGrouping("year"))" 
+                               Variant="@(_selectedGroupBy == "year" ? Variant.Filled : Variant.Outlined)">
+                        Årligen
+                    </MudButton>
+                </MudButtonGroup>
+            </MudItem>
+            
+            <MudItem xs="12" md="4" Class="d-flex align-end justify-end">
+                <MudButtonGroup Variant="Variant.Outlined">
+                    <MudButton StartIcon="@Icons.Material.Filled.FileDownload" 
+                               OnClick="ExportToCSV"
+                               Color="Color.Primary">
+                        Exportera CSV
+                    </MudButton>
+                    <MudButton StartIcon="@Icons.Material.Filled.Image" 
+                               OnClick="ExportToPNG"
+                               Color="Color.Primary">
+                        Exportera PNG
+                    </MudButton>
+                </MudButtonGroup>
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+
+    <!-- Chart -->
+    @if (_report.Periods.Any())
+    {
+        <MudPaper Class="pa-4 mb-4" Elevation="2">
+            <MudText Typo="Typo.h6" Class="mb-4">Nettoförmögenhetsutveckling</MudText>
+            <MudChart ChartType="ChartType.Line" 
+                      ChartSeries="@_chartSeries" 
+                      XAxisLabels="@_xAxisLabels"
+                      Width="100%" 
+                      Height="400px"
+                      ChartOptions="@_chartOptions" />
+        </MudPaper>
+
+        <!-- Asset and Liability Breakdown -->
+        <MudGrid>
+            <MudItem xs="12" md="6">
+                <MudPaper Class="pa-4" Elevation="2">
+                    <MudText Typo="Typo.h6" Class="mb-4">Tillgångar över tid</MudText>
+                    @if (_assetChartSeries.Any())
+                    {
+                        <MudChart ChartType="ChartType.Line" 
+                                  ChartSeries="@_assetChartSeries" 
+                                  XAxisLabels="@_xAxisLabels"
+                                  Width="100%" 
+                                  Height="300px"
+                                  ChartOptions="@_chartOptions" />
+                    }
+                    else
+                    {
+                        <MudText>Inga tillgångsdata att visa.</MudText>
+                    }
+                </MudPaper>
+            </MudItem>
+
+            <MudItem xs="12" md="6">
+                <MudPaper Class="pa-4" Elevation="2">
+                    <MudText Typo="Typo.h6" Class="mb-4">Skulder över tid</MudText>
+                    @if (_liabilityChartSeries.Any())
+                    {
+                        <MudChart ChartType="ChartType.Line" 
+                                  ChartSeries="@_liabilityChartSeries" 
+                                  XAxisLabels="@_xAxisLabels"
+                                  Width="100%" 
+                                  Height="300px"
+                                  ChartOptions="@_chartOptions" />
+                    }
+                    else
+                    {
+                        <MudText>Inga skulddata att visa.</MudText>
+                    }
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+
+        <!-- Data Table -->
+        <MudPaper Class="pa-4 mt-4" Elevation="2">
+            <MudText Typo="Typo.h6" Class="mb-4">Detaljerad Historik</MudText>
+            <MudTable Items="@_report.Periods" Dense="true" Hover="true" Striped="true">
+                <HeaderContent>
+                    <MudTh>Period</MudTh>
+                    <MudTh Style="text-align: right">Nettoförmögenhet</MudTh>
+                    <MudTh Style="text-align: right">Tillgångar</MudTh>
+                    <MudTh Style="text-align: right">Skulder</MudTh>
+                    <MudTh Style="text-align: right">Förändring</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Period">@context.Period</MudTd>
+                    <MudTd DataLabel="Nettoförmögenhet" Style="text-align: right">
+                        <MudText Color="@(context.NetWorth >= 0 ? Color.Success : Color.Error)">
+                            @context.NetWorth.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))
+                        </MudText>
+                    </MudTd>
+                    <MudTd DataLabel="Tillgångar" Style="text-align: right">
+                        @context.TotalAssets.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))
+                    </MudTd>
+                    <MudTd DataLabel="Skulder" Style="text-align: right">
+                        @context.TotalLiabilities.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))
+                    </MudTd>
+                    <MudTd DataLabel="Förändring" Style="text-align: right">
+                        @{
+                            var index = _report.Periods.IndexOf(context);
+                            if (index > 0)
+                            {
+                                var previousPeriod = _report.Periods[index - 1];
+                                var change = context.NetWorth - previousPeriod.NetWorth;
+                                var color = change >= 0 ? Color.Success : Color.Error;
+                                <MudText Color="@color">
+                                    @(change >= 0 ? "+" : "")@change.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))
+                                </MudText>
+                            }
+                            else
+                            {
+                                <MudText>-</MudText>
+                            }
+                        }
+                    </MudTd>
+                </RowTemplate>
+            </MudTable>
+        </MudPaper>
+    }
+    else
+    {
+        <MudAlert Severity="Severity.Info" Class="my-4">
+            <MudText>Ingen historik tillgänglig ännu. Data samlas automatiskt varje dag.</MudText>
+            <MudText Typo="Typo.body2" Class="mt-2">
+                Systemet tar snapshots av din nettoförmögenhet dagligen för att bygga upp historik över tid.
+            </MudText>
+        </MudAlert>
+    }
+}
+
+@code {
+    private bool _loading = true;
+    private NetWorthHistoryReport _report = new();
+    private int? _selectedPeriodMonths = 12;
+    private string _selectedGroupBy = "month";
+    
+    // Chart data
+    private List<ChartSeries> _chartSeries = new();
+    private List<ChartSeries> _assetChartSeries = new();
+    private List<ChartSeries> _liabilityChartSeries = new();
+    private string[] _xAxisLabels = Array.Empty<string>();
+    private ChartOptions _chartOptions = new ChartOptions
+    {
+        YAxisTicks = 100000,
+        YAxisFormat = "C0",
+        InterpolationOption = InterpolationOption.NaturalSpline,
+        LineStrokeWidth = 3
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        _loading = true;
+        
+        DateTime? fromDate = null;
+        if (_selectedPeriodMonths.HasValue)
+        {
+            fromDate = DateTime.Today.AddMonths(-_selectedPeriodMonths.Value);
+        }
+        
+        _report = await ReportService.GetNetWorthHistoryAsync(_selectedGroupBy, fromDate, null);
+        
+        PrepareChartData();
+        
+        _loading = false;
+        StateHasChanged();
+    }
+
+    private void PrepareChartData()
+    {
+        if (!_report.Periods.Any())
+        {
+            _chartSeries = new List<ChartSeries>();
+            _assetChartSeries = new List<ChartSeries>();
+            _liabilityChartSeries = new List<ChartSeries>();
+            _xAxisLabels = Array.Empty<string>();
+            return;
+        }
+
+        _xAxisLabels = _report.Periods.Select(p => p.Period).ToArray();
+
+        // Net worth line chart
+        _chartSeries = new List<ChartSeries>
+        {
+            new ChartSeries
+            {
+                Name = "Nettoförmögenhet",
+                Data = _report.Periods.Select(p => (double)p.NetWorth).ToArray()
+            }
+        };
+
+        // Asset breakdown stacked area chart
+        _assetChartSeries = new List<ChartSeries>();
+        
+        if (_report.Periods.Any(p => p.BankBalance.HasValue && p.BankBalance > 0))
+        {
+            _assetChartSeries.Add(new ChartSeries
+            {
+                Name = "Bankkonton",
+                Data = _report.Periods.Select(p => (double)(p.BankBalance ?? 0)).ToArray()
+            });
+        }
+
+        if (_report.Periods.Any(p => p.InvestmentValue.HasValue && p.InvestmentValue > 0))
+        {
+            _assetChartSeries.Add(new ChartSeries
+            {
+                Name = "Investeringar",
+                Data = _report.Periods.Select(p => (double)(p.InvestmentValue ?? 0)).ToArray()
+            });
+        }
+
+        if (_report.Periods.Any(p => p.PhysicalAssetValue.HasValue && p.PhysicalAssetValue > 0))
+        {
+            _assetChartSeries.Add(new ChartSeries
+            {
+                Name = "Fysiska tillgångar",
+                Data = _report.Periods.Select(p => (double)(p.PhysicalAssetValue ?? 0)).ToArray()
+            });
+        }
+
+        // Liability line chart
+        _liabilityChartSeries = new List<ChartSeries>();
+        
+        if (_report.Periods.Any(p => p.LoanBalance.HasValue && p.LoanBalance > 0))
+        {
+            _liabilityChartSeries.Add(new ChartSeries
+            {
+                Name = "Lån & Krediter",
+                Data = _report.Periods.Select(p => (double)(p.LoanBalance ?? 0)).ToArray()
+            });
+        }
+    }
+
+    private async Task LoadPredefinedPeriod(int months)
+    {
+        _selectedPeriodMonths = months;
+        await LoadData();
+    }
+
+    private async Task LoadAllHistory()
+    {
+        _selectedPeriodMonths = null;
+        await LoadData();
+    }
+
+    private async Task ChangeGrouping(string groupBy)
+    {
+        _selectedGroupBy = groupBy;
+        await LoadData();
+    }
+
+    private async Task ExportToCSV()
+    {
+        try
+        {
+            var csv = new System.Text.StringBuilder();
+            csv.AppendLine("Period,Nettoförmögenhet,Tillgångar,Skulder,Bankkonton,Investeringar,Fysiska Tillgångar,Lån");
+
+            foreach (var period in _report.Periods)
+            {
+                csv.AppendLine($"{period.Period},{period.NetWorth},{period.TotalAssets},{period.TotalLiabilities},{period.BankBalance ?? 0},{period.InvestmentValue ?? 0},{period.PhysicalAssetValue ?? 0},{period.LoanBalance ?? 0}");
+            }
+
+            var bytes = System.Text.Encoding.UTF8.GetBytes(csv.ToString());
+            var base64 = Convert.ToBase64String(bytes);
+            var fileName = $"nettofömögenhet_{DateTime.Now:yyyyMMdd}.csv";
+
+            await JSRuntime.InvokeVoidAsync("downloadFile", fileName, "text/csv", base64);
+            Snackbar.Add("CSV-filen har exporterats", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Fel vid export: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task ExportToPNG()
+    {
+        // This would require additional JavaScript integration to capture the chart as an image
+        // For now, show a message
+        Snackbar.Add("PNG-export kommer snart. Använd skärmdump tills vidare.", Severity.Info);
+        await Task.CompletedTask;
+    }
+}

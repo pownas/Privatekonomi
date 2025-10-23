@@ -1,0 +1,65 @@
+@using MudBlazor
+
+<MudDialog>
+    <DialogContent>
+        <MudText Class="mb-3">
+            @(IsDeposit ? "Sätt in pengar i" : "Ta ut pengar från") <strong>@PocketName</strong>
+        </MudText>
+
+        <MudNumericField @bind-Value="_amount" 
+                         Label="Belopp (kr)" 
+                         Variant="Variant.Outlined"
+                         Min="0"
+                         Max="@(MaxAmount ?? decimal.MaxValue)"
+                         Format="N2"
+                         Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                         Class="mb-3" />
+
+        @if (!IsDeposit && MaxAmount.HasValue)
+        {
+            <MudText Typo="Typo.body2" Color="Color.Info" Class="mb-3">
+                Tillgängligt saldo: @MaxAmount.Value.ToString("C", new System.Globalization.CultureInfo("sv-SE"))
+            </MudText>
+        }
+
+        <MudTextField @bind-Value="_description" 
+                      Label="Beskrivning (valfritt)" 
+                      Variant="Variant.Outlined"
+                      Lines="2"
+                      MaxLength="500"
+                      Class="mb-3" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Avbryt</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Submit">@(IsDeposit ? "Sätt in" : "Ta ut")</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] 
+    public required IMudDialogInstance MudDialog { get; set; }
+
+    [Parameter] public string PocketName { get; set; } = string.Empty;
+    [Parameter] public bool IsDeposit { get; set; } = true;
+    [Parameter] public decimal? MaxAmount { get; set; }
+
+    private decimal _amount;
+    private string _description = string.Empty;
+
+    void Submit()
+    {
+        if (_amount <= 0)
+        {
+            return;
+        }
+
+        if (!IsDeposit && MaxAmount.HasValue && _amount > MaxAmount.Value)
+        {
+            return;
+        }
+
+        MudDialog.Close(DialogResult.Ok((_amount, _description)));
+    }
+
+    void Cancel() => MudDialog.Cancel();
+}

@@ -1,0 +1,61 @@
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudText Typo="Typo.body1" Class="mb-4">
+            Flytta transaktionen "<strong>@Transaction?.Description</strong>" till en annan kategori.
+        </MudText>
+
+        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-2">
+            Nuvarande belopp: @Transaction?.Amount.ToString("C", new System.Globalization.CultureInfo("sv-SE"))
+        </MudText>
+
+        <MudSelect @bind-Value="_selectedCategoryId" Label="Ny Kategori" Variant="Variant.Outlined" Required="true" Class="mt-4">
+            @foreach (var category in Categories.Where(c => c.CategoryId != CurrentCategoryId))
+            {
+                <MudSelectItem Value="@category.CategoryId">
+                    <div class="d-flex align-center gap-2">
+                        <div style="@($"width: 20px; height: 20px; background-color: {category.Color}; border-radius: 50%;")" />
+                        @category.Name
+                    </div>
+                </MudSelectItem>
+            }
+        </MudSelect>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Avbryt</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit" Disabled="@(_selectedCategoryId <= 0)">Flytta</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] 
+    public required IMudDialogInstance MudDialog { get; set; }
+
+    [Parameter] 
+    public Transaction? Transaction { get; set; }
+
+    [Parameter] 
+    public List<Category> Categories { get; set; } = new();
+
+    [Parameter]
+    public int CurrentCategoryId { get; set; }
+
+    private int _selectedCategoryId = 0;
+
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+
+    private void Submit()
+    {
+        if (_selectedCategoryId <= 0)
+        {
+            Snackbar.Add("Välj en kategori", Severity.Warning);
+            return;
+        }
+
+        MudDialog.Close(DialogResult.Ok(_selectedCategoryId));
+    }
+}
