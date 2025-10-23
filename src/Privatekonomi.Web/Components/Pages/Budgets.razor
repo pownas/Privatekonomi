@@ -10,9 +10,20 @@
 
 <div class="d-flex justify-space-between align-center mb-4">
     <MudText Typo="Typo.h4">Budgethantering</MudText>
-    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="ToggleCreateForm">
-        Ny Budget
-    </MudButton>
+    <div class="d-flex gap-2">
+        <MudButton Variant="Variant.Outlined" 
+                   Color="Color.Secondary" 
+                   StartIcon="@Icons.Material.Filled.AutoMode"
+                   OnClick="CreateNextMonthBudgets">
+            Skapa Nästa Månads Budgetar
+        </MudButton>
+        <MudButton Variant="Variant.Filled" 
+                   Color="Color.Primary" 
+                   StartIcon="@Icons.Material.Filled.Add" 
+                   OnClick="ToggleCreateForm">
+            Ny Budget
+        </MudButton>
+    </div>
 </div>
 
 @if (_showCreateForm || _editingBudget != null)
@@ -559,5 +570,27 @@
     {
         var now = DateTime.Now;
         return budget.StartDate <= now && budget.EndDate >= now;
+    }
+
+    private async Task CreateNextMonthBudgets()
+    {
+        try
+        {
+            var createdBudgets = await BudgetService.CreateNextMonthBudgetsForAllActiveAsync();
+            
+            if (createdBudgets.Any())
+            {
+                Snackbar.Add($"{createdBudgets.Count()} budget(ar) skapade för nästa månad!", Severity.Success);
+                await LoadData();
+            }
+            else
+            {
+                Snackbar.Add("Inga budgetar behöver skapas. Budgetar skapas automatiskt under de sista 3 dagarna av månaden.", Severity.Info);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Fel vid skapande av nästa månads budgetar: {ex.Message}", Severity.Error);
+        }
     }
 }
