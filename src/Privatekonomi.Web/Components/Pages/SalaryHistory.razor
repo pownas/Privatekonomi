@@ -309,7 +309,7 @@ else
         }
 
         // Check if we have enough data points for line charts (minimum 4 required for MudChart Line)
-        if (_salaries.Count < 4)
+        if (_salaries.Count() < 4)
         {
             _chartSeries = new List<ChartSeries>();
             _chartLabels = Array.Empty<string>();
