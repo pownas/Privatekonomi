@@ -476,37 +476,64 @@ else
         // Get top 5 categories by total amount
         var topCategories = expensesByCategory.Take(5).Select(x => x.Category).ToList();
 
-        _barChartSeries = topCategories.Select(category => new ChartSeries
+        // Only create chart series if we have data
+        if (monthlyData.Any() && topCategories.Any())
         {
-            Name = category,
-            Data = monthlyData.Select(m => m.Categories.ContainsKey(category) ? (double)m.Categories[category] : 0).ToArray()
-        }).ToList();
+            _barChartSeries = topCategories.Select(category => new ChartSeries
+            {
+                Name = category,
+                Data = monthlyData.Select(m => m.Categories.ContainsKey(category) ? (double)m.Categories[category] : 0).ToArray()
+            }).ToList();
+        }
+        else
+        {
+            _barChartSeries = new List<ChartSeries>();
+        }
 
         // Cash flow chart
         try
         {
             var cashFlowReport = await ReportService.GetCashFlowReportAsync(cutoffDate, DateTime.Now);
             
-            _cashFlowLabels = cashFlowReport.Periods.Select(p => p.Period).ToArray();
-            
-            _cashFlowSeries = new List<ChartSeries>
+            // Check if we have enough data points for chart rendering (minimum 4 required for MudChart Line)
+            if (cashFlowReport.Periods.Count >= 4)
             {
-                new ChartSeries
+                _cashFlowLabels = cashFlowReport.Periods.Select(p => p.Period).ToArray();
+                
+                _cashFlowSeries = new List<ChartSeries>
                 {
-                    Name = "Inkomster",
-                    Data = cashFlowReport.Periods.Select(p => (double)p.Income).ToArray()
-                },
-                new ChartSeries
+                    new ChartSeries
+                    {
+                        Name = "Inkomster",
+                        Data = cashFlowReport.Periods.Select(p => (double)p.Income).ToArray()
+                    },
+                    new ChartSeries
+                    {
+                        Name = "Utgifter",
+                        Data = cashFlowReport.Periods.Select(p => (double)p.Expenses).ToArray()
+                    },
+                    new ChartSeries
+                    {
+                        Name = "Netto",
+                        Data = cashFlowReport.Periods.Select(p => (double)p.NetFlow).ToArray()
+                    }
+                };
+            }
+            else
+            {
+                // Not enough data for chart - clear series and show message
+                _cashFlowSeries = new List<ChartSeries>();
+                _cashFlowLabels = Array.Empty<string>();
+                
+                if (cashFlowReport.Periods.Count == 0)
                 {
-                    Name = "Utgifter",
-                    Data = cashFlowReport.Periods.Select(p => (double)p.Expenses).ToArray()
-                },
-                new ChartSeries
-                {
-                    Name = "Netto",
-                    Data = cashFlowReport.Periods.Select(p => (double)p.NetFlow).ToArray()
+                    Snackbar.Add("Inga transaktioner hittades för vald period", Severity.Info);
                 }
-            };
+                else
+                {
+                    Snackbar.Add($"Otillräckligt med data för kassaflödesdiagram (behöver minst 4 månader, har {cashFlowReport.Periods.Count})", Severity.Info);
+                }
+            }
         }
         catch (Exception ex)
         {
