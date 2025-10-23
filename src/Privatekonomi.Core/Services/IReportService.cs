@@ -23,6 +23,16 @@ public interface IReportService
     /// Get top merchants/payees by spending
     /// </summary>
     Task<IEnumerable<TopMerchant>> GetTopMerchantsAsync(int limit = 10, DateTime? fromDate = null, DateTime? toDate = null);
+    
+    /// <summary>
+    /// Get net worth history over time
+    /// </summary>
+    Task<NetWorthHistoryReport> GetNetWorthHistoryAsync(string groupBy = "month", DateTime? fromDate = null, DateTime? toDate = null);
+    
+    /// <summary>
+    /// Create a snapshot of current net worth
+    /// </summary>
+    Task<NetWorthSnapshot> CreateNetWorthSnapshotAsync(bool isManual = false, string? notes = null);
 }
 
 public class CashFlowReport
@@ -89,4 +99,29 @@ public class TopMerchant
     public decimal TotalSpent { get; set; }
     public int TransactionCount { get; set; }
     public decimal AverageTransaction { get; set; }
+}
+
+public class NetWorthHistoryReport
+{
+    public List<NetWorthHistoryPeriod> Periods { get; set; } = new();
+    public decimal CurrentNetWorth { get; set; }
+    public decimal StartNetWorth { get; set; }
+    public decimal NetWorthChange { get; set; }
+    public decimal NetWorthChangePercentage { get; set; }
+    public DateTime StartDate { get; set; }
+    public DateTime EndDate { get; set; }
+    public string GroupBy { get; set; } = "month";
+}
+
+public class NetWorthHistoryPeriod
+{
+    public string Period { get; set; } = string.Empty; // e.g., "2025-01"
+    public DateTime Date { get; set; }
+    public decimal NetWorth { get; set; }
+    public decimal TotalAssets { get; set; }
+    public decimal TotalLiabilities { get; set; }
+    public decimal? BankBalance { get; set; }
+    public decimal? InvestmentValue { get; set; }
+    public decimal? PhysicalAssetValue { get; set; }
+    public decimal? LoanBalance { get; set; }
 }

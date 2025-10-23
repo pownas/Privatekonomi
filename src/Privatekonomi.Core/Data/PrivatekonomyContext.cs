@@ -50,6 +50,9 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
     public DbSet<CapitalGain> CapitalGains { get; set; }
     public DbSet<CommuteDeduction> CommuteDeductions { get; set; }
     public DbSet<CreditRating> CreditRatings { get; set; }
+    
+    // Net Worth Tracking
+    public DbSet<NetWorthSnapshot> NetWorthSnapshots { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -851,6 +854,32 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
             entity.HasIndex(e => e.UserId);
             entity.HasIndex(e => e.IsRead);
             entity.HasIndex(e => new { e.UserId, e.IsRead });
+        });
+        
+        // Net Worth Snapshot configuration
+        modelBuilder.Entity<NetWorthSnapshot>(entity =>
+        {
+            entity.HasKey(e => e.NetWorthSnapshotId);
+            entity.Property(e => e.Date).IsRequired();
+            entity.Property(e => e.TotalAssets).HasPrecision(18, 2);
+            entity.Property(e => e.TotalLiabilities).HasPrecision(18, 2);
+            entity.Property(e => e.NetWorth).HasPrecision(18, 2);
+            entity.Property(e => e.BankBalance).HasPrecision(18, 2);
+            entity.Property(e => e.InvestmentValue).HasPrecision(18, 2);
+            entity.Property(e => e.PhysicalAssetValue).HasPrecision(18, 2);
+            entity.Property(e => e.LoanBalance).HasPrecision(18, 2);
+            entity.Property(e => e.IsManual).IsRequired();
+            entity.Property(e => e.Notes).HasMaxLength(1000);
+            entity.Property(e => e.CreatedAt).IsRequired();
+            
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.HasIndex(e => e.UserId);
+            entity.HasIndex(e => e.Date);
+            entity.HasIndex(e => new { e.UserId, e.Date });
         });
     }
 }
