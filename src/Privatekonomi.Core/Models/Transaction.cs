@@ -62,7 +62,14 @@ public class Transaction
     /// </summary>
     public int? PocketId { get; set; }
     
+    /// <summary>
+    /// Link to household if this transaction belongs to a specific household
+    /// Null value indicates a personal transaction not linked to any household
+    /// </summary>
+    public int? HouseholdId { get; set; }
+    
     public BankSource? BankSource { get; set; }
     public Pocket? Pocket { get; set; }
+    public Household? Household { get; set; }
     public ICollection<TransactionCategory> TransactionCategories { get; set; } = new List<TransactionCategory>();
 }

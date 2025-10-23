@@ -199,6 +199,11 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
                 .HasForeignKey(e => e.PocketId)
                 .OnDelete(DeleteBehavior.SetNull);
             
+            entity.HasOne(e => e.Household)
+                .WithMany()
+                .HasForeignKey(e => e.HouseholdId)
+                .OnDelete(DeleteBehavior.SetNull);
+            
             entity.HasOne(e => e.User)
                 .WithMany()
                 .HasForeignKey(e => e.UserId)
@@ -208,7 +213,9 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
             entity.HasIndex(e => e.Date);
             entity.HasIndex(e => e.UserId);
             entity.HasIndex(e => e.PocketId);
+            entity.HasIndex(e => e.HouseholdId);
             entity.HasIndex(e => new { e.BankSourceId, e.Date });
+            entity.HasIndex(e => new { e.HouseholdId, e.Date });
             entity.HasIndex(e => e.Payee);
         });
 
