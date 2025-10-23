@@ -411,11 +411,6 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
             entity.HasIndex(e => e.Period);
             entity.HasIndex(e => new { e.UserId, e.Period });
             entity.HasIndex(e => e.IsCurrent);
-            entity.HasIndex(e => e.BankSourceId);
-            
-            // Ignore computed properties
-            entity.Ignore(e => e.ProgressPercentage);
-            entity.Ignore(e => e.RemainingAmount);
         });
 
         // Pocket configuration
