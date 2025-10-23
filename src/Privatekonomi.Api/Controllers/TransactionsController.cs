@@ -23,6 +23,7 @@ public class TransactionsController : ControllerBase
         [FromQuery] DateTime? start_date,
         [FromQuery] DateTime? end_date,
         [FromQuery] int? category_id,
+        [FromQuery] int? household_id,
         [FromQuery] int page = 1,
         [FromQuery] int per_page = 50)
     {
@@ -50,6 +51,11 @@ public class TransactionsController : ControllerBase
             {
                 transactions = transactions.Where(t => 
                     t.TransactionCategories.Any(tc => tc.CategoryId == category_id.Value));
+            }
+            
+            if (household_id.HasValue)
+            {
+                transactions = transactions.Where(t => t.HouseholdId == household_id.Value);
             }
             
             // Apply pagination
@@ -195,6 +201,39 @@ public class TransactionsController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error deleting transaction {TransactionId}", id);
+            return StatusCode(500, "Internal server error");
+        }
+    }
+
+    [HttpGet("household/{householdId}")]
+    public async Task<ActionResult<IEnumerable<Transaction>>> GetTransactionsByHousehold(int householdId)
+    {
+        try
+        {
+            var transactions = await _transactionService.GetTransactionsByHouseholdAsync(householdId);
+            return Ok(transactions);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving transactions for household {HouseholdId}", householdId);
+            return StatusCode(500, "Internal server error");
+        }
+    }
+
+    [HttpGet("household/{householdId}/date-range")]
+    public async Task<ActionResult<IEnumerable<Transaction>>> GetTransactionsByHouseholdAndDateRange(
+        int householdId,
+        [FromQuery] DateTime from, 
+        [FromQuery] DateTime to)
+    {
+        try
+        {
+            var transactions = await _transactionService.GetTransactionsByHouseholdAndDateRangeAsync(householdId, from, to);
+            return Ok(transactions);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving transactions for household {HouseholdId} by date range", householdId);
             return StatusCode(500, "Internal server error");
         }
     }

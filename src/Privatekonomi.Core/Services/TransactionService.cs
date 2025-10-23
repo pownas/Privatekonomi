@@ -209,4 +209,42 @@ public class TransactionService : ITransactionService
 
         await _context.SaveChangesAsync();
     }
+
+    public async Task<IEnumerable<Transaction>> GetTransactionsByHouseholdAsync(int householdId)
+    {
+        var query = _context.Transactions
+            .Include(t => t.BankSource)
+            .Include(t => t.TransactionCategories)
+            .ThenInclude(tc => tc.Category)
+            .Include(t => t.Household)
+            .Where(t => t.HouseholdId == householdId)
+            .AsQueryable();
+
+        // Filter by current user if authenticated
+        if (_currentUserService?.IsAuthenticated == true && _currentUserService.UserId != null)
+        {
+            query = query.Where(t => t.UserId == _currentUserService.UserId);
+        }
+
+        return await query.OrderByDescending(t => t.Date).ToListAsync();
+    }
+
+    public async Task<IEnumerable<Transaction>> GetTransactionsByHouseholdAndDateRangeAsync(int householdId, DateTime from, DateTime to)
+    {
+        var query = _context.Transactions
+            .Include(t => t.BankSource)
+            .Include(t => t.TransactionCategories)
+            .ThenInclude(tc => tc.Category)
+            .Include(t => t.Household)
+            .Where(t => t.HouseholdId == householdId && t.Date >= from && t.Date <= to)
+            .AsQueryable();
+
+        // Filter by current user if authenticated
+        if (_currentUserService?.IsAuthenticated == true && _currentUserService.UserId != null)
+        {
+            query = query.Where(t => t.UserId == _currentUserService.UserId);
+        }
+
+        return await query.OrderByDescending(t => t.Date).ToListAsync();
+    }
 }

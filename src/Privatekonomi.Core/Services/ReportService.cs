@@ -13,12 +13,17 @@ public class ReportService : IReportService
         _context = context;
     }
 
-    public async Task<CashFlowReport> GetCashFlowReportAsync(DateTime fromDate, DateTime toDate, string groupBy = "month")
+    public async Task<CashFlowReport> GetCashFlowReportAsync(DateTime fromDate, DateTime toDate, string groupBy = "month", int? householdId = null)
     {
-        var transactions = await _context.Transactions
-            .Where(t => t.Date >= fromDate && t.Date <= toDate)
-            .OrderBy(t => t.Date)
-            .ToListAsync();
+        var query = _context.Transactions
+            .Where(t => t.Date >= fromDate && t.Date <= toDate);
+
+        if (householdId.HasValue)
+        {
+            query = query.Where(t => t.HouseholdId == householdId.Value);
+        }
+
+        var transactions = await query.OrderBy(t => t.Date).ToListAsync();
 
         var periods = new List<CashFlowPeriod>();
         
@@ -138,12 +143,17 @@ public class ReportService : IReportService
         };
     }
 
-    public async Task<TrendAnalysis> GetTrendAnalysisAsync(int? categoryId, int months = 6)
+    public async Task<TrendAnalysis> GetTrendAnalysisAsync(int? categoryId, int months = 6, int? householdId = null)
     {
         var fromDate = DateTime.Now.AddMonths(-months);
         
         var query = _context.Transactions
             .Where(t => t.Date >= fromDate);
+
+        if (householdId.HasValue)
+        {
+            query = query.Where(t => t.HouseholdId == householdId.Value);
+        }
 
         string categoryName = "Alla kategorier";
         
@@ -198,7 +208,7 @@ public class ReportService : IReportService
         };
     }
 
-    public async Task<IEnumerable<TopMerchant>> GetTopMerchantsAsync(int limit = 10, DateTime? fromDate = null, DateTime? toDate = null)
+    public async Task<IEnumerable<TopMerchant>> GetTopMerchantsAsync(int limit = 10, DateTime? fromDate = null, DateTime? toDate = null, int? householdId = null)
     {
         var query = _context.Transactions
             .Where(t => !t.IsIncome); // Only expenses
@@ -211,6 +221,11 @@ public class ReportService : IReportService
         if (toDate.HasValue)
         {
             query = query.Where(t => t.Date <= toDate.Value);
+        }
+
+        if (householdId.HasValue)
+        {
+            query = query.Where(t => t.HouseholdId == householdId.Value);
         }
 
         var transactions = await query.ToListAsync();

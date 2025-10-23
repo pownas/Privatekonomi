@@ -12,4 +12,6 @@ public interface ITransactionService
     Task<IEnumerable<Transaction>> GetTransactionsByDateRangeAsync(DateTime from, DateTime to);
     Task<IEnumerable<Transaction>> GetUnmappedTransactionsAsync();
     Task UpdateTransactionCategoriesAsync(int transactionId, List<TransactionCategory> categories);
+    Task<IEnumerable<Transaction>> GetTransactionsByHouseholdAsync(int householdId);
+    Task<IEnumerable<Transaction>> GetTransactionsByHouseholdAndDateRangeAsync(int householdId, DateTime from, DateTime to);
 }
