@@ -5,12 +5,24 @@
     <DialogContent>
         <MudText Typo="Typo.h6" Class="mb-4">Redigera bankkoppling</MudText>
         <MudForm @ref="_form" @bind-IsValid="@_formValid">
-            <MudTextField @bind-Value="Connection.ExternalAccountId" Label="Konto-ID" 
-                          HelperText="ID från bankens API" ReadOnly="true" />
+            <MudTextField @bind-Value="Connection.ExternalAccountId" 
+                          Label="Konto-ID" 
+                          Variant="Variant.Outlined"
+                          HelperText="ID från bankens API (kan inte ändras)" 
+                          ReadOnly="true"
+                          Class="mb-3" />
             
-            <MudSwitch @bind-Value="Connection.AutoSyncEnabled" Label="Automatisk synkronisering" Color="Color.Primary" />
+            <MudSwitch @bind-Value="Connection.AutoSyncEnabled" 
+                       Label="Automatisk synkronisering" 
+                       Color="Color.Primary"
+                       Class="mb-3" />
             
-            <MudSelect @bind-Value="Connection.Status" Label="Status" Required="true">
+            <MudSelect @bind-Value="Connection.Status" 
+                       Label="Status" 
+                       Required="true"
+                       Variant="Variant.Outlined"
+                       HelperText="Aktuell status för bankkopplingen"
+                       Class="mb-3">
                 <MudSelectItem Value="@("Active")">Aktiv</MudSelectItem>
                 <MudSelectItem Value="@("Expired")">Utgången</MudSelectItem>
                 <MudSelectItem Value="@("Error")">Fel</MudSelectItem>

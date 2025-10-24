@@ -2,7 +2,7 @@
 
 <MudDialog>
     <DialogContent>
-        <MudText Class="mb-3">
+        <MudText Class="mb-4" Typo="Typo.body1">
             @(IsDeposit ? "Sätt in pengar i" : "Ta ut pengar från") <strong>@PocketName</strong>
         </MudText>
 
@@ -13,11 +13,14 @@
                          Max="@(MaxAmount ?? decimal.MaxValue)"
                          Format="N2"
                          Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
-                         Class="mb-3" />
+                         Adornment="Adornment.End"
+                         AdornmentText="kr"
+                         HelperText="Ange belopp"
+                         Class="mb-4" />
 
         @if (!IsDeposit && MaxAmount.HasValue)
         {
-            <MudText Typo="Typo.body2" Color="Color.Info" Class="mb-3">
+            <MudText Typo="Typo.body2" Color="Color.Info" Class="mb-4">
                 Tillgängligt saldo: @MaxAmount.Value.ToString("C", new System.Globalization.CultureInfo("sv-SE"))
             </MudText>
         }
@@ -25,9 +28,10 @@
         <MudTextField @bind-Value="_description" 
                       Label="Beskrivning (valfritt)" 
                       Variant="Variant.Outlined"
-                      Lines="2"
+                      Lines="3"
                       MaxLength="500"
-                      Class="mb-3" />
+                      HelperText="Lägg till en beskrivning för transaktionen"
+                      Class="mb-4" />
     </DialogContent>
     <DialogActions>
         <MudButton OnClick="Cancel">Avbryt</MudButton>

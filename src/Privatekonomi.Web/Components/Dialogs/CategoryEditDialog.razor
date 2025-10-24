@@ -9,19 +9,22 @@
                          Required="true" 
                          RequiredError="Kategorinamn är obligatoriskt"
                          MaxLength="100"
-                         Class="mb-3" />
+                         Variant="Variant.Outlined"
+                         HelperText="Ge kategorin ett tydligt och beskrivande namn"
+                         Class="mb-4" />
             
-            <div class="d-flex align-center gap-2 mb-3">
+            <div class="d-flex align-center gap-2 mb-4">
                 <MudTextField @bind-Value="_categoryColor" 
                              Label="Färg (hex, t.ex. #FF6B6B)" 
                              Variant="Variant.Outlined"
                              Placeholder="#4ECDC4"
+                             HelperText="Hexadecimal färgkod (t.ex. #FF6B6B)"
                              Style="flex: 1;"
                              @onchange="ValidateColor" />
-                <div style="@($"width: 50px; height: 50px; background-color: {_categoryColor}; border: 2px solid #ccc; border-radius: 4px;")"></div>
+                <div style="@($"width: 60px; height: 60px; background-color: {_categoryColor}; border: 2px solid #ccc; border-radius: 4px;")"></div>
                 <MudIconButton Icon="@Icons.Material.Filled.Refresh" 
                               Color="Color.Primary" 
-                              Size="Size.Small"
+                              Size="Size.Medium"
                               title="Generera slumpmässig färg"
                               OnClick="GenerateRandomColor" />
             </div>

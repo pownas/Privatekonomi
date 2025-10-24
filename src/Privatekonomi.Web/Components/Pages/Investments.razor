@@ -390,7 +390,7 @@ else
             { "Color", Color.Primary }
         };
 
-        var options = new DialogOptions() { CloseButton = true };
+        var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
         var dialog = await DialogService.ShowAsync<QuickPriceUpdateDialog>($"Uppdatera kurs", parameters, options);
         var result = await dialog.Result;
 
@@ -411,7 +411,11 @@ else
             { x => x.Investment, new Investment { PurchaseDate = DateTime.Now, LastUpdated = DateTime.Now } }
         };
 
-        var dialog = await DialogService.ShowAsync<InvestmentDialog>("Lägg till investering", parameters);
+        var dialog = await DialogService.ShowAsync<InvestmentDialog>("Lägg till investering", parameters, new DialogOptions 
+        { 
+            MaxWidth = MaxWidth.Medium, 
+            FullWidth = true 
+        });
         var result = await dialog.Result;
 
         if (result is not null && !result.Canceled && result.Data is Investment investment)
@@ -441,7 +445,11 @@ else
             { x => x.IsEdit, true }
         };
 
-        var dialog = await DialogService.ShowAsync<InvestmentDialog>("Redigera investering", parameters);
+        var dialog = await DialogService.ShowAsync<InvestmentDialog>("Redigera investering", parameters, new DialogOptions 
+        { 
+            MaxWidth = MaxWidth.Medium, 
+            FullWidth = true 
+        });
         var result = await dialog.Result;
 
         if (result is not null && !result.Canceled && result.Data is Investment updatedInvestment)
@@ -474,7 +482,7 @@ else
             { x => x.Investments, _filteredInvestments }
         };
 
-        var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
         var dialog = await DialogService.ShowAsync<UpdateAllPricesDialog>("Uppdatera alla kurser", parameters, options);
         var result = await dialog.Result;
 

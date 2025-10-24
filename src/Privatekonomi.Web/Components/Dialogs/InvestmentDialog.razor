@@ -3,25 +3,64 @@
 <MudDialog>
     <DialogContent>
         <MudForm @ref="_form" @bind-IsValid="@_formValid">
-            <MudTextField @bind-Value="Investment.Name" Label="Namn" Required="true" 
-                          RequiredError="Namn är obligatoriskt" />
+            <MudTextField @bind-Value="Investment.Name" 
+                          Label="Namn" 
+                          Required="true" 
+                          Variant="Variant.Outlined"
+                          HelperText="Namn på aktie eller fond"
+                          RequiredError="Namn är obligatoriskt" 
+                          Class="mb-3" />
             
-            <MudSelect @bind-Value="Investment.Type" Label="Typ" Required="true"
-                       RequiredError="Typ är obligatoriskt">
+            <MudSelect @bind-Value="Investment.Type" 
+                       Label="Typ" 
+                       Required="true"
+                       Variant="Variant.Outlined"
+                       HelperText="Välj typ av investering"
+                       RequiredError="Typ är obligatoriskt"
+                       Class="mb-3">
                 <MudSelectItem Value="@("Aktie")">Aktie</MudSelectItem>
                 <MudSelectItem Value="@("Fond")">Fond</MudSelectItem>
             </MudSelect>
             
-            <MudNumericField @bind-Value="Investment.Quantity" Label="Antal" Required="true" 
-                             RequiredError="Antal är obligatoriskt" Min="0.0001m" Step="0.01m" />
+            <MudNumericField @bind-Value="Investment.Quantity" 
+                             Label="Antal" 
+                             Required="true" 
+                             Variant="Variant.Outlined"
+                             HelperText="Antal aktier/fondandelar"
+                             RequiredError="Antal är obligatoriskt" 
+                             Min="0.0001m" 
+                             Step="0.01m" 
+                             Class="mb-3" />
             
-            <MudNumericField @bind-Value="Investment.PurchasePrice" Label="Köpkurs (kr)" Required="true" 
-                             RequiredError="Köpkurs är obligatoriskt" Min="0.01m" Step="0.01m" />
+            <MudNumericField @bind-Value="Investment.PurchasePrice" 
+                             Label="Köpkurs (kr)" 
+                             Required="true" 
+                             Variant="Variant.Outlined"
+                             HelperText="Priset per aktie/fondandel vid köp"
+                             RequiredError="Köpkurs är obligatoriskt" 
+                             Min="0.01m" 
+                             Step="0.01m" 
+                             Adornment="Adornment.End"
+                             AdornmentText="kr"
+                             Class="mb-3" />
             
-            <MudNumericField @bind-Value="Investment.CurrentPrice" Label="Aktuell kurs (kr)" Required="true" 
-                             RequiredError="Aktuell kurs är obligatoriskt" Min="0.01m" Step="0.01m" />
+            <MudNumericField @bind-Value="Investment.CurrentPrice" 
+                             Label="Aktuell kurs (kr)" 
+                             Required="true" 
+                             Variant="Variant.Outlined"
+                             HelperText="Nuvarande pris per aktie/fondandel"
+                             RequiredError="Aktuell kurs är obligatoriskt" 
+                             Min="0.01m" 
+                             Step="0.01m" 
+                             Adornment="Adornment.End"
+                             AdornmentText="kr"
+                             Class="mb-3" />
             
-            <MudDatePicker @bind-Date="_purchaseDate" Label="Köpdatum" Required="true" 
+            <MudDatePicker @bind-Date="_purchaseDate" 
+                           Label="Köpdatum" 
+                           Required="true" 
+                           Variant="Variant.Outlined"
+                           HelperText="När investeringen gjordes"
                            RequiredError="Köpdatum är obligatoriskt" />
         </MudForm>
     </DialogContent>

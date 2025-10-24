@@ -340,7 +340,11 @@ else
             { x => x.IsDeposit, true }
         };
 
-        var dialog = await DialogService.ShowAsync<AllocateMoneyDialog>("Sätt in pengar", parameters);
+        var dialog = await DialogService.ShowAsync<AllocateMoneyDialog>("Sätt in pengar", parameters, new DialogOptions 
+        { 
+            MaxWidth = MaxWidth.Medium, 
+            FullWidth = true 
+        });
         var result = await dialog.Result;
 
         if (result is not null && !result.Canceled && result.Data is (decimal amount, string description))
@@ -367,7 +371,11 @@ else
             { x => x.MaxAmount, pocket.CurrentAmount }
         };
 
-        var dialog = await DialogService.ShowAsync<AllocateMoneyDialog>("Ta ut pengar", parameters);
+        var dialog = await DialogService.ShowAsync<AllocateMoneyDialog>("Ta ut pengar", parameters, new DialogOptions 
+        { 
+            MaxWidth = MaxWidth.Medium, 
+            FullWidth = true 
+        });
         var result = await dialog.Result;
 
         if (result is not null && !result.Canceled && result.Data is (decimal amount, string description))

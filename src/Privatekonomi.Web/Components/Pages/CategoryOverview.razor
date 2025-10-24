@@ -441,7 +441,11 @@ else
             ["CurrentCategoryId"] = _selectedCategoryId
         };
 
-        var dialog = await DialogService.ShowAsync<MoveCategoryDialog>("Flytta till annan kategori", parameters);
+        var dialog = await DialogService.ShowAsync<MoveCategoryDialog>("Flytta till annan kategori", parameters, new DialogOptions 
+        { 
+            MaxWidth = MaxWidth.Medium, 
+            FullWidth = true 
+        });
         var result = await dialog.Result;
 
         if (result is not null && !result.Canceled && result.Data is int newCategoryId)

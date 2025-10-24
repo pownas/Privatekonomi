@@ -2,10 +2,18 @@
 
 <MudDialog>
     <DialogContent>
-        <MudText Class="mb-4">@ContentText</MudText>
-        <MudNumericField @bind-Value="_newPrice" Label="Ny kurs (kr)" Required="true" 
-                         Min="0.01m" Step="0.01m" Immediate="true"
-                         Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.AttachMoney" />
+        <MudText Class="mb-4" Typo="Typo.body1">@ContentText</MudText>
+        <MudNumericField @bind-Value="_newPrice" 
+                         Label="Ny kurs (kr)" 
+                         Required="true" 
+                         Variant="Variant.Outlined"
+                         Min="0.01m" 
+                         Step="0.01m" 
+                         Immediate="true"
+                         Format="N2"
+                         Adornment="Adornment.Start" 
+                         AdornmentIcon="@Icons.Material.Filled.AttachMoney"
+                         HelperText="Ange det nya priset per aktie/fondandel" />
     </DialogContent>
     <DialogActions>
         <MudButton OnClick="Cancel">Avbryt</MudButton>
