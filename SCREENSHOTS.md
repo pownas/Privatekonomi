@@ -17,8 +17,10 @@ Detta dokument innehåller screenshots av alla huvudfunktioner i Privatekonomi-a
 7. [Investeringar](#investeringar)
 8. [Kategorier](#kategorier)
 9. [Import](#import)
-10. [Skattedeklaration](#skattedeklaration)
-11. [Riktlinjer för uppdatering](#riktlinjer-för-uppdatering)
+10. [Balansräkning](#balansräkning)
+11. [Nettoförmögenhetskurva](#nettoförmögenhetskurva)
+12. [Skattedeklaration](#skattedeklaration)
+13. [Riktlinjer för uppdatering](#riktlinjer-för-uppdatering)
 
 ---
 
@@ -176,67 +178,164 @@ Spåra och följa din löneutveckling över tid.
 
 ## Sparmål
 
-_Screenshots kommer att läggas till när sidan är tillgänglig_
+Hantera personliga sparmål med prioritering och progress tracking.
 
-Hantera personliga och gemensamma sparmål.
+### Sparmålsöversikt
+![Sparmål](docs/screenshots/goals-light.png)
 
-**Planerade funktioner att dokumentera:**
-- Skapa och hantera sparmål
-- Målbelopp och tidsgräns
-- Prioritering av mål
-- Visualisering av framsteg
-- Gemensamma sparmål med andra användare
-- Inbjudningssystem
-- Förslagssystem med demokratiska ändringar
+**Funktioner som visas:**
+- 💰 Översikt:
+  - Totalt Sparmål (summa av alla mål)
+  - Totalt Sparat (nuvarande sparande)
+  - Genomsnittligt Framsteg i procent
+- 📊 Sparmålstabell med kolumner:
+  - Namn
+  - Beskrivning
+  - Målbelopp
+  - Sparat
+  - Framsteg (progress bar + procent)
+  - Målsättningsdatum
+  - Prioritet (1, 2, 3 med färgkodning)
+  - Sparkonto (bank)
+  - Åtgärder (redigera och ta bort)
+
+**Exempel på sparmål:**
+- Semesterresa till Japan (50 000 kr)
+- Nödfond (90 000 kr)
+- Kontantinsats lägenhet (300 000 kr)
+- Ny laptop (25 000 kr)
+- Ny cykel (15 000 kr)
+
+**Viktiga funktioner:**
+- **Prioritering**: Sätt prioritet 1-3 för att fokusera på viktigaste målen
+- **Progress tracking**: Visuell progress bar visar framsteg
+- **Bankkoppling**: Koppla sparmål till specifikt sparkonto
+- **Målsättningsdatum**: Sätt deadline för att nå målet
 
 ---
 
 ## Investeringar
 
-_Screenshots kommer att läggas till när sidan är tillgänglig_
+Hantera aktier, fonder och certifikat med automatisk kursuppdatering.
 
-Hantera aktier, fonder och certifikat.
+### Investeringsöversikt
+![Investeringar](docs/screenshots/investments-light.png)
 
-**Planerade funktioner att dokumentera:**
-- Översikt över investeringar
-- Automatisk kursuppdatering via Yahoo Finance API
-- Import från Avanza Bank
-- Export till CSV
-- Värde och avkastning
-- Bank och konto-filtrering
+**Funktioner som visas:**
+- 💰 Sammanfattning:
+  - Totalt Värde (aktuellt marknadsvärde)
+  - Total Kostnad (inköpspris)
+  - Vinst/Förlust i kronor
+  - Avkastning i procent
+- 📊 Fördelning:
+  - Aktier vs Fonder (progress bar visar procentuell fördelning)
+- 🔄 Åtgärder:
+  - **Uppdatera alla kurser** - Hämta senaste kurser från Yahoo Finance
+  - **Exportera** - Exportera till CSV
+  - **Importera** - Importera från Avanza
+  - **Lägg till** - Lägg till ny investering manuellt
+- 📋 Investeringstabell:
+  - Namn & Ticker
+  - Typ (Aktie/Fond med färgkodade chips)
+  - Bank
+  - Konto
+  - Antal
+  - Köpkurs
+  - Aktuell kurs (uppdateras automatiskt)
+  - Värde (antal × aktuell kurs)
+  - Vinst/Förlust (grönt för vinst, rött för förlust)
+  - Procent
+  - Åtgärder (uppdatera kurs, redigera, sälja, ta bort)
+- 🔍 Filtrering:
+  - Sök efter investeringar
+  - Filtrera efter Bank
+  - Filtrera efter Konto
+- 📊 Sortering: Klicka på kolumnrubriker för att sortera
+
+**Exempel på investeringar:**
+- Aktier: Ericsson B, Nordea, Investor B, Volvo B, SEB A
+- Fonder: Länsförsäkringar Sverige, Avanza Global, SPP Aktiefond Global
+
+**Viktiga funktioner:**
+- **Yahoo Finance integration**: Automatisk kursuppdatering via API
+- **Avanza import**: Importera investeringar från Avanza Bank
+- **Färgkodning**: Grön för vinst, röd för förlust
+- **Realtidsvärdering**: Se aktuellt värde baserat på senaste kursen
 
 ---
 
 ## Kategorier
 
-_Screenshots kommer att läggas till när sidan är tillgänglig_
-
 Hantera och organisera utgifts- och inkomstkategorier.
 
-**Planerade funktioner att dokumentera:**
-- Förkonfigurerade kategorier
-- Färgkodning
-- Hierarkisk struktur
-- Kategoriöversikt
-- Kategorisammanfattning
-- Kategoriseringsregler (44+ förkonfigurerade)
-- Regeltyper: innehåller, exakt, börjar med, slutar med, regex
+### Kategoriöversikt
+![Kategorier](docs/screenshots/categories-light.png)
+
+**Funktioner som visas:**
+- ➕ Ny Kategori - Skapa anpassad kategori
+- 📋 Kategorilistor med färgkodade chips:
+  - Boende (blå)
+  - Hälsa (grön)
+  - Lön (lila)
+  - Mat & Dryck (orange)
+  - Nöje (rosa)
+  - Shopping (turkos)
+  - Sparande (gul)
+  - Transport (cyan)
+  - Övrigt (grå)
+- 🏷️ Systemkategori-märkning för förkonfigurerade kategorier
+- 🔧 Åtgärder för varje kategori:
+  - Redigera kategori
+  - Lägg till underkategori
+  - Återställ till standard
+
+**Kategorityper:**
+- **Systemkategorier**: Förkonfigurerade kategorier som kan återställas
+- **Anpassade kategorier**: Användarskapade kategorier
+- **Underkategorier**: Hierarkisk struktur för bättre organisering
+
+**Viktiga funktioner:**
+- **Färgkodning**: Varje kategori har en unik färg för enkel identifiering
+- **Hierarkisk struktur**: Möjlighet att skapa underkategorier
+- **Återställning**: Systemkategorier kan återställas till standardinställningar
+- **Automatisk kategorisering**: 44+ förkonfigurerade regler för automatisk kategorisering
+- **Regeltyper**: Innehåller, exakt matchning, börjar med, slutar med, regex
 
 ---
 
 ## Import
 
-_Screenshots kommer att läggas till när sidan är tillgänglig_
+Importera transaktioner från banker.
 
-Importera transaktioner och investeringar från banker.
+### Importgränssnitt
+![Import](docs/screenshots/import-light.png)
 
-**Planerade funktioner att dokumentera:**
-- CSV-import från ICA-banken
-- CSV-import från Swedbank
-- CSV-import från Avanza (investeringar)
-- Automatisk dubblettdetektion
-- Förhandsvisning innan import
-- Detaljerad sammanfattning efter import
+**Funktioner som visas:**
+- 🏦 Bankval:
+  - ICA-banken
+  - Swedbank
+  - Radio buttons för att välja bank
+- ➡️ Nästa-knapp (aktiveras när bank är vald)
+
+**Import-process:**
+1. **Välj bank** - Välj från vilken bank du vill importera
+2. **Välj fil** - Ladda upp CSV-fil från banken
+3. **Förhandsvisning** - Se transaktioner innan import
+4. **Mappning** - Mappa kolumner om nödvändigt
+5. **Importera** - Dubblettdetektion och import
+6. **Sammanfattning** - Översikt av importerade transaktioner
+
+**Bankformat som stöds:**
+- **ICA-banken**: CSV-format med specifik kolumnstruktur
+- **Swedbank**: CSV-format med specifik kolumnstruktur  
+- **Avanza**: Separata funktioner för investeringar
+
+**Viktiga funktioner:**
+- **Automatisk dubblettdetektion**: Undviker duplicerade transaktioner
+- **Förhandsvisning**: Se transaktioner innan de importeras
+- **Kolumnmappning**: Automatisk eller manuell mappning av kolumner
+- **Felhantering**: Tydliga felmeddelanden vid problem
+- **Bulkimport**: Importera många transaktioner samtidigt
 
 ---
 
@@ -252,6 +351,97 @@ Sverige-specifika skattefunktioner.
 - ISK/KF schablonbeskattning
 - SIE-export för bokföring
 - Reseavdrag
+
+---
+
+## Balansräkning
+
+Översikt över din ekonomiska situation med tillgångar, skulder och nettoförmögenhet.
+
+### Balansräkningsöversikt
+![Balansräkning](docs/screenshots/balance-sheet-light.png)
+
+**Funktioner som visas:**
+- 💰 Nettoförmögenhet (stor rubrik):
+  - Huvudsaklig siffra i grönt
+  - Undertext med tillgångar och skulder
+- 📊 Tillgångar:
+  - **Bankkonton**: Lista över alla bankkonton med saldo
+  - **Investeringar**: Lista över aktier och fonder med värde
+  - **Fysiska Tillgångar**: Fastigheter, fordon, övrigt
+  - Totalsumma för varje kategori
+  - Totala tillgångar (summa)
+- 📉 Skulder:
+  - **Lån & Krediter**: Lista över alla lån med belopp
+  - Totalsumma
+  - Progress bar visar fördelning tillgångar vs skulder
+- 📈 Översikt:
+  - Skuldkvot (%)
+  - Antal Tillgångar
+  - Antal Skulder
+  - Likvida Medel
+- 🎯 Ekonomiska Nyckeltal:
+  - **Sparandegrad**: Procent av inkomst som sparas
+  - **Skuldsättningsgrad**: Skulder i förhållande till tillgångar
+  - **Kassalikviditet**: Likvida medel i procent
+  - **Soliditet**: Eget kapital i förhållande till tillgångar
+  - **Belåningsgrad**: Lån i förhållande till tillgångar
+  - **Investeringsgrad**: Investeringar i förhållande till tillgångar
+  - Info-knappar för förklaring av varje nyckeltal
+
+**Viktiga funktioner:**
+- **Realtidsöversikt**: Automatiskt uppdaterad balansräkning
+- **Nyckeltal**: Viktiga ekonomiska indikatorer
+- **Färgkodning**: Grön för tillgångar, röd för skulder
+- **Hierarkisk visning**: Gruppering efter typ av tillgång/skuld
+- **Detaljerad information**: Klickbara element för mer detaljer
+
+---
+
+## Nettoförmögenhetskurva
+
+Visualisering av din ekonomiska utveckling över tid.
+
+### Förmögenhetsutveckling
+![Nettoförmögenhetskurva](docs/screenshots/networth-chart-light.png)
+
+**Funktioner som visas:**
+- 💰 Översikt:
+  - Nuvarande Nettoförmögenhet
+  - Startförmögenhet
+  - Förändring i kronor (grönt för ökning)
+  - Förändring i procent
+- ⏱️ Tidsperiod (knappar):
+  - Senaste året
+  - 2 år
+  - 5 år
+  - All historik
+- 📊 Gruppering (knappar):
+  - Månadsvis
+  - Kvartalsvis
+  - Årligen
+- 📥 Export:
+  - Exportera data som CSV
+  - Exportera graf som PNG
+- 📈 Huvudgraf:
+  - Linjediagram över nettoförmögenhetsutveckling
+  - X-axel: Tidpunkt (månad/år)
+  - Y-axel: Belopp i kronor
+  - Interaktiv graf med hover-information
+- 📊 Delgrafer:
+  - **Tillgångar över tid**: Staplad graf med bankkonton, investeringar, fysiska tillgångar
+  - **Skulder över tid**: Linjegraf med lån och krediter
+- 📋 Detaljerad Historik:
+  - Tabell med alla månader/perioder
+  - Kolumner: Period, Nettoförmögenhet, Tillgångar, Skulder, Förändring
+  - Ikoner för ökning/minskning i förändring
+
+**Viktiga funktioner:**
+- **Långsiktig övervakning**: Spåra ekonomisk utveckling över tid
+- **Flexibel visning**: Välj tidsperiod och gruppering
+- **Export**: Dela eller analysera data i andra verktyg
+- **Detaljerad historik**: Se exakta siffror för varje period
+- **Visuell återkoppling**: Färgkodade indikatorer för ökning/minskning
 
 ---
 
