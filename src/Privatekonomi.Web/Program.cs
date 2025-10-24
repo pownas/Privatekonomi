@@ -98,6 +98,7 @@ builder.Services.AddScoped<IBankConnectionService, BankConnectionService>();
 builder.Services.AddScoped<IExportService, ExportService>();
 builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<ISalaryHistoryService, SalaryHistoryService>();
+builder.Services.AddScoped<ICurrencyAccountService, CurrencyAccountService>();
 builder.Services.AddScoped<ThemeService>();
 
 // Swedish-specific services

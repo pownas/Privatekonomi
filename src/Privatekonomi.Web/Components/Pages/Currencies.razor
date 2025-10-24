@@ -1,0 +1,279 @@
+@page "/currencies"
+@rendermode InteractiveServer
+@inject ICurrencyAccountService CurrencyAccountService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+<PageTitle>Kontanter/Valutor - Privatekonomi</PageTitle>
+
+<div class="d-flex justify-space-between align-center mb-4">
+    <MudText Typo="Typo.h4">Kontanter/Valutor</MudText>
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="ToggleCreateForm">
+        Ny Valuta
+    </MudButton>
+</div>
+
+@if (_showCreateForm)
+{
+    <MudPaper Class="pa-4 mb-4">
+        <MudText Typo="Typo.h6" Class="mb-3">@(_editingAccount != null ? "Redigera Valutakonto" : "Lägg till Nytt Valutakonto")</MudText>
+        
+        <MudSelect @bind-Value="_formAccount.Currency" 
+                   Label="Valuta" 
+                   Variant="Variant.Outlined"
+                   Required="true"
+                   Class="mb-3">
+            <MudSelectItem Value="@("EUR")">EUR - Euro</MudSelectItem>
+            <MudSelectItem Value="@("USD")">USD - Amerikanska dollar</MudSelectItem>
+            <MudSelectItem Value="@("GBP")">GBP - Brittiska pund</MudSelectItem>
+            <MudSelectItem Value="@("JPY")">JPY - Japanska yen</MudSelectItem>
+            <MudSelectItem Value="@("CHF")">CHF - Schweiziska franc</MudSelectItem>
+            <MudSelectItem Value="@("NOK")">NOK - Norska kronor</MudSelectItem>
+            <MudSelectItem Value="@("DKK")">DKK - Danska kronor</MudSelectItem>
+            <MudSelectItem Value="@("CAD")">CAD - Kanadensiska dollar</MudSelectItem>
+            <MudSelectItem Value="@("AUD")">AUD - Australiensiska dollar</MudSelectItem>
+            <MudSelectItem Value="@("NZD")">NZD - Nya Zeeländska dollar</MudSelectItem>
+        </MudSelect>
+
+        <MudNumericField @bind-Value="_formAccount.Balance" 
+                         Label="Saldo i utländsk valuta" 
+                         Variant="Variant.Outlined"
+                         Format="N2"
+                         Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                         Class="mb-3" />
+
+        <MudNumericField @bind-Value="_formAccount.ExchangeRate" 
+                         Label="Växelkurs till SEK" 
+                         Variant="Variant.Outlined"
+                         Min="0.001m"
+                         Format="N6"
+                         Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                         Class="mb-3"
+                         HelperText="Exempel: 1 EUR = 10.60 SEK" />
+
+        <MudTextField @bind-Value="_formAccount.AccountNumber" 
+                      Label="Kontonummer (t.ex. 1921, 1922)" 
+                      Variant="Variant.Outlined"
+                      MaxLength="20"
+                      Class="mb-3"
+                      HelperText="Kontonummer i redovisningen" />
+
+        <MudTextField @bind-Value="_formAccount.Description" 
+                      Label="Beskrivning" 
+                      Variant="Variant.Outlined"
+                      Lines="2"
+                      MaxLength="500"
+                      Class="mb-3" />
+
+        <div class="d-flex gap-2">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveAccount">
+                @(_editingAccount != null ? "Uppdatera" : "Lägg till")
+            </MudButton>
+            <MudButton Variant="Variant.Outlined" OnClick="CancelForm">Avbryt</MudButton>
+        </div>
+    </MudPaper>
+}
+
+@if (_loading)
+{
+    <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+}
+else
+{
+    <MudPaper Class="pa-4 mb-4">
+        <MudGrid>
+            <MudItem xs="12" md="6">
+                <MudCard Elevation="2" Class="pa-4">
+                    <MudCardContent>
+                        <MudText Typo="Typo.h6">Totalt Värde (SEK)</MudText>
+                        <MudText Typo="Typo.h4" Color="Color.Success">@_totalValueInSEK.ToString("C", new System.Globalization.CultureInfo("sv-SE"))</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudCard Elevation="2" Class="pa-4">
+                    <MudCardContent>
+                        <MudText Typo="Typo.h6">Antal Valutor</MudText>
+                        <MudText Typo="Typo.h4">@_accounts.Count()</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+
+    <MudPaper Class="pa-4">
+        @if (!_accounts.Any())
+        {
+            <MudText>Inga valutakonton registrerade än.</MudText>
+        }
+        else
+        {
+            <MudTable Items="@_accounts" Hover="true" Striped="true">
+                <HeaderContent>
+                    <MudTh>Valuta</MudTh>
+                    <MudTh>Kontonummer</MudTh>
+                    <MudTh Style="text-align: right">Saldo</MudTh>
+                    <MudTh Style="text-align: right">Växelkurs</MudTh>
+                    <MudTh Style="text-align: right">Värde (SEK)</MudTh>
+                    <MudTh>Beskrivning</MudTh>
+                    <MudTh>Åtgärder</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Valuta">
+                        <MudChip T="string" Size="Size.Small" Color="GetCurrencyColor(context.Currency)">
+                            @context.Currency
+                        </MudChip>
+                    </MudTd>
+                    <MudTd DataLabel="Kontonummer">
+                        @(string.IsNullOrWhiteSpace(context.AccountNumber) ? "-" : context.AccountNumber)
+                    </MudTd>
+                    <MudTd DataLabel="Saldo" Style="text-align: right">
+                        @context.Balance.ToString("N2", new System.Globalization.CultureInfo("sv-SE")) @context.Currency
+                    </MudTd>
+                    <MudTd DataLabel="Växelkurs" Style="text-align: right">
+                        @context.ExchangeRate.ToString("N6", new System.Globalization.CultureInfo("sv-SE"))
+                    </MudTd>
+                    <MudTd DataLabel="Värde (SEK)" Style="text-align: right">
+                        <MudText Color="Color.Success">
+                            @context.ValueInSEK.ToString("C", new System.Globalization.CultureInfo("sv-SE"))
+                        </MudText>
+                    </MudTd>
+                    <MudTd DataLabel="Beskrivning">
+                        <MudText Typo="Typo.body2" Style="max-width: 200px; overflow: hidden; text-overflow: ellipsis;">
+                            @(string.IsNullOrWhiteSpace(context.Description) ? "-" : context.Description)
+                        </MudText>
+                    </MudTd>
+                    <MudTd DataLabel="Åtgärder">
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small"
+                                       OnClick="@(() => EditAccount(context))" />
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small"
+                                       OnClick="@(() => DeleteAccount(context.CurrencyAccountId))" />
+                    </MudTd>
+                </RowTemplate>
+            </MudTable>
+        }
+    </MudPaper>
+}
+
+@code {
+    private bool _loading = true;
+    private bool _showCreateForm = false;
+    private IEnumerable<CurrencyAccount> _accounts = new List<CurrencyAccount>();
+    private decimal _totalValueInSEK = 0;
+    private CurrencyAccount _formAccount = new CurrencyAccount();
+    private CurrencyAccount? _editingAccount = null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        _loading = true;
+        _accounts = await CurrencyAccountService.GetAllCurrencyAccountsAsync();
+        _totalValueInSEK = await CurrencyAccountService.GetTotalValueInSEKAsync();
+        _loading = false;
+    }
+
+    private Color GetCurrencyColor(string currency)
+    {
+        return currency switch
+        {
+            "EUR" => Color.Primary,
+            "USD" => Color.Success,
+            "GBP" => Color.Info,
+            "JPY" => Color.Secondary,
+            "CHF" => Color.Warning,
+            "NOK" => Color.Tertiary,
+            "DKK" => Color.Dark,
+            _ => Color.Default
+        };
+    }
+
+    private void ToggleCreateForm()
+    {
+        _showCreateForm = !_showCreateForm;
+        if (_showCreateForm)
+        {
+            _formAccount = new CurrencyAccount();
+            _editingAccount = null;
+        }
+    }
+
+    private void EditAccount(CurrencyAccount account)
+    {
+        _editingAccount = account;
+        _formAccount = new CurrencyAccount
+        {
+            CurrencyAccountId = account.CurrencyAccountId,
+            Currency = account.Currency,
+            Balance = account.Balance,
+            ExchangeRate = account.ExchangeRate,
+            AccountNumber = account.AccountNumber,
+            Description = account.Description
+        };
+        _showCreateForm = true;
+    }
+
+    private async Task SaveAccount()
+    {
+        if (string.IsNullOrWhiteSpace(_formAccount.Currency))
+        {
+            Snackbar.Add("Valuta är obligatorisk", Severity.Error);
+            return;
+        }
+
+        if (_formAccount.ExchangeRate <= 0)
+        {
+            Snackbar.Add("Växelkurs måste vara större än 0", Severity.Error);
+            return;
+        }
+
+        try
+        {
+            if (_editingAccount != null)
+            {
+                _formAccount.ExchangeRateUpdated = DateTime.UtcNow;
+                await CurrencyAccountService.UpdateCurrencyAccountAsync(_formAccount);
+                Snackbar.Add("Valutakonto uppdaterat!", Severity.Success);
+            }
+            else
+            {
+                _formAccount.ExchangeRateUpdated = DateTime.UtcNow;
+                await CurrencyAccountService.CreateCurrencyAccountAsync(_formAccount);
+                Snackbar.Add("Valutakonto tillagt!", Severity.Success);
+            }
+
+            _showCreateForm = false;
+            _editingAccount = null;
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Fel: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void CancelForm()
+    {
+        _showCreateForm = false;
+        _editingAccount = null;
+        _formAccount = new CurrencyAccount();
+    }
+
+    private async Task DeleteAccount(int id)
+    {
+        var result = await DialogService.ShowMessageBox(
+            "Bekräfta borttagning",
+            "Är du säker på att du vill ta bort detta valutakonto?",
+            yesText: "Ja", cancelText: "Avbryt");
+
+        if (result == true)
+        {
+            await CurrencyAccountService.DeleteCurrencyAccountAsync(id);
+            Snackbar.Add("Valutakonto borttaget", Severity.Success);
+            await LoadData();
+        }
+    }
+}
