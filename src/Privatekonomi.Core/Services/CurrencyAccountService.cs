@@ -58,9 +58,18 @@ public class CurrencyAccountService : ICurrencyAccountService
 
     public async Task UpdateCurrencyAccountAsync(CurrencyAccount currencyAccount)
     {
-        currencyAccount.UpdatedAt = DateTime.UtcNow;
-        _context.CurrencyAccounts.Update(currencyAccount);
-        await _context.SaveChangesAsync();
+        var existingAccount = await _context.CurrencyAccounts.FindAsync(currencyAccount.CurrencyAccountId);
+        if (existingAccount != null)
+        {
+            existingAccount.Currency = currencyAccount.Currency;
+            existingAccount.Balance = currencyAccount.Balance;
+            existingAccount.ExchangeRate = currencyAccount.ExchangeRate;
+            existingAccount.AccountNumber = currencyAccount.AccountNumber;
+            existingAccount.Description = currencyAccount.Description;
+            existingAccount.ExchangeRateUpdated = DateTime.UtcNow;
+            existingAccount.UpdatedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+        }
     }
 
     public async Task DeleteCurrencyAccountAsync(int id)
