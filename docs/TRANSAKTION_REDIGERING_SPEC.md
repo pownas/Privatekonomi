@@ -173,10 +173,26 @@ Mål
 
 11) Nästa steg / review
 - Granska denna spec med produktägare, backend, frontend och QA.
-- Efter godkännande: skapa tekniska tickets: DB-migration, API-ändring, frontend-komponent, audit-logg, export-implementation, tester.
+- Efter godkännande: implementera enligt GitHub-issues (se sektion 12).
+
+12) GitHub Issues skapade för implementation
+- [#129](https://github.com/pownas/Privatekonomi/issues/129) - Databas-migration: Audit-tabell för transaktionsredigering
+- [#130](https://github.com/pownas/Privatekonomi/issues/130) - API: Endpoints för transaktionsredigering och export  
+- [#131](https://github.com/pownas/Privatekonomi/issues/131) - Frontend: UI-komponenter för transaktionsredigering
+- [#132](https://github.com/pownas/Privatekonomi/issues/132) - Export-funktion: CSV och JSON för transaktioner
+- [#133](https://github.com/pownas/Privatekonomi/issues/133) - Tester: Automatiserade tester för transaktionsredigering
+- [#134](https://github.com/pownas/Privatekonomi/issues/134) - Policy & säkerhet: Låsning och behörigheter för transaktioner
+
+**Rekommenderad implementation-ordning:**
+1. Issues #129 (DB-migration) + #134 (policy) först - grund för säkerhet
+2. Issue #130 (API) - kärn-funktionalitet  
+3. Issue #131 (Frontend) + #132 (Export) - användarupplevelse
+4. Issue #133 (Tester) - kvalitetssäkring och CI/CD integration
 
 Bilagor
 - UI-skärmbild: referera till ticket eller PR där screenshot finns bifogad.
+- GitHub Issues: https://github.com/pownas/Privatekonomi/issues?q=is%3Aissue+is%3Aopen+transaktion
 
 ---
 Dokument skapat som utgångspunkt; iterera efter stakeholder-review.
+Status: Kravspec + GitHub-tickets skapade 2025-10-24. Redo för implementation.
