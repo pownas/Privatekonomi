@@ -4,11 +4,12 @@ Denna guide beskriver hur du konfigurerar olika lagringsmetoder i Privatekonomi-
 
 ## Översikt
 
-Privatekonomi stödjer tre olika lagringsmetoder:
+Privatekonomi stödjer fyra olika lagringsmetoder:
 
 1. **InMemory** - Data lagras i minnet, försvinner när applikationen stängs av (standard för utveckling)
-2. **Sqlite** - Data lagras i en lokal SQLite-databas (persistent, lämplig för produktion och lokal användning)
-3. **JsonFile** - Data lagras i JSON-filer (planerad, ej implementerad än)
+2. **SQLite** - Data lagras i en lokal SQLite-databas (persistent, lämplig för produktion och lokal användning)
+3. **SQL Server** - Data lagras i Microsoft SQL Server (persistent, lämplig för storskalig produktion)
+4. **JsonFile** - Data lagras i JSON-filer (planerad, ej implementerad än)
 
 ## Konfiguration
 
@@ -30,7 +31,7 @@ Lagringsmetoden konfigureras via `appsettings.json` eller `appsettings.Developme
 
 | Parameter | Beskrivning | Möjliga värden |
 |-----------|-------------|----------------|
-| `Provider` | Vilken lagringsmetod som ska användas | `InMemory`, `Sqlite`, `JsonFile` |
+| `Provider` | Vilken lagringsmetod som ska användas | `InMemory`, `Sqlite`, `SqlServer`, `JsonFile` |
 | `ConnectionString` | Anslutningssträng eller sökväg till databas/fil | Se exempel nedan |
 | `SeedTestData` | Om testdata ska laddas (endast för utveckling) | `true`, `false` |
 
@@ -100,7 +101,53 @@ Lämplig för: Produktion, lokal användning, Raspberry Pi, NAS
 - Filbaserad, kräver läs/skrivrättigheter
 - Begränsad samtidig åtkomst (lämplig för familj, inte storskalig användning)
 
-### 3. JsonFile (Planerad)
+### 3. SQL Server (Rekommenderas för storskalig produktion)
+
+Lämplig för: Storskalig produktion, företag, molnbaserad hosting
+
+```json
+{
+  "Storage": {
+    "Provider": "SqlServer",
+    "ConnectionString": "Server=localhost;Database=Privatekonomi;Trusted_Connection=True;MultipleActiveResultSets=true",
+    "SeedTestData": false
+  }
+}
+```
+
+**Alternativa ConnectionStrings:**
+
+```json
+// Lokal SQL Server med Windows Authentication
+"ConnectionString": "Server=localhost;Database=Privatekonomi;Trusted_Connection=True;MultipleActiveResultSets=true"
+
+// SQL Server med SQL Authentication
+"ConnectionString": "Server=localhost;Database=Privatekonomi;User Id=sa;Password=YourPassword;MultipleActiveResultSets=true;TrustServerCertificate=True"
+
+// Azure SQL Database
+"ConnectionString": "Server=tcp:yourserver.database.windows.net,1433;Initial Catalog=Privatekonomi;Persist Security Info=False;User ID=yourusername;Password=yourpassword;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;"
+
+// SQL Server Express LocalDB
+"ConnectionString": "Server=(localdb)\\mssqllocaldb;Database=Privatekonomi;Trusted_Connection=True;MultipleActiveResultSets=true"
+```
+
+**Fördelar:**
+- Mycket hög prestanda och skalbarhet
+- Stöd för många samtidiga användare
+- Avancerade säkerhetsfunktioner
+- Backup och återställning inbyggt
+- Stöd för replikering och hög tillgänglighet
+- Perfekt för molnbaserad hosting (Azure SQL)
+
+**Nackdelar:**
+- Kräver SQL Server-installation (eller Azure SQL)
+- Mer komplext att konfigurera
+- Kostnad för SQL Server-licens (utom Express Edition)
+- Överkapacitet för små installationer
+
+**OBS:** ConnectionString måste anges för SQL Server. Om du inte anger en ConnectionString får du ett felmeddelande.
+
+### 4. JsonFile (Planerad)
 
 Lämplig för: Backup, import/export, versionshantering
 

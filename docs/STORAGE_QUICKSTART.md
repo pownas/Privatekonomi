@@ -34,6 +34,28 @@
 }
 ```
 
+### Storskalig produktion (SQL Server)
+```json
+{
+  "Storage": {
+    "Provider": "SqlServer",
+    "ConnectionString": "Server=localhost;Database=Privatekonomi;Trusted_Connection=True;MultipleActiveResultSets=true",
+    "SeedTestData": false
+  }
+}
+```
+
+### Azure SQL Database
+```json
+{
+  "Storage": {
+    "Provider": "SqlServer",
+    "ConnectionString": "Server=tcp:yourserver.database.windows.net,1433;Initial Catalog=Privatekonomi;User ID=yourusername;Password=yourpassword;MultipleActiveResultSets=False;Encrypt=True;",
+    "SeedTestData": false
+  }
+}
+```
+
 ## Växla lagringsmetod
 
 1. Öppna `appsettings.json` (eller `appsettings.Development.json`)

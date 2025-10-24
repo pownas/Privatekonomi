@@ -36,6 +36,19 @@ public static class StorageExtensions
                 });
                 break;
                 
+            case "sqlserver":
+                if (string.IsNullOrEmpty(storageSettings.ConnectionString))
+                {
+                    throw new InvalidOperationException(
+                        "ConnectionString is required for SqlServer provider. " +
+                        "Please specify a connection string in Storage:ConnectionString configuration.");
+                }
+                services.AddDbContext<PrivatekonomyContext>(options =>
+                {
+                    options.UseSqlServer(storageSettings.ConnectionString);
+                });
+                break;
+                
             case "jsonfile":
                 // JsonFile uses InMemory with persistence layer
                 services.AddDbContext<PrivatekonomyContext>(options =>

@@ -143,4 +143,43 @@ public class StorageConfigurationTests
             File.Delete(dbPath);
         }
     }
+
+    [Fact]
+    public void SqlServerStorage_ShouldBeConfigurable()
+    {
+        // Arrange
+        var connectionString = "Server=(localdb)\\mssqllocaldb;Database=PrivatekonomyTest;Trusted_Connection=True;MultipleActiveResultSets=true";
+        
+        // Act
+        var serviceProvider = CreateServiceProvider(new Dictionary<string, string?>
+        {
+            ["Storage:Provider"] = "SqlServer",
+            ["Storage:ConnectionString"] = connectionString,
+            ["Storage:SeedTestData"] = "false"
+        });
+        var context = serviceProvider.GetRequiredService<PrivatekonomyContext>();
+
+        // Assert
+        Assert.NotNull(context);
+        Assert.False(context.Database.IsInMemory());
+        Assert.True(context.Database.IsSqlServer());
+    }
+
+    [Fact]
+    public void SqlServerStorage_WithoutConnectionString_ShouldThrowException()
+    {
+        // Arrange & Act & Assert
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+        {
+            var serviceProvider = CreateServiceProvider(new Dictionary<string, string?>
+            {
+                ["Storage:Provider"] = "SqlServer",
+                ["Storage:ConnectionString"] = "",
+                ["Storage:SeedTestData"] = "false"
+            });
+            // Exception is thrown during AddDbContext configuration
+        });
+
+        Assert.Contains("ConnectionString is required for SqlServer provider", exception.Message);
+    }
 }

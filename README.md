@@ -28,9 +28,9 @@ En privatekonomi-applikation byggd med .NET 9, Blazor Server och MudBlazor för 
   - Systemet föreslår också kategorier baserat på tidigare transaktioner
 - **Responsiv design**: Fungerar på desktop och mobila enheter
 - **Flexibel datalagring**: 
-  - Stöd för InMemory (utveckling), SQLite (produktion) och JSON-filer
+  - Stöd för InMemory (utveckling), SQLite (produktion), SQL Server (storskalig produktion) och JSON-filer
   - Konfigurerbart via appsettings.json
-  - Lämpligt för lokal användning, Raspberry Pi och NAS
+  - Lämpligt för lokal användning, Raspberry Pi, NAS och molnbaserad hosting
   - Se [lagringsguide](docs/STORAGE_GUIDE.md) för mer information
 - **CSV-import**: 
   - Import av transaktioner från ICA-banken och Swedbank
@@ -337,25 +337,7 @@ Applikationen stödjer flera lagringsmetoder som enkelt kan konfigureras via `ap
 }
 ```
 
-Se [STORAGE_GUIDE.md](docs/STORAGE_GUIDE.md) för detaljerad information om:
-- Olika lagringsalternativ
-- Nätverksåtkomst och delad lagring
-- Backup och återställning
-- Migration mellan lagringsmetoder
-- Felsökning och prestanda
-
-### Legacy: Databasmigrering till SQL Server
-
-Om du vill använda SQL Server istället för SQLite (för storskalig användning):
-
-1. Installera EF Core SQL Server-paketet:
-```bash
-dotnet add src/Privatekonomi.Core/Privatekonomi.Core.csproj package Microsoft.EntityFrameworkCore.SqlServer
-```
-
-2. Uppdatera `StorageExtensions.cs` för att lägga till SQL Server-stöd
-
-3. Lägg till connection string i `appsettings.json`:
+#### Storskalig produktion (SQL Server)
 ```json
 {
   "Storage": {
@@ -365,6 +347,13 @@ dotnet add src/Privatekonomi.Core/Privatekonomi.Core.csproj package Microsoft.En
   }
 }
 ```
+
+Se [STORAGE_GUIDE.md](docs/STORAGE_GUIDE.md) för detaljerad information om:
+- Olika lagringsalternativ (InMemory, SQLite, SQL Server, JsonFile)
+- Nätverksåtkomst och delad lagring
+- Backup och återställning
+- Migration mellan lagringsmetoder
+- Felsökning och prestanda
 
 ## 📋 Dokumentation
 
