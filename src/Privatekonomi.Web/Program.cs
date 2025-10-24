@@ -76,7 +76,18 @@ builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuth
 
 // Add HttpContextAccessor for CurrentUserService
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+
+// Conditionally register CurrentUserService based on DevDisableAuth feature flag
+// This allows temporarily bypassing authentication in development for faster testing
+if (builder.Environment.IsDevelopment() && 
+    builder.Configuration.GetValue<bool>("FeatureFlags:DevDisableAuth"))
+{
+    builder.Services.AddScoped<ICurrentUserService, DevCurrentUserService>();
+}
+else
+{
+    builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+}
 
 // Register services
 builder.Services.AddScoped<ITransactionService, TransactionService>();
