@@ -1,0 +1,593 @@
+/* 
+ * Chart Design System for Privatekonomi
+ * Version: 1.0
+ * WCAG 2.1 AA Compliant
+ * Responsive: Mobile-first design
+ */
+
+/* ============================================
+   Chart Container Styles
+   ============================================ */
+
+.chart-container {
+    position: relative;
+    width: 100%;
+    margin-bottom: 1rem;
+}
+
+.chart-container.full-height {
+    height: 100%;
+}
+
+/* Chart wrapper with responsive padding */
+.chart-wrapper {
+    padding: 1rem;
+    background: var(--mud-palette-surface);
+    border-radius: var(--mud-default-borderradius);
+    box-shadow: var(--mud-elevation-2);
+}
+
+/* ============================================
+   Chart Headers
+   ============================================ */
+
+.chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.chart-title {
+    font-family: Roboto, sans-serif;
+    font-size: 1.25rem;
+    font-weight: 500;
+    line-height: 1.6;
+    color: var(--mud-palette-text-primary);
+    margin: 0;
+}
+
+.chart-subtitle {
+    font-family: Roboto, sans-serif;
+    font-size: 0.875rem;
+    font-weight: 400;
+    line-height: 1.43;
+    color: var(--mud-palette-text-secondary);
+    margin-top: 0.25rem;
+}
+
+.chart-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+/* ============================================
+   Filter Section
+   ============================================ */
+
+.chart-filters {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--mud-palette-surface);
+    border-radius: var(--mud-default-borderradius);
+    box-shadow: var(--mud-elevation-2);
+    margin-bottom: 1rem;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.filter-label {
+    font-family: Roboto, sans-serif;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--mud-palette-text-primary);
+}
+
+/* Responsive filter layout */
+@media (min-width: 600px) {
+    .chart-filters {
+        flex-direction: row;
+        align-items: flex-end;
+        justify-content: space-between;
+    }
+    
+    .filter-group {
+        flex: 0 1 auto;
+    }
+}
+
+/* ============================================
+   Chart Focus and Accessibility
+   ============================================ */
+
+/* Enhanced focus indicators for WCAG 2.1 AA compliance */
+.chart-container:focus-within,
+.chart-wrapper:focus-within {
+    outline: 2px solid var(--mud-palette-primary);
+    outline-offset: 2px;
+}
+
+/* Accessible button focus states */
+.chart-action-button:focus-visible,
+.chart-filter-button:focus-visible {
+    outline: 2px solid var(--mud-palette-primary);
+    outline-offset: 2px;
+    box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem var(--mud-palette-primary);
+}
+
+/* Dark mode focus adjustments */
+.mud-theme-dark .chart-action-button:focus-visible,
+.mud-theme-dark .chart-filter-button:focus-visible {
+    outline-color: #776BE7;
+    box-shadow: 0 0 0 0.1rem #1E1E1E, 0 0 0 0.25rem #776BE7;
+}
+
+/* ============================================
+   Touch-friendly Interaction Areas
+   ============================================ */
+
+/* Minimum touch target size: 44x44px */
+.chart-touch-target {
+    min-width: 44px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ============================================
+   Chart Legend Enhancements
+   ============================================ */
+
+.chart-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--mud-palette-divider);
+}
+
+.chart-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+}
+
+.chart-legend-item:hover {
+    background-color: var(--mud-palette-action-hover);
+}
+
+.chart-legend-item:focus-visible {
+    outline: 2px solid var(--mud-palette-primary);
+    outline-offset: 2px;
+}
+
+.chart-legend-color {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.chart-legend-label {
+    font-family: Roboto, sans-serif;
+    font-size: 0.875rem;
+    font-weight: 400;
+    color: var(--mud-palette-text-primary);
+}
+
+/* ============================================
+   Data Table Alternative (WCAG)
+   ============================================ */
+
+.chart-data-table {
+    margin-top: 2rem;
+}
+
+.chart-data-table-toggle {
+    margin-bottom: 1rem;
+}
+
+.chart-table-caption {
+    font-family: Roboto, sans-serif;
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--mud-palette-text-primary);
+    margin-bottom: 1rem;
+    text-align: left;
+}
+
+/* ============================================
+   Loading and Empty States
+   ============================================ */
+
+.chart-loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 300px;
+    padding: 2rem;
+}
+
+.chart-empty {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 300px;
+    padding: 2rem;
+    text-align: center;
+    color: var(--mud-palette-text-secondary);
+}
+
+.chart-empty-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.chart-empty-message {
+    font-family: Roboto, sans-serif;
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.chart-empty-hint {
+    font-family: Roboto, sans-serif;
+    font-size: 0.875rem;
+    color: var(--mud-palette-text-disabled);
+}
+
+/* ============================================
+   Responsive Chart Heights
+   ============================================ */
+
+/* Mobile-first approach */
+.chart-height-sm {
+    height: 280px;
+}
+
+.chart-height-md {
+    height: 320px;
+}
+
+.chart-height-lg {
+    height: 350px;
+}
+
+/* Tablet adjustments */
+@media (min-width: 600px) {
+    .chart-height-sm {
+        height: 300px;
+    }
+    
+    .chart-height-md {
+        height: 350px;
+    }
+    
+    .chart-height-lg {
+        height: 400px;
+    }
+}
+
+/* Desktop adjustments */
+@media (min-width: 960px) {
+    .chart-height-sm {
+        height: 300px;
+    }
+    
+    .chart-height-md {
+        height: 400px;
+    }
+    
+    .chart-height-lg {
+        height: 450px;
+    }
+}
+
+/* ============================================
+   Chart-specific Overrides for MudChart
+   ============================================ */
+
+/* Improve MudChart SVG elements for better accessibility */
+.mud-chart-container svg {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Ensure chart lines have minimum contrast */
+.mud-chart-line {
+    stroke-width: 2px;
+    transition: stroke-width 0.2s ease;
+}
+
+.mud-chart-line:hover {
+    stroke-width: 3px;
+}
+
+/* Chart points/markers */
+.mud-chart-point {
+    r: 4;
+    transition: r 0.2s ease;
+}
+
+.mud-chart-point:hover {
+    r: 6;
+}
+
+/* Bar chart enhancements */
+.mud-chart-bar {
+    transition: opacity 0.2s ease;
+}
+
+.mud-chart-bar:hover {
+    opacity: 0.8;
+}
+
+/* ============================================
+   Trend Indicators
+   ============================================ */
+
+.trend-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-family: Roboto, sans-serif;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.trend-indicator.positive {
+    color: var(--mud-palette-success);
+}
+
+.trend-indicator.negative {
+    color: var(--mud-palette-error);
+}
+
+.trend-indicator.neutral {
+    color: var(--mud-palette-text-secondary);
+}
+
+.trend-icon {
+    font-size: 1.25rem;
+}
+
+/* ============================================
+   Summary Cards for Charts
+   ============================================ */
+
+.chart-summary-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.chart-summary-card {
+    padding: 1.5rem;
+    background: var(--mud-palette-surface);
+    border-radius: var(--mud-default-borderradius);
+    box-shadow: var(--mud-elevation-2);
+    transition: box-shadow 0.2s ease;
+}
+
+.chart-summary-card:hover {
+    box-shadow: var(--mud-elevation-4);
+}
+
+.summary-card-label {
+    font-family: Roboto, sans-serif;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--mud-palette-text-secondary);
+    margin-bottom: 0.5rem;
+}
+
+.summary-card-value {
+    font-family: Roboto, sans-serif;
+    font-size: 1.5rem;
+    font-weight: 500;
+    color: var(--mud-palette-text-primary);
+}
+
+.summary-card-change {
+    font-family: Roboto, sans-serif;
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+}
+
+/* Mobile optimization for summary cards */
+@media (max-width: 599px) {
+    .chart-summary-cards {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ============================================
+   Export Button Styling
+   ============================================ */
+
+.chart-export-group {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+/* ============================================
+   Tooltip Enhancements (if using custom tooltips)
+   ============================================ */
+
+.chart-tooltip {
+    position: absolute;
+    padding: 8px 12px;
+    background: var(--mud-palette-surface);
+    border: 1px solid var(--mud-palette-divider);
+    border-radius: 4px;
+    box-shadow: var(--mud-elevation-8);
+    pointer-events: none;
+    z-index: 1000;
+    max-width: 300px;
+}
+
+.chart-tooltip-title {
+    font-family: Roboto, sans-serif;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--mud-palette-text-secondary);
+    margin-bottom: 0.25rem;
+}
+
+.chart-tooltip-value {
+    font-family: Roboto, sans-serif;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--mud-palette-text-primary);
+}
+
+/* Dark mode tooltip adjustments */
+.mud-theme-dark .chart-tooltip {
+    background: #2D2D2D;
+    border-color: #424242;
+}
+
+/* ============================================
+   Utility Classes
+   ============================================ */
+
+.chart-responsive {
+    width: 100%;
+    height: auto;
+}
+
+.chart-centered {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.chart-hidden {
+    display: none;
+}
+
+/* Screen reader only content */
+.chart-sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}
+
+/* ============================================
+   Print Styles
+   ============================================ */
+
+@media print {
+    .chart-wrapper {
+        box-shadow: none;
+        border: 1px solid #ddd;
+        page-break-inside: avoid;
+    }
+    
+    .chart-actions,
+    .chart-filters {
+        display: none;
+    }
+    
+    .chart-data-table {
+        display: block !important;
+    }
+}
+
+/* ============================================
+   Animations (Subtle and Accessible)
+   ============================================ */
+
+/* Respect user's motion preferences */
+@media (prefers-reduced-motion: no-preference) {
+    .chart-enter {
+        animation: chartFadeIn 0.3s ease-in;
+    }
+    
+    @keyframes chartFadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+}
+
+/* Disable animations for users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* ============================================
+   Color Palette Variables
+   These are fallbacks; prefer MudBlazor theme variables
+   ============================================ */
+
+:root {
+    /* Light mode colors (WCAG AA compliant) */
+    --chart-primary: #1976D2;
+    --chart-secondary: #7B1FA2;
+    --chart-success: #388E3C;
+    --chart-warning: #F57C00;
+    --chart-error: #D32F2F;
+    --chart-info: #0097A7;
+    
+    /* Data series colors */
+    --chart-series-1: #1976D2;
+    --chart-series-2: #388E3C;
+    --chart-series-3: #F57C00;
+    --chart-series-4: #7B1FA2;
+    --chart-series-5: #0097A7;
+    --chart-series-6: #C2185B;
+}
+
+.mud-theme-dark {
+    /* Dark mode colors (WCAG AA compliant) */
+    --chart-primary: #64B5F6;
+    --chart-secondary: #CE93D8;
+    --chart-success: #81C784;
+    --chart-warning: #FFB74D;
+    --chart-error: #E57373;
+    --chart-info: #4DD0E1;
+    
+    /* Data series colors */
+    --chart-series-1: #64B5F6;
+    --chart-series-2: #81C784;
+    --chart-series-3: #FFB74D;
+    --chart-series-4: #CE93D8;
+    --chart-series-5: #4DD0E1;
+    --chart-series-6: #F48FB1;
+}

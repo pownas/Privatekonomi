@@ -6,7 +6,12 @@
 
 <PageTitle>Nettoförmögenhetskurva - Privatekonomi</PageTitle>
 
-<MudText Typo="Typo.h4" Class="mb-4">Nettoförmögenhetskurva</MudText>
+<div class="chart-container">
+    <MudText Typo="Typo.h4" Class="mb-4">Nettoförmögenhetskurva</MudText>
+    <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">
+        Visualisering av din ekonomiska utveckling över tid med tillgångar, skulder och nettoförmögenhet.
+    </MudText>
+</div>
 
 @if (_loading)
 {
@@ -62,61 +67,85 @@ else
     </MudGrid>
 
     <!-- Filters -->
-    <MudPaper Class="pa-4 mb-4">
-        <MudGrid>
-            <MudItem xs="12" md="4">
-                <MudText Typo="Typo.subtitle1" Class="mb-2">Tidsperiod</MudText>
-                <MudButtonGroup Color="Color.Primary" Variant="Variant.Outlined">
-                    <MudButton OnClick="@(() => LoadPredefinedPeriod(12))" 
-                               Variant="@(_selectedPeriodMonths == 12 ? Variant.Filled : Variant.Outlined)">
-                        Senaste året
-                    </MudButton>
-                    <MudButton OnClick="@(() => LoadPredefinedPeriod(24))" 
-                               Variant="@(_selectedPeriodMonths == 24 ? Variant.Filled : Variant.Outlined)">
-                        2 år
-                    </MudButton>
-                    <MudButton OnClick="@(() => LoadPredefinedPeriod(60))" 
-                               Variant="@(_selectedPeriodMonths == 60 ? Variant.Filled : Variant.Outlined)">
-                        5 år
-                    </MudButton>
-                    <MudButton OnClick="@(() => LoadAllHistory())" 
-                               Variant="@(_selectedPeriodMonths == null ? Variant.Filled : Variant.Outlined)">
-                        All historik
-                    </MudButton>
-                </MudButtonGroup>
+    <MudPaper Class="pa-4 mb-4" Elevation="2">
+        <MudGrid Spacing="3">
+            <MudItem xs="12" sm="6" md="4">
+                <div class="filter-group">
+                    <MudText Typo="Typo.subtitle1" Class="filter-label mb-2">Tidsperiod</MudText>
+                    <MudButtonGroup Color="Color.Primary" Variant="Variant.Outlined" Size="Size.Small" Class="chart-touch-target">
+                        <MudButton OnClick="@(() => LoadPredefinedPeriod(12))" 
+                                   Variant="@(_selectedPeriodMonths == 12 ? Variant.Filled : Variant.Outlined)"
+                                   aria-label="Visa senaste året"
+                                   Class="chart-filter-button">
+                            Senaste året
+                        </MudButton>
+                        <MudButton OnClick="@(() => LoadPredefinedPeriod(24))" 
+                                   Variant="@(_selectedPeriodMonths == 24 ? Variant.Filled : Variant.Outlined)"
+                                   aria-label="Visa senaste 2 åren"
+                                   Class="chart-filter-button">
+                            2 år
+                        </MudButton>
+                        <MudButton OnClick="@(() => LoadPredefinedPeriod(60))" 
+                                   Variant="@(_selectedPeriodMonths == 60 ? Variant.Filled : Variant.Outlined)"
+                                   aria-label="Visa senaste 5 åren"
+                                   Class="chart-filter-button">
+                            5 år
+                        </MudButton>
+                        <MudButton OnClick="@(() => LoadAllHistory())" 
+                                   Variant="@(_selectedPeriodMonths == null ? Variant.Filled : Variant.Outlined)"
+                                   aria-label="Visa all historik"
+                                   Class="chart-filter-button">
+                            All historik
+                        </MudButton>
+                    </MudButtonGroup>
+                </div>
             </MudItem>
             
-            <MudItem xs="12" md="4">
-                <MudText Typo="Typo.subtitle1" Class="mb-2">Gruppering</MudText>
-                <MudButtonGroup Color="Color.Primary" Variant="Variant.Outlined">
-                    <MudButton OnClick="@(() => ChangeGrouping("month"))" 
-                               Variant="@(_selectedGroupBy == "month" ? Variant.Filled : Variant.Outlined)">
-                        Månadsvis
-                    </MudButton>
-                    <MudButton OnClick="@(() => ChangeGrouping("quarter"))" 
-                               Variant="@(_selectedGroupBy == "quarter" ? Variant.Filled : Variant.Outlined)">
-                        Kvartalsvis
-                    </MudButton>
-                    <MudButton OnClick="@(() => ChangeGrouping("year"))" 
-                               Variant="@(_selectedGroupBy == "year" ? Variant.Filled : Variant.Outlined)">
-                        Årligen
-                    </MudButton>
-                </MudButtonGroup>
+            <MudItem xs="12" sm="6" md="4">
+                <div class="filter-group">
+                    <MudText Typo="Typo.subtitle1" Class="filter-label mb-2">Gruppering</MudText>
+                    <MudButtonGroup Color="Color.Primary" Variant="Variant.Outlined" Size="Size.Small" Class="chart-touch-target">
+                        <MudButton OnClick="@(() => ChangeGrouping("month"))" 
+                                   Variant="@(_selectedGroupBy == "month" ? Variant.Filled : Variant.Outlined)"
+                                   aria-label="Gruppera månadsvis"
+                                   Class="chart-filter-button">
+                            Månadsvis
+                        </MudButton>
+                        <MudButton OnClick="@(() => ChangeGrouping("quarter"))" 
+                                   Variant="@(_selectedGroupBy == "quarter" ? Variant.Filled : Variant.Outlined)"
+                                   aria-label="Gruppera kvartalsvis"
+                                   Class="chart-filter-button">
+                            Kvartalsvis
+                        </MudButton>
+                        <MudButton OnClick="@(() => ChangeGrouping("year"))" 
+                                   Variant="@(_selectedGroupBy == "year" ? Variant.Filled : Variant.Outlined)"
+                                   aria-label="Gruppera årligen"
+                                   Class="chart-filter-button">
+                            Årligen
+                        </MudButton>
+                    </MudButtonGroup>
+                </div>
             </MudItem>
             
-            <MudItem xs="12" md="4" Class="d-flex align-end justify-end">
-                <MudButtonGroup Variant="Variant.Outlined">
-                    <MudButton StartIcon="@Icons.Material.Filled.FileDownload" 
-                               OnClick="ExportToCSV"
-                               Color="Color.Primary">
-                        Exportera CSV
-                    </MudButton>
-                    <MudButton StartIcon="@Icons.Material.Filled.Image" 
-                               OnClick="ExportToPNG"
-                               Color="Color.Primary">
-                        Exportera PNG
-                    </MudButton>
-                </MudButtonGroup>
+            <MudItem xs="12" md="4" Class="d-flex align-end justify-md-end justify-start">
+                <div class="chart-export-group">
+                    <MudButtonGroup Variant="Variant.Outlined" Size="Size.Small">
+                        <MudButton StartIcon="@Icons.Material.Filled.FileDownload" 
+                                   OnClick="ExportToCSV"
+                                   Color="Color.Primary"
+                                   aria-label="Exportera data som CSV-fil"
+                                   Class="chart-action-button chart-touch-target">
+                            <span class="d-none d-sm-inline">Exportera </span>CSV
+                        </MudButton>
+                        <MudButton StartIcon="@Icons.Material.Filled.Image" 
+                                   OnClick="ExportToPNG"
+                                   Color="Color.Primary"
+                                   aria-label="Exportera graf som PNG-bild"
+                                   Class="chart-action-button chart-touch-target">
+                            <span class="d-none d-sm-inline">Exportera </span>PNG
+                        </MudButton>
+                    </MudButtonGroup>
+                </div>
             </MudItem>
         </MudGrid>
     </MudPaper>
@@ -124,61 +153,117 @@ else
     <!-- Chart -->
     @if (_report.Periods.Any())
     {
-        <MudPaper Class="pa-4 mb-4" Elevation="2">
-            <MudText Typo="Typo.h6" Class="mb-4">Nettoförmögenhetsutveckling</MudText>
-            <MudChart ChartType="ChartType.Line" 
-                      ChartSeries="@_chartSeries" 
-                      XAxisLabels="@_xAxisLabels"
-                      Width="100%" 
-                      Height="400px"
-                      ChartOptions="@_chartOptions" />
+        <MudPaper Class="pa-4 mb-4 chart-wrapper" Elevation="2">
+            <div class="chart-header">
+                <div>
+                    <MudText Typo="Typo.h6" Class="chart-title">Nettoförmögenhetsutveckling</MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary" Class="chart-subtitle">
+                        @GetChartDescription()
+                    </MudText>
+                </div>
+            </div>
+            <div role="img" aria-label="Graf som visar nettoförmögenhetsutveckling över tid">
+                <MudChart ChartType="ChartType.Line" 
+                          ChartSeries="@_chartSeries" 
+                          XAxisLabels="@_xAxisLabels"
+                          Width="100%" 
+                          Height="400px"
+                          ChartOptions="@_chartOptions"
+                          Class="chart-responsive chart-height-lg" />
+            </div>
+            <!-- Screen reader description -->
+            <p class="chart-sr-only">
+                Grafen visar nettoförmögenhetsutvecklingen från @_report.Periods.First().Period till @_report.Periods.Last().Period.
+                Startförmögenhet var @_report.StartNetWorth.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))
+                och nuvarande förmögenhet är @_report.CurrentNetWorth.ToString("C0", new System.Globalization.CultureInfo("sv-SE")).
+                Detta representerar en förändring på @(_report.NetWorthChange >= 0 ? "+" : "")@_report.NetWorthChange.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))
+                (@(_report.NetWorthChangePercentage >= 0 ? "+" : "")@_report.NetWorthChangePercentage.ToString("F1")%).
+            </p>
         </MudPaper>
 
         <!-- Asset and Liability Breakdown -->
-        <MudGrid>
+        <MudGrid Spacing="3">
             <MudItem xs="12" md="6">
-                <MudPaper Class="pa-4" Elevation="2">
-                    <MudText Typo="Typo.h6" Class="mb-4">Tillgångar över tid</MudText>
+                <MudPaper Class="pa-4 chart-wrapper" Elevation="2">
+                    <div class="chart-header">
+                        <MudText Typo="Typo.h6" Class="chart-title">Tillgångar över tid</MudText>
+                    </div>
                     @if (_assetChartSeries.Any())
                     {
-                        <MudChart ChartType="ChartType.Line" 
-                                  ChartSeries="@_assetChartSeries" 
-                                  XAxisLabels="@_xAxisLabels"
-                                  Width="100%" 
-                                  Height="300px"
-                                  ChartOptions="@_chartOptions" />
+                        <div role="img" aria-label="Graf som visar tillgångar uppdelat på bankkonton, investeringar och fysiska tillgångar">
+                            <MudChart ChartType="ChartType.Line" 
+                                      ChartSeries="@_assetChartSeries" 
+                                      XAxisLabels="@_xAxisLabels"
+                                      Width="100%" 
+                                      Height="300px"
+                                      ChartOptions="@_chartOptions"
+                                      Class="chart-responsive chart-height-md" />
+                        </div>
+                        <p class="chart-sr-only">
+                            Grafen visar utvecklingen av tillgångar uppdelat på @string.Join(", ", _assetChartSeries.Select(s => s.Name)).
+                        </p>
                     }
                     else
                     {
-                        <MudText>Inga tillgångsdata att visa.</MudText>
+                        <div class="chart-empty">
+                            <MudIcon Icon="@Icons.Material.Filled.TrendingUp" Class="chart-empty-icon" />
+                            <MudText Class="chart-empty-message">Inga tillgångsdata att visa</MudText>
+                            <MudText Typo="Typo.body2" Class="chart-empty-hint">
+                                Data kommer att visas när du har registrerat tillgångar.
+                            </MudText>
+                        </div>
                     }
                 </MudPaper>
             </MudItem>
 
             <MudItem xs="12" md="6">
-                <MudPaper Class="pa-4" Elevation="2">
-                    <MudText Typo="Typo.h6" Class="mb-4">Skulder över tid</MudText>
+                <MudPaper Class="pa-4 chart-wrapper" Elevation="2">
+                    <div class="chart-header">
+                        <MudText Typo="Typo.h6" Class="chart-title">Skulder över tid</MudText>
+                    </div>
                     @if (_liabilityChartSeries.Any())
                     {
-                        <MudChart ChartType="ChartType.Line" 
-                                  ChartSeries="@_liabilityChartSeries" 
-                                  XAxisLabels="@_xAxisLabels"
-                                  Width="100%" 
-                                  Height="300px"
-                                  ChartOptions="@_chartOptions" />
+                        <div role="img" aria-label="Graf som visar skulder och krediter över tid">
+                            <MudChart ChartType="ChartType.Line" 
+                                      ChartSeries="@_liabilityChartSeries" 
+                                      XAxisLabels="@_xAxisLabels"
+                                      Width="100%" 
+                                      Height="300px"
+                                      ChartOptions="@_chartOptions"
+                                      Class="chart-responsive chart-height-md" />
+                        </div>
+                        <p class="chart-sr-only">
+                            Grafen visar utvecklingen av skulder uppdelat på @string.Join(", ", _liabilityChartSeries.Select(s => s.Name)).
+                        </p>
                     }
                     else
                     {
-                        <MudText>Inga skulddata att visa.</MudText>
+                        <div class="chart-empty">
+                            <MudIcon Icon="@Icons.Material.Filled.TrendingDown" Class="chart-empty-icon" />
+                            <MudText Class="chart-empty-message">Inga skulddata att visa</MudText>
+                            <MudText Typo="Typo.body2" Class="chart-empty-hint">
+                                Data kommer att visas när du har registrerat skulder.
+                            </MudText>
+                        </div>
                     }
                 </MudPaper>
             </MudItem>
         </MudGrid>
 
-        <!-- Data Table -->
-        <MudPaper Class="pa-4 mt-4" Elevation="2">
-            <MudText Typo="Typo.h6" Class="mb-4">Detaljerad Historik</MudText>
-            <MudTable Items="@_report.Periods" Dense="true" Hover="true" Striped="true">
+        <!-- Data Table (WCAG Alternative) -->
+        <MudPaper Class="pa-4 mt-4 chart-data-table" Elevation="2">
+            <div class="chart-header">
+                <MudText Typo="Typo.h6" Class="chart-title">Detaljerad Historik</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary" Class="chart-subtitle">
+                    Tabellvy av all data som visas i graferna
+                </MudText>
+            </div>
+            <MudTable Items="@_report.Periods" 
+                      Dense="true" 
+                      Hover="true" 
+                      Striped="true"
+                      aria-label="Detaljerad historik över nettoförmögenhet, tillgångar och skulder"
+                      Breakpoint="Breakpoint.Sm">
                 <HeaderContent>
                     <MudTh>Period</MudTh>
                     <MudTh Style="text-align: right">Nettoförmögenhet</MudTh>
@@ -189,9 +274,11 @@ else
                 <RowTemplate>
                     <MudTd DataLabel="Period">@context.Period</MudTd>
                     <MudTd DataLabel="Nettoförmögenhet" Style="text-align: right">
-                        <MudText Color="@(context.NetWorth >= 0 ? Color.Success : Color.Error)">
-                            @context.NetWorth.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))
-                        </MudText>
+                        <div class="trend-indicator @(context.NetWorth >= 0 ? "positive" : "negative")">
+                            <MudText Color="@(context.NetWorth >= 0 ? Color.Success : Color.Error)">
+                                @context.NetWorth.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))
+                            </MudText>
+                        </div>
                     </MudTd>
                     <MudTd DataLabel="Tillgångar" Style="text-align: right">
                         @context.TotalAssets.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))
@@ -206,10 +293,15 @@ else
                             {
                                 var previousPeriod = _report.Periods[index - 1];
                                 var change = context.NetWorth - previousPeriod.NetWorth;
-                                var color = change >= 0 ? Color.Success : Color.Error;
-                                <MudText Color="@color">
-                                    @(change >= 0 ? "+" : "")@change.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))
-                                </MudText>
+                                var isPositive = change >= 0;
+                                <div class="trend-indicator @(isPositive ? "positive" : "negative")">
+                                    <MudIcon Icon="@(isPositive ? Icons.Material.Filled.TrendingUp : Icons.Material.Filled.TrendingDown)" 
+                                             Size="Size.Small" 
+                                             Class="trend-icon" />
+                                    <MudText Color="@(isPositive ? Color.Success : Color.Error)">
+                                        @(change >= 0 ? "+" : "")@change.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))
+                                    </MudText>
+                                </div>
                             }
                             else
                             {
@@ -248,8 +340,43 @@ else
         YAxisTicks = 100000,
         YAxisFormat = "C0",
         InterpolationOption = InterpolationOption.NaturalSpline,
-        LineStrokeWidth = 3
+        LineStrokeWidth = 2, // Standard width, increases on hover via CSS
+        MaxNumYAxisTicks = 8 // Limit ticks for better readability
     };
+
+    private string[] GetChartPalette()
+    {
+        // WCAG AA compliant colors for both light and dark mode
+        // In real implementation, check theme state
+        return new[]
+        {
+            "#1976D2", // Primary Blue
+            "#388E3C", // Success Green
+            "#F57C00", // Warning Orange
+            "#7B1FA2", // Secondary Purple
+            "#0097A7", // Info Cyan
+            "#C2185B"  // Pink
+        };
+    }
+
+    private string GetChartDescription()
+    {
+        if (!_report.Periods.Any()) return "";
+        
+        var grouping = _selectedGroupBy switch
+        {
+            "month" => "månadsvis",
+            "quarter" => "kvartalsvis",
+            "year" => "årlig",
+            _ => ""
+        };
+        
+        var period = _selectedPeriodMonths.HasValue 
+            ? $"senaste {_selectedPeriodMonths} månaderna" 
+            : "all tillgänglig historik";
+            
+        return $"Visar {grouping} utveckling för {period}";
+    }
 
     protected override async Task OnInitializedAsync()
     {
