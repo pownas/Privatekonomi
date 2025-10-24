@@ -19,7 +19,7 @@
             
             <MudItem xs="12" md="6">
                 <MudNumericField Label="Belopp" @bind-Value="_transaction.Amount" Required="true" 
-                                 Format="N2" Adornment="Adornment.Start" AdornmentText="kr" />
+                                 Format="N2" Culture="@(new System.Globalization.CultureInfo("sv-SE"))" Adornment="Adornment.Start" AdornmentText="kr" />
             </MudItem>
             
             <MudItem xs="12">

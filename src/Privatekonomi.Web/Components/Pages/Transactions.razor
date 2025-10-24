@@ -1,6 +1,7 @@
 @page "/transactions"
 @rendermode InteractiveServer
 @inject ITransactionService TransactionService
+@inject IHouseholdService HouseholdService
 @inject IExportService ExportService
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
@@ -42,12 +43,20 @@
         <MudTable Items="@_transactions" Hover="true" Striped="true" Filter="new Func<Transaction,bool>(FilterFunc)">
             <ToolBarContent>
                 <MudTextField @bind-Value="_searchString" Placeholder="Sök" Adornment="Adornment.Start" 
-                              AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+                              AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0 mr-2"></MudTextField>
+                <MudSelect T="int?" @bind-Value="_selectedHouseholdId" Label="Filtrera efter hushåll" 
+                           Clearable="true" Style="min-width: 200px;" Class="mt-0">
+                    @foreach (var household in _households)
+                    {
+                        <MudSelectItem Value="@((int?)household.HouseholdId)">@household.Name</MudSelectItem>
+                    }
+                </MudSelect>
             </ToolBarContent>
             <HeaderContent>
                 <MudTh>Datum</MudTh>
                 <MudTh>Beskrivning</MudTh>
                 <MudTh>Bank</MudTh>
+                <MudTh>Hushåll</MudTh>
                 <MudTh>Kategori</MudTh>
                 <MudTh Style="text-align: right">Belopp</MudTh>
                 <MudTh>Åtgärder</MudTh>
@@ -99,6 +108,18 @@
                         <MudText Typo="Typo.body2" Color="Color.Default">-</MudText>
                     }
                 </MudTd>
+                <MudTd DataLabel="Hushåll">
+                    @if (context.Household != null)
+                    {
+                        <MudChip T="string" Size="Size.Small" Color="Color.Secondary" Variant="Variant.Outlined">
+                            <MudIcon Icon="@Icons.Material.Filled.Home" Size="Size.Small" /> @context.Household.Name
+                        </MudChip>
+                    }
+                    else
+                    {
+                        <MudText Typo="Typo.caption" Color="Color.Default">Personlig</MudText>
+                    }
+                </MudTd>
                 <MudTd DataLabel="Kategori">
                     @if (context.TransactionCategories.Any())
                     {
@@ -140,8 +161,10 @@
 @code {
     private bool _loading = true;
     private IEnumerable<Transaction> _transactions = new List<Transaction>();
+    private List<Household> _households = new();
     private string _searchString = "";
     private int? _expandedTransactionId = null;
+    private int? _selectedHouseholdId = null;
 
     protected override async Task OnInitializedAsync()
     {
@@ -151,12 +174,22 @@
     private async Task LoadData()
     {
         _loading = true;
+        var households = await HouseholdService.GetAllHouseholdsAsync();
+        _households = households.ToList();
         _transactions = await TransactionService.GetAllTransactionsAsync();
         _loading = false;
     }
 
     private bool FilterFunc(Transaction transaction)
     {
+        // Filter by household
+        if (_selectedHouseholdId.HasValue)
+        {
+            if (transaction.HouseholdId != _selectedHouseholdId.Value)
+                return false;
+        }
+        
+        // Filter by search string
         if (string.IsNullOrWhiteSpace(_searchString))
             return true;
         if (transaction.Description.Contains(_searchString, StringComparison.OrdinalIgnoreCase))

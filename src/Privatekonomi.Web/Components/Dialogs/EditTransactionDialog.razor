@@ -2,6 +2,7 @@
 @using Privatekonomi.Core.Services
 @inject ITransactionService TransactionService
 @inject ICategoryService CategoryService
+@inject IHouseholdService HouseholdService
 @inject ISnackbar Snackbar
 
 <MudDialog>
@@ -213,6 +214,7 @@
             Date = Transaction.Date,
             IsIncome = Transaction.IsIncome,
             BankSourceId = Transaction.BankSourceId,
+            HouseholdId = Transaction.HouseholdId,
             Currency = Transaction.Currency,
             Payee = Transaction.Payee,
             Tags = Transaction.Tags,

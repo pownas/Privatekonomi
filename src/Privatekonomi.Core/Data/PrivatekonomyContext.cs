@@ -54,6 +54,9 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
     
     // Net Worth Tracking
     public DbSet<NetWorthSnapshot> NetWorthSnapshots { get; set; }
+    
+    // Currency Accounts
+    public DbSet<CurrencyAccount> CurrencyAccounts { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -199,6 +202,11 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
                 .HasForeignKey(e => e.PocketId)
                 .OnDelete(DeleteBehavior.SetNull);
             
+            entity.HasOne(e => e.Household)
+                .WithMany()
+                .HasForeignKey(e => e.HouseholdId)
+                .OnDelete(DeleteBehavior.SetNull);
+            
             entity.HasOne(e => e.User)
                 .WithMany()
                 .HasForeignKey(e => e.UserId)
@@ -208,7 +216,9 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
             entity.HasIndex(e => e.Date);
             entity.HasIndex(e => e.UserId);
             entity.HasIndex(e => e.PocketId);
+            entity.HasIndex(e => e.HouseholdId);
             entity.HasIndex(e => new { e.BankSourceId, e.Date });
+            entity.HasIndex(e => new { e.HouseholdId, e.Date });
             entity.HasIndex(e => e.Payee);
         });
 
@@ -907,6 +917,29 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
             entity.HasIndex(e => e.UserId);
             entity.HasIndex(e => e.Date);
             entity.HasIndex(e => new { e.UserId, e.Date });
+        });
+        
+        // Currency Account configuration
+        modelBuilder.Entity<CurrencyAccount>(entity =>
+        {
+            entity.HasKey(e => e.CurrencyAccountId);
+            entity.Property(e => e.Currency).IsRequired().HasMaxLength(3);
+            entity.Property(e => e.Balance).HasPrecision(18, 2);
+            entity.Property(e => e.ExchangeRate).HasPrecision(18, 6);
+            entity.Property(e => e.AccountNumber).HasMaxLength(20);
+            entity.Property(e => e.Description).HasMaxLength(500);
+            entity.Property(e => e.CreatedAt).IsRequired();
+            
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.HasIndex(e => e.UserId);
+            entity.HasIndex(e => e.Currency);
+            
+            // Ignore computed property
+            entity.Ignore(e => e.ValueInSEK);
         });
     }
 }

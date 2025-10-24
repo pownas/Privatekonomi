@@ -141,7 +141,7 @@
                         <MudTd DataLabel="Typ">
                             <MudChip T="string" Size="Size.Small" Color="Color.Info">@context.SecurityType</MudChip>
                         </MudTd>
-                        <MudTd DataLabel="Datum">@context.SaleDate.ToShortDateString()</MudTd>
+                        <MudTd DataLabel="Datum">@context.SaleDate.ToString("yyyy-MM-dd")</MudTd>
                         <MudTd DataLabel="Antal">@context.Quantity.ToString("N2")</MudTd>
                         <MudTd DataLabel="Inköp">@context.TotalPurchasePrice.ToString("N2") kr</MudTd>
                         <MudTd DataLabel="Försäljning">@context.TotalSalePrice.ToString("N2") kr</MudTd>

@@ -31,6 +31,11 @@ a, .btn-link {
     padding-top: 1.1rem;
 }
 
+/* Fix for main content to prevent overlap with MudAppBar */
+.mud-main-content {
+    padding-top: 80px !important;
+}
+
 h1:focus {
     outline: none;
 }

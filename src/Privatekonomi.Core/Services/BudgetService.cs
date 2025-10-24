@@ -65,9 +65,44 @@ public class BudgetService : IBudgetService
     public async Task<Budget> UpdateBudgetAsync(Budget budget)
     {
         budget.UpdatedAt = DateTime.UtcNow;
-        _context.Entry(budget).State = EntityState.Modified;
+        
+        // Get the existing budget with its categories
+        var existingBudget = await _context.Budgets
+            .Include(b => b.BudgetCategories)
+            .FirstOrDefaultAsync(b => b.BudgetId == budget.BudgetId);
+            
+        if (existingBudget == null)
+        {
+            throw new InvalidOperationException($"Budget with ID {budget.BudgetId} not found");
+        }
+
+        // Update basic properties
+        existingBudget.Name = budget.Name;
+        existingBudget.Description = budget.Description;
+        existingBudget.StartDate = budget.StartDate;
+        existingBudget.EndDate = budget.EndDate;
+        existingBudget.Period = budget.Period;
+        existingBudget.TemplateType = budget.TemplateType;
+        existingBudget.RolloverUnspent = budget.RolloverUnspent;
+        existingBudget.HouseholdId = budget.HouseholdId;
+        existingBudget.UpdatedAt = budget.UpdatedAt;
+
+        // Remove all existing budget categories
+        existingBudget.BudgetCategories.Clear();
+
+        // Add new budget categories
+        foreach (var bc in budget.BudgetCategories)
+        {
+            existingBudget.BudgetCategories.Add(new BudgetCategory
+            {
+                BudgetId = existingBudget.BudgetId,
+                CategoryId = bc.CategoryId,
+                PlannedAmount = bc.PlannedAmount
+            });
+        }
+
         await _context.SaveChangesAsync();
-        return budget;
+        return existingBudget;
     }
 
     public async Task DeleteBudgetAsync(int id)
@@ -180,5 +215,174 @@ public class BudgetService : IBudgetService
         }
 
         return transactionsByCategory;
+    }
+
+    public async Task<Budget?> GetBudgetForCategoryAndMonthAsync(int categoryId, DateTime date)
+    {
+        // Get the first day of the month
+        var startDate = new DateTime(date.Year, date.Month, 1);
+        var endDate = startDate.AddMonths(1).AddDays(-1);
+
+        var query = _context.Budgets
+            .Include(b => b.BudgetCategories.Where(bc => bc.CategoryId == categoryId))
+            .ThenInclude(bc => bc.Category)
+            .Where(b => b.StartDate <= startDate && b.EndDate >= endDate && b.Period == BudgetPeriod.Monthly)
+            .AsQueryable();
+
+        // Filter by current user if authenticated
+        if (_currentUserService?.IsAuthenticated == true && _currentUserService.UserId != null)
+        {
+            query = query.Where(b => b.UserId == _currentUserService.UserId);
+        }
+
+        return await query.FirstOrDefaultAsync();
+    }
+
+    public async Task<Budget> CreateOrUpdateCategoryBudgetAsync(int categoryId, DateTime monthDate, decimal plannedAmount)
+    {
+        // Get the first and last day of the month
+        var startDate = new DateTime(monthDate.Year, monthDate.Month, 1);
+        var endDate = startDate.AddMonths(1).AddDays(-1);
+
+        // Check if a budget already exists for this month
+        var existingBudget = await GetBudgetForCategoryAndMonthAsync(categoryId, monthDate);
+
+        if (existingBudget != null)
+        {
+            // Update existing budget category
+            var existingBudgetCategory = existingBudget.BudgetCategories.FirstOrDefault(bc => bc.CategoryId == categoryId);
+            
+            if (existingBudgetCategory != null)
+            {
+                // Update the planned amount
+                existingBudgetCategory.PlannedAmount = plannedAmount;
+            }
+            else
+            {
+                // Add new budget category to existing budget
+                existingBudget.BudgetCategories.Add(new BudgetCategory
+                {
+                    BudgetId = existingBudget.BudgetId,
+                    CategoryId = categoryId,
+                    PlannedAmount = plannedAmount
+                });
+            }
+
+            await UpdateBudgetAsync(existingBudget);
+            return existingBudget;
+        }
+        else
+        {
+            // Create new monthly budget
+            var newBudget = new Budget
+            {
+                Name = $"Budget {startDate:yyyy-MM}",
+                StartDate = startDate,
+                EndDate = endDate,
+                Period = BudgetPeriod.Monthly,
+                BudgetCategories = new List<BudgetCategory>
+                {
+                    new BudgetCategory
+                    {
+                        CategoryId = categoryId,
+                        PlannedAmount = plannedAmount
+                    }
+                }
+            };
+
+            return await CreateBudgetAsync(newBudget);
+        }
+    }
+
+    public async Task<Budget?> CreateNextMonthBudgetAsync(int budgetId)
+    {
+        var existingBudget = await GetBudgetByIdAsync(budgetId);
+        if (existingBudget == null)
+        {
+            return null;
+        }
+
+        // Only create next month budget for monthly budgets
+        if (existingBudget.Period != BudgetPeriod.Monthly)
+        {
+            return null;
+        }
+
+        // Calculate next month dates
+        var nextMonthStart = existingBudget.EndDate.AddDays(1);
+        var nextMonthEnd = nextMonthStart.AddMonths(1).AddDays(-1);
+
+        // Check if a budget already exists for next month
+        var existingNextMonthBudget = await _context.Budgets
+            .Where(b => b.StartDate == nextMonthStart && b.EndDate == nextMonthEnd)
+            .FirstOrDefaultAsync();
+
+        if (existingNextMonthBudget != null)
+        {
+            return null; // Budget already exists for next month
+        }
+
+        // Create new budget for next month based on the existing budget
+        var nextMonthBudget = new Budget
+        {
+            Name = $"Budget {nextMonthStart:yyyy-MM}",
+            Description = existingBudget.Description,
+            StartDate = nextMonthStart,
+            EndDate = nextMonthEnd,
+            Period = BudgetPeriod.Monthly,
+            TemplateType = existingBudget.TemplateType,
+            RolloverUnspent = existingBudget.RolloverUnspent,
+            HouseholdId = existingBudget.HouseholdId,
+            UserId = existingBudget.UserId,
+            BudgetCategories = existingBudget.BudgetCategories.Select(bc => new BudgetCategory
+            {
+                CategoryId = bc.CategoryId,
+                PlannedAmount = bc.PlannedAmount
+            }).ToList()
+        };
+
+        return await CreateBudgetAsync(nextMonthBudget);
+    }
+
+    public async Task<IEnumerable<Budget>> CreateNextMonthBudgetsForAllActiveAsync()
+    {
+        var today = DateTime.Today;
+        var currentMonthEnd = new DateTime(today.Year, today.Month, DateTime.DaysInMonth(today.Year, today.Month));
+        
+        // Check if we're in the last 3 days of the month
+        var daysUntilMonthEnd = (currentMonthEnd - today).Days;
+        if (daysUntilMonthEnd > 3)
+        {
+            return new List<Budget>(); // Not time to create next month budgets yet
+        }
+
+        // Get all monthly budgets that end this month
+        var activeMonthlyBudgets = await _context.Budgets
+            .Include(b => b.BudgetCategories)
+            .Where(b => b.Period == BudgetPeriod.Monthly && 
+                       b.EndDate.Year == today.Year && 
+                       b.EndDate.Month == today.Month)
+            .ToListAsync();
+
+        // Filter by current user if authenticated
+        if (_currentUserService?.IsAuthenticated == true && _currentUserService.UserId != null)
+        {
+            activeMonthlyBudgets = activeMonthlyBudgets
+                .Where(b => b.UserId == _currentUserService.UserId)
+                .ToList();
+        }
+
+        var createdBudgets = new List<Budget>();
+
+        foreach (var budget in activeMonthlyBudgets)
+        {
+            var nextMonthBudget = await CreateNextMonthBudgetAsync(budget.BudgetId);
+            if (nextMonthBudget != null)
+            {
+                createdBudgets.Add(nextMonthBudget);
+            }
+        }
+
+        return createdBudgets;
     }
 }

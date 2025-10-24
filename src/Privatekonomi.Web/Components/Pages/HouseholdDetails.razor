@@ -46,7 +46,7 @@ else
                     <RowTemplate>
                         <MudTd DataLabel="Namn">@context.Name</MudTd>
                         <MudTd DataLabel="E-post">@context.Email</MudTd>
-                        <MudTd DataLabel="Gick med">@context.JoinedDate.ToShortDateString()</MudTd>
+                        <MudTd DataLabel="Gick med">@context.JoinedDate.ToString("yyyy-MM-dd")</MudTd>
                         <MudTd DataLabel="Åtgärder">
                             <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="@(() => RemoveMember(context.HouseholdMemberId))" />
                         </MudTd>
@@ -80,7 +80,7 @@ else
                         <MudTd DataLabel="Typ">@GetExpenseTypeText(context.Type)</MudTd>
                         <MudTd DataLabel="Belopp">@context.TotalAmount.ToString("N2") kr</MudTd>
                         <MudTd DataLabel="Fördelning">@GetSplitMethodText(context.SplitMethod)</MudTd>
-                        <MudTd DataLabel="Datum">@context.ExpenseDate.ToShortDateString()</MudTd>
+                        <MudTd DataLabel="Datum">@context.ExpenseDate.ToString("yyyy-MM-dd")</MudTd>
                         <MudTd DataLabel="Åtgärder">
                             <MudIconButton Icon="@Icons.Material.Filled.Visibility" Color="Color.Primary" Size="Size.Small" OnClick="@(() => ViewExpenseDetails(context.SharedExpenseId))" />
                             <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="@(() => DeleteExpense(context.SharedExpenseId))" />

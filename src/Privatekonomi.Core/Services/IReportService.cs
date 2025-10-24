@@ -7,7 +7,7 @@ public interface IReportService
     /// <summary>
     /// Get cash flow data for a date range
     /// </summary>
-    Task<CashFlowReport> GetCashFlowReportAsync(DateTime fromDate, DateTime toDate, string groupBy = "month");
+    Task<CashFlowReport> GetCashFlowReportAsync(DateTime fromDate, DateTime toDate, string groupBy = "month", int? householdId = null);
     
     /// <summary>
     /// Get net worth calculation (assets - liabilities)
@@ -17,12 +17,12 @@ public interface IReportService
     /// <summary>
     /// Get trend analysis for a specific category
     /// </summary>
-    Task<TrendAnalysis> GetTrendAnalysisAsync(int? categoryId, int months = 6);
+    Task<TrendAnalysis> GetTrendAnalysisAsync(int? categoryId, int months = 6, int? householdId = null);
     
     /// <summary>
     /// Get top merchants/payees by spending
     /// </summary>
-    Task<IEnumerable<TopMerchant>> GetTopMerchantsAsync(int limit = 10, DateTime? fromDate = null, DateTime? toDate = null);
+    Task<IEnumerable<TopMerchant>> GetTopMerchantsAsync(int limit = 10, DateTime? fromDate = null, DateTime? toDate = null, int? householdId = null);
     
     /// <summary>
     /// Get net worth history over time

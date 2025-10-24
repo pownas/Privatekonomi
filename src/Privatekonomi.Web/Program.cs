@@ -8,8 +8,14 @@ using Privatekonomi.Core.Services;
 using Privatekonomi.Web.Components;
 using Privatekonomi.Web.Components.Account;
 using Privatekonomi.Web.Services;
+using System.Globalization;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Configure Swedish culture as default
+var swedishCulture = new CultureInfo("sv-SE");
+CultureInfo.DefaultThreadCurrentCulture = swedishCulture;
+CultureInfo.DefaultThreadCurrentUICulture = swedishCulture;
 
 // Add Aspire service defaults
 builder.AddServiceDefaults();
@@ -92,6 +98,7 @@ builder.Services.AddScoped<IBankConnectionService, BankConnectionService>();
 builder.Services.AddScoped<IExportService, ExportService>();
 builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<ISalaryHistoryService, SalaryHistoryService>();
+builder.Services.AddScoped<ICurrencyAccountService, CurrencyAccountService>();
 builder.Services.AddScoped<ThemeService>();
 
 // Swedish-specific services
@@ -157,6 +164,15 @@ builder.Services.AddScoped<IBankApiService>(sp =>
 });
 
 var app = builder.Build();
+
+// Configure request localization for Swedish
+var supportedCultures = new[] { new CultureInfo("sv-SE") };
+app.UseRequestLocalization(new RequestLocalizationOptions
+{
+    DefaultRequestCulture = new Microsoft.AspNetCore.Localization.RequestCulture("sv-SE"),
+    SupportedCultures = supportedCultures,
+    SupportedUICultures = supportedCultures
+});
 
 // Seed the database
 try
