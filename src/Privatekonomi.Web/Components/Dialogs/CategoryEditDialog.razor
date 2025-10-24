@@ -1,0 +1,143 @@
+@inject ICategoryService CategoryService
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudForm @ref="_form" @bind-IsValid="@_formValid">
+            <MudTextField @bind-Value="_categoryName" 
+                         Label="Kategorinamn" 
+                         Required="true" 
+                         RequiredError="Kategorinamn är obligatoriskt"
+                         MaxLength="100"
+                         Class="mb-3" />
+            
+            <div class="d-flex align-center gap-2 mb-3">
+                <MudTextField @bind-Value="_categoryColor" 
+                             Label="Färg (hex, t.ex. #FF6B6B)" 
+                             Variant="Variant.Outlined"
+                             Placeholder="#4ECDC4"
+                             Style="flex: 1;"
+                             @onchange="ValidateColor" />
+                <div style="@($"width: 50px; height: 50px; background-color: {_categoryColor}; border: 2px solid #ccc; border-radius: 4px;")"></div>
+                <MudIconButton Icon="@Icons.Material.Filled.Refresh" 
+                              Color="Color.Primary" 
+                              Size="Size.Small"
+                              title="Generera slumpmässig färg"
+                              OnClick="GenerateRandomColor" />
+            </div>
+
+            @if (ParentCategory != null)
+            {
+                <MudAlert Severity="Severity.Info" Class="mb-3">
+                    Underkategori till: <strong>@ParentCategory.Name</strong>
+                </MudAlert>
+            }
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Avbryt</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit" Disabled="@(!_formValid)">
+            @(IsCreate ? "Skapa" : "Uppdatera")
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    public required IMudDialogInstance MudDialog { get; set; }
+
+    [Parameter] 
+    public Category? Category { get; set; }
+
+    [Parameter]
+    public bool IsCreate { get; set; } = false;
+
+    [Parameter]
+    public Category? ParentCategory { get; set; }
+
+    private MudForm? _form;
+    private bool _formValid;
+    private string _categoryName = string.Empty;
+    private string _categoryColor = "#4ECDC4";
+
+    protected override void OnInitialized()
+    {
+        if (Category != null)
+        {
+            _categoryName = Category.Name;
+            _categoryColor = Category.Color;
+        }
+        else if (IsCreate)
+        {
+            GenerateRandomColor();
+        }
+    }
+
+    private void GenerateRandomColor()
+    {
+        var random = new Random();
+        var r = random.Next(50, 230);
+        var g = random.Next(50, 230);
+        var b = random.Next(50, 230);
+        _categoryColor = $"#{r:X2}{g:X2}{b:X2}";
+    }
+
+    private void ValidateColor()
+    {
+        if (string.IsNullOrWhiteSpace(_categoryColor) || 
+            !_categoryColor.StartsWith("#") || 
+            (_categoryColor.Length != 7 && _categoryColor.Length != 4))
+        {
+            Snackbar.Add("Färgkoden måste vara i formatet #RRGGBB eller #RGB", Severity.Warning);
+        }
+    }
+
+    private async Task Submit()
+    {
+        if (string.IsNullOrWhiteSpace(_categoryName))
+        {
+            Snackbar.Add("Kategorinamn är obligatoriskt", Severity.Error);
+            return;
+        }
+
+        // Validate color format
+        if (string.IsNullOrWhiteSpace(_categoryColor) || 
+            !_categoryColor.StartsWith("#") || 
+            (_categoryColor.Length != 7 && _categoryColor.Length != 4))
+        {
+            Snackbar.Add("Färgkoden måste vara i formatet #RRGGBB eller #RGB", Severity.Error);
+            return;
+        }
+
+        try
+        {
+            if (IsCreate)
+            {
+                var newCategory = new Category
+                {
+                    Name = _categoryName,
+                    Color = _categoryColor,
+                    ParentId = ParentCategory?.CategoryId
+                };
+
+                await CategoryService.CreateCategoryAsync(newCategory);
+                Snackbar.Add("Kategori skapad!", Severity.Success);
+            }
+            else if (Category != null)
+            {
+                Category.Name = _categoryName;
+                Category.Color = _categoryColor;
+                await CategoryService.UpdateCategoryAsync(Category);
+                Snackbar.Add("Kategori uppdaterad!", Severity.Success);
+            }
+
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Fel: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+}
