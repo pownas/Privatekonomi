@@ -8,7 +8,12 @@
 
 <PageTitle>Dashboard - Privatekonomi</PageTitle>
 
-<MudText Typo="Typo.h4" Class="mb-4">Dashboard</MudText>
+<div class="chart-container">
+    <MudText Typo="Typo.h4" Class="mb-4">Dashboard</MudText>
+    <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">
+        Översikt av din ekonomi med inkomster, utgifter och kassaflöde.
+    </MudText>
+</div>
 
 @if (_loading)
 {
@@ -56,101 +61,167 @@ else
 
     @if (_transactions.Any())
     {
-        <MudPaper Class="pa-4 mt-4">
-            <MudGrid>
-                <MudItem xs="12">
-                    <MudText Typo="Typo.h6" Class="mb-2">Visualisering av Kategorier</MudText>
-                    <MudButtonGroup Color="Color.Primary" Variant="Variant.Outlined">
-                        <MudButton OnClick="@(() => ChangePeriod(6))" 
-                                   Variant="@(_selectedMonths == 6 ? Variant.Filled : Variant.Outlined)">
-                            6 månader
-                        </MudButton>
-                        <MudButton OnClick="@(() => ChangePeriod(12))" 
-                                   Variant="@(_selectedMonths == 12 ? Variant.Filled : Variant.Outlined)">
-                            12 månader
-                        </MudButton>
-                        <MudButton OnClick="@(() => ChangePeriod(24))" 
-                                   Variant="@(_selectedMonths == 24 ? Variant.Filled : Variant.Outlined)">
-                            24 månader
-                        </MudButton>
-                    </MudButtonGroup>
-                </MudItem>
-            </MudGrid>
+        <MudPaper Class="pa-4 mt-4 chart-filters" Elevation="2">
+            <div class="filter-group">
+                <MudText Typo="Typo.subtitle1" Class="filter-label mb-2">Tidsperiod</MudText>
+                <MudButtonGroup Color="Color.Primary" Variant="Variant.Outlined" Size="Size.Small" Class="chart-touch-target">
+                    <MudButton OnClick="@(() => ChangePeriod(6))" 
+                               Variant="@(_selectedMonths == 6 ? Variant.Filled : Variant.Outlined)"
+                               aria-label="Visa senaste 6 månaderna"
+                               Class="chart-filter-button">
+                        6 månader
+                    </MudButton>
+                    <MudButton OnClick="@(() => ChangePeriod(12))" 
+                               Variant="@(_selectedMonths == 12 ? Variant.Filled : Variant.Outlined)"
+                               aria-label="Visa senaste 12 månaderna"
+                               Class="chart-filter-button">
+                        12 månader
+                    </MudButton>
+                    <MudButton OnClick="@(() => ChangePeriod(24))" 
+                               Variant="@(_selectedMonths == 24 ? Variant.Filled : Variant.Outlined)"
+                               aria-label="Visa senaste 24 månaderna"
+                               Class="chart-filter-button">
+                        24 månader
+                    </MudButton>
+                </MudButtonGroup>
+            </div>
         </MudPaper>
 
-        <MudGrid Class="mt-4">
+        <MudGrid Class="mt-4" Spacing="3">
             <MudItem xs="12" md="6">
-                <MudPaper Class="pa-4" Elevation="2">
-                    <MudText Typo="Typo.h6" Class="mb-4">Utgiftsfördelning per Kategori</MudText>
+                <MudPaper Class="pa-4 chart-wrapper" Elevation="2">
+                    <div class="chart-header">
+                        <MudText Typo="Typo.h6" Class="chart-title">Utgiftsfördelning per Kategori</MudText>
+                    </div>
                     @if (_expensePieData.Any())
                     {
-                        <MudChart ChartType="ChartType.Pie" 
-                                  InputData="@_expensePieData" 
-                                  InputLabels="@_expensePieLabels"
-                                  Width="100%" 
-                                  Height="300px"
-                                  LegendPosition="Position.Bottom" />
+                        <div role="img" aria-label="Cirkeldiagram som visar utgiftsfördelning per kategori">
+                            <MudChart ChartType="ChartType.Pie" 
+                                      InputData="@_expensePieData" 
+                                      InputLabels="@_expensePieLabels"
+                                      Width="100%" 
+                                      Height="300px"
+                                      LegendPosition="Position.Bottom"
+                                      Class="chart-responsive chart-height-md" />
+                        </div>
+                        <p class="chart-sr-only">
+                            Cirkeldiagram visar utgifter fördelade på kategorier: @string.Join(", ", _expensePieLabels).
+                        </p>
                     }
                     else
                     {
-                        <MudText>Inga utgifter för vald period.</MudText>
+                        <div class="chart-empty">
+                            <MudIcon Icon="@Icons.Material.Filled.PieChart" Class="chart-empty-icon" />
+                            <MudText Class="chart-empty-message">Inga utgifter för vald period</MudText>
+                            <MudText Typo="Typo.body2" Class="chart-empty-hint">
+                                Registrera transaktioner för att se fördelning.
+                            </MudText>
+                        </div>
                     }
                 </MudPaper>
             </MudItem>
 
             <MudItem xs="12" md="6">
-                <MudPaper Class="pa-4" Elevation="2">
-                    <MudText Typo="Typo.h6" Class="mb-4">Inkomstfördelning per Kategori</MudText>
+                <MudPaper Class="pa-4 chart-wrapper" Elevation="2">
+                    <div class="chart-header">
+                        <MudText Typo="Typo.h6" Class="chart-title">Inkomstfördelning per Kategori</MudText>
+                    </div>
                     @if (_incomePieData.Any())
                     {
-                        <MudChart ChartType="ChartType.Pie" 
-                                  InputData="@_incomePieData" 
-                                  InputLabels="@_incomePieLabels"
-                                  Width="100%" 
-                                  Height="300px"
-                                  LegendPosition="Position.Bottom" />
+                        <div role="img" aria-label="Cirkeldiagram som visar inkomstfördelning per kategori">
+                            <MudChart ChartType="ChartType.Pie" 
+                                      InputData="@_incomePieData" 
+                                      InputLabels="@_incomePieLabels"
+                                      Width="100%" 
+                                      Height="300px"
+                                      LegendPosition="Position.Bottom"
+                                      Class="chart-responsive chart-height-md" />
+                        </div>
+                        <p class="chart-sr-only">
+                            Cirkeldiagram visar inkomster fördelade på kategorier: @string.Join(", ", _incomePieLabels).
+                        </p>
                     }
                     else
                     {
-                        <MudText>Inga inkomster för vald period.</MudText>
+                        <div class="chart-empty">
+                            <MudIcon Icon="@Icons.Material.Filled.PieChart" Class="chart-empty-icon" />
+                            <MudText Class="chart-empty-message">Inga inkomster för vald period</MudText>
+                            <MudText Typo="Typo.body2" Class="chart-empty-hint">
+                                Registrera transaktioner för att se fördelning.
+                            </MudText>
+                        </div>
                     }
                 </MudPaper>
             </MudItem>
 
             <MudItem xs="12">
-                <MudPaper Class="pa-4" Elevation="2">
-                    <MudText Typo="Typo.h6" Class="mb-4">Kassaflöde över tid</MudText>
+                <MudPaper Class="pa-4 chart-wrapper" Elevation="2">
+                    <div class="chart-header">
+                        <MudText Typo="Typo.h6" Class="chart-title">Kassaflöde över tid</MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="chart-subtitle">
+                            Inkomster och utgifter månadsvis
+                        </MudText>
+                    </div>
                     @if (_cashFlowSeries.Any())
                     {
-                        <MudChart ChartType="ChartType.Line" 
-                                  ChartSeries="@_cashFlowSeries" 
-                                  XAxisLabels="@_cashFlowLabels"
-                                  Width="100%" 
-                                  Height="350px"
-                                  ChartOptions="@_chartOptions" />
+                        <div role="img" aria-label="Linjediagram som visar kassaflöde över tid med inkomster och utgifter">
+                            <MudChart ChartType="ChartType.Line" 
+                                      ChartSeries="@_cashFlowSeries" 
+                                      XAxisLabels="@_cashFlowLabels"
+                                      Width="100%" 
+                                      Height="350px"
+                                      ChartOptions="@_chartOptions"
+                                      Class="chart-responsive chart-height-lg" />
+                        </div>
+                        <p class="chart-sr-only">
+                            Linjediagram visar kassaflöde med @_cashFlowSeries.Count dataserier över @_cashFlowLabels.Length månader.
+                        </p>
                     }
                     else
                     {
-                        <MudText>Inga kassaflödesdata att visa.</MudText>
+                        <div class="chart-empty">
+                            <MudIcon Icon="@Icons.Material.Filled.ShowChart" Class="chart-empty-icon" />
+                            <MudText Class="chart-empty-message">Inga kassaflödesdata att visa</MudText>
+                            <MudText Typo="Typo.body2" Class="chart-empty-hint">
+                                Data kommer att visas när du har registrerat transaktioner.
+                            </MudText>
+                        </div>
                     }
                 </MudPaper>
             </MudItem>
 
             <MudItem xs="12">
-                <MudPaper Class="pa-4" Elevation="2">
-                    <MudText Typo="Typo.h6" Class="mb-4">Utgifter per Kategori - Månadsvis Jämförelse</MudText>
+                <MudPaper Class="pa-4 chart-wrapper" Elevation="2">
+                    <div class="chart-header">
+                        <MudText Typo="Typo.h6" Class="chart-title">Utgifter per Kategori - Månadsvis Jämförelse</MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="chart-subtitle">
+                            Jämför utgifter mellan månader per kategori
+                        </MudText>
+                    </div>
                     @if (_barChartSeries.Any())
                     {
-                        <MudChart ChartType="ChartType.Bar" 
-                                  ChartSeries="@_barChartSeries" 
-                                  XAxisLabels="@_barChartLabels"
-                                  Width="100%" 
-                                  Height="400px"
-                                  ChartOptions="@_chartOptions" />
+                        <div role="img" aria-label="Stapeldiagram som visar utgifter per kategori månadsvis">
+                            <MudChart ChartType="ChartType.Bar" 
+                                      ChartSeries="@_barChartSeries" 
+                                      XAxisLabels="@_barChartLabels"
+                                      Width="100%" 
+                                      Height="400px"
+                                      ChartOptions="@_chartOptions"
+                                      Class="chart-responsive chart-height-lg" />
+                        </div>
+                        <p class="chart-sr-only">
+                            Stapeldiagram visar utgifter för @_barChartSeries.Count kategorier över @_barChartLabels.Length månader.
+                        </p>
                     }
                     else
                     {
-                        <MudText>Inga data att visa för vald period.</MudText>
+                        <div class="chart-empty">
+                            <MudIcon Icon="@Icons.Material.Filled.BarChart" Class="chart-empty-icon" />
+                            <MudText Class="chart-empty-message">Inga data att visa för vald period</MudText>
+                            <MudText Typo="Typo.body2" Class="chart-empty-hint">
+                                Välj en period med transaktioner för att se jämförelsen.
+                            </MudText>
+                        </div>
                     }
                 </MudPaper>
             </MudItem>
