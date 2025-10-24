@@ -83,19 +83,13 @@
         {
             try
             {
-                // Check if user has a saved preference
-                var hasSavedPreference = await JSRuntime.InvokeAsync<bool>("themeManager.hasPreference");
+                // Get the initial theme that was already applied in the head script
+                _isDarkMode = await JSRuntime.InvokeAsync<bool>("themeManager.getInitialTheme");
                 
-                if (hasSavedPreference)
+                // If no saved preference exists, save the system preference
+                var hasSavedPreference = await JSRuntime.InvokeAsync<bool>("themeManager.hasPreference");
+                if (!hasSavedPreference)
                 {
-                    // Use saved preference
-                    _isDarkMode = await JSRuntime.InvokeAsync<bool>("themeManager.getTheme");
-                }
-                else
-                {
-                    // Use system preference if no saved preference
-                    _isDarkMode = await _mudThemeProvider.GetSystemDarkModeAsync();
-                    // Save the system preference
                     await JSRuntime.InvokeVoidAsync("themeManager.setTheme", _isDarkMode);
                 }
                 
