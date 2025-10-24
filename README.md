@@ -239,6 +239,16 @@ Se [AVANZA_IMPORT_GUIDE.md](wiki/AVANZA_IMPORT_GUIDE.md) för detaljerad guide m
 
 ## 📊 Skärmdumpar
 
+> **📸 Se [SCREENSHOTS.md](SCREENSHOTS.md) för fullständig screenshot-dokumentation av alla funktioner!**
+
+Dokumentationen innehåller screenshots av:
+- Dashboard (ljust och mörkt läge)
+- Transaktioner med split-kategorisering
+- Budgethantering
+- Lån & Krediter med amorteringsplan
+- Löneutveckling över tid
+- Och mycket mer...
+
 ### Dashboard
 Översikt över totala inkomster, utgifter, nettoresultat och antal transaktioner. Visar även visualisering av kategorier med cirkeldiagram och stapeldiagram för utgifter per kategori och månad.
 
