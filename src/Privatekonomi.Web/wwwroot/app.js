@@ -29,8 +29,26 @@ window.themeManager = {
     },
     setTheme: function(isDarkMode) {
         localStorage.setItem('darkMode', isDarkMode.toString());
+        // Also apply the theme class immediately
+        if (isDarkMode) {
+            document.documentElement.classList.add('mud-theme-dark');
+        } else {
+            document.documentElement.classList.remove('mud-theme-dark');
+        }
     },
     hasPreference: function() {
         return localStorage.getItem('darkMode') !== null;
+    },
+    // Get the initial theme state (what was pre-applied in the head script)
+    getInitialTheme: function() {
+        var darkMode = localStorage.getItem('darkMode');
+        if (darkMode === 'true') {
+            return true;
+        } else if (darkMode === 'false') {
+            return false;
+        } else {
+            // No preference saved, check system preference
+            return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        }
     }
 };

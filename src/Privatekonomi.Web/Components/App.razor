@@ -12,6 +12,24 @@
     <link rel="stylesheet" href="@Assets["Privatekonomi.Web.styles.css"]" />
     <ImportMap />
     <link rel="icon" type="image/png" href="favicon.png" />
+    <script>
+        // Prevent flash of light theme by applying dark mode immediately if preferred
+        (function() {
+            try {
+                var darkMode = localStorage.getItem('darkMode');
+                if (darkMode === 'true') {
+                    document.documentElement.classList.add('mud-theme-dark');
+                } else if (darkMode === null) {
+                    // No preference saved, check system preference
+                    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                        document.documentElement.classList.add('mud-theme-dark');
+                    }
+                }
+            } catch (e) {
+                // Ignore localStorage errors
+            }
+        })();
+    </script>
     <HeadOutlet @rendermode="InteractiveServer" />
 </head>
 
