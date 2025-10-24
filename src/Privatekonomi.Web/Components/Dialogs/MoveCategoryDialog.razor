@@ -6,11 +6,16 @@
             Flytta transaktionen "<strong>@Transaction?.Description</strong>" till en annan kategori.
         </MudText>
 
-        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-2">
+        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">
             Nuvarande belopp: @Transaction?.Amount.ToString("C", new System.Globalization.CultureInfo("sv-SE"))
         </MudText>
 
-        <MudSelect @bind-Value="_selectedCategoryId" Label="Ny Kategori" Variant="Variant.Outlined" Required="true" Class="mt-4">
+        <MudSelect @bind-Value="_selectedCategoryId" 
+                   Label="Ny Kategori" 
+                   Variant="Variant.Outlined" 
+                   Required="true" 
+                   HelperText="Välj vilken kategori transaktionen ska flyttas till"
+                   Class="mt-4">
             @foreach (var category in Categories.Where(c => c.CategoryId != CurrentCategoryId))
             {
                 <MudSelectItem Value="@category.CategoryId">

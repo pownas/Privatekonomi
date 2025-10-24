@@ -213,7 +213,11 @@ else
     private async Task OpenCreateDialog()
     {
         var parameters = new DialogParameters<CreateSharedGoalDialog>();
-        var dialog = await DialogService.ShowAsync<CreateSharedGoalDialog>("Skapa Nytt Gemensamt Sparmål", parameters);
+        var dialog = await DialogService.ShowAsync<CreateSharedGoalDialog>("Skapa Nytt Gemensamt Sparmål", parameters, new DialogOptions 
+        { 
+            MaxWidth = MaxWidth.Medium, 
+            FullWidth = true 
+        });
         var result = await dialog.Result;
 
         if (result is not null && !result.Canceled && result.Data is SharedGoal newGoal)

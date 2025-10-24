@@ -11,13 +11,24 @@
         {
             <MudGrid>
                 <MudItem xs="12">
-                    <MudTextField @bind-Value="_transaction.Description" Label="Beskrivning" Variant="Variant.Outlined" />
+                    <MudTextField @bind-Value="_transaction.Description" 
+                                  Label="Beskrivning" 
+                                  Variant="Variant.Outlined" 
+                                  HelperText="Beskrivande namn för transaktionen" />
                 </MudItem>
                 <MudItem xs="12" md="6">
-                    <MudDatePicker @bind-Date="_transactionDate" Label="Datum" Variant="Variant.Outlined" />
+                    <MudDatePicker @bind-Date="_transactionDate" 
+                                   Label="Datum" 
+                                   Variant="Variant.Outlined" 
+                                   HelperText="När transaktionen genomfördes" />
                 </MudItem>
                 <MudItem xs="12" md="6">
-                    <MudNumericField @bind-Value="_transaction.Amount" Label="Belopp" Variant="Variant.Outlined" Format="N2" />
+                    <MudNumericField @bind-Value="_transaction.Amount" 
+                                     Label="Belopp" 
+                                     Variant="Variant.Outlined" 
+                                     Format="N2" 
+                                     Adornment="Adornment.End" 
+                                     AdornmentText="kr" />
                 </MudItem>
                 <MudItem xs="12">
                     <MudText Typo="Typo.subtitle2" Class="mb-2">Kategorier</MudText>
@@ -161,9 +172,10 @@
                                   HelperText="Exempel: mat, shopping, nödvändigt" />
                 </MudItem>
                 <MudItem xs="12">
-                    <MudTextField @bind-Value="_transaction.Notes" Label="Noteringar" 
+                    <MudTextField @bind-Value="_transaction.Notes" 
+                                  Label="Noteringar" 
                                   Variant="Variant.Outlined" 
-                                  Lines="4"
+                                  Lines="5"
                                   HelperText="Lägg till anteckningar eller kommentarer om transaktionen" />
                 </MudItem>
             </MudGrid>

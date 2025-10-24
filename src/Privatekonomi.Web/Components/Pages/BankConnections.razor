@@ -172,7 +172,7 @@ else
     {
         var dialog = await DialogService.ShowAsync<AddBankConnectionDialog>("Lägg till bankkoppling", new DialogOptions 
         { 
-            MaxWidth = MaxWidth.Small, 
+            MaxWidth = MaxWidth.Medium, 
             FullWidth = true 
         });
         
@@ -233,7 +233,7 @@ else
 
         var dialog = await DialogService.ShowAsync<EditBankConnectionDialog>("Redigera bankkoppling", parameters, new DialogOptions 
         { 
-            MaxWidth = MaxWidth.Small, 
+            MaxWidth = MaxWidth.Medium, 
             FullWidth = true 
         });
         

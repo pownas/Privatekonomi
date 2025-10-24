@@ -8,14 +8,16 @@
                       Variant="Variant.Outlined"
                       Required="true"
                       MaxLength="200"
-                      Class="mb-3" />
+                      HelperText="Ge sparmålet ett tydligt och beskrivande namn"
+                      Class="mb-4" />
         
         <MudTextField @bind-Value="_description" 
                       Label="Beskrivning" 
                       Variant="Variant.Outlined"
-                      Lines="3"
+                      Lines="4"
                       MaxLength="500"
-                      Class="mb-3" />
+                      HelperText="Beskriv sparmålet mer detaljerat (valfritt)"
+                      Class="mb-4" />
 
         <MudNumericField @bind-Value="_targetAmount" 
                          Label="Målbelopp (kr)" 
@@ -23,7 +25,10 @@
                          Min="0"
                          Format="N2"
                          Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
-                         Class="mb-3" />
+                         Adornment="Adornment.End"
+                         AdornmentText="kr"
+                         HelperText="Det totala belopp ni vill spara"
+                         Class="mb-4" />
 
         <MudNumericField @bind-Value="_currentAmount" 
                          Label="Startbelopp (kr)" 
@@ -31,14 +36,18 @@
                          Min="0"
                          Format="N2"
                          Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
-                         Class="mb-3" />
+                         Adornment="Adornment.End"
+                         AdornmentText="kr"
+                         HelperText="Det belopp ni redan har sparat (valfritt)"
+                         Class="mb-4" />
 
         <MudDatePicker @bind-Date="_targetDate"
                        Label="Målsättningsdatum"
                        Variant="Variant.Outlined"
-                       Class="mb-3" />
+                       HelperText="När vill ni ha nått målet? (valfritt)"
+                       Class="mb-4" />
 
-        <MudSelect @bind-Value="_priority" Label="Prioritet" Variant="Variant.Outlined" Class="mb-3">
+        <MudSelect @bind-Value="_priority" Label="Prioritet" Variant="Variant.Outlined" Class="mb-4" HelperText="Hur viktig är detta sparmål?">
             <MudSelectItem Value="1">1 - Högst</MudSelectItem>
             <MudSelectItem Value="2">2 - Hög</MudSelectItem>
             <MudSelectItem Value="3">3 - Normal</MudSelectItem>
