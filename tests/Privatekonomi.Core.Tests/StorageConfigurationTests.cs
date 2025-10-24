@@ -9,25 +9,29 @@ namespace Privatekonomi.Core.Tests;
 
 public class StorageConfigurationTests
 {
-    [Fact]
-    public void InMemoryStorage_ShouldBeConfigurable()
+    private static IServiceProvider CreateServiceProvider(Dictionary<string, string?> configValues)
     {
-        // Arrange
         var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                ["Storage:Provider"] = "InMemory",
-                ["Storage:ConnectionString"] = "",
-                ["Storage:SeedTestData"] = "false"
-            })
+            .AddInMemoryCollection(configValues)
             .Build();
 
         var services = new ServiceCollection();
         services.AddSingleton<IConfiguration>(configuration);
-
-        // Act
         services.AddPrivatekonomyStorage(configuration);
-        var serviceProvider = services.BuildServiceProvider();
+
+        return services.BuildServiceProvider();
+    }
+
+    [Fact]
+    public void InMemoryStorage_ShouldBeConfigurable()
+    {
+        // Arrange & Act
+        var serviceProvider = CreateServiceProvider(new Dictionary<string, string?>
+        {
+            ["Storage:Provider"] = "InMemory",
+            ["Storage:ConnectionString"] = "",
+            ["Storage:SeedTestData"] = "false"
+        });
         var context = serviceProvider.GetRequiredService<PrivatekonomyContext>();
 
         // Assert
@@ -40,21 +44,14 @@ public class StorageConfigurationTests
     {
         // Arrange
         var dbPath = Path.Combine(Path.GetTempPath(), $"test_{Guid.NewGuid()}.db");
-        var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                ["Storage:Provider"] = "Sqlite",
-                ["Storage:ConnectionString"] = $"Data Source={dbPath}",
-                ["Storage:SeedTestData"] = "false"
-            })
-            .Build();
-
-        var services = new ServiceCollection();
-        services.AddSingleton<IConfiguration>(configuration);
-
+        
         // Act
-        services.AddPrivatekonomyStorage(configuration);
-        var serviceProvider = services.BuildServiceProvider();
+        var serviceProvider = CreateServiceProvider(new Dictionary<string, string?>
+        {
+            ["Storage:Provider"] = "Sqlite",
+            ["Storage:ConnectionString"] = $"Data Source={dbPath}",
+            ["Storage:SeedTestData"] = "false"
+        });
         var context = serviceProvider.GetRequiredService<PrivatekonomyContext>();
 
         // Assert
@@ -101,22 +98,15 @@ public class StorageConfigurationTests
     {
         // Arrange
         var dbPath = Path.Combine(Path.GetTempPath(), $"test_{Guid.NewGuid()}.db");
-        var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
+
+        // Act - Create database and add data
+        {
+            var serviceProvider = CreateServiceProvider(new Dictionary<string, string?>
             {
                 ["Storage:Provider"] = "Sqlite",
                 ["Storage:ConnectionString"] = $"Data Source={dbPath}",
                 ["Storage:SeedTestData"] = "false"
-            })
-            .Build();
-
-        var services = new ServiceCollection();
-        services.AddSingleton<IConfiguration>(configuration);
-        services.AddPrivatekonomyStorage(configuration);
-
-        // Act - Create database and add data
-        using (var serviceProvider = services.BuildServiceProvider())
-        {
+            });
             var context = serviceProvider.GetRequiredService<PrivatekonomyContext>();
             await context.Database.EnsureCreatedAsync();
 
@@ -131,8 +121,13 @@ public class StorageConfigurationTests
         }
 
         // Act - Retrieve data with new context
-        using (var serviceProvider = services.BuildServiceProvider())
         {
+            var serviceProvider = CreateServiceProvider(new Dictionary<string, string?>
+            {
+                ["Storage:Provider"] = "Sqlite",
+                ["Storage:ConnectionString"] = $"Data Source={dbPath}",
+                ["Storage:SeedTestData"] = "false"
+            });
             var context = serviceProvider.GetRequiredService<PrivatekonomyContext>();
             var category = await context.Categories.FirstOrDefaultAsync(c => c.Name == "Test Category");
 
