@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Privatekonomi.Core.Data;
 using Privatekonomi.Core.Services;
 using Privatekonomi.Api.Middleware;
+using Privatekonomi.Core.Configuration;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,9 +25,8 @@ builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Configure DbContext with InMemory database
-builder.Services.AddDbContext<PrivatekonomyContext>(options =>
-    options.UseInMemoryDatabase("PrivatekonomyDb"));
+// Configure storage based on appsettings
+builder.Services.AddPrivatekonomyStorage(builder.Configuration);
 
 // Register services
 builder.Services.AddScoped<ITransactionService, TransactionService>();
@@ -102,11 +102,25 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// Seed the database
+// Initialize database
 using (var scope = app.Services.CreateScope())
 {
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+    var storageSettings = scope.ServiceProvider.GetRequiredService<Microsoft.Extensions.Options.IOptions<StorageSettings>>().Value;
     var context = scope.ServiceProvider.GetRequiredService<PrivatekonomyContext>();
-    context.Database.EnsureCreated();
+    
+    // For SQLite, ensure database is created
+    if (storageSettings.Provider.Equals("Sqlite", StringComparison.OrdinalIgnoreCase))
+    {
+        logger.LogInformation("Using SQLite storage, ensuring database is created...");
+        context.Database.EnsureCreated();
+    }
+    else
+    {
+        context.Database.EnsureCreated();
+    }
+    
+    logger.LogInformation("Database initialized with provider: {Provider}", storageSettings.Provider);
 }
 
 // Configure the HTTP request pipeline.
