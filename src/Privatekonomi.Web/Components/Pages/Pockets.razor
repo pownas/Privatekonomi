@@ -237,13 +237,14 @@ else
 
     protected override async Task OnInitializedAsync()
     {
+        _loading = true;
         await LoadPockets();
         await LoadBankSources();
+        _loading = false;
     }
 
     private async Task LoadPockets()
     {
-        _loading = true;
         _pockets = await PocketService.GetAllPocketsAsync();
         
         _pocketsByBankSource = _pockets.ToLookup(p => p.BankSourceId);
@@ -251,8 +252,6 @@ else
         _totalTargetAmount = _pockets.Sum(p => p.TargetAmount);
         _totalCurrentAmount = _pockets.Sum(p => p.CurrentAmount);
         _averageProgress = _pockets.Any() ? _pockets.Average(p => GetProgressActual(p)) : 0;
-        
-        _loading = false;
     }
 
     private async Task LoadBankSources()

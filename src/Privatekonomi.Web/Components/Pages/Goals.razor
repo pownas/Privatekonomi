@@ -201,20 +201,19 @@ else
 
     protected override async Task OnInitializedAsync()
     {
+        _loading = true;
         await LoadGoals();
         await LoadBankSources();
+        _loading = false;
     }
 
     private async Task LoadGoals()
     {
-        _loading = true;
         _goals = await GoalService.GetAllGoalsAsync();
         
         _totalTargetAmount = _goals.Sum(g => g.TargetAmount);
         _totalCurrentAmount = _goals.Sum(g => g.CurrentAmount);
         _averageProgress = _goals.Any() ? _goals.Average(g => GetProgress(g)) : 0;
-        
-        _loading = false;
     }
 
     private async Task LoadBankSources()
