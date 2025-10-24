@@ -8,6 +8,35 @@ public interface ITransactionService
     Task<Transaction?> GetTransactionByIdAsync(int id);
     Task<Transaction> CreateTransactionAsync(Transaction transaction);
     Task<Transaction> UpdateTransactionAsync(Transaction transaction);
+    
+    /// <summary>
+    /// Updates a transaction with optimistic locking and audit logging
+    /// </summary>
+    /// <param name="id">Transaction ID</param>
+    /// <param name="amount">New amount</param>
+    /// <param name="date">New date</param>
+    /// <param name="description">New description</param>
+    /// <param name="payee">New payee</param>
+    /// <param name="notes">New notes</param>
+    /// <param name="tags">New tags</param>
+    /// <param name="categories">New categories with split amounts</param>
+    /// <param name="clientUpdatedAt">Client's UpdatedAt timestamp for optimistic locking</param>
+    /// <param name="userId">User ID for audit logging</param>
+    /// <param name="ipAddress">IP address for audit logging</param>
+    /// <returns>Updated transaction</returns>
+    Task<Transaction> UpdateTransactionWithAuditAsync(
+        int id,
+        decimal amount,
+        DateTime date,
+        string description,
+        string? payee,
+        string? notes,
+        string? tags,
+        List<(int CategoryId, decimal Amount)>? categories,
+        DateTime? clientUpdatedAt,
+        string? userId,
+        string? ipAddress);
+    
     Task DeleteTransactionAsync(int id);
     Task<IEnumerable<Transaction>> GetTransactionsByDateRangeAsync(DateTime from, DateTime to);
     Task<IEnumerable<Transaction>> GetUnmappedTransactionsAsync();

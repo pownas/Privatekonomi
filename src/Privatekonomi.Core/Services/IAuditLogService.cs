@@ -11,4 +11,9 @@ public interface IAuditLogService
     /// Logs a security-critical action
     /// </summary>
     Task LogAsync(string action, string entityType, int? entityId = null, string? details = null, string? userId = null, string? ipAddress = null);
+
+    /// <summary>
+    /// Logs a transaction update with before/after values
+    /// </summary>
+    Task LogTransactionUpdateAsync(Transaction before, Transaction after, string? userId = null, string? ipAddress = null);
 }

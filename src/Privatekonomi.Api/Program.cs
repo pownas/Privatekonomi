@@ -9,7 +9,11 @@ var builder = WebApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
 
 // Add services to the container.
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+    });
 
 // Configure ProblemDetails
 builder.Services.AddProblemDetails();
@@ -126,3 +130,7 @@ app.MapDefaultEndpoints();
 app.MapControllers();
 
 app.Run();
+
+// Make the implicit Program class public for testing
+public partial class Program { }
+

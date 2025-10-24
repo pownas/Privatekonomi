@@ -9,12 +9,18 @@ public class TransactionService : ITransactionService
     private readonly PrivatekonomyContext _context;
     private readonly ICurrentUserService? _currentUserService;
     private readonly ICategoryRuleService _categoryRuleService;
+    private readonly IAuditLogService _auditLogService;
 
-    public TransactionService(PrivatekonomyContext context, ICategoryRuleService categoryRuleService, ICurrentUserService? currentUserService = null)
+    public TransactionService(
+        PrivatekonomyContext context, 
+        ICategoryRuleService categoryRuleService, 
+        IAuditLogService auditLogService,
+        ICurrentUserService? currentUserService = null)
     {
         _context = context;
         _currentUserService = currentUserService;
         _categoryRuleService = categoryRuleService;
+        _auditLogService = auditLogService;
     }
 
     public async Task<IEnumerable<Transaction>> GetAllTransactionsAsync()
@@ -105,6 +111,109 @@ public class TransactionService : ITransactionService
         transaction.UpdatedAt = DateTime.UtcNow;
         _context.Entry(transaction).State = EntityState.Modified;
         await _context.SaveChangesAsync();
+        return transaction;
+    }
+
+    public async Task<Transaction> UpdateTransactionWithAuditAsync(
+        int id,
+        decimal amount,
+        DateTime date,
+        string description,
+        string? payee,
+        string? notes,
+        string? tags,
+        List<(int CategoryId, decimal Amount)>? categories,
+        DateTime? clientUpdatedAt,
+        string? userId,
+        string? ipAddress)
+    {
+        // Fetch the existing transaction with related data
+        var transaction = await _context.Transactions
+            .Include(t => t.TransactionCategories)
+            .FirstOrDefaultAsync(t => t.TransactionId == id);
+
+        if (transaction == null)
+        {
+            throw new InvalidOperationException($"Transaction with ID {id} not found");
+        }
+
+        // Check if transaction is locked
+        if (transaction.IsLocked)
+        {
+            throw new InvalidOperationException($"Transaction {id} is locked and cannot be edited");
+        }
+
+        // Optimistic locking check
+        if (clientUpdatedAt.HasValue && transaction.UpdatedAt.HasValue)
+        {
+            // Compare timestamps (allow small tolerance for precision differences)
+            var timeDifference = Math.Abs((transaction.UpdatedAt.Value - clientUpdatedAt.Value).TotalSeconds);
+            if (timeDifference > 1) // More than 1 second difference indicates concurrent modification
+            {
+                throw new InvalidOperationException(
+                    $"Transaction {id} has been modified by another user. Please refresh and try again.");
+            }
+        }
+
+        // Input validation
+        if (amount <= 0)
+        {
+            throw new ArgumentException("Amount must be greater than 0", nameof(amount));
+        }
+
+        if (string.IsNullOrWhiteSpace(description))
+        {
+            throw new ArgumentException("Description is required", nameof(description));
+        }
+
+        // Create a copy of the original for audit logging
+        var originalTransaction = new Transaction
+        {
+            TransactionId = transaction.TransactionId,
+            Amount = transaction.Amount,
+            Date = transaction.Date,
+            Description = transaction.Description,
+            Payee = transaction.Payee,
+            Notes = transaction.Notes,
+            Tags = transaction.Tags,
+            UpdatedAt = transaction.UpdatedAt
+        };
+
+        // Update transaction fields
+        transaction.Amount = amount;
+        transaction.Date = date;
+        transaction.Description = description;
+        transaction.Payee = payee;
+        transaction.Notes = notes;
+        transaction.Tags = tags;
+        transaction.UpdatedAt = DateTime.UtcNow;
+
+        // Update categories if provided
+        if (categories != null)
+        {
+            // Remove existing categories
+            _context.TransactionCategories.RemoveRange(transaction.TransactionCategories);
+            
+            // Add new categories
+            transaction.TransactionCategories = categories
+                .Select(c => new TransactionCategory
+                {
+                    TransactionId = id,
+                    CategoryId = c.CategoryId,
+                    Amount = c.Amount
+                })
+                .ToList();
+        }
+
+        await _context.SaveChangesAsync();
+
+        // Create audit log
+        await _auditLogService.LogTransactionUpdateAsync(
+            originalTransaction,
+            transaction,
+            userId,
+            ipAddress);
+
         return transaction;
     }
 

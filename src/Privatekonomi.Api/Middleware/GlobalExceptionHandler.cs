@@ -64,6 +64,8 @@ public class GlobalExceptionHandler : IExceptionHandler
         NotFoundException => StatusCodes.Status404NotFound,
         BadRequestException => StatusCodes.Status400BadRequest,
         ValidationException => StatusCodes.Status400BadRequest,
+        ConflictException => StatusCodes.Status409Conflict,
+        ForbiddenException => StatusCodes.Status403Forbidden,
         ArgumentNullException => StatusCodes.Status400BadRequest,
         ArgumentException => StatusCodes.Status400BadRequest,
         InvalidOperationException => StatusCodes.Status400BadRequest,
@@ -75,6 +77,8 @@ public class GlobalExceptionHandler : IExceptionHandler
         NotFoundException => "Resource Not Found",
         BadRequestException => "Bad Request",
         ValidationException => "Validation Error",
+        ConflictException => "Conflict",
+        ForbiddenException => "Forbidden",
         ArgumentNullException => "Invalid Argument",
         ArgumentException => "Invalid Argument",
         InvalidOperationException => "Invalid Operation",
@@ -84,7 +88,9 @@ public class GlobalExceptionHandler : IExceptionHandler
     private static string GetType(int statusCode) => statusCode switch
     {
         StatusCodes.Status400BadRequest => "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+        StatusCodes.Status403Forbidden => "https://tools.ietf.org/html/rfc9110#section-15.5.4",
         StatusCodes.Status404NotFound => "https://tools.ietf.org/html/rfc9110#section-15.5.5",
+        StatusCodes.Status409Conflict => "https://tools.ietf.org/html/rfc9110#section-15.5.10",
         StatusCodes.Status500InternalServerError => "https://tools.ietf.org/html/rfc9110#section-15.6.1",
         _ => "https://tools.ietf.org/html/rfc9110"
     };
