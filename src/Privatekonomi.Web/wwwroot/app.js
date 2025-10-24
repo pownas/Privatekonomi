@@ -40,6 +40,8 @@ window.themeManager = {
         return localStorage.getItem('darkMode') !== null;
     },
     // Get the initial theme state (what was pre-applied in the head script)
+    // NOTE: This logic mirrors the inline script in App.razor <head>
+    // Both must stay in sync to prevent theme flash on page load
     getInitialTheme: function() {
         var darkMode = localStorage.getItem('darkMode');
         if (darkMode === 'true') {

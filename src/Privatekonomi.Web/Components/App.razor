@@ -17,9 +17,13 @@
         (function() {
             try {
                 var darkMode = localStorage.getItem('darkMode');
+                // Three states: 'true' (dark), 'false' (light), null (use system)
                 if (darkMode === 'true') {
                     document.documentElement.classList.add('mud-theme-dark');
-                } else if (darkMode === null) {
+                } else if (darkMode === 'false') {
+                    // User explicitly chose light mode, don't apply dark class
+                    // (light theme is the default, so no action needed)
+                } else {
                     // No preference saved, check system preference
                     if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
                         document.documentElement.classList.add('mud-theme-dark');
