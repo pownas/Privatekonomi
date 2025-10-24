@@ -10,9 +10,10 @@
 # - Run ./app-install.sh first to set up the development environment
 # 
 # What this script does:
-# 1. Check prerequisites are installed
-# 2. Navigate to AppHost directory
-# 3. Start Aspire Dashboard with all services
+# 1. Stop any existing .NET processes and free up ports
+# 2. Check prerequisites are installed
+# 3. Navigate to AppHost directory
+# 4. Start Aspire Dashboard with all services
 #
 # Created: October 23, 2025
 # ============================================================================
@@ -37,6 +38,45 @@ log_success() {
 
 log_warning() {
     echo -e "${YELLOW}[WARNING]${NC} $1"
+}
+
+# Function to stop existing processes and free ports
+cleanup_processes() {
+    log_info "Stopping existing .NET processes and freeing ports..."
+    
+    # Kill all dotnet processes
+    if pgrep -f "dotnet" > /dev/null; then
+        log_warning "Found running .NET processes, stopping them..."
+        pkill -f "dotnet" || true
+        sleep 2
+        
+        # Force kill if still running
+        if pgrep -f "dotnet" > /dev/null; then
+            log_warning "Force killing remaining .NET processes..."
+            pkill -9 -f "dotnet" || true
+            sleep 1
+        fi
+    fi
+    
+    # Check for processes using common Aspire ports and kill them
+    local aspire_ports=(15184 17127 19109 20095 21218 22282 18080 18443)
+    
+    for port in "${aspire_ports[@]}"; do
+        local pid=$(lsof -ti:$port 2>/dev/null || true)
+        if [ -n "$pid" ]; then
+            log_warning "Port $port is in use by process $pid, stopping it..."
+            kill $pid 2>/dev/null || true
+            sleep 1
+            
+            # Force kill if still running
+            if kill -0 $pid 2>/dev/null; then
+                log_warning "Force killing process $pid on port $port..."
+                kill -9 $pid 2>/dev/null || true
+            fi
+        fi
+    done
+    
+    log_success "Process cleanup completed"
 }
 
 log_error() {
@@ -155,9 +195,10 @@ show_help() {
     echo -e "  Run ${GREEN}./app-install.sh${NC} first to set up the development environment"
     echo ""
     echo -e "${YELLOW}What this script does:${NC}"
-    echo -e "  1. Checks that prerequisites are installed (.NET 9, Aspire workload)"
-    echo -e "  2. Verifies the project builds successfully"
-    echo -e "  3. Starts the Aspire Dashboard with all services"
+    echo -e "  1. Stops any existing .NET processes and frees up ports"
+    echo -e "  2. Checks that prerequisites are installed (.NET 9, Aspire workload)"
+    echo -e "  3. Verifies the project builds successfully"
+    echo -e "  4. Starts the Aspire Dashboard with all services"
     echo ""
     echo -e "${YELLOW}Troubleshooting:${NC}"
     echo -e "  • If you get 'command not found' errors, run ${GREEN}./app-install.sh${NC}"
@@ -175,6 +216,7 @@ main() {
     
     log_section "Privatekonomi Application Startup"
     
+    cleanup_processes
     check_prerequisites
     quick_build_check
     start_application
