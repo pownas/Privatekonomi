@@ -196,15 +196,28 @@ try
         var context = scope.ServiceProvider.GetRequiredService<PrivatekonomyContext>();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
         
-        // For SQLite, ensure database is created and apply migrations
-        if (storageSettings.Provider.Equals("Sqlite", StringComparison.OrdinalIgnoreCase))
+        // For SQLite and SqlServer, ensure database is created
+        if (storageSettings.Provider.Equals("Sqlite", StringComparison.OrdinalIgnoreCase) ||
+            storageSettings.Provider.Equals("SqlServer", StringComparison.OrdinalIgnoreCase))
         {
-            logger.LogInformation("Using SQLite storage, ensuring database is created...");
+            logger.LogInformation("Using {Provider} storage, ensuring database is created...", storageSettings.Provider);
             context.Database.EnsureCreated();
         }
         else
         {
             context.Database.EnsureCreated();
+        }
+        
+        // For JsonFile, load existing data
+        if (storageSettings.Provider.Equals("JsonFile", StringComparison.OrdinalIgnoreCase))
+        {
+            var persistenceService = scope.ServiceProvider.GetService<Privatekonomi.Core.Services.Persistence.IDataPersistenceService>();
+            if (persistenceService != null && persistenceService.Exists())
+            {
+                logger.LogInformation("Loading data from JSON files...");
+                await persistenceService.LoadAsync(context);
+                logger.LogInformation("Data loaded successfully from JSON files");
+            }
         }
         
         // Seed test data only if configured

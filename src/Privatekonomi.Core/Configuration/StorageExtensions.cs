@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Privatekonomi.Core.Data;
+using Privatekonomi.Core.Services.Persistence;
 
 namespace Privatekonomi.Core.Configuration;
 
@@ -53,7 +54,8 @@ public static class StorageExtensions
                 // JsonFile uses InMemory with persistence layer
                 services.AddDbContext<PrivatekonomyContext>(options =>
                     options.UseInMemoryDatabase("PrivatekonomyDb"));
-                // TODO: Add JSON file persistence service
+                services.AddSingleton<IDataPersistenceService, JsonFilePersistenceService>();
+                services.AddHostedService<JsonFilePersistenceHostedService>();
                 break;
                 
             case "inmemory":

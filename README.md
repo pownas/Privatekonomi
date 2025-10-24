@@ -28,7 +28,7 @@ En privatekonomi-applikation byggd med .NET 9, Blazor Server och MudBlazor för 
   - Systemet föreslår också kategorier baserat på tidigare transaktioner
 - **Responsiv design**: Fungerar på desktop och mobila enheter
 - **Flexibel datalagring**: 
-  - Stöd för InMemory (utveckling), SQLite (produktion), SQL Server (storskalig produktion) och JSON-filer
+  - Stöd för InMemory (utveckling), SQLite (produktion), SQL Server (storskalig produktion) och JsonFile (backup/portabilitet)
   - Konfigurerbart via appsettings.json
   - Lämpligt för lokal användning, Raspberry Pi, NAS och molnbaserad hosting
   - Se [lagringsguide](docs/STORAGE_GUIDE.md) för mer information
@@ -343,6 +343,17 @@ Applikationen stödjer flera lagringsmetoder som enkelt kan konfigureras via `ap
   "Storage": {
     "Provider": "SqlServer",
     "ConnectionString": "Server=localhost;Database=Privatekonomi;Trusted_Connection=True;MultipleActiveResultSets=true",
+    "SeedTestData": false
+  }
+}
+```
+
+#### Backup/Portabilitet (JsonFile)
+```json
+{
+  "Storage": {
+    "Provider": "JsonFile",
+    "ConnectionString": "./data",
     "SeedTestData": false
   }
 }

@@ -147,9 +147,9 @@ Lämplig för: Storskalig produktion, företag, molnbaserad hosting
 
 **OBS:** ConnectionString måste anges för SQL Server. Om du inte anger en ConnectionString får du ett felmeddelande.
 
-### 4. JsonFile (Planerad)
+### 4. JsonFile (Implementerad)
 
-Lämplig för: Backup, import/export, versionshantering
+Lämplig för: Backup, import/export, versionshantering, portabilitet
 
 ```json
 {
@@ -161,7 +161,56 @@ Lämplig för: Backup, import/export, versionshantering
 }
 ```
 
-**OBS:** Denna lagringsmetod är inte fullt implementerad ännu.
+**Alternativa ConnectionStrings:**
+
+```json
+// Relativ sökväg
+"ConnectionString": "./data"
+
+// Absolut sökväg
+"ConnectionString": "/var/data/privatekonomi"
+
+// Standard (om ej angiven)
+"ConnectionString": "" // Använder ./data som standard
+```
+
+**Så fungerar det:**
+- Använder InMemory-databas för snabb åtkomst
+- Sparar automatiskt data till JSON-filer var 5:e minut
+- Sparar vid applikationens avslut
+- Laddar data automatiskt vid uppstart om JSON-filer finns
+- Varje entitetstyp sparas i en egen JSON-fil (t.ex. categories.json, transactions.json)
+
+**Fördelar:**
+- Läsbar textformat (JSON)
+- Enkel backup (kopiera katalogen)
+- Versionshantering möjlig (git, etc.)
+- Portabelt mellan olika system
+- Snabb åtkomst (InMemory)
+- Inget beroende av databas-server
+
+**Nackdelar:**
+- Större filstorlek än SQLite
+- Periodisk spara kan förlora senaste ändringarna vid plötslig krasch (max 5 minuter)
+- Mindre effektivt för stora datamängder (>10000 transaktioner)
+- JSON-filer måste läsas helt vid uppstart
+
+**Användningsfall:**
+- Prototyping och utveckling
+- Små installationer med få transaktioner
+- När textbaserad lagring önskas
+- För enkel versionshantering av data
+- Backup och export
+
+**Filstruktur:**
+```
+./data/
+├── categories.json
+├── transactions.json
+├── budgets.json
+├── investments.json
+└── ... (övriga entiteter)
+```
 
 ## Miljöspecifik konfiguration
 

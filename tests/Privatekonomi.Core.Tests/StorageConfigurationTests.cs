@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Privatekonomi.Core.Configuration;
 using Privatekonomi.Core.Data;
 using Xunit;
@@ -17,6 +18,7 @@ public class StorageConfigurationTests
 
         var services = new ServiceCollection();
         services.AddSingleton<IConfiguration>(configuration);
+        services.AddLogging(); // Add logging for persistence services
         services.AddPrivatekonomyStorage(configuration);
 
         return services.BuildServiceProvider();
@@ -181,5 +183,98 @@ public class StorageConfigurationTests
         });
 
         Assert.Contains("ConnectionString is required for SqlServer provider", exception.Message);
+    }
+
+    [Fact]
+    public void JsonFileStorage_ShouldBeConfigurable()
+    {
+        // Arrange & Act
+        var dataPath = Path.Combine(Path.GetTempPath(), $"jsontest_{Guid.NewGuid()}");
+        var serviceProvider = CreateServiceProvider(new Dictionary<string, string?>
+        {
+            ["Storage:Provider"] = "JsonFile",
+            ["Storage:ConnectionString"] = dataPath,
+            ["Storage:SeedTestData"] = "false"
+        });
+        var context = serviceProvider.GetRequiredService<PrivatekonomyContext>();
+
+        // Assert
+        Assert.NotNull(context);
+        Assert.True(context.Database.IsInMemory());
+        
+        // Verify persistence service is registered
+        var persistenceService = serviceProvider.GetService<Core.Services.Persistence.IDataPersistenceService>();
+        Assert.NotNull(persistenceService);
+
+        // Cleanup
+        if (Directory.Exists(dataPath))
+        {
+            Directory.Delete(dataPath, true);
+        }
+    }
+
+    [Fact]
+    public async Task JsonFileStorage_ShouldPersistAndLoadData()
+    {
+        // Arrange
+        var dataPath = Path.Combine(Path.GetTempPath(), $"jsontest_{Guid.NewGuid()}");
+
+        // Act - Create data and save
+        {
+            var serviceProvider = CreateServiceProvider(new Dictionary<string, string?>
+            {
+                ["Storage:Provider"] = "JsonFile",
+                ["Storage:ConnectionString"] = dataPath,
+                ["Storage:SeedTestData"] = "false"
+            });
+            var context = serviceProvider.GetRequiredService<PrivatekonomyContext>();
+            var persistenceService = serviceProvider.GetService<Core.Services.Persistence.IDataPersistenceService>();
+
+            Assert.NotNull(persistenceService); // Verify service is registered
+
+            await context.Database.EnsureCreatedAsync();
+
+            context.Categories.Add(new Core.Models.Category
+            {
+                Name = "Test Category",
+                Color = "#FF0000",
+                TaxRelated = false,
+                CreatedAt = DateTime.UtcNow
+            });
+            await context.SaveChangesAsync();
+
+            // Save to JSON files
+            await persistenceService.SaveAsync(context);
+        }
+
+        // Act - Load data in new context
+        {
+            var serviceProvider = CreateServiceProvider(new Dictionary<string, string?>
+            {
+                ["Storage:Provider"] = "JsonFile",
+                ["Storage:ConnectionString"] = dataPath,
+                ["Storage:SeedTestData"] = "false"
+            });
+            var context = serviceProvider.GetRequiredService<PrivatekonomyContext>();
+            var persistenceService = serviceProvider.GetService<Core.Services.Persistence.IDataPersistenceService>();
+
+            Assert.NotNull(persistenceService); // Verify service is registered
+
+            await context.Database.EnsureCreatedAsync();
+            await persistenceService.LoadAsync(context);
+
+            var category = await context.Categories.FirstOrDefaultAsync(c => c.Name == "Test Category");
+
+            // Assert
+            Assert.NotNull(category);
+            Assert.Equal("Test Category", category.Name);
+            Assert.Equal("#FF0000", category.Color);
+        }
+
+        // Cleanup
+        if (Directory.Exists(dataPath))
+        {
+            Directory.Delete(dataPath, true);
+        }
     }
 }

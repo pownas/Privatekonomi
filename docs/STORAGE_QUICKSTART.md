@@ -56,6 +56,19 @@
 }
 ```
 
+### Backup/Portabilitet (JsonFile)
+```json
+{
+  "Storage": {
+    "Provider": "JsonFile",
+    "ConnectionString": "./data",
+    "SeedTestData": false
+  }
+}
+```
+
+**OBS:** JsonFile använder InMemory med automatisk persistens till JSON-filer var 5:e minut och vid avslut.
+
 ## Växla lagringsmetod
 
 1. Öppna `appsettings.json` (eller `appsettings.Development.json`)
