@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Privatekonomi.Core.Models;
 using Privatekonomi.Core.Services;
+using Privatekonomi.Api.Exceptions;
 
 namespace Privatekonomi.Api.Controllers;
 
@@ -27,80 +28,64 @@ public class TransactionsController : ControllerBase
         [FromQuery] int page = 1,
         [FromQuery] int per_page = 50)
     {
-        try
+        var transactions = await _transactionService.GetAllTransactionsAsync();
+        
+        // Apply filters
+        if (account_id.HasValue)
         {
-            var transactions = await _transactionService.GetAllTransactionsAsync();
-            
-            // Apply filters
-            if (account_id.HasValue)
-            {
-                transactions = transactions.Where(t => t.BankSourceId == account_id.Value);
-            }
-            
-            if (start_date.HasValue)
-            {
-                transactions = transactions.Where(t => t.Date >= start_date.Value);
-            }
-            
-            if (end_date.HasValue)
-            {
-                transactions = transactions.Where(t => t.Date <= end_date.Value);
-            }
-            
-            if (category_id.HasValue)
-            {
-                transactions = transactions.Where(t => 
-                    t.TransactionCategories.Any(tc => tc.CategoryId == category_id.Value));
-            }
-            
-            if (household_id.HasValue)
-            {
-                transactions = transactions.Where(t => t.HouseholdId == household_id.Value);
-            }
-            
-            // Apply pagination
-            var totalCount = transactions.Count();
-            var totalPages = (int)Math.Ceiling(totalCount / (double)per_page);
-            
-            var paginatedTransactions = transactions
-                .OrderByDescending(t => t.Date)
-                .Skip((page - 1) * per_page)
-                .Take(per_page)
-                .ToList();
-            
-            return Ok(new TransactionListResponse
-            {
-                Transactions = paginatedTransactions,
-                Page = page,
-                PerPage = per_page,
-                TotalCount = totalCount,
-                TotalPages = totalPages
-            });
+            transactions = transactions.Where(t => t.BankSourceId == account_id.Value);
         }
-        catch (Exception ex)
+        
+        if (start_date.HasValue)
         {
-            _logger.LogError(ex, "Error retrieving transactions");
-            return StatusCode(500, "Internal server error");
+            transactions = transactions.Where(t => t.Date >= start_date.Value);
         }
+        
+        if (end_date.HasValue)
+        {
+            transactions = transactions.Where(t => t.Date <= end_date.Value);
+        }
+        
+        if (category_id.HasValue)
+        {
+            transactions = transactions.Where(t => 
+                t.TransactionCategories.Any(tc => tc.CategoryId == category_id.Value));
+        }
+        
+        if (household_id.HasValue)
+        {
+            transactions = transactions.Where(t => t.HouseholdId == household_id.Value);
+        }
+        
+        // Apply pagination
+        var totalCount = transactions.Count();
+        var totalPages = (int)Math.Ceiling(totalCount / (double)per_page);
+        
+        var paginatedTransactions = transactions
+            .OrderByDescending(t => t.Date)
+            .Skip((page - 1) * per_page)
+            .Take(per_page)
+            .ToList();
+        
+        return Ok(new TransactionListResponse
+        {
+            Transactions = paginatedTransactions,
+            Page = page,
+            PerPage = per_page,
+            TotalCount = totalCount,
+            TotalPages = totalPages
+        });
     }
 
     [HttpGet("{id}")]
     public async Task<ActionResult<Transaction>> GetTransaction(int id)
     {
-        try
+        var transaction = await _transactionService.GetTransactionByIdAsync(id);
+        if (transaction == null)
         {
-            var transaction = await _transactionService.GetTransactionByIdAsync(id);
-            if (transaction == null)
-            {
-                return NotFound();
-            }
-            return Ok(transaction);
+            throw new NotFoundException("Transaction", id);
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error retrieving transaction {TransactionId}", id);
-            return StatusCode(500, "Internal server error");
-        }
+        return Ok(transaction);
     }
 
     [HttpGet("date-range")]
@@ -108,66 +93,29 @@ public class TransactionsController : ControllerBase
         [FromQuery] DateTime from, 
         [FromQuery] DateTime to)
     {
-        try
-        {
-            var transactions = await _transactionService.GetTransactionsByDateRangeAsync(from, to);
-            return Ok(transactions);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error retrieving transactions by date range");
-            return StatusCode(500, "Internal server error");
-        }
+        var transactions = await _transactionService.GetTransactionsByDateRangeAsync(from, to);
+        return Ok(transactions);
     }
 
     [HttpGet("unmapped")]
     public async Task<ActionResult<IEnumerable<Transaction>>> GetUnmappedTransactions()
     {
-        try
-        {
-            var transactions = await _transactionService.GetUnmappedTransactionsAsync();
-            return Ok(transactions);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error retrieving unmapped transactions");
-            return StatusCode(500, "Internal server error");
-        }
+        var transactions = await _transactionService.GetUnmappedTransactionsAsync();
+        return Ok(transactions);
     }
 
     [HttpPut("{id}/categories")]
     public async Task<IActionResult> UpdateTransactionCategories(int id, List<TransactionCategory> categories)
     {
-        try
-        {
-            await _transactionService.UpdateTransactionCategoriesAsync(id, categories);
-            return NoContent();
-        }
-        catch (ArgumentException ex)
-        {
-            _logger.LogError(ex, "Transaction not found {TransactionId}", id);
-            return NotFound(ex.Message);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error updating transaction categories for {TransactionId}", id);
-            return StatusCode(500, "Internal server error");
-        }
+        await _transactionService.UpdateTransactionCategoriesAsync(id, categories);
+        return NoContent();
     }
 
     [HttpPost]
     public async Task<ActionResult<Transaction>> CreateTransaction(Transaction transaction)
     {
-        try
-        {
-            var createdTransaction = await _transactionService.CreateTransactionAsync(transaction);
-            return CreatedAtAction(nameof(GetTransaction), new { id = createdTransaction.TransactionId }, createdTransaction);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error creating transaction");
-            return StatusCode(500, "Internal server error");
-        }
+        var createdTransaction = await _transactionService.CreateTransactionAsync(transaction);
+        return CreatedAtAction(nameof(GetTransaction), new { id = createdTransaction.TransactionId }, createdTransaction);
     }
 
     [HttpPut("{id}")]
@@ -175,49 +123,25 @@ public class TransactionsController : ControllerBase
     {
         if (id != transaction.TransactionId)
         {
-            return BadRequest();
+            throw new BadRequestException("Transaction ID in URL does not match transaction ID in body");
         }
 
-        try
-        {
-            await _transactionService.UpdateTransactionAsync(transaction);
-            return NoContent();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error updating transaction {TransactionId}", id);
-            return StatusCode(500, "Internal server error");
-        }
+        await _transactionService.UpdateTransactionAsync(transaction);
+        return NoContent();
     }
 
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteTransaction(int id)
     {
-        try
-        {
-            await _transactionService.DeleteTransactionAsync(id);
-            return NoContent();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error deleting transaction {TransactionId}", id);
-            return StatusCode(500, "Internal server error");
-        }
+        await _transactionService.DeleteTransactionAsync(id);
+        return NoContent();
     }
 
     [HttpGet("household/{householdId}")]
     public async Task<ActionResult<IEnumerable<Transaction>>> GetTransactionsByHousehold(int householdId)
     {
-        try
-        {
-            var transactions = await _transactionService.GetTransactionsByHouseholdAsync(householdId);
-            return Ok(transactions);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error retrieving transactions for household {HouseholdId}", householdId);
-            return StatusCode(500, "Internal server error");
-        }
+        var transactions = await _transactionService.GetTransactionsByHouseholdAsync(householdId);
+        return Ok(transactions);
     }
 
     [HttpGet("household/{householdId}/date-range")]
@@ -226,16 +150,8 @@ public class TransactionsController : ControllerBase
         [FromQuery] DateTime from, 
         [FromQuery] DateTime to)
     {
-        try
-        {
-            var transactions = await _transactionService.GetTransactionsByHouseholdAndDateRangeAsync(householdId, from, to);
-            return Ok(transactions);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error retrieving transactions for household {HouseholdId} by date range", householdId);
-            return StatusCode(500, "Internal server error");
-        }
+        var transactions = await _transactionService.GetTransactionsByHouseholdAndDateRangeAsync(householdId, from, to);
+        return Ok(transactions);
     }
 }
 

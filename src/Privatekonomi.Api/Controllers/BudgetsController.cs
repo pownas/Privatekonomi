@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Privatekonomi.Core.Models;
 using Privatekonomi.Core.Services;
+using Privatekonomi.Api.Exceptions;
 
 namespace Privatekonomi.Api.Controllers;
 
@@ -22,122 +23,66 @@ public class BudgetsController : ControllerBase
         [FromQuery] DateTime? period_start,
         [FromQuery] DateTime? period_end)
     {
-        try
+        var budgets = await _budgetService.GetAllBudgetsAsync();
+        
+        // Filter by period if provided
+        if (period_start.HasValue)
         {
-            var budgets = await _budgetService.GetAllBudgetsAsync();
-            
-            // Filter by period if provided
-            if (period_start.HasValue)
-            {
-                budgets = budgets.Where(b => b.EndDate >= period_start.Value);
-            }
-            
-            if (period_end.HasValue)
-            {
-                budgets = budgets.Where(b => b.StartDate <= period_end.Value);
-            }
-            
-            return Ok(budgets);
+            budgets = budgets.Where(b => b.EndDate >= period_start.Value);
         }
-        catch (Exception ex)
+        
+        if (period_end.HasValue)
         {
-            _logger.LogError(ex, "Error retrieving budgets");
-            return StatusCode(500, "Internal server error");
+            budgets = budgets.Where(b => b.StartDate <= period_end.Value);
         }
+        
+        return Ok(budgets);
     }
 
     [HttpGet("{id}")]
     public async Task<ActionResult<Budget>> GetBudget(int id)
     {
-        try
+        var budget = await _budgetService.GetBudgetByIdAsync(id);
+        if (budget == null)
         {
-            var budget = await _budgetService.GetBudgetByIdAsync(id);
-            if (budget == null)
-            {
-                return NotFound();
-            }
-            return Ok(budget);
+            throw new NotFoundException("Budget", id);
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error retrieving budget {BudgetId}", id);
-            return StatusCode(500, "Internal server error");
-        }
+        return Ok(budget);
     }
 
     [HttpGet("active")]
     public async Task<ActionResult<IEnumerable<Budget>>> GetActiveBudgets()
     {
-        try
-        {
-            var budgets = await _budgetService.GetActiveBudgetsAsync();
-            return Ok(budgets);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error retrieving active budgets");
-            return StatusCode(500, "Internal server error");
-        }
+        var budgets = await _budgetService.GetActiveBudgetsAsync();
+        return Ok(budgets);
     }
 
     [HttpGet("{id}/actual-amounts")]
     public async Task<ActionResult<Dictionary<int, decimal>>> GetActualAmounts(int id)
     {
-        try
-        {
-            var actualAmounts = await _budgetService.GetActualAmountsByCategoryAsync(id);
-            return Ok(actualAmounts);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error retrieving actual amounts for budget {BudgetId}", id);
-            return StatusCode(500, "Internal server error");
-        }
+        var actualAmounts = await _budgetService.GetActualAmountsByCategoryAsync(id);
+        return Ok(actualAmounts);
     }
 
     [HttpGet("{id}/transactions")]
     public async Task<ActionResult<IEnumerable<Transaction>>> GetTransactionsForBudget(int id)
     {
-        try
-        {
-            var transactions = await _budgetService.GetTransactionsForBudgetAsync(id);
-            return Ok(transactions);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error retrieving transactions for budget {BudgetId}", id);
-            return StatusCode(500, "Internal server error");
-        }
+        var transactions = await _budgetService.GetTransactionsForBudgetAsync(id);
+        return Ok(transactions);
     }
 
     [HttpGet("{id}/transactions-by-category")]
     public async Task<ActionResult<Dictionary<int, List<Transaction>>>> GetTransactionsByCategoryForBudget(int id)
     {
-        try
-        {
-            var transactions = await _budgetService.GetTransactionsByCategoryForBudgetAsync(id);
-            return Ok(transactions);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error retrieving transactions by category for budget {BudgetId}", id);
-            return StatusCode(500, "Internal server error");
-        }
+        var transactions = await _budgetService.GetTransactionsByCategoryForBudgetAsync(id);
+        return Ok(transactions);
     }
 
     [HttpPost]
     public async Task<ActionResult<Budget>> CreateBudget(Budget budget)
     {
-        try
-        {
-            var createdBudget = await _budgetService.CreateBudgetAsync(budget);
-            return CreatedAtAction(nameof(GetBudget), new { id = createdBudget.BudgetId }, createdBudget);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error creating budget");
-            return StatusCode(500, "Internal server error");
-        }
+        var createdBudget = await _budgetService.CreateBudgetAsync(budget);
+        return CreatedAtAction(nameof(GetBudget), new { id = createdBudget.BudgetId }, createdBudget);
     }
 
     [HttpPut("{id}")]
@@ -145,33 +90,17 @@ public class BudgetsController : ControllerBase
     {
         if (id != budget.BudgetId)
         {
-            return BadRequest();
+            throw new BadRequestException("Budget ID in URL does not match budget ID in body");
         }
 
-        try
-        {
-            await _budgetService.UpdateBudgetAsync(budget);
-            return NoContent();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error updating budget {BudgetId}", id);
-            return StatusCode(500, "Internal server error");
-        }
+        await _budgetService.UpdateBudgetAsync(budget);
+        return NoContent();
     }
 
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteBudget(int id)
     {
-        try
-        {
-            await _budgetService.DeleteBudgetAsync(id);
-            return NoContent();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error deleting budget {BudgetId}", id);
-            return StatusCode(500, "Internal server error");
-        }
+        await _budgetService.DeleteBudgetAsync(id);
+        return NoContent();
     }
 }

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Privatekonomi.Core.Models;
 using Privatekonomi.Core.Services;
+using Privatekonomi.Api.Exceptions;
 
 namespace Privatekonomi.Api.Controllers;
 
@@ -28,7 +29,7 @@ public class LoansController : ControllerBase
         var loan = await _loanService.GetLoanByIdAsync(id);
         if (loan == null)
         {
-            return NotFound();
+            throw new NotFoundException("Loan", id);
         }
         return Ok(loan);
     }
@@ -36,11 +37,6 @@ public class LoansController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<Loan>> CreateLoan([FromBody] Loan loan)
     {
-        if (!ModelState.IsValid)
-        {
-            return BadRequest(ModelState);
-        }
-
         var createdLoan = await _loanService.CreateLoanAsync(loan);
         return CreatedAtAction(nameof(GetLoan), new { id = createdLoan.LoanId }, createdLoan);
     }
@@ -50,12 +46,7 @@ public class LoansController : ControllerBase
     {
         if (id != loan.LoanId)
         {
-            return BadRequest();
-        }
-
-        if (!ModelState.IsValid)
-        {
-            return BadRequest(ModelState);
+            throw new BadRequestException("Loan ID in URL does not match loan ID in body");
         }
 
         var updatedLoan = await _loanService.UpdateLoanAsync(loan);

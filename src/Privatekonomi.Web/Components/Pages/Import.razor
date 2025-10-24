@@ -3,6 +3,7 @@
 @inject ISnackbar Snackbar
 @inject NavigationManager Navigation
 @inject HttpClient Http
+@using Privatekonomi.Web.Services
 
 <PageTitle>Importera Transaktioner - Privatekonomi</PageTitle>
 
@@ -284,8 +285,8 @@ else if (_currentStep == ImportStep.Complete)
             }
             else
             {
-                var errorText = await response.Content.ReadAsStringAsync();
-                Snackbar.Add($"Fel vid uppladdning: {errorText}", Severity.Error);
+                var errorMessage = await ApiErrorHandler.GetErrorMessageAsync(response);
+                Snackbar.Add(errorMessage, Severity.Error);
             }
         }
         catch (Exception ex)
@@ -330,8 +331,8 @@ else if (_currentStep == ImportStep.Complete)
             }
             else
             {
-                var errorText = await response.Content.ReadAsStringAsync();
-                Snackbar.Add($"Fel vid import: {errorText}", Severity.Error);
+                var errorMessage = await ApiErrorHandler.GetErrorMessageAsync(response);
+                Snackbar.Add(errorMessage, Severity.Error);
             }
         }
         catch (Exception ex)

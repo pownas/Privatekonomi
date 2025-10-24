@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Privatekonomi.Core.Data;
 using Privatekonomi.Core.Services;
+using Privatekonomi.Api.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,6 +10,13 @@ builder.AddServiceDefaults();
 
 // Add services to the container.
 builder.Services.AddControllers();
+
+// Configure ProblemDetails
+builder.Services.AddProblemDetails();
+
+// Register global exception handler
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -103,6 +111,10 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+// Add exception handler middleware
+app.UseExceptionHandler();
+app.UseStatusCodePages();
 
 app.UseHttpsRedirection();
 app.UseCors("AllowBlazorWeb");
