@@ -9,6 +9,7 @@ using Privatekonomi.Web.Components;
 using Privatekonomi.Web.Components.Account;
 using Privatekonomi.Web.Services;
 using System.Globalization;
+using Privatekonomi.Core.Configuration;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -45,9 +46,8 @@ builder.Services.AddMudServices(config =>
     config.SnackbarConfiguration.ShowTransitionDuration = 500;
 });
 
-// Configure DbContext with InMemory database
-builder.Services.AddDbContext<PrivatekonomyContext>(options =>
-    options.UseInMemoryDatabase("PrivatekonomyDb"));
+// Configure storage based on appsettings
+builder.Services.AddPrivatekonomyStorage(builder.Configuration);
 
 // Add Identity services
 builder.Services.AddAuthentication(IdentityConstants.ApplicationScheme)
@@ -191,16 +191,33 @@ try
     using (var scope = app.Services.CreateScope())
     {
         var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-        logger.LogInformation("Starting database seeding...");
+        var storageSettings = scope.ServiceProvider.GetRequiredService<Microsoft.Extensions.Options.IOptions<StorageSettings>>().Value;
         
         var context = scope.ServiceProvider.GetRequiredService<PrivatekonomyContext>();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-        context.Database.EnsureCreated();
         
-        // Seed test data
-        await TestDataSeeder.SeedTestDataAsync(context, userManager);
+        // For SQLite, ensure database is created and apply migrations
+        if (storageSettings.Provider.Equals("Sqlite", StringComparison.OrdinalIgnoreCase))
+        {
+            logger.LogInformation("Using SQLite storage, ensuring database is created...");
+            context.Database.EnsureCreated();
+        }
+        else
+        {
+            context.Database.EnsureCreated();
+        }
         
-        logger.LogInformation("Database seeding completed successfully");
+        // Seed test data only if configured
+        if (storageSettings.SeedTestData)
+        {
+            logger.LogInformation("Seeding test data...");
+            await TestDataSeeder.SeedTestDataAsync(context, userManager);
+            logger.LogInformation("Database seeding completed successfully");
+        }
+        else
+        {
+            logger.LogInformation("Test data seeding is disabled in configuration");
+        }
     }
 }
 catch (Exception ex)

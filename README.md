@@ -27,7 +27,11 @@ En privatekonomi-applikation byggd med .NET 9, Blazor Server och MudBlazor för 
   - Användarvänligt gränssnitt för att hantera kategoriseringsregler
   - Systemet föreslår också kategorier baserat på tidigare transaktioner
 - **Responsiv design**: Fungerar på desktop och mobila enheter
-- **In-memory databas**: Använder Entity Framework Core InMemory för snabb utveckling
+- **Flexibel datalagring**: 
+  - Stöd för InMemory (utveckling), SQLite (produktion) och JSON-filer
+  - Konfigurerbart via appsettings.json
+  - Lämpligt för lokal användning, Raspberry Pi och NAS
+  - Se [lagringsguide](docs/STORAGE_GUIDE.md) för mer information
 - **CSV-import**: 
   - Import av transaktioner från ICA-banken och Swedbank
   - Import av investeringar från Avanza Bank med dubbletthantering
@@ -296,26 +300,68 @@ Privatekonomi/
 
 ## 🔧 Konfiguration
 
-### Databasmigrering
+### Lagringsmetoder
 
-För att migrera från InMemory-databasen till SQL Server:
+Applikationen stödjer flera lagringsmetoder som enkelt kan konfigureras via `appsettings.json`:
+
+#### Utveckling (InMemory med testdata)
+```json
+{
+  "Storage": {
+    "Provider": "InMemory",
+    "ConnectionString": "",
+    "SeedTestData": true
+  }
+}
+```
+
+#### Produktion (SQLite)
+```json
+{
+  "Storage": {
+    "Provider": "Sqlite",
+    "ConnectionString": "Data Source=privatekonomi.db",
+    "SeedTestData": false
+  }
+}
+```
+
+#### Raspberry Pi / NAS (SQLite på delad lagring)
+```json
+{
+  "Storage": {
+    "Provider": "Sqlite",
+    "ConnectionString": "Data Source=/mnt/nas/privatekonomi.db",
+    "SeedTestData": false
+  }
+}
+```
+
+Se [STORAGE_GUIDE.md](docs/STORAGE_GUIDE.md) för detaljerad information om:
+- Olika lagringsalternativ
+- Nätverksåtkomst och delad lagring
+- Backup och återställning
+- Migration mellan lagringsmetoder
+- Felsökning och prestanda
+
+### Legacy: Databasmigrering till SQL Server
+
+Om du vill använda SQL Server istället för SQLite (för storskalig användning):
 
 1. Installera EF Core SQL Server-paketet:
 ```bash
 dotnet add src/Privatekonomi.Core/Privatekonomi.Core.csproj package Microsoft.EntityFrameworkCore.SqlServer
 ```
 
-2. Uppdatera `Program.cs` i både Web och Api-projekten:
-```csharp
-builder.Services.AddDbContext<PrivatekonomyContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-```
+2. Uppdatera `StorageExtensions.cs` för att lägga till SQL Server-stöd
 
 3. Lägg till connection string i `appsettings.json`:
 ```json
 {
-  "ConnectionStrings": {
-    "DefaultConnection": "Server=localhost;Database=Privatekonomi;Trusted_Connection=True;MultipleActiveResultSets=true"
+  "Storage": {
+    "Provider": "SqlServer",
+    "ConnectionString": "Server=localhost;Database=Privatekonomi;Trusted_Connection=True;MultipleActiveResultSets=true",
+    "SeedTestData": false
   }
 }
 ```
