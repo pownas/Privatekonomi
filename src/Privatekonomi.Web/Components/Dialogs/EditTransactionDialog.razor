@@ -1,6 +1,7 @@
 @using Privatekonomi.Core.Models
 @using Privatekonomi.Core.Services
 @inject ITransactionService TransactionService
+@inject ICategoryService CategoryService
 @inject IHouseholdService HouseholdService
 @inject ISnackbar Snackbar
 
@@ -17,6 +18,133 @@
                 </MudItem>
                 <MudItem xs="12" md="6">
                     <MudNumericField @bind-Value="_transaction.Amount" Label="Belopp" Variant="Variant.Outlined" Format="N2" />
+                </MudItem>
+                <MudItem xs="12">
+                    <MudText Typo="Typo.subtitle2" Class="mb-2">Kategorier</MudText>
+                    @if (_availableCategories != null && _availableCategories.Any())
+                    {
+                        <MudRadioGroup @bind-Value="_splitMode" Class="mb-3">
+                            <MudRadio T="SplitMode" Value="SplitMode.Single" Color="Color.Primary">En kategori</MudRadio>
+                            <MudRadio T="SplitMode" Value="SplitMode.Multiple" Color="Color.Primary">Dela på flera kategorier (2-4)</MudRadio>
+                        </MudRadioGroup>
+
+                        @if (_splitMode == SplitMode.Single)
+                        {
+                            <MudSelect @bind-Value="_selectedCategoryId" Label="Välj kategori" Variant="Variant.Outlined" 
+                                       T="int?" Clearable="true" HelperText="Välj en kategori för transaktionen">
+                                @foreach (var category in _availableCategories)
+                                {
+                                    <MudSelectItem T="int?" Value="@category.CategoryId">
+                                        <div style="display: flex; align-items: center;">
+                                            <div style="width: 16px; height: 16px; border-radius: 50%; background-color: @category.Color; margin-right: 8px;"></div>
+                                            @category.Name
+                                        </div>
+                                    </MudSelectItem>
+                                }
+                            </MudSelect>
+                            @if (_selectedCategoryId.HasValue)
+                            {
+                                var selectedCat = _availableCategories.FirstOrDefault(c => c.CategoryId == _selectedCategoryId.Value);
+                                if (selectedCat != null)
+                                {
+                                    <MudChip T="string" Size="Size.Small" 
+                                             Style="@($"background-color: {selectedCat.Color}; color: white; margin-top: 8px;")" 
+                                             OnClose="() => _selectedCategoryId = null">
+                                        @selectedCat.Name
+                                    </MudChip>
+                                }
+                            }
+                        }
+                        else
+                        {
+                            <MudRadioGroup @bind-Value="_amountSplitType" Class="mb-3">
+                                <MudRadio T="AmountSplitType" Value="AmountSplitType.Percentage" Color="Color.Primary">Dela via procent</MudRadio>
+                                <MudRadio T="AmountSplitType" Value="AmountSplitType.Amount" Color="Color.Primary">Dela via exakta belopp</MudRadio>
+                            </MudRadioGroup>
+
+                            @for (int i = 0; i < _categorySplits.Count; i++)
+                            {
+                                var index = i;
+                                var split = _categorySplits[index];
+                                <MudPaper Class="pa-3 mb-2" Elevation="1">
+                                    <MudGrid>
+                                        <MudItem xs="12" sm="5">
+                                            <MudSelect @bind-Value="split.CategoryId" Label="@($"Kategori {index + 1}")" 
+                                                       Variant="Variant.Outlined" T="int?" Required="true">
+                                                <MudSelectItem T="int?" Value="@((int?)null)">-- Välj kategori --</MudSelectItem>
+                                                @foreach (var category in _availableCategories)
+                                                {
+                                                    <MudSelectItem T="int?" Value="@category.CategoryId">
+                                                        <div style="display: flex; align-items: center;">
+                                                            <div style="width: 16px; height: 16px; border-radius: 50%; background-color: @category.Color; margin-right: 8px;"></div>
+                                                            @category.Name
+                                                        </div>
+                                                    </MudSelectItem>
+                                                }
+                                            </MudSelect>
+                                        </MudItem>
+                                        <MudItem xs="10" sm="5">
+                                            @if (_amountSplitType == AmountSplitType.Percentage)
+                                            {
+                                                <MudNumericField @bind-Value="split.Percentage" Label="Procent" 
+                                                                 Variant="Variant.Outlined" Min="0" Max="100" 
+                                                                 Adornment="Adornment.End" AdornmentText="%" 
+                                                                 Format="N1" />
+                                            }
+                                            else
+                                            {
+                                                <MudNumericField @bind-Value="split.Amount" Label="Belopp" 
+                                                                 Variant="Variant.Outlined" Min="0" 
+                                                                 Format="N2" />
+                                            }
+                                        </MudItem>
+                                        <MudItem xs="2" sm="2" Style="display: flex; align-items: center;">
+                                            @if (index > 0)
+                                            {
+                                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" 
+                                                               OnClick="() => RemoveCategorySplit(index)" />
+                                            }
+                                        </MudItem>
+                                    </MudGrid>
+                                </MudPaper>
+                            }
+
+                            @if (_categorySplits.Count < 4)
+                            {
+                                <MudButton StartIcon="@Icons.Material.Filled.Add" Variant="Variant.Outlined" 
+                                           Color="Color.Primary" OnClick="AddCategorySplit" Class="mt-2">
+                                    Lägg till kategori
+                                </MudButton>
+                            }
+
+                            <MudAlert Severity="Severity.Info" Class="mt-3">
+                                @if (_amountSplitType == AmountSplitType.Percentage)
+                                {
+                                    var totalPercentage = _categorySplits.Sum(s => s.Percentage);
+                                    <text>Total: @totalPercentage.ToString("N1")% av @_transaction.Amount.ToString("N2") kr</text>
+                                    @if (Math.Abs(totalPercentage - 100) > 0.01m)
+                                    {
+                                        <br />
+                                        <MudText Color="Color.Warning" Typo="Typo.body2">⚠️ Totalen måste vara 100%</MudText>
+                                    }
+                                }
+                                else
+                                {
+                                    var totalAmount = _categorySplits.Sum(s => s.Amount);
+                                    <text>Total: @totalAmount.ToString("N2") kr av @_transaction.Amount.ToString("N2") kr</text>
+                                    @if (Math.Abs(totalAmount - _transaction.Amount) > 0.01m)
+                                    {
+                                        <br />
+                                        <MudText Color="Color.Warning" Typo="Typo.body2">⚠️ Totalen måste matcha transaktionsbeloppet</MudText>
+                                    }
+                                }
+                            </MudAlert>
+                        }
+                    }
+                    else
+                    {
+                        <MudProgressCircular Color="Color.Primary" Size="Size.Small" Indeterminate="true" />
+                    }
                 </MudItem>
                 <MudItem xs="12">
                     <MudSelect T="int?" @bind-Value="_transaction.HouseholdId" Label="Hushåll" Variant="Variant.Outlined" 
@@ -58,8 +186,36 @@
     private DateTime? _transactionDate;
     private List<Household> _households = new();
 
+    private IEnumerable<Category> _availableCategories = new List<Category>();
+    private int? _selectedCategoryId;
+    private SplitMode _splitMode = SplitMode.Single;
+    private AmountSplitType _amountSplitType = AmountSplitType.Percentage;
+    private List<CategorySplit> _categorySplits = new();
+
+    private enum SplitMode
+    {
+        Single,
+        Multiple
+    }
+
+    private enum AmountSplitType
+    {
+        Percentage,
+        Amount
+    }
+
+    private class CategorySplit
+    {
+        public int? CategoryId { get; set; }
+        public decimal Amount { get; set; }
+        public decimal Percentage { get; set; } = 25;
+    }
+
     protected override async Task OnInitializedAsync()
     {
+        // Load all available categories
+        _availableCategories = await CategoryService.GetAllCategoriesAsync();
+
         // Load available households
         var households = await HouseholdService.GetAllHouseholdsAsync();
         _households = households.ToList();
@@ -86,6 +242,65 @@
             UpdatedAt = Transaction.UpdatedAt
         };
         _transactionDate = _transaction.Date;
+        
+        // Initialize category splits based on existing categories
+        if (Transaction.TransactionCategories.Any())
+        {
+            if (Transaction.TransactionCategories.Count == 1)
+            {
+                _splitMode = SplitMode.Single;
+                _selectedCategoryId = Transaction.TransactionCategories.First().CategoryId;
+            }
+            else
+            {
+                _splitMode = SplitMode.Multiple;
+                _categorySplits = Transaction.TransactionCategories.Select(tc => new CategorySplit
+                {
+                    CategoryId = tc.CategoryId,
+                    Amount = tc.Amount,
+                    Percentage = tc.Percentage
+                }).ToList();
+                
+                // Determine split type based on existing data
+                if (_categorySplits.All(s => s.Percentage > 0))
+                {
+                    _amountSplitType = AmountSplitType.Percentage;
+                }
+                else
+                {
+                    _amountSplitType = AmountSplitType.Amount;
+                }
+            }
+        }
+        else
+        {
+            // Initialize with one empty split for multiple mode
+            _categorySplits.Add(new CategorySplit { Amount = _transaction.Amount / 2, Percentage = 50 });
+            _categorySplits.Add(new CategorySplit { Amount = _transaction.Amount / 2, Percentage = 50 });
+        }
+    }
+
+    private void AddCategorySplit()
+    {
+        if (_categorySplits.Count < 4)
+        {
+            var remainingPercentage = 100 - _categorySplits.Sum(s => s.Percentage);
+            var remainingAmount = _transaction.Amount - _categorySplits.Sum(s => s.Amount);
+            
+            _categorySplits.Add(new CategorySplit 
+            { 
+                Amount = remainingAmount > 0 ? remainingAmount : 0,
+                Percentage = remainingPercentage > 0 ? remainingPercentage : 0
+            });
+        }
+    }
+
+    private void RemoveCategorySplit(int index)
+    {
+        if (index > 0 && _categorySplits.Count > 1)
+        {
+            _categorySplits.RemoveAt(index);
+        }
     }
 
     private void Cancel()
@@ -105,6 +320,79 @@
             _transaction.UpdatedAt = DateTime.UtcNow;
             
             await TransactionService.UpdateTransactionAsync(_transaction);
+            
+            // Update categories based on mode
+            List<TransactionCategory> newCategories;
+            
+            if (_splitMode == SplitMode.Single)
+            {
+                if (_selectedCategoryId.HasValue)
+                {
+                    newCategories = new List<TransactionCategory>
+                    {
+                        new TransactionCategory
+                        {
+                            TransactionId = _transaction.TransactionId,
+                            CategoryId = _selectedCategoryId.Value,
+                            Amount = _transaction.Amount,
+                            Percentage = 100
+                        }
+                    };
+                }
+                else
+                {
+                    newCategories = new List<TransactionCategory>();
+                }
+            }
+            else
+            {
+                // Validate splits
+                var validSplits = _categorySplits.Where(s => s.CategoryId.HasValue).ToList();
+                
+                if (!validSplits.Any())
+                {
+                    Snackbar.Add("Välj minst en kategori", Severity.Warning);
+                    return;
+                }
+
+                if (_amountSplitType == AmountSplitType.Percentage)
+                {
+                    var totalPercentage = validSplits.Sum(s => s.Percentage);
+                    if (Math.Abs(totalPercentage - 100) > 0.01m)
+                    {
+                        Snackbar.Add("Totalen måste vara 100%", Severity.Warning);
+                        return;
+                    }
+                    
+                    newCategories = validSplits.Select(s => new TransactionCategory
+                    {
+                        TransactionId = _transaction.TransactionId,
+                        CategoryId = s.CategoryId!.Value,
+                        Amount = _transaction.Amount * (s.Percentage / 100),
+                        Percentage = s.Percentage
+                    }).ToList();
+                }
+                else
+                {
+                    var totalAmount = validSplits.Sum(s => s.Amount);
+                    if (Math.Abs(totalAmount - _transaction.Amount) > 0.01m)
+                    {
+                        Snackbar.Add("Totalen måste matcha transaktionsbeloppet", Severity.Warning);
+                        return;
+                    }
+                    
+                    newCategories = validSplits.Select(s => new TransactionCategory
+                    {
+                        TransactionId = _transaction.TransactionId,
+                        CategoryId = s.CategoryId!.Value,
+                        Amount = s.Amount,
+                        Percentage = (s.Amount / _transaction.Amount) * 100
+                    }).ToList();
+                }
+            }
+            
+            await TransactionService.UpdateTransactionCategoriesAsync(_transaction.TransactionId, newCategories);
+            
             Snackbar.Add("Transaktionen har uppdaterats", Severity.Success);
             MudDialog.Close(DialogResult.Ok(true));
         }
