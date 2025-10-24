@@ -9,11 +9,21 @@ public class CategoryService : ICategoryService
 {
     private readonly PrivatekonomyContext _context;
     private readonly ICurrentUserService? _currentUserService;
+    private static readonly Random _random = new();
 
     public CategoryService(PrivatekonomyContext context, ICurrentUserService? currentUserService = null)
     {
         _context = context;
         _currentUserService = currentUserService;
+    }
+
+    private static string GenerateRandomHexColor()
+    {
+        // Generate a random color that is not too dark or too light for good visibility
+        var r = _random.Next(50, 230);
+        var g = _random.Next(50, 230);
+        var b = _random.Next(50, 230);
+        return $"#{r:X2}{g:X2}{b:X2}";
     }
 
     public async Task<IEnumerable<Category>> GetAllCategoriesAsync()
@@ -36,6 +46,13 @@ public class CategoryService : ICategoryService
     public async Task<Category> CreateCategoryAsync(Category category)
     {
         category.CreatedAt = DateTime.UtcNow;
+        
+        // Generate a random color if not provided
+        if (string.IsNullOrWhiteSpace(category.Color) || category.Color == "#000000")
+        {
+            category.Color = GenerateRandomHexColor();
+        }
+        
         _context.Categories.Add(category);
         await _context.SaveChangesAsync();
         return category;
@@ -190,6 +207,29 @@ public class CategoryService : ICategoryService
         }
 
         return statistics;
+    }
+
+    public async Task<Category?> ResetSystemCategoryAsync(int categoryId)
+    {
+        var category = await GetCategoryByIdAsync(categoryId);
+        if (category == null || !category.IsSystemCategory)
+        {
+            return null;
+        }
+
+        if (!string.IsNullOrWhiteSpace(category.OriginalName))
+        {
+            category.Name = category.OriginalName;
+        }
+        
+        if (!string.IsNullOrWhiteSpace(category.OriginalColor))
+        {
+            category.Color = category.OriginalColor;
+        }
+
+        category.UpdatedAt = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+        return category;
     }
 
     public async Task<IEnumerable<CategoryStatistics>> GetAllCategoryStatisticsAsync(int months)

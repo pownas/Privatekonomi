@@ -126,6 +126,9 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
             entity.Property(e => e.Color).IsRequired().HasMaxLength(7);
             entity.Property(e => e.DefaultBudgetMonthly).HasPrecision(18, 2);
             entity.Property(e => e.TaxRelated).IsRequired();
+            entity.Property(e => e.IsSystemCategory).IsRequired();
+            entity.Property(e => e.OriginalName).HasMaxLength(100);
+            entity.Property(e => e.OriginalColor).HasMaxLength(7);
             entity.Property(e => e.CreatedAt).IsRequired();
             
             // Self-referencing relationship for hierarchical categories
@@ -484,15 +487,15 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
 
         // Seed initial categories
         modelBuilder.Entity<Category>().HasData(
-            new Category { CategoryId = 1, Name = "Mat & Dryck", Color = "#FF6B6B", TaxRelated = false, CreatedAt = DateTime.UtcNow },
-            new Category { CategoryId = 2, Name = "Transport", Color = "#4ECDC4", TaxRelated = false, CreatedAt = DateTime.UtcNow },
-            new Category { CategoryId = 3, Name = "Boende", Color = "#45B7D1", TaxRelated = false, CreatedAt = DateTime.UtcNow },
-            new Category { CategoryId = 4, Name = "Nöje", Color = "#FFA07A", TaxRelated = false, CreatedAt = DateTime.UtcNow },
-            new Category { CategoryId = 5, Name = "Shopping", Color = "#98D8C8", TaxRelated = false, CreatedAt = DateTime.UtcNow },
-            new Category { CategoryId = 6, Name = "Hälsa", Color = "#6BCF7F", TaxRelated = false, CreatedAt = DateTime.UtcNow },
-            new Category { CategoryId = 7, Name = "Lön", Color = "#4CAF50", TaxRelated = false, CreatedAt = DateTime.UtcNow },
-            new Category { CategoryId = 8, Name = "Sparande", Color = "#2196F3", TaxRelated = false, CreatedAt = DateTime.UtcNow },
-            new Category { CategoryId = 9, Name = "Övrigt", Color = "#9E9E9E", TaxRelated = false, CreatedAt = DateTime.UtcNow }
+            new Category { CategoryId = 1, Name = "Mat & Dryck", Color = "#FF6B6B", TaxRelated = false, IsSystemCategory = true, OriginalName = "Mat & Dryck", OriginalColor = "#FF6B6B", CreatedAt = DateTime.UtcNow },
+            new Category { CategoryId = 2, Name = "Transport", Color = "#4ECDC4", TaxRelated = false, IsSystemCategory = true, OriginalName = "Transport", OriginalColor = "#4ECDC4", CreatedAt = DateTime.UtcNow },
+            new Category { CategoryId = 3, Name = "Boende", Color = "#45B7D1", TaxRelated = false, IsSystemCategory = true, OriginalName = "Boende", OriginalColor = "#45B7D1", CreatedAt = DateTime.UtcNow },
+            new Category { CategoryId = 4, Name = "Nöje", Color = "#FFA07A", TaxRelated = false, IsSystemCategory = true, OriginalName = "Nöje", OriginalColor = "#FFA07A", CreatedAt = DateTime.UtcNow },
+            new Category { CategoryId = 5, Name = "Shopping", Color = "#98D8C8", TaxRelated = false, IsSystemCategory = true, OriginalName = "Shopping", OriginalColor = "#98D8C8", CreatedAt = DateTime.UtcNow },
+            new Category { CategoryId = 6, Name = "Hälsa", Color = "#6BCF7F", TaxRelated = false, IsSystemCategory = true, OriginalName = "Hälsa", OriginalColor = "#6BCF7F", CreatedAt = DateTime.UtcNow },
+            new Category { CategoryId = 7, Name = "Lön", Color = "#4CAF50", TaxRelated = false, IsSystemCategory = true, OriginalName = "Lön", OriginalColor = "#4CAF50", CreatedAt = DateTime.UtcNow },
+            new Category { CategoryId = 8, Name = "Sparande", Color = "#2196F3", TaxRelated = false, IsSystemCategory = true, OriginalName = "Sparande", OriginalColor = "#2196F3", CreatedAt = DateTime.UtcNow },
+            new Category { CategoryId = 9, Name = "Övrigt", Color = "#9E9E9E", TaxRelated = false, IsSystemCategory = true, OriginalName = "Övrigt", OriginalColor = "#9E9E9E", CreatedAt = DateTime.UtcNow }
         );
 
         // Seed initial bank sources

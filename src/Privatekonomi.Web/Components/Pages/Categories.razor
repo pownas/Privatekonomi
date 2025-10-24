@@ -8,35 +8,10 @@
 
 <div class="d-flex justify-space-between align-center mb-4">
     <MudText Typo="Typo.h4">Kategorier</MudText>
-    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="ToggleCreateForm">
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenCreateDialog">
         Ny Kategori
     </MudButton>
 </div>
-
-@if (_showCreateForm)
-{
-    <MudPaper Class="pa-4 mb-4">
-        <MudText Typo="Typo.h6" Class="mb-3">Skapa Ny Kategori</MudText>
-        <MudTextField @bind-Value="_newCategoryName" 
-                     Label="Kategorinamn" 
-                     Variant="Variant.Outlined" 
-                     Required="true"
-                     MaxLength="100"
-                     Class="mb-3" />
-        <div class="d-flex align-center gap-2 mb-3">
-            <MudTextField @bind-Value="_newCategoryColorHex" 
-                         Label="Färg (hex, t.ex. #FF6B6B)" 
-                         Variant="Variant.Outlined"
-                         Placeholder="#4ECDC4"
-                         Style="flex: 1;" />
-            <div style="@($"width: 50px; height: 50px; background-color: {_newCategoryColorHex}; border: 2px solid #ccc; border-radius: 4px;")"></div>
-        </div>
-        <div class="d-flex gap-2">
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="CreateCategory">Skapa</MudButton>
-            <MudButton Variant="Variant.Outlined" OnClick="ToggleCreateForm">Avbryt</MudButton>
-        </div>
-    </MudPaper>
-}
 
 <MudPaper Class="pa-4">
     @if (_loading)
@@ -45,28 +20,79 @@
     }
     else
     {
-        <MudGrid>
-            @foreach (var category in _categories)
-            {
-                <MudItem xs="12" sm="6" md="4" lg="3">
-                    <MudCard Elevation="2">
-                        <MudCardContent>
-                            <div class="d-flex justify-space-between align-center">
-                                <MudChip T="string" Style="@($"background-color: {category.Color}; color: white;")" Size="Size.Large">
-                                    @category.Name
-                                </MudChip>
+        @* Main Categories *@
+        @foreach (var category in _mainCategories)
+        {
+            <MudCard Elevation="2" Class="mb-3">
+                <MudCardContent>
+                    <div class="d-flex justify-space-between align-center mb-2">
+                        <div class="d-flex align-center gap-2">
+                            <MudChip T="string" Style="@($"background-color: {category.Color}; color: white;")" Size="Size.Large">
+                                @category.Name
+                            </MudChip>
+                            @if (category.IsSystemCategory)
+                            {
+                                <MudChip T="string" Size="Size.Small" Color="Color.Info">Systemkategori</MudChip>
+                            }
+                        </div>
+                        <div class="d-flex gap-1">
+                            <MudIconButton Icon="@Icons.Material.Filled.Edit" 
+                                         Color="Color.Primary" 
+                                         Size="Size.Small"
+                                         OnClick="@(() => OpenEditDialog(category))" />
+                            <MudIconButton Icon="@Icons.Material.Filled.Add" 
+                                         Color="Color.Success" 
+                                         Size="Size.Small"
+                                         title="Lägg till underkategori"
+                                         OnClick="@(() => OpenCreateSubcategoryDialog(category))" />
+                            @if (category.IsSystemCategory)
+                            {
+                                <MudIconButton Icon="@Icons.Material.Filled.RestartAlt" 
+                                             Color="Color.Warning" 
+                                             Size="Size.Small"
+                                             title="Återställ till standard"
+                                             OnClick="@(() => ResetSystemCategory(category))" />
+                            }
+                            @if (!category.IsSystemCategory)
+                            {
                                 <MudIconButton Icon="@Icons.Material.Filled.Delete" 
                                              Color="Color.Error" 
                                              Size="Size.Small"
                                              OnClick="@(() => DeleteCategory(category))" />
-                            </div>
-                        </MudCardContent>
-                    </MudCard>
-                </MudItem>
-            }
-        </MudGrid>
+                            }
+                        </div>
+                    </div>
+                    
+                    @* Subcategories *@
+                    @if (category.SubCategories.Any())
+                    {
+                        <MudDivider Class="my-2" />
+                        <div class="d-flex flex-wrap gap-2 mt-2">
+                            @foreach (var subCategory in category.SubCategories)
+                            {
+                                <div class="d-flex align-center gap-1">
+                                    <MudChip T="string" 
+                                            Style="@($"background-color: {subCategory.Color}; color: white;")" 
+                                            Size="Size.Small">
+                                        @subCategory.Name
+                                    </MudChip>
+                                    <MudIconButton Icon="@Icons.Material.Filled.Edit" 
+                                                 Color="Color.Primary" 
+                                                 Size="Size.Small"
+                                                 OnClick="@(() => OpenEditDialog(subCategory))" />
+                                    <MudIconButton Icon="@Icons.Material.Filled.Delete" 
+                                                 Color="Color.Error" 
+                                                 Size="Size.Small"
+                                                 OnClick="@(() => DeleteCategory(subCategory))" />
+                                </div>
+                            }
+                        </div>
+                    }
+                </MudCardContent>
+            </MudCard>
+        }
         
-        @if (!_categories.Any())
+        @if (!_mainCategories.Any())
         {
             <MudText>Inga kategorier tillgängliga.</MudText>
         }
@@ -75,10 +101,7 @@
 
 @code {
     private bool _loading = true;
-    private bool _showCreateForm = false;
-    private IEnumerable<Category> _categories = new List<Category>();
-    private string _newCategoryName = string.Empty;
-    private string _newCategoryColorHex = "#4ECDC4";
+    private IEnumerable<Category> _mainCategories = new List<Category>();
 
     protected override async Task OnInitializedAsync()
     {
@@ -88,51 +111,85 @@
     private async Task LoadData()
     {
         _loading = true;
-        _categories = await CategoryService.GetAllCategoriesAsync();
+        var allCategories = await CategoryService.GetAllCategoriesAsync();
+        _mainCategories = allCategories.Where(c => c.ParentId == null).OrderBy(c => c.Name);
         _loading = false;
     }
 
-    private void ToggleCreateForm()
+    private async Task OpenCreateDialog()
     {
-        _showCreateForm = !_showCreateForm;
-        if (_showCreateForm)
+        var parameters = new DialogParameters<CategoryEditDialog>
         {
-            _newCategoryName = string.Empty;
-            _newCategoryColorHex = "#4ECDC4";
+            { x => x.Category, null },
+            { x => x.IsCreate, true }
+        };
+        
+        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<CategoryEditDialog>("Skapa Ny Kategori", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await LoadData();
         }
     }
 
-    private async Task CreateCategory()
+    private async Task OpenEditDialog(Category category)
     {
-        if (string.IsNullOrWhiteSpace(_newCategoryName))
+        var parameters = new DialogParameters<CategoryEditDialog>
         {
-            Snackbar.Add("Kategorinamn är obligatoriskt", Severity.Error);
-            return;
-        }
+            { x => x.Category, category },
+            { x => x.IsCreate, false }
+        };
+        
+        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<CategoryEditDialog>("Redigera Kategori", parameters, options);
+        var result = await dialog.Result;
 
-        // Validate color format
-        if (string.IsNullOrWhiteSpace(_newCategoryColorHex) || !_newCategoryColorHex.StartsWith("#") || (_newCategoryColorHex.Length != 7 && _newCategoryColorHex.Length != 4))
+        if (!result.Canceled)
         {
-            Snackbar.Add("Färgkoden måste vara i formatet #RRGGBB eller #RGB", Severity.Error);
-            return;
-        }
-
-        try
-        {
-            var category = new Category
-            {
-                Name = _newCategoryName,
-                Color = _newCategoryColorHex
-            };
-
-            await CategoryService.CreateCategoryAsync(category);
-            Snackbar.Add("Kategori skapad!", Severity.Success);
-            _showCreateForm = false;
             await LoadData();
         }
-        catch (Exception ex)
+    }
+
+    private async Task OpenCreateSubcategoryDialog(Category parentCategory)
+    {
+        var parameters = new DialogParameters<CategoryEditDialog>
         {
-            Snackbar.Add($"Fel vid skapande av kategori: {ex.Message}", Severity.Error);
+            { x => x.Category, null },
+            { x => x.IsCreate, true },
+            { x => x.ParentCategory, parentCategory }
+        };
+        
+        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<CategoryEditDialog>("Skapa Underkategori", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await LoadData();
+        }
+    }
+
+    private async Task ResetSystemCategory(Category category)
+    {
+        var result = await DialogService.ShowMessageBox(
+            "Återställ Systemkategori",
+            $"Är du säker på att du vill återställa kategorin '{category.Name}' till sitt ursprungliga värde?",
+            yesText: "Återställ", cancelText: "Avbryt");
+
+        if (result == true)
+        {
+            try
+            {
+                await CategoryService.ResetSystemCategoryAsync(category.CategoryId);
+                Snackbar.Add("Kategori återställd!", Severity.Success);
+                await LoadData();
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Fel vid återställning av kategori: {ex.Message}", Severity.Error);
+            }
         }
     }
 

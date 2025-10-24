@@ -61,4 +61,15 @@ public class CategoriesController : ControllerBase
         await _categoryService.DeleteCategoryAsync(id);
         return NoContent();
     }
+
+    [HttpPost("{id}/reset")]
+    public async Task<ActionResult<Category>> ResetSystemCategory(int id)
+    {
+        var category = await _categoryService.ResetSystemCategoryAsync(id);
+        if (category == null)
+        {
+            throw new NotFoundException("Category not found or is not a system category", id);
+        }
+        return Ok(category);
+    }
 }

@@ -10,6 +10,9 @@ public class Category
     public int? ParentId { get; set; } // For hierarchical categories (e.g., "Transport" -> "Public Transport")
     public decimal? DefaultBudgetMonthly { get; set; } // Default monthly budget suggestion
     public bool TaxRelated { get; set; } // Whether category is tax-deductible or affects tax reporting
+    public bool IsSystemCategory { get; set; } // Whether this is a default system category
+    public string? OriginalName { get; set; } // Original name for system categories (for reset)
+    public string? OriginalColor { get; set; } // Original color for system categories (for reset)
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
     
