@@ -1,0 +1,185 @@
+<svg width="1200" height="800" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="1200" height="800" fill="#f8f9fa"/>
+  
+  <!-- Title -->
+  <text x="600" y="30" text-anchor="middle" font-size="20" font-weight="bold" fill="#2c3e50">
+    Wireframes: Transaktionsredigering med Kategorival
+  </text>
+  
+  <!-- 1. Transaction List View -->
+  <g transform="translate(50, 60)">
+    <text x="0" y="20" font-size="16" font-weight="bold" fill="#34495e">1. Transaktionslista</text>
+    
+    <!-- Table header -->
+    <rect x="0" y="30" width="500" height="40" fill="#ecf0f1" stroke="#bdc3c7"/>
+    <text x="10" y="52" font-size="12" fill="#2c3e50">Datum</text>
+    <text x="80" y="52" font-size="12" fill="#2c3e50">Beskrivning</text>
+    <text x="200" y="52" font-size="12" fill="#2c3e50">Kategori</text>
+    <text x="300" y="52" font-size="12" fill="#2c3e50">Belopp</text>
+    <text x="380" y="52" font-size="12" fill="#2c3e50">Åtgärder</text>
+    
+    <!-- Table rows -->
+    <rect x="0" y="70" width="500" height="35" fill="white" stroke="#bdc3c7"/>
+    <text x="10" y="90" font-size="11" fill="#2c3e50">2024-01-15</text>
+    <text x="80" y="90" font-size="11" fill="#2c3e50">ICA Maxi Stormarknad</text>
+    <rect x="200" y="77" width="80" height="20" rx="10" fill="#3498db"/>
+    <text x="240" y="89" font-size="10" fill="white" text-anchor="middle">Mat & Dryck</text>
+    <text x="300" y="90" font-size="11" fill="#2c3e50">-450,00 SEK</text>
+    
+    <!-- Edit icon -->
+    <circle cx="430" cy="87" r="8" fill="#f39c12"/>
+    <text x="430" y="91" font-size="10" text-anchor="middle" fill="white">✏️</text>
+    
+    <!-- Arrow pointing to modal -->
+    <path d="M 450 87 Q 480 87 480 150" stroke="#e74c3c" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+    <text x="485" y="120" font-size="11" fill="#e74c3c">Klick öppnar modal</text>
+  </g>
+  
+  <!-- 2. Edit Transaction Modal -->
+  <g transform="translate(600, 60)">
+    <text x="0" y="20" font-size="16" font-weight="bold" fill="#34495e">2. Redigeringsmodal</text>
+    
+    <!-- Modal container -->
+    <rect x="0" y="30" width="450" height="400" fill="white" stroke="#bdc3c7" stroke-width="2" rx="8"/>
+    <rect x="0" y="30" width="450" height="40" fill="#3498db" rx="8 8 0 0"/>
+    <text x="225" y="52" font-size="14" font-weight="bold" text-anchor="middle" fill="white">✏️ Redigera Transaktion</text>
+    
+    <!-- Form fields -->
+    <text x="20" y="95" font-size="12" fill="#2c3e50">Beskrivning:</text>
+    <rect x="20" y="100" width="410" height="25" fill="#ecf0f1" stroke="#bdc3c7"/>
+    <text x="25" y="116" font-size="11" fill="#7f8c8d">ICA Maxi Stormarknad</text>
+    
+    <text x="20" y="145" font-size="12" fill="#2c3e50">Datum:</text>
+    <rect x="20" y="150" width="150" height="25" fill="#ecf0f1" stroke="#bdc3c7"/>
+    <text x="25" y="166" font-size="11" fill="#7f8c8d">2024-01-15 📅</text>
+    
+    <text x="200" y="145" font-size="12" fill="#2c3e50">Belopp:</text>
+    <rect x="200" y="150" width="150" height="25" fill="#ecf0f1" stroke="#bdc3c7"/>
+    <text x="205" y="166" font-size="11" fill="#7f8c8d">450,00 SEK</text>
+    
+    <text x="20" y="195" font-size="12" fill="#2c3e50">Motpart:</text>
+    <rect x="20" y="200" width="410" height="25" fill="#ecf0f1" stroke="#bdc3c7"/>
+    <text x="25" y="216" font-size="11" fill="#7f8c8d">ICA Maxi</text>
+    
+    <!-- Category section -->
+    <text x="20" y="245" font-size="12" fill="#2c3e50">🏷️ Kategori:</text>
+    <rect x="20" y="250" width="300" height="25" fill="#ecf0f1" stroke="#bdc3c7"/>
+    <text x="25" y="266" font-size="11" fill="#7f8c8d">Mat & Dryck ▼</text>
+    
+    <!-- Split button -->
+    <rect x="330" y="250" width="60" height="25" fill="#f39c12" stroke="#e67e22" rx="4"/>
+    <text x="360" y="266" font-size="10" text-anchor="middle" fill="white">🔄 Split</text>
+    
+    <!-- Notes -->
+    <text x="20" y="295" font-size="12" fill="#2c3e50">📝 Noteringar:</text>
+    <rect x="20" y="300" width="410" height="40" fill="#ecf0f1" stroke="#bdc3c7"/>
+    <text x="25" y="316" font-size="11" fill="#7f8c8d">Veckohandling</text>
+    
+    <!-- Tags -->
+    <text x="20" y="360" font-size="12" fill="#2c3e50">🏷️ Taggar:</text>
+    <rect x="20" y="365" width="200" height="25" fill="#ecf0f1" stroke="#bdc3c7"/>
+    <text x="25" y="381" font-size="11" fill="#7f8c8d">dagligvaror, mat</text>
+    
+    <!-- Action buttons -->
+    <rect x="270" y="395" width="70" height="30" fill="#95a5a6" stroke="#7f8c8d" rx="4"/>
+    <text x="305" y="413" font-size="12" text-anchor="middle" fill="white">Avbryt</text>
+    
+    <rect x="350" y="395" width="80" height="30" fill="#27ae60" stroke="#229954" rx="4"/>
+    <text x="390" y="413" font-size="12" text-anchor="middle" fill="white">💾 Spara</text>
+    
+    <!-- Arrow to split panel -->
+    <path d="M 360 275 Q 360 320 500 320" stroke="#f39c12" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+    <text x="420" y="310" font-size="11" fill="#f39c12">Split-panel</text>
+  </g>
+  
+  <!-- 3. Category Dropdown -->
+  <g transform="translate(50, 320)">
+    <text x="0" y="20" font-size="16" font-weight="bold" fill="#34495e">3. Kategoriväljare</text>
+    
+    <!-- Dropdown container -->
+    <rect x="0" y="30" width="300" height="200" fill="white" stroke="#bdc3c7" stroke-width="1" rx="4"/>
+    
+    <!-- Search box -->
+    <rect x="10" y="40" width="280" height="25" fill="#ecf0f1" stroke="#bdc3c7"/>
+    <text x="15" y="56" font-size="11" fill="#7f8c8d">🔍 Sök kategori...</text>
+    
+    <!-- Categories list -->
+    <text x="15" y="80" font-size="12" font-weight="bold" fill="#2c3e50">Senaste använda:</text>
+    <rect x="15" y="85" width="100" height="20" rx="10" fill="#3498db"/>
+    <text x="65" y="97" font-size="10" fill="white" text-anchor="middle">Mat & Dryck</text>
+    
+    <text x="15" y="120" font-size="12" font-weight="bold" fill="#2c3e50">Alla kategorier:</text>
+    <text x="15" y="140" font-size="11" fill="#2c3e50">📁 Mat & Dryck</text>
+    <text x="25" y="155" font-size="10" fill="#7f8c8d">  └ Dagligvaror</text>
+    <text x="25" y="170" font-size="10" fill="#7f8c8d">  └ Restauranger</text>
+    <text x="15" y="185" font-size="11" fill="#2c3e50">🚗 Transport</text>
+    <text x="25" y="200" font-size="10" fill="#7f8c8d">  └ Kollektivtrafik</text>
+    <text x="25" y="215" font-size="10" fill="#7f8c8d">  └ Bensin</text>
+  </g>
+  
+  <!-- 4. Split Panel -->
+  <g transform="translate(600, 320)">
+    <text x="0" y="20" font-size="16" font-weight="bold" fill="#34495e">4. Split-funktionalitet</text>
+    
+    <!-- Split container -->
+    <rect x="0" y="30" width="450" height="280" fill="white" stroke="#f39c12" stroke-width="2" rx="8"/>
+    <rect x="0" y="30" width="450" height="40" fill="#f39c12" rx="8 8 0 0"/>
+    <text x="225" y="52" font-size="14" font-weight="bold" text-anchor="middle" fill="white">✂️ Dela transaktion (450,00 SEK)</text>
+    
+    <!-- Split rows -->
+    <text x="20" y="90" font-size="12" fill="#2c3e50">1.</text>
+    <rect x="40" y="80" width="140" height="25" fill="#ecf0f1" stroke="#bdc3c7"/>
+    <text x="45" y="96" font-size="11" fill="#7f8c8d">Mat & Dryck ▼</text>
+    
+    <rect x="190" y="80" width="80" height="25" fill="#ecf0f1" stroke="#bdc3c7"/>
+    <text x="195" y="96" font-size="11" fill="#7f8c8d">300,00</text>
+    <text x="275" y="96" font-size="11" fill="#2c3e50">SEK (66.7%)</text>
+    
+    <circle cx="380" cy="92" r="10" fill="#e74c3c"/>
+    <text x="380" y="96" font-size="12" text-anchor="middle" fill="white">❌</text>
+    
+    <!-- Second split row -->
+    <text x="20" y="130" font-size="12" fill="#2c3e50">2.</text>
+    <rect x="40" y="120" width="140" height="25" fill="#ecf0f1" stroke="#bdc3c7"/>
+    <text x="45" y="136" font-size="11" fill="#7f8c8d">Hushållsvaror ▼</text>
+    
+    <rect x="190" y="120" width="80" height="25" fill="#ecf0f1" stroke="#bdc3c7"/>
+    <text x="195" y="136" font-size="11" fill="#7f8c8d">150,00</text>
+    <text x="275" y="136" font-size="11" fill="#2c3e50">SEK (33.3%)</text>
+    
+    <circle cx="380" cy="132" r="10" fill="#e74c3c"/>
+    <text x="380" y="136" font-size="12" text-anchor="middle" fill="white">❌</text>
+    
+    <!-- Add category button -->
+    <rect x="20" y="160" width="120" height="25" fill="#2ecc71" stroke="#27ae60" rx="4"/>
+    <text x="80" y="176" font-size="11" text-anchor="middle" fill="white">➕ Lägg till kategori</text>
+    
+    <!-- Total validation -->
+    <text x="20" y="210" font-size="14" font-weight="bold" fill="#27ae60">Totalt: 450,00 SEK ✅</text>
+    
+    <!-- Confirmation area -->
+    <rect x="10" y="230" width="430" height="60" fill="#fef9e7" stroke="#f39c12" rx="4"/>
+    <text x="20" y="250" font-size="12" fill="#f39c12">⚠️ Bekräfta split-ändring:</text>
+    <text x="20" y="265" font-size="11" fill="#2c3e50">Transaktionen kommer att delas över 2 kategorier.</text>
+    
+    <!-- Action buttons -->
+    <rect x="280" y="270" width="70" height="25" fill="#95a5a6" stroke="#7f8c8d" rx="4"/>
+    <text x="315" y="285" font-size="11" text-anchor="middle" fill="white">Avbryt</text>
+    
+    <rect x="360" y="270" width="70" height="25" fill="#f39c12" stroke="#e67e22" rx="4"/>
+    <text x="395" y="285" font-size="11" text-anchor="middle" fill="white">✂️ Dela</text>
+  </g>
+  
+  <!-- Arrow markers -->
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#e74c3c"/>
+    </marker>
+  </defs>
+  
+  <!-- Footer notes -->
+  <text x="600" y="780" text-anchor="middle" font-size="12" fill="#7f8c8d">
+    Wireframes visar huvudflödet för transaktionsredigering med fokus på kategorival och split-funktionalitet
+  </text>
+</svg>
