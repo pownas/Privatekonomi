@@ -4,24 +4,24 @@
     <DialogContent>
         @if (_isUpdating)
         {
-            <div class="text-center">
+            <div class="text-center pa-4">
                 <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Large" />
                 <MudText Typo="Typo.h6" Class="mt-4">Uppdaterar aktiekurser...</MudText>
-                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-2">
                     @_updateProgress / @_totalInvestments
                 </MudText>
             </div>
         }
         else if (_isComplete)
         {
-            <div>
+            <div class="pa-3">
                 <MudAlert Severity="Severity.Success" Class="mb-4">
-                    <MudText>Uppdatering slutförd!</MudText>
+                    <MudText Typo="Typo.h6">Uppdatering slutförd!</MudText>
                 </MudAlert>
-                <MudText Typo="Typo.body1" Class="mb-2">
+                <MudText Typo="Typo.body1" Class="mb-3">
                     <strong>Lyckade:</strong> @_result.SuccessCount
                 </MudText>
-                <MudText Typo="Typo.body1" Class="mb-2">
+                <MudText Typo="Typo.body1" Class="mb-3">
                     <strong>Misslyckade:</strong> @_result.FailedCount
                 </MudText>
                 @if (_result.Errors.Any())
@@ -46,12 +46,14 @@
         }
         else
         {
-            <MudText>
-                Vill du uppdatera aktiekurserna för alla <strong>@_totalInvestments</strong> investeringar?
-            </MudText>
-            <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-2">
-                Detta kan ta några minuter beroende på antalet investeringar.
-            </MudText>
+            <div class="pa-3">
+                <MudText Typo="Typo.body1" Class="mb-3">
+                    Vill du uppdatera aktiekurserna för alla <strong>@_totalInvestments</strong> investeringar?
+                </MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                    Detta kan ta några minuter beroende på antalet investeringar.
+                </MudText>
+            </div>
         }
     </DialogContent>
     <DialogActions>
