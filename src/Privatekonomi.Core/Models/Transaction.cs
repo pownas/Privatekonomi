@@ -18,6 +18,7 @@ public class Transaction
     public bool Imported { get; set; } // Whether transaction was imported from CSV/API
     public string? ImportSource { get; set; } // Source of import (e.g., "ICA-banken CSV", "Swedbank API")
     public bool Cleared { get; set; } // Whether transaction has been reconciled/cleared
+    public bool IsLocked { get; set; } // Whether transaction is locked and cannot be edited
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
     

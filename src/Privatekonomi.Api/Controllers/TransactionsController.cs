@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Privatekonomi.Core.Models;
 using Privatekonomi.Core.Services;
 using Privatekonomi.Api.Exceptions;
+using Privatekonomi.Api.Models;
 
 namespace Privatekonomi.Api.Controllers;
 
@@ -119,15 +120,50 @@ public class TransactionsController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateTransaction(int id, Transaction transaction)
+    public async Task<IActionResult> UpdateTransaction(int id, [FromBody] UpdateTransactionRequest request)
     {
-        if (id != transaction.TransactionId)
+        try
         {
-            throw new BadRequestException("Transaction ID in URL does not match transaction ID in body");
-        }
+            // Convert category DTOs to tuples
+            var categories = request.Categories?
+                .Select(c => (c.CategoryId, c.Amount))
+                .ToList();
 
-        await _transactionService.UpdateTransactionAsync(transaction);
-        return NoContent();
+            // Get user ID and IP address for audit logging
+            var userId = User?.Identity?.Name;
+            var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
+
+            var updatedTransaction = await _transactionService.UpdateTransactionWithAuditAsync(
+                id,
+                request.Amount,
+                request.Date,
+                request.Description,
+                request.Payee,
+                request.Notes,
+                request.Tags,
+                categories,
+                request.UpdatedAt,
+                userId,
+                ipAddress);
+
+            return Ok(updatedTransaction);
+        }
+        catch (InvalidOperationException ex) when (ex.Message.Contains("not found"))
+        {
+            throw new NotFoundException("Transaction", id);
+        }
+        catch (InvalidOperationException ex) when (ex.Message.Contains("locked"))
+        {
+            throw new ForbiddenException(ex.Message);
+        }
+        catch (InvalidOperationException ex) when (ex.Message.Contains("modified by another user"))
+        {
+            throw new ConflictException(ex.Message);
+        }
+        catch (ArgumentException ex)
+        {
+            throw new BadRequestException(ex.Message);
+        }
     }
 
     [HttpDelete("{id}")]
