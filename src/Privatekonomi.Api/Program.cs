@@ -49,6 +49,17 @@ builder.Services.AddScoped<IExportService, ExportService>();
 builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<ISalaryHistoryService, SalaryHistoryService>();
 
+// Register security services for bank API
+builder.Services.AddMemoryCache();
+builder.Services.AddDataProtection();
+builder.Services.AddSingleton<ITokenEncryptionService, Privatekonomi.Core.Services.TokenEncryptionService>();
+builder.Services.AddSingleton<IOAuthStateService, Privatekonomi.Core.Services.OAuthStateService>();
+
+// Register bank sync background service
+builder.Services.Configure<Privatekonomi.Core.Services.BankSyncSettings>(
+    builder.Configuration.GetSection("BankSync"));
+builder.Services.AddHostedService<Privatekonomi.Core.Services.BankSyncBackgroundService>();
+
 // Register HttpClient for bank API services
 builder.Services.AddHttpClient();
 

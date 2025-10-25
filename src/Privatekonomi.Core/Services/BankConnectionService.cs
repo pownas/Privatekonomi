@@ -13,18 +13,21 @@ public class BankConnectionService : IBankConnectionService
     private readonly PrivatekonomyContext _context;
     private readonly Dictionary<string, IBankApiService> _bankApiServices;
     private readonly IAuditLogService? _auditLogService;
+    private readonly ITokenEncryptionService? _tokenEncryptionService;
     private readonly ILogger<BankConnectionService> _logger;
 
     public BankConnectionService(
         PrivatekonomyContext context,
         IEnumerable<IBankApiService> bankApiServices,
         ILogger<BankConnectionService> logger,
-        IAuditLogService? auditLogService = null)
+        IAuditLogService? auditLogService = null,
+        ITokenEncryptionService? tokenEncryptionService = null)
     {
         _context = context;
         _bankApiServices = bankApiServices.ToDictionary(s => s.BankName, s => s, StringComparer.OrdinalIgnoreCase);
         _logger = logger;
         _auditLogService = auditLogService;
+        _tokenEncryptionService = tokenEncryptionService;
     }
 
     public async Task<List<BankConnection>> GetConnectionsAsync(int? bankSourceId = null)
@@ -45,13 +48,35 @@ public class BankConnectionService : IBankConnectionService
 
     public async Task<BankConnection?> GetConnectionAsync(int connectionId)
     {
-        return await _context.BankConnections
+        var connection = await _context.BankConnections
             .Include(c => c.BankSource)
             .FirstOrDefaultAsync(c => c.BankConnectionId == connectionId);
+
+        // Decrypt tokens when retrieving
+        if (connection != null && _tokenEncryptionService != null)
+        {
+            if (!string.IsNullOrEmpty(connection.AccessToken))
+                connection.AccessToken = _tokenEncryptionService.Decrypt(connection.AccessToken);
+            
+            if (!string.IsNullOrEmpty(connection.RefreshToken))
+                connection.RefreshToken = _tokenEncryptionService.Decrypt(connection.RefreshToken);
+        }
+
+        return connection;
     }
 
     public async Task<BankConnection> CreateConnectionAsync(BankConnection connection)
     {
+        // Encrypt tokens before saving
+        if (_tokenEncryptionService != null)
+        {
+            if (!string.IsNullOrEmpty(connection.AccessToken))
+                connection.AccessToken = _tokenEncryptionService.Encrypt(connection.AccessToken);
+            
+            if (!string.IsNullOrEmpty(connection.RefreshToken))
+                connection.RefreshToken = _tokenEncryptionService.Encrypt(connection.RefreshToken);
+        }
+
         connection.CreatedAt = DateTime.UtcNow;
         _context.BankConnections.Add(connection);
         await _context.SaveChangesAsync();
@@ -71,6 +96,18 @@ public class BankConnectionService : IBankConnectionService
 
     public async Task<BankConnection> UpdateConnectionAsync(BankConnection connection)
     {
+        // Encrypt tokens before saving if they were updated
+        if (_tokenEncryptionService != null)
+        {
+            if (!string.IsNullOrEmpty(connection.AccessToken) && 
+                !_tokenEncryptionService.IsEncrypted(connection.AccessToken))
+                connection.AccessToken = _tokenEncryptionService.Encrypt(connection.AccessToken);
+            
+            if (!string.IsNullOrEmpty(connection.RefreshToken) && 
+                !_tokenEncryptionService.IsEncrypted(connection.RefreshToken))
+                connection.RefreshToken = _tokenEncryptionService.Encrypt(connection.RefreshToken);
+        }
+
         connection.UpdatedAt = DateTime.UtcNow;
         _context.BankConnections.Update(connection);
         await _context.SaveChangesAsync();
