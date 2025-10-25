@@ -1,8 +1,16 @@
 ﻿@inherits LayoutComponentBase
 @using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.Extensions.Options
+@using Microsoft.Extensions.DependencyInjection
+@using Privatekonomi.Core.Configuration
+@using Privatekonomi.Core.Services.Persistence
+@using Privatekonomi.Core.Data
 @inject ThemeService ThemeService
 @inject IJSRuntime JSRuntime
 @inject NavigationManager NavigationManager
+@inject IOptions<StorageSettings> StorageSettings
+@inject IServiceProvider ServiceProvider
+@inject ISnackbar Snackbar
 @implements IDisposable
 
 <MudThemeProvider @ref="@_mudThemeProvider" Theme="@_theme" @bind-IsDarkMode="@_isDarkMode" />
@@ -15,6 +23,16 @@
         <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@ToggleDrawer" />
         <MudText Typo="Typo.h5" Class="ml-3">Privatekonomi</MudText>
         <MudSpacer />
+        @if (IsJsonFileStorage)
+        {
+            <MudTooltip Text="Spara data till JSON-filer">
+                <MudIconButton Icon="@Icons.Material.Filled.Save" 
+                               Color="Color.Inherit" 
+                               OnClick="@SaveJsonData"
+                               Disabled="@_isSaving"
+                               aria-label="Spara JSON-data" />
+            </MudTooltip>
+        }
         <AuthorizeView>
             <Authorized>
                 <MudText Typo="Typo.body2" Class="mr-2">@context.User.Identity?.Name</MudText>
@@ -42,6 +60,7 @@
 @code {
     private bool _drawerOpen = true;
     private bool _isDarkMode = false;
+    private bool _isSaving = false;
     private MudThemeProvider? _mudThemeProvider;
     private MudTheme _theme = new MudTheme()
     {
@@ -76,6 +95,46 @@
             TextDisabled = "rgba(255,255,255, 0.38)",
         }
     };
+
+    private bool IsJsonFileStorage => 
+        StorageSettings.Value.Provider.Equals("JsonFile", StringComparison.OrdinalIgnoreCase);
+
+    private async Task SaveJsonData()
+    {
+        if (!IsJsonFileStorage)
+        {
+            return;
+        }
+
+        _isSaving = true;
+        StateHasChanged();
+
+        try
+        {
+            using var scope = ServiceProvider.CreateScope();
+            var context = scope.ServiceProvider.GetRequiredService<PrivatekonomyContext>();
+            var persistenceService = scope.ServiceProvider.GetService<IDataPersistenceService>();
+
+            if (persistenceService != null)
+            {
+                await persistenceService.SaveAsync(context);
+                Snackbar.Add("Data sparad till JSON-filer", Severity.Success);
+            }
+            else
+            {
+                Snackbar.Add("Kunde inte hitta persistence service", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Fel vid sparande: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isSaving = false;
+            StateHasChanged();
+        }
+    }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
