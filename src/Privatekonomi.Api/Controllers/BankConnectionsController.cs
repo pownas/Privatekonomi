@@ -153,7 +153,10 @@ public class BankConnectionsController : ControllerBase
             // Validate state to prevent CSRF attacks
             if (!_oauthStateService.ValidateState(request.State, request.BankName))
             {
-                _logger.LogWarning("Invalid OAuth state received for bank {BankName}", request.BankName);
+                // Sanitize bank name by validating it against known banks before logging
+                var sanitizedBankName = _bankConnectionService.GetAvailableBanks()
+                    .Contains(request.BankName) ? request.BankName : "unknown";
+                _logger.LogWarning("Invalid OAuth state received for bank {BankName}", sanitizedBankName);
                 return BadRequest(new { error = "Ogiltig eller utgången state-parameter" });
             }
 
