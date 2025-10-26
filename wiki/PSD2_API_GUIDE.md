@@ -48,6 +48,8 @@ För att använda bank-API:erna behöver du:
    - Användarnamn och lösenord
    - TOTP-app om du har 2FA aktiverat
 
+**📖 Detaljerad guide:** Se [BANK_API_CREDENTIALS_GUIDE.md](BANK_API_CREDENTIALS_GUIDE.md) för steg-för-steg instruktioner om hur du erhåller API-nycklar från varje bank.
+
 ### Konfiguration i appsettings.json
 
 Lägg till följande i `appsettings.json`:
@@ -58,6 +60,9 @@ Lägg till följande i `appsettings.json`:
     "ClientId": "ditt-client-id",
     "ClientSecret": "ditt-client-secret",
     "Environment": "sandbox" // eller "production"
+  },
+  "Avanza": {
+    "Note": "Avanza använder inte PSD2. Användare loggar in direkt via UI."
   },
   "IcaBanken": {
     "ClientId": "ditt-client-id",
@@ -71,6 +76,8 @@ Lägg till följande i `appsettings.json`:
 - Azure Key Vault
 - Environment Variables
 - User Secrets (för development)
+
+Se [BANK_API_CREDENTIALS_GUIDE.md](BANK_API_CREDENTIALS_GUIDE.md) för detaljer om säker credential-hantering.
 
 ### Säkerhet och kryptering
 
