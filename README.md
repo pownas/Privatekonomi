@@ -19,6 +19,9 @@ En privatekonomi-applikation byggd med .NET 9, Blazor Server och MudBlazor för 
 - **Investeringshantering**: Hantera aktier, fonder och certifikat med översikt över värde och avkastning
 - **Automatisk kursuppdatering**: Uppdatera aktiekurser via Yahoo Finance API med ett knapptryck
 - **Kategorisystem**: Förkonfigurerade kategorier med färgkodning och hierarkisk struktur
+  - **BAS 2025-baserad kontoplan**: Kontonummer inspirerade av svensk BAS-standard för strukturerad bokföring
+  - Redigerbar kontoplan med stöd för egna konton och underkategorier
+  - Se [Kontoplan BAS 2025 guide](docs/KONTOPLAN_BAS_2025.md) för detaljerad information
 - **Split-kategorisering**: Möjlighet att dela upp transaktioner i flera kategorier
 - **Automatisk kategorisering**: 
   - Regelbaserad kategorisering med 44+ förkonfigurerade regler
