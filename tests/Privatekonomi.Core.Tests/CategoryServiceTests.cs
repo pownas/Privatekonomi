@@ -238,4 +238,120 @@ public class CategoryServiceTests : IDisposable
         var result = await _categoryService.GetCategoryByIdAsync(category.CategoryId);
         Assert.Null(result);
     }
+
+    [Fact]
+    public async Task CreateCategoryAsync_PreservesAccountNumber()
+    {
+        // Arrange
+        var category = new Category
+        {
+            Name = "Mat & Dryck",
+            Color = "#FF6B6B",
+            AccountNumber = "5000"
+        };
+
+        // Act
+        var result = await _categoryService.CreateCategoryAsync(category);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal("5000", result.AccountNumber);
+    }
+
+    [Fact]
+    public async Task UpdateCategoryAsync_UpdatesAccountNumber()
+    {
+        // Arrange
+        var category = new Category
+        {
+            Name = "Test Category",
+            Color = "#FF6B6B",
+            AccountNumber = "3000"
+        };
+        await _categoryService.CreateCategoryAsync(category);
+
+        // Act
+        category.AccountNumber = "3100";
+        var result = await _categoryService.UpdateCategoryAsync(category);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal("3100", result.AccountNumber);
+    }
+
+    [Fact]
+    public async Task ResetSystemCategoryAsync_RestoresOriginalAccountNumber()
+    {
+        // Arrange
+        var category = new Category
+        {
+            Name = "Modified Name",
+            Color = "#000000",
+            AccountNumber = "9999",
+            IsSystemCategory = true,
+            OriginalName = "Original Name",
+            OriginalColor = "#FF6B6B",
+            OriginalAccountNumber = "5000",
+            CreatedAt = DateTime.UtcNow
+        };
+        _context.Categories.Add(category);
+        await _context.SaveChangesAsync();
+
+        // Act
+        var result = await _categoryService.ResetSystemCategoryAsync(category.CategoryId);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal("Original Name", result.Name);
+        Assert.Equal("#FF6B6B", result.Color);
+        Assert.Equal("5000", result.AccountNumber);
+        Assert.NotNull(result.UpdatedAt);
+    }
+
+    [Fact]
+    public async Task SeededCategories_HaveCorrectAccountNumbers()
+    {
+        // This test verifies that the database seeding includes account numbers
+        // We need to create a new context with the actual seed data
+        var options = new DbContextOptionsBuilder<PrivatekonomyContext>()
+            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .Options;
+
+        using var context = new PrivatekonomyContext(options);
+        await context.Database.EnsureCreatedAsync();
+        
+        var categoryService = new CategoryService(context);
+
+        // Act
+        var categories = await categoryService.GetAllCategoriesAsync();
+        var categoryList = categories.ToList();
+
+        // Assert - Verify main categories have account numbers
+        var matOchDryck = categoryList.FirstOrDefault(c => c.Name == "Mat & Dryck");
+        Assert.NotNull(matOchDryck);
+        Assert.Equal("5000", matOchDryck.AccountNumber);
+
+        var boende = categoryList.FirstOrDefault(c => c.Name == "Boende");
+        Assert.NotNull(boende);
+        Assert.Equal("4000", boende.AccountNumber);
+
+        var lon = categoryList.FirstOrDefault(c => c.Name == "Lön");
+        Assert.NotNull(lon);
+        Assert.Equal("3000", lon.AccountNumber);
+
+        var sparande = categoryList.FirstOrDefault(c => c.Name == "Sparande");
+        Assert.NotNull(sparande);
+        Assert.Equal("8000", sparande.AccountNumber);
+
+        // Verify subcategories exist and have account numbers
+        var livsmedel = categoryList.FirstOrDefault(c => c.Name == "Livsmedel");
+        Assert.NotNull(livsmedel);
+        Assert.Equal("5100", livsmedel.AccountNumber);
+        Assert.Equal(matOchDryck.CategoryId, livsmedel.ParentId);
+
+        var hyra = categoryList.FirstOrDefault(c => c.Name == "Hyra/Avgift");
+        Assert.NotNull(hyra);
+        Assert.Equal("4100", hyra.AccountNumber);
+        Assert.Equal(boende.CategoryId, hyra.ParentId);
+    }
 }
