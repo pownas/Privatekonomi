@@ -526,7 +526,7 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
             // Subcategories for Nöje (7000)
             new Category { CategoryId = 20, Name = "Streaming", AccountNumber = "7100", Color = "#FFA07A", ParentId = 4, TaxRelated = false, IsSystemCategory = true, OriginalName = "Streaming", OriginalColor = "#FFA07A", OriginalAccountNumber = "7100", CreatedAt = DateTime.UtcNow },
             new Category { CategoryId = 21, Name = "Gym", AccountNumber = "7300", Color = "#FF8A65", ParentId = 4, TaxRelated = false, IsSystemCategory = true, OriginalName = "Gym", OriginalColor = "#FF8A65", OriginalAccountNumber = "7300", CreatedAt = DateTime.UtcNow },
-            new Category { CategoryId = 22, Name = "Resor", AccountNumber = "7500", Color = "#FFAB91", ParentId = 4, TaxRelated = false, IsSystemCategory = true, OriginalName = "Resor", OriginalColor = "#FFAB91", OriginalAccountNumber = "7500", CreatedAt = DateTime.UtcNow },
+            new Category { CategoryId = 22, Name = "Resor", AccountNumber = "7400", Color = "#FFAB91", ParentId = 4, TaxRelated = false, IsSystemCategory = true, OriginalName = "Resor", OriginalColor = "#FFAB91", OriginalAccountNumber = "7400", CreatedAt = DateTime.UtcNow },
             
             // Subcategories for Shopping (5500)
             new Category { CategoryId = 23, Name = "Kläder", AccountNumber = "5510", Color = "#98D8C8", ParentId = 5, TaxRelated = false, IsSystemCategory = true, OriginalName = "Kläder", OriginalColor = "#98D8C8", OriginalAccountNumber = "5510", CreatedAt = DateTime.UtcNow },

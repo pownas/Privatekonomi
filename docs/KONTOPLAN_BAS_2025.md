@@ -74,8 +74,7 @@ Motsvarar BAS klass 8 (Övriga rörelsekostnader). Här registreras fritidsaktiv
   - **7100 - Streaming**: Netflix, Spotify, HBO, etc.
   - **7200 - Bio och Teater**: Biljetter till bio, teater, konserter
   - **7300 - Gym och Träning**: Gymmedlemskap, träningsrelaterat
-  - **7400 - Hobby**: Material och kostnader för hobbyer
-  - **7500 - Resor och Semester**: Semesterresor, hotell, flyg
+  - **7400 - Resor och Semester**: Semesterresor, hotell, flyg
 - **7500 - Hälsa**: Huvudkategori för hälsorelaterade kostnader
   - **7510 - Tandvård**: Tandläkare, tandhygienist
   - **7520 - Läkarvård**: Vårdcentral, specialist
