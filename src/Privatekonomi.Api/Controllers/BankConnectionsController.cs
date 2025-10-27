@@ -9,13 +9,16 @@ namespace Privatekonomi.Api.Controllers;
 public class BankConnectionsController : ControllerBase
 {
     private readonly IBankConnectionService _bankConnectionService;
+    private readonly IOAuthStateService _oauthStateService;
     private readonly ILogger<BankConnectionsController> _logger;
 
     public BankConnectionsController(
         IBankConnectionService bankConnectionService,
+        IOAuthStateService oauthStateService,
         ILogger<BankConnectionsController> logger)
     {
         _bankConnectionService = bankConnectionService;
+        _oauthStateService = oauthStateService;
         _logger = logger;
     }
 
@@ -89,7 +92,9 @@ public class BankConnectionsController : ControllerBase
                 return BadRequest(new { error = $"Bank '{request.BankName}' stöds inte" });
 
             var redirectUri = $"{Request.Scheme}://{Request.Host}/api/bankconnections/callback";
-            var state = Guid.NewGuid().ToString();
+            
+            // Generate and store state for CSRF protection
+            var state = _oauthStateService.GenerateState(request.BankName);
             
             var authUrl = await bankService.GetAuthorizationUrlAsync(redirectUri, state);
 
@@ -145,6 +150,16 @@ public class BankConnectionsController : ControllerBase
     {
         try
         {
+            // Validate state to prevent CSRF attacks
+            if (!_oauthStateService.ValidateState(request.State, request.BankName))
+            {
+                // Sanitize bank name by validating it against known banks before logging
+                var sanitizedBankName = _bankConnectionService.GetAvailableBanks()
+                    .Contains(request.BankName) ? request.BankName : "unknown";
+                _logger.LogWarning("Invalid OAuth state received for bank {BankName}", sanitizedBankName);
+                return BadRequest(new { error = "Ogiltig eller utgången state-parameter" });
+            }
+
             var bankService = _bankConnectionService.GetBankApiService(request.BankName);
             if (bankService == null)
                 return BadRequest(new { error = $"Bank '{request.BankName}' stöds inte" });
@@ -155,8 +170,11 @@ public class BankConnectionsController : ControllerBase
             // Set bank source
             connection.BankSourceId = request.BankSourceId;
 
-            // Save connection
+            // Save connection (tokens will be encrypted automatically)
             var savedConnection = await _bankConnectionService.CreateConnectionAsync(connection);
+
+            // Remove used state token
+            _oauthStateService.RemoveState(request.State);
 
             return Ok(savedConnection);
         }
@@ -285,6 +303,7 @@ public class BankConnectionsController : ControllerBase
     {
         public string BankName { get; set; } = string.Empty;
         public string Code { get; set; } = string.Empty;
+        public string State { get; set; } = string.Empty;
         public string RedirectUri { get; set; } = string.Empty;
         public int BankSourceId { get; set; }
     }

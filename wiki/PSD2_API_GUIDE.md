@@ -48,6 +48,8 @@ För att använda bank-API:erna behöver du:
    - Användarnamn och lösenord
    - TOTP-app om du har 2FA aktiverat
 
+**📖 Detaljerad guide:** Se [BANK_API_CREDENTIALS_GUIDE.md](BANK_API_CREDENTIALS_GUIDE.md) för steg-för-steg instruktioner om hur du erhåller API-nycklar från varje bank.
+
 ### Konfiguration i appsettings.json
 
 Lägg till följande i `appsettings.json`:
@@ -58,6 +60,9 @@ Lägg till följande i `appsettings.json`:
     "ClientId": "ditt-client-id",
     "ClientSecret": "ditt-client-secret",
     "Environment": "sandbox" // eller "production"
+  },
+  "Avanza": {
+    "Note": "Avanza använder inte PSD2. Användare loggar in direkt via UI."
   },
   "IcaBanken": {
     "ClientId": "ditt-client-id",
@@ -72,21 +77,45 @@ Lägg till följande i `appsettings.json`:
 - Environment Variables
 - User Secrets (för development)
 
+Se [BANK_API_CREDENTIALS_GUIDE.md](BANK_API_CREDENTIALS_GUIDE.md) för detaljer om säker credential-hantering.
+
 ### Säkerhet och kryptering
 
-För produktion bör du:
+**Implementerat för produktion:**
 
-1. **Kryptera tokens i databasen**:
-   - Implementera kryptering för AccessToken och RefreshToken
-   - Använd Data Protection API eller liknande
+1. **Tokenkryptering i databasen** ✅:
+   - Alla OAuth2 AccessToken och RefreshToken krypteras automatiskt
+   - Använder ASP.NET Core Data Protection API
+   - Transparent kryptering/dekryptering vid sparande/hämtning
+   - Se [PSD2_SECURITY_GDPR.md](PSD2_SECURITY_GDPR.md) för detaljer
 
-2. **Validera OAuth state**:
-   - Implementera CSRF-skydd i OAuth-flödet
-   - Lagra state i session och validera vid callback
+2. **OAuth state-validering** ✅:
+   - CSRF-skydd i OAuth-flödet implementerat
+   - State lagras i minne med 15 minuters TTL
+   - Valideras automatiskt vid callback
+   - Single-use tokens (tas bort efter användning)
 
 3. **Säker lagring av credentials**:
-   - Använd Azure Key Vault eller motsvarande
+   - Använd Azure Key Vault eller environment variables i produktion
+   - User Secrets för development
    - Aldrig hardcoda credentials i kod
+
+4. **Automatisk synkronisering** ✅:
+   - Valfri bakgrundssynkronisering med konfigurerbar periodicitet
+   - Aktiveras per bankkoppling
+   - Konfigureras via appsettings.json
+
+**Konfiguration:**
+```json
+{
+  "BankSync": {
+    "Enabled": false,
+    "IntervalMinutes": 60
+  }
+}
+```
+
+För mer information om säkerhet och GDPR, se [PSD2_SECURITY_GDPR.md](PSD2_SECURITY_GDPR.md).
 
 ## Användning via API
 
@@ -197,9 +226,9 @@ Response:
 }
 ```
 
-## Användning via UI (kommande)
+## Användning via UI
 
-En grafisk gränssnitt kommer att läggas till i Blazor Web-applikationen för att hantera bankkopplingar:
+Ett grafiskt gränssnitt finns tillgängligt i Blazor Web-applikationen för att hantera bankkopplingar:
 
 1. Navigera till **Bankkopplingar** i menyn
 2. Klicka på **Lägg till bank**
@@ -210,14 +239,43 @@ En grafisk gränssnitt kommer att läggas till i Blazor Web-applikationen för a
 
 ## Automatisk synkronisering
 
-För att aktivera automatisk synkronisering kan du implementera en background service som:
+Automatisk synkronisering av banktransaktioner är nu implementerad via `BankSyncBackgroundService`.
 
-1. Kör periodiskt (t.ex. varje timme eller dagligen)
-2. Kontrollerar alla aktiva bankkopplingar
-3. Synkroniserar transaktioner för varje koppling
-4. Skickar notifikationer vid fel
+**Aktivera automatisk synkronisering:**
 
-Exempel på implementation kommer i framtida uppdatering.
+1. Konfigurera i `appsettings.json`:
+```json
+{
+  "BankSync": {
+    "Enabled": true,
+    "IntervalMinutes": 60
+  }
+}
+```
+
+2. Aktivera auto-sync för specifika bankkopplingar:
+```http
+PUT /api/bankconnections/{id}
+Content-Type: application/json
+
+{
+  "autoSyncEnabled": true
+}
+```
+
+**Funktioner:**
+- Kör periodiskt enligt konfigurerat intervall
+- Synkroniserar endast aktiva kopplingar med `autoSyncEnabled = true`
+- Hämtar transaktioner från senaste 7 dagarna
+- Hanterar fel och timeout graciöst
+- Loggar alla aktiviteter för spårbarhet
+- Uppdaterar kopplingstatus vid ihållande fel
+
+**Prestandaöverväganden:**
+- Standard-intervall: 60 minuter (rekommenderat)
+- Minimum intervall: 15 minuter (respektera API rate limits)
+- Synkroniserar endast de senaste 7 dagarna per körning
+- Hanterar dubbletter automatiskt
 
 ## Felsökning
 
@@ -281,13 +339,25 @@ Bankernas API:er har begränsningar:
 - Samtycke från användare krävs för dataåtkomst
 - Tidsbegränsad åtkomst (90-180 dagar)
 
-### Rekommendationer
+### Implementerade säkerhetsåtgärder
 
-1. Använd HTTPS för all kommunikation
-2. Kryptera känslig data i databas
-3. Implementera audit logging
-4. Regelbunden säkerhetsgenomgång
-5. Följ OWASP security guidelines
+1. ✅ **HTTPS för all kommunikation**
+2. ✅ **Tokenkryptering i databas** (ASP.NET Core Data Protection)
+3. ✅ **OAuth state-validering** (CSRF-skydd)
+4. ✅ **Audit logging** (alla bank-operationer)
+5. ✅ **Automatisk token refresh**
+6. ✅ **Felhantering och robusthet**
+7. ✅ **GDPR-efterlevnad**
+
+### Ytterligare rekommendationer
+
+1. Regelbunden säkerhetsgenomgång
+2. Följ OWASP security guidelines
+3. Implementera rate limiting i produktion
+4. Använd Azure Key Vault för credentials
+5. Aktivera Application Insights för monitoring
+
+**Se [PSD2_SECURITY_GDPR.md](PSD2_SECURITY_GDPR.md) för komplett säkerhets- och GDPR-dokumentation.**
 
 ## Utveckling och testning
 
@@ -324,21 +394,33 @@ För frågor om denna implementation:
 
 ## Framtida förbättringar
 
-Planerade förbättringar inkluderar:
+Planerade och implementerade förbättringar:
 
-- [ ] Grafiskt gränssnitt för hantering av bankkopplingar
-- [ ] Automatisk synkronisering med scheduler
+- [x] ~~Grafiskt gränssnitt för hantering av bankkopplingar~~ **Implementerat**
+- [x] ~~Automatisk synkronisering med scheduler~~ **Implementerat**
+- [x] ~~Token-kryptering i databas~~ **Implementerat**
+- [x] ~~OAuth state-validering~~ **Implementerat**
 - [ ] Notifikationer vid nya transaktioner
 - [ ] Stöd för fler banker (Nordea, SEB, Handelsbanken)
-- [ ] Token-kryptering i databas
-- [ ] OAuth state-validering
+- [ ] Retry logic med Polly (exponential backoff)
+- [ ] Rate limiting för API-anrop
+- [ ] Circuit breaker pattern
 - [ ] Exportera konfiguration för backup
+- [ ] Real-time synkronisering med webhooks (om stöds av banken)
 
 ## Licens och ansvar
 
 Denna implementation är ett exempel och bör ses över av säkerhetsexperter innan produktion. Utvecklaren ansvarar inte för dataförlust eller säkerhetsbrott. Följ alltid bankernas användarvillkor och API-policy.
 
 ## Changelog
+
+### Version 1.1 (2025-10-25)
+- ✅ Implementerad tokenkryptering med ASP.NET Core Data Protection
+- ✅ OAuth state-validering för CSRF-skydd
+- ✅ Automatisk synkronisering med BankSyncBackgroundService
+- ✅ Komplett säkerhets- och GDPR-dokumentation
+- ✅ Unit tests för nya säkerhetsfunktioner
+- ✅ Förbättrad felhantering och logging
 
 ### Version 1.0 (2025-01-20)
 - Initial implementation av PSD2-stöd

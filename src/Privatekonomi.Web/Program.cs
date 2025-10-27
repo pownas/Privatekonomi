@@ -105,7 +105,6 @@ builder.Services.AddScoped<IGoalService, GoalService>();
 builder.Services.AddScoped<IPocketService, PocketService>();
 builder.Services.AddScoped<ISharedGoalService, SharedGoalService>();
 builder.Services.AddScoped<IAuditLogService, AuditLogService>();
-builder.Services.AddScoped<IBankConnectionService, BankConnectionService>();
 builder.Services.AddScoped<IExportService, ExportService>();
 builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<ISalaryHistoryService, SalaryHistoryService>();
@@ -117,6 +116,9 @@ builder.Services.AddScoped<ISieExporter, SieExporter>();
 builder.Services.AddScoped<IK4Generator, K4Generator>();
 builder.Services.AddScoped<ITaxDeductionService, TaxDeductionService>();
 builder.Services.AddScoped<IISKTaxCalculator, ISKTaxCalculator>();
+
+// Register bank API services and dependencies
+builder.Services.AddBankApiServices(builder.Configuration);
 
 // Add HttpClient for API calls (if needed later) using Aspire service discovery
 builder.Services.AddHttpClient("api", client =>
@@ -138,41 +140,6 @@ builder.Services.AddScoped<HttpClient>(sp =>
 
 // Register stock price service with HttpClient
 builder.Services.AddHttpClient<IStockPriceService, YahooFinanceStockPriceService>();
-
-// Register bank API services
-// Note: In production, configure with actual credentials from secure storage
-builder.Services.AddScoped<IBankApiService>(sp =>
-{
-    var context = sp.GetRequiredService<PrivatekonomyContext>();
-    var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
-    var httpClient = httpClientFactory.CreateClient();
-    
-    var clientId = builder.Configuration["Swedbank:ClientId"] ?? "demo-client-id";
-    var clientSecret = builder.Configuration["Swedbank:ClientSecret"] ?? "demo-client-secret";
-    
-    return new Privatekonomi.Core.Services.BankApi.SwedbankApiService(context, httpClient, clientId, clientSecret);
-});
-
-builder.Services.AddScoped<IBankApiService>(sp =>
-{
-    var context = sp.GetRequiredService<PrivatekonomyContext>();
-    var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
-    var httpClient = httpClientFactory.CreateClient();
-    
-    return new Privatekonomi.Core.Services.BankApi.AvanzaApiService(context, httpClient);
-});
-
-builder.Services.AddScoped<IBankApiService>(sp =>
-{
-    var context = sp.GetRequiredService<PrivatekonomyContext>();
-    var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
-    var httpClient = httpClientFactory.CreateClient();
-    
-    var clientId = builder.Configuration["IcaBanken:ClientId"] ?? "demo-client-id";
-    var clientSecret = builder.Configuration["IcaBanken:ClientSecret"] ?? "demo-client-secret";
-    
-    return new Privatekonomi.Core.Services.BankApi.IcaBankenApiService(context, httpClient, clientId, clientSecret);
-});
 
 var app = builder.Build();
 
