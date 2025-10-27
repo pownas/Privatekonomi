@@ -124,11 +124,13 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
             entity.HasKey(e => e.CategoryId);
             entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
             entity.Property(e => e.Color).IsRequired().HasMaxLength(7);
+            entity.Property(e => e.AccountNumber).HasMaxLength(10);
             entity.Property(e => e.DefaultBudgetMonthly).HasPrecision(18, 2);
             entity.Property(e => e.TaxRelated).IsRequired();
             entity.Property(e => e.IsSystemCategory).IsRequired();
             entity.Property(e => e.OriginalName).HasMaxLength(100);
             entity.Property(e => e.OriginalColor).HasMaxLength(7);
+            entity.Property(e => e.OriginalAccountNumber).HasMaxLength(10);
             entity.Property(e => e.CreatedAt).IsRequired();
             
             // Self-referencing relationship for hierarchical categories
@@ -485,17 +487,25 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
             entity.HasIndex(e => e.TransactionDate);
         });
 
-        // Seed initial categories
+        // Seed initial categories with BAS 2025-inspired account numbers
+        // Based on BAS 2025, adapted for personal finance (privatekonomi)
+        // Account number ranges:
+        // - 3000-3999: Income (Intäkter) - corresponds to BAS class 3
+        // - 4000-4999: Housing & Living (Boende) - corresponds to BAS class 4-5 (operational costs)
+        // - 5000-5999: Food & Consumption (Mat & Förbrukning) - corresponds to BAS class 6 (other external costs)
+        // - 6000-6999: Transportation & Other Costs (Transport & Övriga kostnader) - corresponds to BAS class 7 (personnel costs adapted)
+        // - 7000-7999: Entertainment & Health (Nöje & Hälsa) - corresponds to BAS class 8 (other costs)
+        // - 8000-8999: Savings & Investments (Sparande) - corresponds to BAS class 1 (assets)
         modelBuilder.Entity<Category>().HasData(
-            new Category { CategoryId = 1, Name = "Mat & Dryck", Color = "#FF6B6B", TaxRelated = false, IsSystemCategory = true, OriginalName = "Mat & Dryck", OriginalColor = "#FF6B6B", CreatedAt = DateTime.UtcNow },
-            new Category { CategoryId = 2, Name = "Transport", Color = "#4ECDC4", TaxRelated = false, IsSystemCategory = true, OriginalName = "Transport", OriginalColor = "#4ECDC4", CreatedAt = DateTime.UtcNow },
-            new Category { CategoryId = 3, Name = "Boende", Color = "#45B7D1", TaxRelated = false, IsSystemCategory = true, OriginalName = "Boende", OriginalColor = "#45B7D1", CreatedAt = DateTime.UtcNow },
-            new Category { CategoryId = 4, Name = "Nöje", Color = "#FFA07A", TaxRelated = false, IsSystemCategory = true, OriginalName = "Nöje", OriginalColor = "#FFA07A", CreatedAt = DateTime.UtcNow },
-            new Category { CategoryId = 5, Name = "Shopping", Color = "#98D8C8", TaxRelated = false, IsSystemCategory = true, OriginalName = "Shopping", OriginalColor = "#98D8C8", CreatedAt = DateTime.UtcNow },
-            new Category { CategoryId = 6, Name = "Hälsa", Color = "#6BCF7F", TaxRelated = false, IsSystemCategory = true, OriginalName = "Hälsa", OriginalColor = "#6BCF7F", CreatedAt = DateTime.UtcNow },
-            new Category { CategoryId = 7, Name = "Lön", Color = "#4CAF50", TaxRelated = false, IsSystemCategory = true, OriginalName = "Lön", OriginalColor = "#4CAF50", CreatedAt = DateTime.UtcNow },
-            new Category { CategoryId = 8, Name = "Sparande", Color = "#2196F3", TaxRelated = false, IsSystemCategory = true, OriginalName = "Sparande", OriginalColor = "#2196F3", CreatedAt = DateTime.UtcNow },
-            new Category { CategoryId = 9, Name = "Övrigt", Color = "#9E9E9E", TaxRelated = false, IsSystemCategory = true, OriginalName = "Övrigt", OriginalColor = "#9E9E9E", CreatedAt = DateTime.UtcNow }
+            new Category { CategoryId = 1, Name = "Mat & Dryck", AccountNumber = "5000", Color = "#FF6B6B", TaxRelated = false, IsSystemCategory = true, OriginalName = "Mat & Dryck", OriginalColor = "#FF6B6B", OriginalAccountNumber = "5000", CreatedAt = DateTime.UtcNow },
+            new Category { CategoryId = 2, Name = "Transport", AccountNumber = "6000", Color = "#4ECDC4", TaxRelated = false, IsSystemCategory = true, OriginalName = "Transport", OriginalColor = "#4ECDC4", OriginalAccountNumber = "6000", CreatedAt = DateTime.UtcNow },
+            new Category { CategoryId = 3, Name = "Boende", AccountNumber = "4000", Color = "#45B7D1", TaxRelated = false, IsSystemCategory = true, OriginalName = "Boende", OriginalColor = "#45B7D1", OriginalAccountNumber = "4000", CreatedAt = DateTime.UtcNow },
+            new Category { CategoryId = 4, Name = "Nöje", AccountNumber = "7000", Color = "#FFA07A", TaxRelated = false, IsSystemCategory = true, OriginalName = "Nöje", OriginalColor = "#FFA07A", OriginalAccountNumber = "7000", CreatedAt = DateTime.UtcNow },
+            new Category { CategoryId = 5, Name = "Shopping", AccountNumber = "5500", Color = "#98D8C8", TaxRelated = false, IsSystemCategory = true, OriginalName = "Shopping", OriginalColor = "#98D8C8", OriginalAccountNumber = "5500", CreatedAt = DateTime.UtcNow },
+            new Category { CategoryId = 6, Name = "Hälsa", AccountNumber = "7500", Color = "#6BCF7F", TaxRelated = false, IsSystemCategory = true, OriginalName = "Hälsa", OriginalColor = "#6BCF7F", OriginalAccountNumber = "7500", CreatedAt = DateTime.UtcNow },
+            new Category { CategoryId = 7, Name = "Lön", AccountNumber = "3000", Color = "#4CAF50", TaxRelated = false, IsSystemCategory = true, OriginalName = "Lön", OriginalColor = "#4CAF50", OriginalAccountNumber = "3000", CreatedAt = DateTime.UtcNow },
+            new Category { CategoryId = 8, Name = "Sparande", AccountNumber = "8000", Color = "#2196F3", TaxRelated = false, IsSystemCategory = true, OriginalName = "Sparande", OriginalColor = "#2196F3", OriginalAccountNumber = "8000", CreatedAt = DateTime.UtcNow },
+            new Category { CategoryId = 9, Name = "Övrigt", AccountNumber = "6900", Color = "#9E9E9E", TaxRelated = false, IsSystemCategory = true, OriginalName = "Övrigt", OriginalColor = "#9E9E9E", OriginalAccountNumber = "6900", CreatedAt = DateTime.UtcNow }
         );
 
         // Seed initial bank sources

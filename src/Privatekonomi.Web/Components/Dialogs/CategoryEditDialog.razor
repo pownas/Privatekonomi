@@ -13,6 +13,14 @@
                          HelperText="Ge kategorin ett tydligt och beskrivande namn"
                          Class="mb-4" />
             
+            <MudTextField @bind-Value="_accountNumber" 
+                         Label="Kontonummer (BAS-inspirerat)" 
+                         MaxLength="10"
+                         Variant="Variant.Outlined"
+                         Placeholder="t.ex. 3000, 4100, 5000"
+                         HelperText="Valfritt: BAS-inspirerat kontonummer för strukturerad bokföring"
+                         Class="mb-4" />
+            
             <div class="d-flex align-center gap-2 mb-4">
                 <MudTextField @bind-Value="_categoryColor" 
                              Label="Färg (hex, t.ex. #FF6B6B)" 
@@ -62,6 +70,7 @@
     private bool _formValid;
     private string _categoryName = string.Empty;
     private string _categoryColor = "#4ECDC4";
+    private string? _accountNumber;
 
     protected override void OnInitialized()
     {
@@ -69,6 +78,7 @@
         {
             _categoryName = Category.Name;
             _categoryColor = Category.Color;
+            _accountNumber = Category.AccountNumber;
         }
         else if (IsCreate)
         {
@@ -120,6 +130,7 @@
                 {
                     Name = _categoryName,
                     Color = _categoryColor,
+                    AccountNumber = _accountNumber,
                     ParentId = ParentCategory?.CategoryId
                 };
 
@@ -130,6 +141,7 @@
             {
                 Category.Name = _categoryName;
                 Category.Color = _categoryColor;
+                Category.AccountNumber = _accountNumber;
                 await CategoryService.UpdateCategoryAsync(Category);
                 Snackbar.Add("Kategori uppdaterad!", Severity.Success);
             }
