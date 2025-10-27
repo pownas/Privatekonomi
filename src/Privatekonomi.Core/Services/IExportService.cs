@@ -30,4 +30,24 @@ public interface IExportService
     /// </summary>
     /// <returns>JSON backup file content as byte array</returns>
     Task<byte[]> ExportFullBackupAsync();
+    
+    /// <summary>
+    /// Get list of years that have transaction data
+    /// </summary>
+    /// <returns>List of years with transactions</returns>
+    Task<List<int>> GetAvailableYearsAsync();
+    
+    /// <summary>
+    /// Export all economic data for a specific year to JSON format
+    /// </summary>
+    /// <param name="year">Year to export</param>
+    /// <returns>JSON file content as byte array</returns>
+    Task<byte[]> ExportYearDataToJsonAsync(int year);
+    
+    /// <summary>
+    /// Export all economic data for a specific year to CSV format
+    /// </summary>
+    /// <param name="year">Year to export</param>
+    /// <returns>CSV file content as byte array</returns>
+    Task<byte[]> ExportYearDataToCsvAsync(int year);
 }
