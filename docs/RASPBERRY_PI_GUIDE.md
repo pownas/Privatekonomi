@@ -88,7 +88,10 @@ sudo apt upgrade -y
 
 ```bash
 # Ladda ner och installera .NET 9
-curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --channel 9.0
+# OBS: Verifiera alltid nedladdade skript innan körning
+curl -sSL https://dot.net/v1/dotnet-install.sh -o /tmp/dotnet-install.sh
+# Granska skriptet om du vill: cat /tmp/dotnet-install.sh
+bash /tmp/dotnet-install.sh --channel 9.0
 
 # Lägg till .NET i PATH
 echo 'export DOTNET_ROOT=$HOME/.dotnet' >> ~/.bashrc
@@ -196,16 +199,26 @@ Om du har en NAS kan du montera den och använda den för lagring:
 # Skapa monteringspunkt
 sudo mkdir -p /mnt/nas
 
+# För SMB/CIFS: Skapa en säker credentials-fil först
+sudo mkdir -p /etc/smbcredentials
+sudo nano /etc/smbcredentials/nas.cred
+# Lägg till i filen:
+# username=dinUser
+# password=dittLösenord
+sudo chmod 600 /etc/smbcredentials/nas.cred
+
 # Montera NAS (exempel för NFS)
 sudo mount -t nfs 192.168.1.100:/volume1/privatekonomi /mnt/nas
 
-# Eller för SMB/CIFS
-sudo mount -t cifs //192.168.1.100/privatekonomi /mnt/nas -o username=dinUser,password=dittLösenord
+# Eller för SMB/CIFS med credentials-fil
+sudo mount -t cifs //192.168.1.100/privatekonomi /mnt/nas -o credentials=/etc/smbcredentials/nas.cred
 
 # Gör monteringen permanent (lägg till i /etc/fstab)
 sudo nano /etc/fstab
-# Lägg till:
+# För NFS, lägg till:
 # 192.168.1.100:/volume1/privatekonomi /mnt/nas nfs defaults 0 0
+# För CIFS, lägg till:
+# //192.168.1.100/privatekonomi /mnt/nas cifs credentials=/etc/smbcredentials/nas.cred 0 0
 ```
 
 Använd sedan `/mnt/nas/privatekonomi.db` som ConnectionString.
@@ -535,9 +548,14 @@ Uppdatera `appsettings.Production.json`:
 ### 4. Använd starka lösenord
 
 Se till att du använder starka lösenord för:
-- Raspberry Pi användarkonto
-- Privatekonomi-applikationen
-- NAS/extern lagring
+- Raspberry Pi användarkonto (minst 12 tecken, blanda stora/små bokstäver, siffror och specialtecken)
+- Privatekonomi-applikationen (minst 8 tecken enligt policy)
+- NAS/extern lagring (följ samma rekommendation som för Pi-kontot)
+
+**Exempel på starka lösenord:**
+- Använd en lösenordshanterare (rekommenderat)
+- Kombinera ord med siffror och symboler: `Kaffe42!Solsken#2024`
+- Undvik vanliga ord, födelsedatum eller enkla sekvenser
 
 ## Prestandarekommendationer
 
