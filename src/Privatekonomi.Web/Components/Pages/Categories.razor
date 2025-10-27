@@ -28,7 +28,14 @@
                     <div class="d-flex justify-space-between align-center mb-2">
                         <div class="d-flex align-center gap-2">
                             <MudChip T="string" Style="@($"background-color: {category.Color}; color: white;")" Size="Size.Large">
-                                @category.Name
+                                @if (!string.IsNullOrWhiteSpace(category.AccountNumber))
+                                {
+                                    <text>@category.AccountNumber - @category.Name</text>
+                                }
+                                else
+                                {
+                                    <text>@category.Name</text>
+                                }
                             </MudChip>
                             @if (category.IsSystemCategory)
                             {
@@ -74,7 +81,14 @@
                                     <MudChip T="string" 
                                             Style="@($"background-color: {subCategory.Color}; color: white;")" 
                                             Size="Size.Small">
-                                        @subCategory.Name
+                                        @if (!string.IsNullOrWhiteSpace(subCategory.AccountNumber))
+                                        {
+                                            <text>@subCategory.AccountNumber - @subCategory.Name</text>
+                                        }
+                                        else
+                                        {
+                                            <text>@subCategory.Name</text>
+                                        }
                                     </MudChip>
                                     <MudIconButton Icon="@Icons.Material.Filled.Edit" 
                                                  Color="Color.Primary" 

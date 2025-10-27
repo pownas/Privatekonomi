@@ -227,6 +227,11 @@ public class CategoryService : ICategoryService
             category.Color = category.OriginalColor;
         }
 
+        if (!string.IsNullOrWhiteSpace(category.OriginalAccountNumber))
+        {
+            category.AccountNumber = category.OriginalAccountNumber;
+        }
+
         category.UpdatedAt = DateTime.UtcNow;
         await _context.SaveChangesAsync();
         return category;
