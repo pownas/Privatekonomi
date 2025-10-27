@@ -147,7 +147,7 @@ Förenkla skattedeklarationen genom att exportera föregående års data:
 ### Budgetfiltrering för JSON
 
 Budgetar inkluderas om:
-- Budgetens startår matchar det valda året, ELLER
+- Budgetens startår matchar det valda året, eller
 - Budgetens slutår matchar det valda året
 
 ### Löneutvecklingsfiltrering för JSON
@@ -222,7 +222,7 @@ Både JSON och CSV exporteras med:
 
 ## Relaterad funktionalitet
 
-- **Full Backup**: Exportera ALL data (alla år) i JSON-format
+- **Full Backup**: Exportera all data (alla år) i JSON-format
 - **Transaction Export**: Exportera transaktioner med anpassat datumintervall
 - **Budget Export**: Exportera specifika budgetar
 
