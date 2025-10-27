@@ -32,6 +32,12 @@ En privatekonomi-applikation byggd med .NET 9, Blazor Server och MudBlazor för 
   - Konfigurerbart via appsettings.json
   - Lämpligt för lokal användning, Raspberry Pi, NAS och molnbaserad hosting
   - Se [lagringsguide](docs/STORAGE_GUIDE.md) för mer information
+- **Data Persistens & Backup**:
+  - Automatisk sparning var 5:e minut (för JsonFile provider)
+  - Fullständig backup/export till JSON
+  - Import med merge- eller ersättningsläge
+  - Webbaserat gränssnitt för datahantering
+  - Perfekt för Raspberry Pi-installationer - se [Raspberry Pi guide](docs/RASPBERRY_PI_GUIDE.md)
 - **CSV-import**: 
   - Import av transaktioner från ICA-banken och Swedbank
   - Import av investeringar från Avanza Bank med dubbletthantering
@@ -381,6 +387,8 @@ Se [STORAGE_GUIDE.md](docs/STORAGE_GUIDE.md) för detaljerad information om:
 ### Användarguider
 
 - **[USER_AUTHENTICATION.md](docs/USER_AUTHENTICATION.md)**: Guide för användarregistrering, inloggning och datahantering
+- **[RASPBERRY_PI_GUIDE.md](docs/RASPBERRY_PI_GUIDE.md)**: ⭐ Komplett guide för installation på Raspberry Pi med lokal datalagring
+- **[STORAGE_GUIDE.md](docs/STORAGE_GUIDE.md)**: Guide för olika lagringsalternativ och konfiguration
 - **[CSV_IMPORT_GUIDE.md](wiki/CSV_IMPORT_GUIDE.md)**: Guide för import av transaktioner från ICA-banken och Swedbank
 - **[PSD2_API_GUIDE.md](wiki/PSD2_API_GUIDE.md)**: Guide för automatisk bankimport via PSD2-API (Swedbank, Avanza, ICA Banken)
 - **[AVANZA_IMPORT_GUIDE.md](wiki/AVANZA_IMPORT_GUIDE.md)**: Guide för import av investeringar från Avanza Bank
