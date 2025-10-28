@@ -14,17 +14,19 @@
 
 <MudPaper Class="pa-4">
     <MudGrid>
-        <MudItem xs="12" Class="d-flex justify-space-between align-center mb-4">
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" 
+        <MudItem xs="12" Class="d-flex flex-column flex-sm-row justify-space-between align-start align-sm-center gap-2 mb-4">
+            <MudButton Variant="Variant.Filled" 
+                       Color="Color.Primary" 
+                       StartIcon="@Icons.Material.Filled.Add" 
                        OnClick="@(() => Navigation.NavigateTo("/transactions/new"))">
                 Ny Transaktion
             </MudButton>
             <MudButtonGroup Color="Color.Primary" Variant="Variant.Outlined">
                 <MudButton StartIcon="@Icons.Material.Filled.Download" OnClick="ExportToCsv">
-                    Exportera CSV
+                    <span class="d-none d-sm-inline">Exportera </span>CSV
                 </MudButton>
                 <MudButton StartIcon="@Icons.Material.Filled.Download" OnClick="ExportToJson">
-                    Exportera JSON
+                    <span class="d-none d-sm-inline">Exportera </span>JSON
                 </MudButton>
             </MudButtonGroup>
         </MudItem>
