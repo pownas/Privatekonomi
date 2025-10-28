@@ -151,7 +151,7 @@ Alla fält har beskrivande ARIA-etiketter:
 
 ## Versionshistorik
 
-### Version 2.0 (Oktober 2024)
+### Version 2.0 (2024-10-28)
 - ✅ MudAutocomplete för kategorisökning
 - ✅ Förbättrad validering med MudForm
 - ✅ Nya fält: IsIncome, Payee, PaymentMethod, Currency
