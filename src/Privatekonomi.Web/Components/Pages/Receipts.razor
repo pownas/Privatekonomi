@@ -1,0 +1,429 @@
+@page "/receipts"
+@rendermode InteractiveServer
+@using Privatekonomi.Core.Models
+@using Privatekonomi.Core.Services
+@inject IReceiptService ReceiptService
+@inject ICategoryService CategoryService
+@inject ITransactionService TransactionService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<PageTitle>Kvitton - Privatekonomi</PageTitle>
+
+<div class="d-flex justify-space-between align-center mb-4">
+    <MudText Typo="Typo.h4">Kvitton</MudText>
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="ToggleCreateForm">
+        Nytt Kvitto
+    </MudButton>
+</div>
+
+@if (_showCreateForm)
+{
+    <MudPaper Class="pa-4 mb-4">
+        <MudText Typo="Typo.h6" Class="mb-3">@(_editingReceipt != null ? "Redigera Kvitto" : "Lägg till Nytt Kvitto")</MudText>
+        
+        <MudGrid>
+            <MudItem xs="12" md="6">
+                <MudTextField @bind-Value="_formReceipt.Merchant" 
+                              Label="Butik/Återförsäljare" 
+                              Variant="Variant.Outlined"
+                              Required="true"
+                              MaxLength="200"
+                              Class="mb-3" />
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudNumericField @bind-Value="_formReceipt.TotalAmount" 
+                                 Label="Totalt belopp (kr)" 
+                                 Variant="Variant.Outlined"
+                                 Min="0"
+                                 Format="N2"
+                                 Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                                 Class="mb-3" />
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudDatePicker @bind-Date="_formReceiptDate"
+                               Label="Kvittodatum"
+                               Variant="Variant.Outlined"
+                               Class="mb-3" />
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudSelect @bind-Value="_formReceipt.ReceiptType" 
+                           Label="Kvittotyp" 
+                           Variant="Variant.Outlined" 
+                           Class="mb-3">
+                    <MudSelectItem Value="@("Physical")">Fysiskt kvitto</MudSelectItem>
+                    <MudSelectItem Value="@("E-Receipt")">E-kvitto</MudSelectItem>
+                    <MudSelectItem Value="@("Scanned")">Skannat</MudSelectItem>
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudTextField @bind-Value="_formReceipt.ReceiptNumber" 
+                              Label="Kvittonummer (valfritt)" 
+                              Variant="Variant.Outlined"
+                              MaxLength="100"
+                              Class="mb-3" />
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudTextField @bind-Value="_formReceipt.PaymentMethod" 
+                              Label="Betalningsmetod (valfritt)" 
+                              Variant="Variant.Outlined"
+                              MaxLength="50"
+                              Class="mb-3" />
+            </MudItem>
+            <MudItem xs="12">
+                <MudTextField @bind-Value="_formReceipt.Notes" 
+                              Label="Anteckningar (valfritt)" 
+                              Variant="Variant.Outlined"
+                              Lines="2"
+                              MaxLength="500"
+                              Class="mb-3" />
+            </MudItem>
+        </MudGrid>
+
+        <MudText Typo="Typo.h6" Class="mb-3 mt-4">Radposter</MudText>
+        @foreach (var item in _formLineItems)
+        {
+            var index = _formLineItems.IndexOf(item);
+            <MudPaper Class="pa-3 mb-2" Elevation="1">
+                <MudGrid>
+                    <MudItem xs="12" md="4">
+                        <MudTextField @bind-Value="item.Description" 
+                                      Label="Beskrivning" 
+                                      Variant="Variant.Outlined"
+                                      MaxLength="200"
+                                      Class="mb-2" />
+                    </MudItem>
+                    <MudItem xs="6" md="2">
+                        <MudNumericField @bind-Value="item.Quantity" 
+                                         Label="Antal" 
+                                         Variant="Variant.Outlined"
+                                         Min="0"
+                                         Format="N2"
+                                         Class="mb-2" />
+                    </MudItem>
+                    <MudItem xs="6" md="2">
+                        <MudNumericField Value="item.UnitPrice" 
+                                         Label="À-pris" 
+                                         Variant="Variant.Outlined"
+                                         Min="0"
+                                         Format="N2"
+                                         Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                                         Class="mb-2"
+                                         ValueChanged="@((decimal val) => { item.UnitPrice = val; CalculateLineItemTotal(item); })" />
+                    </MudItem>
+                    <MudItem xs="6" md="2">
+                        <MudNumericField @bind-Value="item.TotalPrice" 
+                                         Label="Totalt" 
+                                         Variant="Variant.Outlined"
+                                         ReadOnly="true"
+                                         Format="N2"
+                                         Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                                         Class="mb-2" />
+                    </MudItem>
+                    <MudItem xs="6" md="2">
+                        <div class="d-flex align-center" style="height: 100%;">
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" 
+                                           Color="Color.Error" 
+                                           OnClick="@(() => RemoveLineItem(index))" />
+                        </div>
+                    </MudItem>
+                </MudGrid>
+            </MudPaper>
+        }
+        <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Add" OnClick="AddLineItem" Class="mb-3">
+            Lägg till radpost
+        </MudButton>
+
+        <div class="d-flex gap-2 mt-4">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveReceipt">
+                @(_editingReceipt != null ? "Uppdatera" : "Lägg till")
+            </MudButton>
+            <MudButton Variant="Variant.Outlined" OnClick="CancelForm">Avbryt</MudButton>
+        </div>
+    </MudPaper>
+}
+
+@if (_loading)
+{
+    <div class="d-flex flex-column align-center pa-6">
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Large" />
+        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-4">Laddar kvitton...</MudText>
+    </div>
+}
+else
+{
+    <MudPaper Class="pa-4 mb-4">
+        <MudGrid>
+            <MudItem xs="12" md="4">
+                <MudCard Elevation="2" Class="pa-4">
+                    <MudCardContent>
+                        <MudText Typo="Typo.h6">Totalt antal kvitton</MudText>
+                        <MudText Typo="Typo.h4" Color="Color.Primary">@_receipts.Count</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <MudCard Elevation="2" Class="pa-4">
+                    <MudCardContent>
+                        <MudText Typo="Typo.h6">Total summa</MudText>
+                        <MudText Typo="Typo.h4" Color="Color.Secondary">@_totalAmount.ToString("C", new System.Globalization.CultureInfo("sv-SE"))</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <MudCard Elevation="2" Class="pa-4">
+                    <MudCardContent>
+                        <MudText Typo="Typo.h6">Denna månad</MudText>
+                        <MudText Typo="Typo.h4" Color="Color.Info">@_thisMonthCount</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+
+    <MudPaper Class="pa-4">
+        <MudTable Items="_receipts" Hover="true" Striped="true" Filter="new Func<Receipt, bool>(FilterReceipts)">
+            <ToolBarContent>
+                <MudText Typo="Typo.h6">Kvitton</MudText>
+                <MudSpacer />
+                <MudTextField @bind-Value="_searchString" Placeholder="Sök..." Adornment="Adornment.Start" 
+                              AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0" />
+            </ToolBarContent>
+            <HeaderContent>
+                <MudTh>Datum</MudTh>
+                <MudTh>Butik</MudTh>
+                <MudTh>Belopp</MudTh>
+                <MudTh>Typ</MudTh>
+                <MudTh>Radposter</MudTh>
+                <MudTh>Åtgärder</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Datum">@context.ReceiptDate.ToString("yyyy-MM-dd")</MudTd>
+                <MudTd DataLabel="Butik">@context.Merchant</MudTd>
+                <MudTd DataLabel="Belopp">@context.TotalAmount.ToString("C", new System.Globalization.CultureInfo("sv-SE"))</MudTd>
+                <MudTd DataLabel="Typ">
+                    <MudChip T="string" Size="Size.Small" Color="@GetReceiptTypeColor(context.ReceiptType)">
+                        @GetReceiptTypeLabel(context.ReceiptType)
+                    </MudChip>
+                </MudTd>
+                <MudTd DataLabel="Radposter">@context.ReceiptLineItems.Count st</MudTd>
+                <MudTd>
+                    <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small" Color="Color.Info" 
+                                   OnClick="@(() => ViewReceipt(context))" Title="Visa" />
+                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Primary" 
+                                   OnClick="@(() => EditReceipt(context))" />
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" 
+                                   OnClick="@(() => DeleteReceipt(context))" />
+                </MudTd>
+            </RowTemplate>
+            <PagerContent>
+                <MudTablePager PageSizeOptions="new int[] { 10, 25, 50, 100 }" />
+            </PagerContent>
+        </MudTable>
+    </MudPaper>
+}
+
+@code {
+    private bool _loading = true;
+    private bool _showCreateForm = false;
+    private List<Receipt> _receipts = new();
+    private List<Category> _categories = new();
+    private Receipt _formReceipt = new();
+    private Receipt? _editingReceipt = null;
+    private DateTime? _formReceiptDate;
+    private List<ReceiptLineItem> _formLineItems = new();
+    private string _userId = string.Empty;
+    private decimal _totalAmount = 0;
+    private int _thisMonthCount = 0;
+    private string _searchString = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        _userId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
+        
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        _loading = true;
+        _receipts = await ReceiptService.GetReceiptsAsync(_userId);
+        _totalAmount = _receipts.Sum(r => r.TotalAmount);
+        _thisMonthCount = _receipts.Count(r => r.ReceiptDate.Month == DateTime.Today.Month && 
+                                              r.ReceiptDate.Year == DateTime.Today.Year);
+        _categories = (await CategoryService.GetAllCategoriesAsync()).ToList();
+        _loading = false;
+    }
+
+    private void ToggleCreateForm()
+    {
+        _showCreateForm = !_showCreateForm;
+        if (_showCreateForm)
+        {
+            _formReceipt = new Receipt 
+            { 
+                UserId = _userId,
+                ReceiptType = "Physical",
+                Currency = "SEK"
+            };
+            _formReceiptDate = DateTime.Today;
+            _formLineItems = new();
+            _editingReceipt = null;
+        }
+    }
+
+    private void EditReceipt(Receipt receipt)
+    {
+        _editingReceipt = receipt;
+        _formReceipt = new Receipt
+        {
+            ReceiptId = receipt.ReceiptId,
+            UserId = receipt.UserId,
+            Merchant = receipt.Merchant,
+            ReceiptDate = receipt.ReceiptDate,
+            TotalAmount = receipt.TotalAmount,
+            Currency = receipt.Currency,
+            ReceiptType = receipt.ReceiptType,
+            ReceiptNumber = receipt.ReceiptNumber,
+            PaymentMethod = receipt.PaymentMethod,
+            Notes = receipt.Notes
+        };
+        _formReceiptDate = receipt.ReceiptDate;
+        _formLineItems = receipt.ReceiptLineItems.Select(li => new ReceiptLineItem
+        {
+            ReceiptLineItemId = li.ReceiptLineItemId,
+            Description = li.Description,
+            Quantity = li.Quantity,
+            UnitPrice = li.UnitPrice,
+            TotalPrice = li.TotalPrice,
+            CategoryId = li.CategoryId
+        }).ToList();
+        _showCreateForm = true;
+    }
+
+    private void AddLineItem()
+    {
+        _formLineItems.Add(new ReceiptLineItem
+        {
+            Description = string.Empty,
+            Quantity = 1,
+            UnitPrice = 0,
+            TotalPrice = 0
+        });
+    }
+
+    private void RemoveLineItem(int index)
+    {
+        _formLineItems.RemoveAt(index);
+    }
+
+    private void CalculateLineItemTotal(ReceiptLineItem item)
+    {
+        item.TotalPrice = item.Quantity * item.UnitPrice;
+    }
+
+    private async Task SaveReceipt()
+    {
+        if (string.IsNullOrWhiteSpace(_formReceipt.Merchant))
+        {
+            Snackbar.Add("Butik är obligatoriskt", Severity.Error);
+            return;
+        }
+
+        _formReceipt.ReceiptDate = _formReceiptDate ?? DateTime.Today;
+        _formReceipt.ReceiptLineItems = _formLineItems;
+
+        try
+        {
+            if (_editingReceipt != null)
+            {
+                await ReceiptService.UpdateReceiptAsync(_formReceipt);
+                Snackbar.Add("Kvitto uppdaterat!", Severity.Success);
+            }
+            else
+            {
+                await ReceiptService.CreateReceiptAsync(_formReceipt);
+                Snackbar.Add("Kvitto skapat!", Severity.Success);
+            }
+
+            _showCreateForm = false;
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Fel: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void CancelForm()
+    {
+        _showCreateForm = false;
+        _editingReceipt = null;
+    }
+
+    private async Task ViewReceipt(Receipt receipt)
+    {
+        var lineItemsText = string.Join("\n", receipt.ReceiptLineItems.Select(li => 
+            $"{li.Quantity} x {li.Description} - {li.TotalPrice:C}"));
+        
+        await DialogService.ShowMessageBox(
+            $"Kvitto: {receipt.Merchant}",
+            $"Datum: {receipt.ReceiptDate:yyyy-MM-dd}\nTotalt: {receipt.TotalAmount:C}\n\nRadposter:\n{lineItemsText}",
+            cancelText: "Stäng");
+    }
+
+    private async Task DeleteReceipt(Receipt receipt)
+    {
+        bool? confirm = await DialogService.ShowMessageBox(
+            "Bekräfta borttagning",
+            $"Är du säker på att du vill ta bort kvittot från '{receipt.Merchant}'?",
+            yesText: "Ta bort", cancelText: "Avbryt");
+
+        if (confirm == true)
+        {
+            try
+            {
+                await ReceiptService.DeleteReceiptAsync(receipt.ReceiptId, _userId);
+                Snackbar.Add("Kvitto borttaget", Severity.Success);
+                await LoadData();
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Fel: {ex.Message}", Severity.Error);
+            }
+        }
+    }
+
+    private bool FilterReceipts(Receipt receipt)
+    {
+        if (string.IsNullOrWhiteSpace(_searchString))
+            return true;
+        
+        return receipt.Merchant.Contains(_searchString, StringComparison.OrdinalIgnoreCase) ||
+               (receipt.ReceiptNumber?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) ?? false);
+    }
+
+    private Color GetReceiptTypeColor(string receiptType)
+    {
+        return receiptType switch
+        {
+            "Physical" => Color.Default,
+            "E-Receipt" => Color.Info,
+            "Scanned" => Color.Success,
+            _ => Color.Default
+        };
+    }
+
+    private string GetReceiptTypeLabel(string receiptType)
+    {
+        return receiptType switch
+        {
+            "Physical" => "Fysiskt",
+            "E-Receipt" => "E-kvitto",
+            "Scanned" => "Skannat",
+            _ => receiptType
+        };
+    }
+}
