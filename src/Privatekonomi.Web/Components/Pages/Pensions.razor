@@ -1,0 +1,334 @@
+@page "/pensions"
+@rendermode InteractiveServer
+@inject IPensionService PensionService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+<PageTitle>Pension - Privatekonomi</PageTitle>
+
+<div class="d-flex justify-space-between align-center mb-4">
+    <MudText Typo="Typo.h4">Pension</MudText>
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="ToggleCreateForm">
+        Ny Pension
+    </MudButton>
+</div>
+
+<MudAlert Severity="Severity.Info" Class="mb-4">
+    <MudText Typo="Typo.body2"><strong>Tips:</strong> Hämta dina pensionsuppgifter från <a href="https://www.minpension.se" target="_blank">minpension.se</a> för en komplett översikt.</MudText>
+</MudAlert>
+
+@if (_showCreateForm)
+{
+    <MudPaper Class="pa-4 mb-4">
+        <MudText Typo="Typo.h6" Class="mb-3">@(_editingPension != null ? "Redigera Pension" : "Lägg till Ny Pension")</MudText>
+        
+        <MudTextField @bind-Value="_formPension.Name" 
+                      Label="Namn" 
+                      Variant="Variant.Outlined"
+                      Required="true"
+                      MaxLength="200"
+                      Class="mb-3" />
+        
+        <MudSelect @bind-Value="_formPension.PensionType" 
+                   Label="Pensionstyp" 
+                   Variant="Variant.Outlined"
+                   Required="true"
+                   Class="mb-3">
+            <MudSelectItem Value="@("Tjänstepension")">Tjänstepension</MudSelectItem>
+            <MudSelectItem Value="@("Privat pension")">Privat pension</MudSelectItem>
+            <MudSelectItem Value="@("Allmän pension")">Allmän pension (AP7)</MudSelectItem>
+            <MudSelectItem Value="@("Pensionsförsäkring")">Pensionsförsäkring</MudSelectItem>
+        </MudSelect>
+
+        <MudTextField @bind-Value="_formPension.Provider" 
+                      Label="Leverantör (t.ex. AMF, Alecta, SEB)" 
+                      Variant="Variant.Outlined"
+                      MaxLength="100"
+                      Class="mb-3" />
+
+        <MudNumericField @bind-Value="_formPension.CurrentValue" 
+                         Label="Nuvarande värde (kr)" 
+                         Variant="Variant.Outlined"
+                         Min="0"
+                         Format="N2"
+                         Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                         Class="mb-3" />
+
+        <MudNumericField @bind-Value="_formPension.TotalContributions" 
+                         Label="Totala inbetalningar (kr)" 
+                         Variant="Variant.Outlined"
+                         Min="0"
+                         Format="N2"
+                         Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                         Class="mb-3" />
+
+        <MudNumericField @bind-Value="_monthlyContribution" 
+                         Label="Månatlig inbetalning (kr)" 
+                         Variant="Variant.Outlined"
+                         Min="0"
+                         Format="N2"
+                         Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                         Class="mb-3" />
+
+        <MudNumericField @bind-Value="_expectedMonthlyPension" 
+                         Label="Förväntad månatlig pension (kr)" 
+                         Variant="Variant.Outlined"
+                         Min="0"
+                         Format="N2"
+                         Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                         Class="mb-3" />
+
+        <MudNumericField @bind-Value="_retirementAge" 
+                         Label="Pensionsålder" 
+                         Variant="Variant.Outlined"
+                         Min="55"
+                         Max="75"
+                         Class="mb-3" />
+
+        <MudTextField @bind-Value="_formPension.AccountNumber" 
+                      Label="Kontonummer/Policynummer" 
+                      Variant="Variant.Outlined"
+                      MaxLength="50"
+                      Class="mb-3" />
+
+        <MudTextField @bind-Value="_formPension.Notes" 
+                      Label="Anteckningar" 
+                      Variant="Variant.Outlined"
+                      Lines="3"
+                      MaxLength="1000"
+                      Class="mb-3" />
+
+        <div class="d-flex gap-2">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SavePension">
+                @(_editingPension != null ? "Uppdatera" : "Lägg till")
+            </MudButton>
+            <MudButton Variant="Variant.Outlined" OnClick="CancelForm">Avbryt</MudButton>
+        </div>
+    </MudPaper>
+}
+
+@if (_loading)
+{
+    <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+}
+else
+{
+    <!-- Summary Cards -->
+    <MudPaper Class="pa-4 mb-4">
+        <MudGrid>
+            <MudItem xs="12" md="4">
+                <MudCard Elevation="2" Class="pa-4">
+                    <MudCardContent>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">Totalt Pensionsvärde</MudText>
+                        <MudText Typo="Typo.h4" Color="Color.Success">@_totalValue.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <MudCard Elevation="2" Class="pa-4">
+                    <MudCardContent>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">Totala Inbetalningar</MudText>
+                        <MudText Typo="Typo.h4">@_totalContributions.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <MudCard Elevation="2" Class="pa-4">
+                    <MudCardContent>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">Total Avkastning</MudText>
+                        <MudText Typo="Typo.h4" Color="@(_totalReturn >= 0 ? Color.Success : Color.Error)">
+                            @(_totalReturn >= 0 ? "+" : "")@_totalReturn.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))
+                        </MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+
+    @if (!_pensions.Any())
+    {
+        <MudPaper Class="pa-8 text-center">
+            <MudIcon Icon="@Icons.Material.Filled.Savings" Size="Size.Large" Color="Color.Default" Class="mb-2" />
+            <MudText Typo="Typo.h6" Color="Color.Default" Class="mb-2">Inga pensioner registrerade</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">Lägg till din första pension genom att klicka på "Ny Pension"-knappen.</MudText>
+        </MudPaper>
+    }
+    else
+    {
+        <MudTable Items="_pensions" Hover="true" Breakpoint="Breakpoint.Sm" Class="mt-4">
+            <HeaderContent>
+                <MudTh>Namn</MudTh>
+                <MudTh>Typ</MudTh>
+                <MudTh>Leverantör</MudTh>
+                <MudTh Style="text-align: right;">Värde</MudTh>
+                <MudTh Style="text-align: right;">Inbetalningar</MudTh>
+                <MudTh Style="text-align: right;">Avkastning</MudTh>
+                <MudTh Style="text-align: right;">Avkastning %</MudTh>
+                <MudTh>Senast uppdaterad</MudTh>
+                <MudTh>Åtgärder</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Namn">@context.Name</MudTd>
+                <MudTd DataLabel="Typ">
+                    <MudChip T="string" Size="Size.Small" Color="Color.Primary">@context.PensionType</MudChip>
+                </MudTd>
+                <MudTd DataLabel="Leverantör">@context.Provider</MudTd>
+                <MudTd DataLabel="Värde" Style="text-align: right;">
+                    <strong>@context.CurrentValue.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))</strong>
+                </MudTd>
+                <MudTd DataLabel="Inbetalningar" Style="text-align: right;">
+                    @context.TotalContributions.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))
+                </MudTd>
+                <MudTd DataLabel="Avkastning" Style="text-align: right;">
+                    <MudText Color="@(context.TotalReturn >= 0 ? Color.Success : Color.Error)">
+                        @(context.TotalReturn >= 0 ? "+" : "")@context.TotalReturn.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))
+                    </MudText>
+                </MudTd>
+                <MudTd DataLabel="Avkastning %" Style="text-align: right;">
+                    <MudText Color="@(context.ReturnPercentage >= 0 ? Color.Success : Color.Error)">
+                        @(context.ReturnPercentage >= 0 ? "+" : "")@context.ReturnPercentage.ToString("F2")%
+                    </MudText>
+                </MudTd>
+                <MudTd DataLabel="Senast uppdaterad">@context.LastUpdated.ToString("yyyy-MM-dd")</MudTd>
+                <MudTd>
+                    <MudIconButton Icon="@Icons.Material.Filled.Edit" 
+                                   Color="Color.Primary" 
+                                   Size="Size.Small"
+                                   OnClick="@(() => EditPension(context))" />
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete" 
+                                   Color="Color.Error" 
+                                   Size="Size.Small"
+                                   OnClick="@(() => DeletePension(context))" />
+                </MudTd>
+            </RowTemplate>
+        </MudTable>
+    }
+}
+
+@code {
+    private bool _loading = true;
+    private bool _showCreateForm = false;
+    private List<Pension> _pensions = new();
+    private Pension _formPension = new();
+    private Pension? _editingPension = null;
+    
+    private decimal _totalValue;
+    private decimal _totalContributions;
+    private decimal _totalReturn;
+    
+    // Nullable helper fields for form binding
+    private decimal? _monthlyContribution;
+    private decimal? _expectedMonthlyPension;
+    private int? _retirementAge;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadPensions();
+    }
+
+    private async Task LoadPensions()
+    {
+        _loading = true;
+        var pensions = await PensionService.GetAllPensionsAsync();
+        _pensions = pensions.ToList();
+        
+        _totalValue = await PensionService.GetTotalPensionValueAsync();
+        _totalContributions = await PensionService.GetTotalPensionContributionsAsync();
+        _totalReturn = _totalValue - _totalContributions;
+        
+        _loading = false;
+    }
+
+    private void ToggleCreateForm()
+    {
+        _showCreateForm = !_showCreateForm;
+        if (!_showCreateForm)
+        {
+            CancelForm();
+        }
+    }
+
+    private void EditPension(Pension pension)
+    {
+        _editingPension = pension;
+        _formPension = new Pension
+        {
+            PensionId = pension.PensionId,
+            Name = pension.Name,
+            PensionType = pension.PensionType,
+            Provider = pension.Provider,
+            CurrentValue = pension.CurrentValue,
+            TotalContributions = pension.TotalContributions,
+            AccountNumber = pension.AccountNumber,
+            Notes = pension.Notes,
+            UserId = pension.UserId
+        };
+        
+        _monthlyContribution = pension.MonthlyContribution;
+        _expectedMonthlyPension = pension.ExpectedMonthlyPension;
+        _retirementAge = pension.RetirementAge;
+        
+        _showCreateForm = true;
+    }
+
+    private async Task SavePension()
+    {
+        try
+        {
+            // Set nullable fields
+            _formPension.MonthlyContribution = _monthlyContribution;
+            _formPension.ExpectedMonthlyPension = _expectedMonthlyPension;
+            _formPension.RetirementAge = _retirementAge;
+            
+            if (_editingPension != null)
+            {
+                await PensionService.UpdatePensionAsync(_formPension);
+                Snackbar.Add("Pension uppdaterad!", Severity.Success);
+            }
+            else
+            {
+                await PensionService.AddPensionAsync(_formPension);
+                Snackbar.Add("Pension tillagd!", Severity.Success);
+            }
+
+            await LoadPensions();
+            CancelForm();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Ett fel uppstod: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void CancelForm()
+    {
+        _formPension = new Pension();
+        _monthlyContribution = null;
+        _expectedMonthlyPension = null;
+        _retirementAge = null;
+        _editingPension = null;
+        _showCreateForm = false;
+    }
+
+    private async Task DeletePension(Pension pension)
+    {
+        bool? result = await DialogService.ShowMessageBox(
+            "Bekräfta borttagning",
+            $"Är du säker på att du vill ta bort pensionen '{pension.Name}'?",
+            yesText: "Ja", cancelText: "Avbryt");
+
+        if (result == true)
+        {
+            try
+            {
+                await PensionService.DeletePensionAsync(pension.PensionId);
+                Snackbar.Add("Pension borttagen!", Severity.Success);
+                await LoadPensions();
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Ett fel uppstod: {ex.Message}", Severity.Error);
+            }
+        }
+    }
+}

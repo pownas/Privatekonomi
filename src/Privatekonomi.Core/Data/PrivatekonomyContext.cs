@@ -57,6 +57,12 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
     
     // Currency Accounts
     public DbSet<CurrencyAccount> CurrencyAccounts { get; set; }
+    
+    // Investment-related entities
+    public DbSet<Pension> Pensions { get; set; }
+    public DbSet<Dividend> Dividends { get; set; }
+    public DbSet<InvestmentTransaction> InvestmentTransactions { get; set; }
+    public DbSet<PortfolioAllocation> PortfolioAllocations { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -1052,6 +1058,120 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
             
             // Ignore computed property
             entity.Ignore(e => e.ValueInSEK);
+        });
+        
+        // Pension configuration
+        modelBuilder.Entity<Pension>(entity =>
+        {
+            entity.HasKey(e => e.PensionId);
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(200);
+            entity.Property(e => e.PensionType).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.Provider).HasMaxLength(100);
+            entity.Property(e => e.CurrentValue).HasPrecision(18, 2);
+            entity.Property(e => e.TotalContributions).HasPrecision(18, 2);
+            entity.Property(e => e.MonthlyContribution).HasPrecision(18, 2);
+            entity.Property(e => e.ExpectedMonthlyPension).HasPrecision(18, 2);
+            entity.Property(e => e.AccountNumber).HasMaxLength(50);
+            entity.Property(e => e.Notes).HasMaxLength(1000);
+            entity.Property(e => e.LastUpdated).IsRequired();
+            entity.Property(e => e.CreatedAt).IsRequired();
+            
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.HasIndex(e => e.UserId);
+            entity.HasIndex(e => e.PensionType);
+            
+            // Ignore computed properties
+            entity.Ignore(e => e.TotalReturn);
+            entity.Ignore(e => e.ReturnPercentage);
+        });
+        
+        // Dividend configuration
+        modelBuilder.Entity<Dividend>(entity =>
+        {
+            entity.HasKey(e => e.DividendId);
+            entity.Property(e => e.AmountPerShare).HasPrecision(18, 4);
+            entity.Property(e => e.TotalAmount).HasPrecision(18, 2);
+            entity.Property(e => e.SharesHeld).HasPrecision(18, 4);
+            entity.Property(e => e.Currency).IsRequired().HasMaxLength(3);
+            entity.Property(e => e.TaxWithheld).HasPrecision(18, 2);
+            entity.Property(e => e.ReinvestedShares).HasPrecision(18, 4);
+            entity.Property(e => e.ReinvestmentPrice).HasPrecision(18, 4);
+            entity.Property(e => e.Notes).HasMaxLength(500);
+            entity.Property(e => e.PaymentDate).IsRequired();
+            entity.Property(e => e.CreatedAt).IsRequired();
+            
+            entity.HasOne(e => e.Investment)
+                .WithMany()
+                .HasForeignKey(e => e.InvestmentId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.HasIndex(e => e.InvestmentId);
+            entity.HasIndex(e => e.UserId);
+            entity.HasIndex(e => e.PaymentDate);
+        });
+        
+        // InvestmentTransaction configuration
+        modelBuilder.Entity<InvestmentTransaction>(entity =>
+        {
+            entity.HasKey(e => e.InvestmentTransactionId);
+            entity.Property(e => e.TransactionType).IsRequired().HasMaxLength(20);
+            entity.Property(e => e.Quantity).HasPrecision(18, 4);
+            entity.Property(e => e.PricePerShare).HasPrecision(18, 4);
+            entity.Property(e => e.TotalAmount).HasPrecision(18, 2);
+            entity.Property(e => e.Fees).HasPrecision(18, 2);
+            entity.Property(e => e.Currency).IsRequired().HasMaxLength(3);
+            entity.Property(e => e.ExchangeRate).HasPrecision(18, 6);
+            entity.Property(e => e.Notes).HasMaxLength(500);
+            entity.Property(e => e.TransactionDate).IsRequired();
+            entity.Property(e => e.CreatedAt).IsRequired();
+            
+            entity.HasOne(e => e.Investment)
+                .WithMany()
+                .HasForeignKey(e => e.InvestmentId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.HasIndex(e => e.InvestmentId);
+            entity.HasIndex(e => e.UserId);
+            entity.HasIndex(e => e.TransactionDate);
+            
+            // Ignore computed property
+            entity.Ignore(e => e.TotalCost);
+        });
+        
+        // PortfolioAllocation configuration
+        modelBuilder.Entity<PortfolioAllocation>(entity =>
+        {
+            entity.HasKey(e => e.PortfolioAllocationId);
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(200);
+            entity.Property(e => e.AssetClass).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.TargetPercentage).HasPrecision(5, 2);
+            entity.Property(e => e.MinPercentage).HasPrecision(5, 2);
+            entity.Property(e => e.MaxPercentage).HasPrecision(5, 2);
+            entity.Property(e => e.Notes).HasMaxLength(500);
+            entity.Property(e => e.IsActive).IsRequired();
+            entity.Property(e => e.CreatedAt).IsRequired();
+            
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.HasIndex(e => e.UserId);
+            entity.HasIndex(e => e.IsActive);
         });
     }
 }
