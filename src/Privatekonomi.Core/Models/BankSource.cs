@@ -1,6 +1,6 @@
 namespace Privatekonomi.Core.Models;
 
-public class BankSource
+public class BankSource : ITemporalEntity
 {
     public int BankSourceId { get; set; }
     public string Name { get; set; } = string.Empty;
@@ -16,6 +16,10 @@ public class BankSource
     public DateTime? ClosedDate { get; set; } // When account was closed (null if active)
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
+    
+    // Temporal tracking
+    public DateTime ValidFrom { get; set; }
+    public DateTime? ValidTo { get; set; }
     
     // User ownership
     public string? UserId { get; set; }

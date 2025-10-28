@@ -1,6 +1,6 @@
 namespace Privatekonomi.Core.Models;
 
-public class Asset
+public class Asset : ITemporalEntity
 {
     public int AssetId { get; set; }
     public string Name { get; set; } = string.Empty;
@@ -13,6 +13,10 @@ public class Asset
     public string? Location { get; set; } // For real estate or where item is stored
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
+    
+    // Temporal tracking
+    public DateTime ValidFrom { get; set; }
+    public DateTime? ValidTo { get; set; }
     
     // User ownership
     public string? UserId { get; set; }

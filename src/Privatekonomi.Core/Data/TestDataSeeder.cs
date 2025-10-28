@@ -205,7 +205,9 @@ public static class TestDataSeeder
                 Imported = false,
                 Cleared = true,
                 CreatedAt = DateTime.UtcNow,
-                UserId = userId
+                UserId = userId,
+                ValidFrom = DateTime.UtcNow,
+                ValidTo = null
             };
 
             transactions.Add(transaction);
@@ -241,7 +243,9 @@ public static class TestDataSeeder
                 Imported = false,
                 Cleared = false,
                 CreatedAt = DateTime.UtcNow,
-                UserId = userId
+                UserId = userId,
+                ValidFrom = DateTime.UtcNow,
+                ValidTo = null
             };
             
             transactions.Add(transaction);
@@ -271,7 +275,9 @@ public static class TestDataSeeder
                 LastUpdated = DateTime.Now.AddDays(-1),
                 Market = "Stockholm",
                 CreatedAt = DateTime.UtcNow,
-                UserId = userId
+                UserId = userId,
+                ValidFrom = DateTime.UtcNow,
+                ValidTo = null
             },
             new Investment
             {
@@ -286,7 +292,9 @@ public static class TestDataSeeder
                 LastUpdated = DateTime.Now.AddDays(-2),
                 Market = "Stockholm",
                 CreatedAt = DateTime.UtcNow,
-                UserId = userId
+                UserId = userId,
+                ValidFrom = DateTime.UtcNow,
+                ValidTo = null
             },
             new Investment
             {
@@ -301,7 +309,9 @@ public static class TestDataSeeder
                 LastUpdated = DateTime.Now.AddDays(-1),
                 Market = "Stockholm",
                 CreatedAt = DateTime.UtcNow,
-                UserId = userId
+                UserId = userId,
+                ValidFrom = DateTime.UtcNow,
+                ValidTo = null
             },
             new Investment
             {
@@ -314,7 +324,9 @@ public static class TestDataSeeder
                 PurchaseDate = DateTime.Now.AddMonths(-12),
                 LastUpdated = DateTime.Now.AddDays(-3),
                 CreatedAt = DateTime.UtcNow,
-                UserId = userId
+                UserId = userId,
+                ValidFrom = DateTime.UtcNow,
+                ValidTo = null
             },
             new Investment
             {
@@ -327,7 +339,9 @@ public static class TestDataSeeder
                 PurchaseDate = DateTime.Now.AddMonths(-10),
                 LastUpdated = DateTime.Now.AddDays(-1),
                 CreatedAt = DateTime.UtcNow,
-                UserId = userId
+                UserId = userId,
+                ValidFrom = DateTime.UtcNow,
+                ValidTo = null
             },
             new Investment
             {
@@ -340,7 +354,9 @@ public static class TestDataSeeder
                 PurchaseDate = DateTime.Now.AddMonths(-9),
                 LastUpdated = DateTime.Now.AddDays(-2),
                 CreatedAt = DateTime.UtcNow,
-                UserId = userId
+                UserId = userId,
+                ValidFrom = DateTime.UtcNow,
+                ValidTo = null
             },
             new Investment
             {
@@ -355,7 +371,9 @@ public static class TestDataSeeder
                 LastUpdated = DateTime.Now,
                 Market = "Stockholm",
                 CreatedAt = DateTime.UtcNow,
-                UserId = userId
+                UserId = userId,
+                ValidFrom = DateTime.UtcNow,
+                ValidTo = null
             },
             new Investment
             {
@@ -370,7 +388,9 @@ public static class TestDataSeeder
                 LastUpdated = DateTime.Now.AddDays(-1),
                 Market = "Stockholm",
                 CreatedAt = DateTime.UtcNow,
-                UserId = userId
+                UserId = userId,
+                ValidFrom = DateTime.UtcNow,
+                ValidTo = null
             }
         };
 
@@ -563,7 +583,9 @@ public static class TestDataSeeder
                 Priority = 1,
                 FundedFromBankSourceId = 1,
                 CreatedAt = DateTime.UtcNow,
-                UserId = userId
+                UserId = userId,
+                ValidFrom = DateTime.UtcNow,
+                ValidTo = null
             },
             new Goal
             {
@@ -576,7 +598,9 @@ public static class TestDataSeeder
                 Priority = 2,
                 FundedFromBankSourceId = 1,
                 CreatedAt = DateTime.UtcNow,
-                UserId = userId
+                UserId = userId,
+                ValidFrom = DateTime.UtcNow,
+                ValidTo = null
             },
             new Goal
             {
@@ -589,7 +613,9 @@ public static class TestDataSeeder
                 Priority = 1,
                 FundedFromBankSourceId = 2,
                 CreatedAt = DateTime.UtcNow,
-                UserId = userId
+                UserId = userId,
+                ValidFrom = DateTime.UtcNow,
+                ValidTo = null
             },
             new Goal
             {
@@ -601,7 +627,9 @@ public static class TestDataSeeder
                 TargetDate = DateTime.Now.AddMonths(24),
                 Priority = 1,
                 CreatedAt = DateTime.UtcNow,
-                UserId = userId
+                UserId = userId,
+                ValidFrom = DateTime.UtcNow,
+                ValidTo = null
             },
             new Goal
             {
@@ -614,7 +642,9 @@ public static class TestDataSeeder
                 Priority = 3,
                 FundedFromBankSourceId = 1,
                 CreatedAt = DateTime.UtcNow,
-                UserId = userId
+                UserId = userId,
+                ValidFrom = DateTime.UtcNow,
+                ValidTo = null
             }
         };
 
@@ -638,7 +668,9 @@ public static class TestDataSeeder
                 Location = "Stockholm, Södermalm",
                 Currency = "SEK",
                 CreatedAt = DateTime.UtcNow,
-                UserId = userId
+                UserId = userId,
+                ValidFrom = DateTime.UtcNow,
+                ValidTo = null
             },
             new Asset
             {
@@ -652,7 +684,9 @@ public static class TestDataSeeder
                 Location = "Stockholm",
                 Currency = "SEK",
                 CreatedAt = DateTime.UtcNow,
-                UserId = userId
+                UserId = userId,
+                ValidFrom = DateTime.UtcNow,
+                ValidTo = null
             },
             new Asset
             {
@@ -666,7 +700,9 @@ public static class TestDataSeeder
                 Location = "Hemkontor",
                 Currency = "SEK",
                 CreatedAt = DateTime.UtcNow,
-                UserId = userId
+                UserId = userId,
+                ValidFrom = DateTime.UtcNow,
+                ValidTo = null
             },
             new Asset
             {
@@ -680,7 +716,9 @@ public static class TestDataSeeder
                 Location = "Lägenheten",
                 Currency = "SEK",
                 CreatedAt = DateTime.UtcNow,
-                UserId = userId
+                UserId = userId,
+                ValidFrom = DateTime.UtcNow,
+                ValidTo = null
             },
             new Asset
             {
@@ -694,7 +732,9 @@ public static class TestDataSeeder
                 Location = "Vardagsrum",
                 Currency = "SEK",
                 CreatedAt = DateTime.UtcNow,
-                UserId = userId
+                UserId = userId,
+                ValidFrom = DateTime.UtcNow,
+                ValidTo = null
             },
             new Asset
             {
@@ -708,7 +748,9 @@ public static class TestDataSeeder
                 Location = "Bankfack",
                 Currency = "SEK",
                 CreatedAt = DateTime.UtcNow,
-                UserId = userId
+                UserId = userId,
+                ValidFrom = DateTime.UtcNow,
+                ValidTo = null
             }
         };
 
@@ -732,7 +774,9 @@ public static class TestDataSeeder
                 StartDate = DateTime.Now.AddYears(-5),
                 MaturityDate = DateTime.Now.AddYears(25),
                 CreatedAt = DateTime.UtcNow,
-                UserId = userId
+                UserId = userId,
+                ValidFrom = DateTime.UtcNow,
+                ValidTo = null
             },
             new Loan
             {
@@ -746,7 +790,9 @@ public static class TestDataSeeder
                 StartDate = DateTime.Now.AddYears(-3),
                 MaturityDate = DateTime.Now.AddYears(2),
                 CreatedAt = DateTime.UtcNow,
-                UserId = userId
+                UserId = userId,
+                ValidFrom = DateTime.UtcNow,
+                ValidTo = null
             },
             new Loan
             {
@@ -760,7 +806,9 @@ public static class TestDataSeeder
                 StartDate = DateTime.Now.AddYears(-8),
                 MaturityDate = DateTime.Now.AddYears(17),
                 CreatedAt = DateTime.UtcNow,
-                UserId = userId
+                UserId = userId,
+                ValidFrom = DateTime.UtcNow,
+                ValidTo = null
             }
         };
 
@@ -892,7 +940,9 @@ public static class TestDataSeeder
                 BankSourceId = 1,
                 Priority = 1,
                 CreatedAt = DateTime.UtcNow.AddMonths(-6),
-                UserId = userId
+                UserId = userId,
+                ValidFrom = DateTime.UtcNow,
+                ValidTo = null
             },
             new Pocket
             {
@@ -905,7 +955,9 @@ public static class TestDataSeeder
                 BankSourceId = 1,
                 Priority = 2,
                 CreatedAt = DateTime.UtcNow.AddMonths(-4),
-                UserId = userId
+                UserId = userId,
+                ValidFrom = DateTime.UtcNow,
+                ValidTo = null
             },
             new Pocket
             {
@@ -918,7 +970,9 @@ public static class TestDataSeeder
                 BankSourceId = 1,
                 Priority = 2,
                 CreatedAt = DateTime.UtcNow.AddMonths(-3),
-                UserId = userId
+                UserId = userId,
+                ValidFrom = DateTime.UtcNow,
+                ValidTo = null
             },
 
             // Pockets on Swedbank (BankSourceId = 2)
@@ -933,7 +987,9 @@ public static class TestDataSeeder
                 BankSourceId = 2,
                 Priority = 1,
                 CreatedAt = DateTime.UtcNow.AddMonths(-8),
-                UserId = userId
+                UserId = userId,
+                ValidFrom = DateTime.UtcNow,
+                ValidTo = null
             },
             new Pocket
             {
@@ -946,7 +1002,9 @@ public static class TestDataSeeder
                 BankSourceId = 2,
                 Priority = 3,
                 CreatedAt = DateTime.UtcNow.AddMonths(-2),
-                UserId = userId
+                UserId = userId,
+                ValidFrom = DateTime.UtcNow,
+                ValidTo = null
             },
             new Pocket
             {
@@ -958,7 +1016,9 @@ public static class TestDataSeeder
                 BankSourceId = 2,
                 Priority = 4,
                 CreatedAt = DateTime.UtcNow.AddMonths(-1),
-                UserId = userId
+                UserId = userId,
+                ValidFrom = DateTime.UtcNow,
+                ValidTo = null
             },
             new Pocket
             {
@@ -970,7 +1030,9 @@ public static class TestDataSeeder
                 BankSourceId = 2,
                 Priority = 2,
                 CreatedAt = DateTime.UtcNow.AddMonths(-5),
-                UserId = userId
+                UserId = userId,
+                ValidFrom = DateTime.UtcNow,
+                ValidTo = null
             }
         };
 

@@ -74,12 +74,19 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
             entity.Property(e => e.InitialBalance).HasPrecision(18, 2);
             entity.Property(e => e.CreatedAt).IsRequired();
             
+            // Temporal tracking
+            entity.Property(e => e.ValidFrom).IsRequired();
+            entity.Property(e => e.ValidTo);
+            
             entity.HasOne(e => e.User)
                 .WithMany()
                 .HasForeignKey(e => e.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
             
             entity.HasIndex(e => e.UserId);
+            entity.HasIndex(e => e.ValidFrom);
+            entity.HasIndex(e => e.ValidTo);
+            entity.HasIndex(e => new { e.ValidFrom, e.ValidTo });
             
             // Ignore computed property
             entity.Ignore(e => e.CurrentBalance);
@@ -193,6 +200,10 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
             entity.Property(e => e.Cleared).IsRequired();
             entity.Property(e => e.CreatedAt).IsRequired();
             
+            // Temporal tracking
+            entity.Property(e => e.ValidFrom).IsRequired();
+            entity.Property(e => e.ValidTo);
+            
             // Additional properties from OpenAPI spec
             entity.Property(e => e.Payee).HasMaxLength(200);
             entity.Property(e => e.Currency).IsRequired().HasMaxLength(3);
@@ -225,6 +236,11 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
             entity.HasIndex(e => new { e.BankSourceId, e.Date });
             entity.HasIndex(e => new { e.HouseholdId, e.Date });
             entity.HasIndex(e => e.Payee);
+            
+            // Temporal indexes for efficient historical queries
+            entity.HasIndex(e => e.ValidFrom);
+            entity.HasIndex(e => e.ValidTo);
+            entity.HasIndex(e => new { e.ValidFrom, e.ValidTo });
         });
 
         modelBuilder.Entity<TransactionCategory>(entity =>
@@ -260,12 +276,19 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
             entity.Property(e => e.ExtraMonthlyPayment).HasPrecision(18, 2);
             entity.Property(e => e.Priority).IsRequired();
             
+            // Temporal tracking
+            entity.Property(e => e.ValidFrom).IsRequired();
+            entity.Property(e => e.ValidTo);
+            
             entity.HasOne(e => e.User)
                 .WithMany()
                 .HasForeignKey(e => e.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
             
             entity.HasIndex(e => e.UserId);
+            entity.HasIndex(e => e.ValidFrom);
+            entity.HasIndex(e => e.ValidTo);
+            entity.HasIndex(e => new { e.ValidFrom, e.ValidTo });
             
             // Ignore computed properties
             entity.Ignore(e => e.CurrentBalance);
@@ -284,12 +307,19 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
             entity.Property(e => e.Location).HasMaxLength(200);
             entity.Property(e => e.CreatedAt).IsRequired();
             
+            // Temporal tracking
+            entity.Property(e => e.ValidFrom).IsRequired();
+            entity.Property(e => e.ValidTo);
+            
             entity.HasOne(e => e.User)
                 .WithMany()
                 .HasForeignKey(e => e.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
             
             entity.HasIndex(e => e.UserId);
+            entity.HasIndex(e => e.ValidFrom);
+            entity.HasIndex(e => e.ValidTo);
+            entity.HasIndex(e => new { e.ValidFrom, e.ValidTo });
             
             // Ignore computed properties
             entity.Ignore(e => e.ValueChange);
@@ -307,6 +337,10 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
             entity.Property(e => e.PurchaseDate).IsRequired();
             entity.Property(e => e.LastUpdated).IsRequired();
             entity.Property(e => e.CreatedAt).IsRequired();
+            
+            // Temporal tracking
+            entity.Property(e => e.ValidFrom).IsRequired();
+            entity.Property(e => e.ValidTo);
             
             // New properties for bank and account information
             entity.Property(e => e.AccountNumber).HasMaxLength(50);
@@ -331,6 +365,9 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
             entity.HasIndex(e => e.ISIN);
             entity.HasIndex(e => e.AccountNumber);
             entity.HasIndex(e => e.UserId);
+            entity.HasIndex(e => e.ValidFrom);
+            entity.HasIndex(e => e.ValidTo);
+            entity.HasIndex(e => new { e.ValidFrom, e.ValidTo });
             
             // Ignore computed properties
             entity.Ignore(e => e.TotalValue);
@@ -349,12 +386,19 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
             entity.Property(e => e.Period).IsRequired();
             entity.Property(e => e.CreatedAt).IsRequired();
             
+            // Temporal tracking
+            entity.Property(e => e.ValidFrom).IsRequired();
+            entity.Property(e => e.ValidTo);
+            
             entity.HasOne(e => e.User)
                 .WithMany()
                 .HasForeignKey(e => e.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
             
             entity.HasIndex(e => e.UserId);
+            entity.HasIndex(e => e.ValidFrom);
+            entity.HasIndex(e => e.ValidTo);
+            entity.HasIndex(e => new { e.ValidFrom, e.ValidTo });
             
             entity.HasOne(e => e.Household)
                 .WithMany()
@@ -389,6 +433,10 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
             entity.Property(e => e.Priority).IsRequired();
             entity.Property(e => e.CreatedAt).IsRequired();
             
+            // Temporal tracking
+            entity.Property(e => e.ValidFrom).IsRequired();
+            entity.Property(e => e.ValidTo);
+            
             entity.HasOne(e => e.FundedFromBankSource)
                 .WithMany()
                 .HasForeignKey(e => e.FundedFromBankSourceId)
@@ -400,6 +448,9 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
                 .OnDelete(DeleteBehavior.Cascade);
             
             entity.HasIndex(e => e.UserId);
+            entity.HasIndex(e => e.ValidFrom);
+            entity.HasIndex(e => e.ValidTo);
+            entity.HasIndex(e => new { e.ValidFrom, e.ValidTo });
         });
         
         // SalaryHistory configuration
@@ -440,6 +491,10 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
             entity.Property(e => e.Priority).IsRequired();
             entity.Property(e => e.CreatedAt).IsRequired();
             
+            // Temporal tracking
+            entity.Property(e => e.ValidFrom).IsRequired();
+            entity.Property(e => e.ValidTo);
+            
             entity.HasOne(e => e.BankSource)
                 .WithMany()
                 .HasForeignKey(e => e.BankSourceId)
@@ -452,6 +507,9 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
             
             entity.HasIndex(e => e.UserId);
             entity.HasIndex(e => e.BankSourceId);
+            entity.HasIndex(e => e.ValidFrom);
+            entity.HasIndex(e => e.ValidTo);
+            entity.HasIndex(e => new { e.ValidFrom, e.ValidTo });
             
             // Ignore computed properties
             entity.Ignore(e => e.ProgressPercentage);
@@ -551,12 +609,12 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
 
         // Seed initial bank sources
         modelBuilder.Entity<BankSource>().HasData(
-            new BankSource { BankSourceId = 1, Name = "ICA-banken", Color = "#DC143C", AccountType = "checking", Currency = "SEK", InitialBalance = 0, CreatedAt = DateTime.UtcNow }, // röd (Crimson)
-            new BankSource { BankSourceId = 2, Name = "Swedbank", Color = "#FF8C00", AccountType = "checking", Currency = "SEK", InitialBalance = 0, CreatedAt = DateTime.UtcNow }, // mörk orange (Dark Orange)
-            new BankSource { BankSourceId = 3, Name = "SEB", Color = "#0066CC", AccountType = "checking", Currency = "SEK", InitialBalance = 0, CreatedAt = DateTime.UtcNow }, // blå
-            new BankSource { BankSourceId = 4, Name = "Nordea", Color = "#00A9CE", AccountType = "checking", Currency = "SEK", InitialBalance = 0, CreatedAt = DateTime.UtcNow }, // ljusblå
-            new BankSource { BankSourceId = 5, Name = "Handelsbanken", Color = "#003366", AccountType = "checking", Currency = "SEK", InitialBalance = 0, CreatedAt = DateTime.UtcNow }, // mörk blå
-            new BankSource { BankSourceId = 6, Name = "Avanza", Color = "#006400", AccountType = "investment", Currency = "SEK", InitialBalance = 0, CreatedAt = DateTime.UtcNow } // mörkgrön (Dark Green)
+            new BankSource { BankSourceId = 1, Name = "ICA-banken", Color = "#DC143C", AccountType = "checking", Currency = "SEK", InitialBalance = 0, CreatedAt = DateTime.UtcNow, ValidFrom = DateTime.UtcNow, ValidTo = null }, // röd (Crimson)
+            new BankSource { BankSourceId = 2, Name = "Swedbank", Color = "#FF8C00", AccountType = "checking", Currency = "SEK", InitialBalance = 0, CreatedAt = DateTime.UtcNow, ValidFrom = DateTime.UtcNow, ValidTo = null }, // mörk orange (Dark Orange)
+            new BankSource { BankSourceId = 3, Name = "SEB", Color = "#0066CC", AccountType = "checking", Currency = "SEK", InitialBalance = 0, CreatedAt = DateTime.UtcNow, ValidFrom = DateTime.UtcNow, ValidTo = null }, // blå
+            new BankSource { BankSourceId = 4, Name = "Nordea", Color = "#00A9CE", AccountType = "checking", Currency = "SEK", InitialBalance = 0, CreatedAt = DateTime.UtcNow, ValidFrom = DateTime.UtcNow, ValidTo = null }, // ljusblå
+            new BankSource { BankSourceId = 5, Name = "Handelsbanken", Color = "#003366", AccountType = "checking", Currency = "SEK", InitialBalance = 0, CreatedAt = DateTime.UtcNow, ValidFrom = DateTime.UtcNow, ValidTo = null }, // mörk blå
+            new BankSource { BankSourceId = 6, Name = "Avanza", Color = "#006400", AccountType = "investment", Currency = "SEK", InitialBalance = 0, CreatedAt = DateTime.UtcNow, ValidFrom = DateTime.UtcNow, ValidTo = null } // mörkgrön (Dark Green)
         );
 
         // Swedish-specific entities configuration
