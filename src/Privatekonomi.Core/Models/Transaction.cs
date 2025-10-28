@@ -1,6 +1,6 @@
 namespace Privatekonomi.Core.Models;
 
-public class Transaction
+public class Transaction : ITemporalEntity
 {
     public int TransactionId { get; set; }
     public decimal Amount { get; set; }
@@ -8,6 +8,10 @@ public class Transaction
     public DateTime Date { get; set; }
     public bool IsIncome { get; set; }
     public int? BankSourceId { get; set; }
+    
+    // Temporal tracking
+    public DateTime ValidFrom { get; set; }
+    public DateTime? ValidTo { get; set; }
     
     // Enhanced fields from proposed model
     public string Currency { get; set; } = "SEK"; // Default to Swedish Krona

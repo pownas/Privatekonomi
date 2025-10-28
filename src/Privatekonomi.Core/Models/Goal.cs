@@ -1,6 +1,6 @@
 namespace Privatekonomi.Core.Models;
 
-public class Goal
+public class Goal : ITemporalEntity
 {
     public int GoalId { get; set; }
     public string Name { get; set; } = string.Empty;
@@ -12,6 +12,10 @@ public class Goal
     public int? FundedFromBankSourceId { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
+    
+    // Temporal tracking
+    public DateTime ValidFrom { get; set; }
+    public DateTime? ValidTo { get; set; }
     
     // User ownership
     public string? UserId { get; set; }

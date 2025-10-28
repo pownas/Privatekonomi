@@ -1,6 +1,6 @@
 namespace Privatekonomi.Core.Models;
 
-public class Investment
+public class Investment : ITemporalEntity
 {
     public int InvestmentId { get; set; }
     public string Name { get; set; } = string.Empty;
@@ -10,6 +10,10 @@ public class Investment
     public decimal CurrentPrice { get; set; }
     public DateTime PurchaseDate { get; set; }
     public DateTime LastUpdated { get; set; }
+    
+    // Temporal tracking
+    public DateTime ValidFrom { get; set; }
+    public DateTime? ValidTo { get; set; }
     
     // Bank and account information
     public int? BankSourceId { get; set; }

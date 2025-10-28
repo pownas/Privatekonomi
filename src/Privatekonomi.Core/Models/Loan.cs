@@ -1,6 +1,6 @@
 namespace Privatekonomi.Core.Models;
 
-public class Loan
+public class Loan : ITemporalEntity
 {
     public int LoanId { get; set; }
     public string Name { get; set; } = string.Empty;
@@ -13,6 +13,10 @@ public class Loan
     public DateTime? MaturityDate { get; set; } // When loan is expected to be fully paid
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
+    
+    // Temporal tracking
+    public DateTime ValidFrom { get; set; }
+    public DateTime? ValidTo { get; set; }
     
     // Bolån (Mortgage) specific fields
     /// <summary>

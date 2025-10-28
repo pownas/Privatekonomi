@@ -1,6 +1,6 @@
 namespace Privatekonomi.Core.Models;
 
-public class Pocket
+public class Pocket : ITemporalEntity
 {
     public int PocketId { get; set; }
     public string Name { get; set; } = string.Empty;
@@ -12,6 +12,10 @@ public class Pocket
     public decimal MonthlyAllocation { get; set; } = 0; // Automatic monthly contribution
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
+    
+    // Temporal tracking
+    public DateTime ValidFrom { get; set; }
+    public DateTime? ValidTo { get; set; }
     
     // User ownership
     public string? UserId { get; set; }

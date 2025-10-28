@@ -1,6 +1,6 @@
 namespace Privatekonomi.Core.Models;
 
-public class Budget
+public class Budget : ITemporalEntity
 {
     public int BudgetId { get; set; }
     public string Name { get; set; } = string.Empty;
@@ -13,6 +13,10 @@ public class Budget
     public int? HouseholdId { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
+    
+    // Temporal tracking
+    public DateTime ValidFrom { get; set; }
+    public DateTime? ValidTo { get; set; }
     
     // User ownership
     public string? UserId { get; set; }
