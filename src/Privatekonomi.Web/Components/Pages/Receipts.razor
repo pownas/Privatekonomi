@@ -104,7 +104,7 @@
                     </MudItem>
                     <MudItem xs="6" md="2">
                         <MudNumericField Value="item.UnitPrice" 
-                                         Label="À-pris" 
+                                         Label="A-pris" 
                                          Variant="Variant.Outlined"
                                          Min="0"
                                          Format="N2"
@@ -365,12 +365,13 @@ else
 
     private async Task ViewReceipt(Receipt receipt)
     {
+        var svCulture = new System.Globalization.CultureInfo("sv-SE");
         var lineItemsText = string.Join("\n", receipt.ReceiptLineItems.Select(li => 
-            $"{li.Quantity} x {li.Description} - {li.TotalPrice:C}"));
+            $"{li.Quantity} x {li.Description} - {li.TotalPrice.ToString("C", svCulture)}"));
         
         await DialogService.ShowMessageBox(
             $"Kvitto: {receipt.Merchant}",
-            $"Datum: {receipt.ReceiptDate:yyyy-MM-dd}\nTotalt: {receipt.TotalAmount:C}\n\nRadposter:\n{lineItemsText}",
+            $"Datum: {receipt.ReceiptDate:yyyy-MM-dd}\nTotalt: {receipt.TotalAmount.ToString("C", svCulture)}\n\nRadposter:\n{lineItemsText}",
             cancelText: "Stäng");
     }
 
