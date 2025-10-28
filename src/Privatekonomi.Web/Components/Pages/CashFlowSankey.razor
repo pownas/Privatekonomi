@@ -1,0 +1,281 @@
+@page "/cashflow/sankey"
+@rendermode InteractiveServer
+@inject ITransactionService TransactionService
+@inject ICategoryService CategoryService
+
+<PageTitle>Sankey-diagram - Privatekonomi</PageTitle>
+
+<div class="d-flex flex-column flex-md-row justify-space-between align-start align-md-center mb-4 gap-2">
+    <div>
+        <MudText Typo="Typo.h4">Sankey-diagram: Kassaflöde</MudText>
+        <MudText Typo="Typo.body2" Color="Color.Secondary">
+            Visualisera pengaflödet från inkomster till utgiftskategorier
+        </MudText>
+    </div>
+</div>
+
+@if (_loading)
+{
+    <div class="d-flex flex-column align-center pa-6">
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Large" />
+        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-4">Laddar kassaflöde...</MudText>
+    </div>
+}
+else
+{
+    <MudPaper Class="pa-4 mb-4" Elevation="2">
+        <MudText Typo="Typo.subtitle1" Class="mb-2">Filtrera period</MudText>
+        <div class="d-flex gap-3 flex-wrap">
+            <MudDatePicker @bind-Date="_startDate" 
+                           Label="Från datum" 
+                           Variant="Variant.Outlined"
+                           Editable="true"
+                           DateFormat="yyyy-MM-dd" />
+            <MudDatePicker @bind-Date="_endDate" 
+                           Label="Till datum" 
+                           Variant="Variant.Outlined"
+                           Editable="true"
+                           DateFormat="yyyy-MM-dd" />
+            <MudButton OnClick="@LoadData" 
+                       Variant="Variant.Filled" 
+                       Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.Refresh">
+                Uppdatera
+            </MudButton>
+        </div>
+    </MudPaper>
+
+    <MudPaper Class="pa-4" Elevation="2">
+        <MudText Typo="Typo.h6" Class="mb-4">Kassaflöde: Inkomster → Utgifter</MudText>
+        
+        @if (!_incomeCategories.Any() && !_expenseCategories.Any())
+        {
+            <MudAlert Severity="Severity.Info">
+                Inga transaktioner hittades för vald period.
+            </MudAlert>
+        }
+        else
+        {
+            <!-- Sankey visualization using simple bars -->
+            <div class="sankey-container">
+                <!-- Income section -->
+                <div class="sankey-column">
+                    <MudText Typo="Typo.subtitle1" Class="mb-2" Align="Align.Center">Inkomster</MudText>
+                    @foreach (var income in _incomeCategories.OrderByDescending(x => x.Amount))
+                    {
+                        var percentage = _totalIncome > 0 ? (double)(income.Amount / _totalIncome) * 100 : 0;
+                        <div class="sankey-node sankey-income" style="height: @($"{percentage}%")">
+                            <div class="sankey-node-content">
+                                <MudText Typo="Typo.body2">@income.CategoryName</MudText>
+                                <MudText Typo="Typo.caption">@income.Amount.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))</MudText>
+                            </div>
+                        </div>
+                    }
+                    <div class="sankey-total">
+                        <MudText Typo="Typo.h6" Color="Color.Success">
+                            Totalt: @_totalIncome.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))
+                        </MudText>
+                    </div>
+                </div>
+
+                <!-- Flow indicator -->
+                <div class="sankey-flow">
+                    <MudIcon Icon="@Icons.Material.Filled.ArrowForward" Size="Size.Large" />
+                    <MudText Typo="Typo.body2" Class="mt-2">
+                        Netto: @((_totalIncome - _totalExpenses).ToString("C0", new System.Globalization.CultureInfo("sv-SE")))
+                    </MudText>
+                </div>
+
+                <!-- Expense section -->
+                <div class="sankey-column">
+                    <MudText Typo="Typo.subtitle1" Class="mb-2" Align="Align.Center">Utgifter</MudText>
+                    @foreach (var expense in _expenseCategories.OrderByDescending(x => x.Amount))
+                    {
+                        var percentage = _totalExpenses > 0 ? (double)(expense.Amount / _totalExpenses) * 100 : 0;
+                        <div class="sankey-node sankey-expense" style="height: @($"{percentage}%")">
+                            <div class="sankey-node-content">
+                                <MudText Typo="Typo.body2">@expense.CategoryName</MudText>
+                                <MudText Typo="Typo.caption">@expense.Amount.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))</MudText>
+                            </div>
+                        </div>
+                    }
+                    <div class="sankey-total">
+                        <MudText Typo="Typo.h6" Color="Color.Error">
+                            Totalt: @_totalExpenses.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))
+                        </MudText>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Summary statistics -->
+            <MudDivider Class="my-4" />
+            <div class="d-flex justify-space-around flex-wrap gap-4">
+                <div class="text-center">
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">Sparkvot</MudText>
+                    <MudText Typo="Typo.h5" Color="@(_totalIncome > 0 && (_totalIncome - _totalExpenses) / _totalIncome > 0.1m ? Color.Success : Color.Warning)">
+                        @(_totalIncome > 0 ? ((_totalIncome - _totalExpenses) / _totalIncome * 100).ToString("F1") : "0")%
+                    </MudText>
+                </div>
+                <div class="text-center">
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">Antal inkomstkategorier</MudText>
+                    <MudText Typo="Typo.h5">@_incomeCategories.Count()</MudText>
+                </div>
+                <div class="text-center">
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">Antal utgiftskategorier</MudText>
+                    <MudText Typo="Typo.h5">@_expenseCategories.Count()</MudText>
+                </div>
+                <div class="text-center">
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">Genomsnittlig transaktion</MudText>
+                    <MudText Typo="Typo.h5">
+                        @(_totalTransactions > 0 ? ((_totalIncome + _totalExpenses) / _totalTransactions).ToString("C0", new System.Globalization.CultureInfo("sv-SE")) : "0 kr")
+                    </MudText>
+                </div>
+            </div>
+        }
+    </MudPaper>
+}
+
+<style>
+    .sankey-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: stretch;
+        gap: 2rem;
+        min-height: 400px;
+        margin: 1rem 0;
+    }
+    
+    .sankey-column {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .sankey-node {
+        border-radius: 8px;
+        padding: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 40px;
+        transition: transform 0.2s;
+    }
+    
+    .sankey-node:hover {
+        transform: translateX(-4px);
+    }
+    
+    .sankey-income {
+        background: linear-gradient(135deg, #4caf50 0%, #81c784 100%);
+        color: white;
+    }
+    
+    .sankey-expense {
+        background: linear-gradient(135deg, #f44336 0%, #e57373 100%);
+        color: white;
+    }
+    
+    .sankey-node-content {
+        text-align: center;
+        width: 100%;
+    }
+    
+    .sankey-flow {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-width: 100px;
+    }
+    
+    .sankey-total {
+        margin-top: 1rem;
+        text-align: center;
+        padding-top: 1rem;
+        border-top: 2px solid var(--mud-palette-divider);
+    }
+    
+    @@media (max-width: 960px) {
+        .sankey-container {
+            flex-direction: column;
+        }
+        
+        .sankey-flow {
+            transform: rotate(90deg);
+            margin: 1rem 0;
+        }
+    }
+</style>
+
+@code {
+    private bool _loading = true;
+    private DateTime? _startDate = DateTime.Now.AddMonths(-1);
+    private DateTime? _endDate = DateTime.Now;
+    
+    private List<CategoryFlow> _incomeCategories = new();
+    private List<CategoryFlow> _expenseCategories = new();
+    private decimal _totalIncome = 0;
+    private decimal _totalExpenses = 0;
+    private int _totalTransactions = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        _loading = true;
+        
+        var transactions = await TransactionService.GetAllTransactionsAsync();
+        
+        // Filter by date range
+        if (_startDate.HasValue)
+        {
+            transactions = transactions.Where(t => t.Date >= _startDate.Value);
+        }
+        if (_endDate.HasValue)
+        {
+            transactions = transactions.Where(t => t.Date <= _endDate.Value);
+        }
+        
+        var transactionList = transactions.ToList();
+        _totalTransactions = transactionList.Count;
+        
+        // Group income by category
+        _incomeCategories = transactionList
+            .Where(t => t.IsIncome)
+            .SelectMany(t => t.TransactionCategories.Select(tc => new { tc.Category.Name, t.Amount }))
+            .GroupBy(x => x.Name)
+            .Select(g => new CategoryFlow
+            {
+                CategoryName = g.Key,
+                Amount = g.Sum(x => x.Amount)
+            })
+            .ToList();
+        
+        // Group expenses by category
+        _expenseCategories = transactionList
+            .Where(t => !t.IsIncome)
+            .SelectMany(t => t.TransactionCategories.Select(tc => new { tc.Category.Name, t.Amount }))
+            .GroupBy(x => x.Name)
+            .Select(g => new CategoryFlow
+            {
+                CategoryName = g.Key,
+                Amount = g.Sum(x => x.Amount)
+            })
+            .ToList();
+        
+        _totalIncome = _incomeCategories.Sum(c => c.Amount);
+        _totalExpenses = _expenseCategories.Sum(c => c.Amount);
+        
+        _loading = false;
+    }
+
+    private class CategoryFlow
+    {
+        public string CategoryName { get; set; } = string.Empty;
+        public decimal Amount { get; set; }
+    }
+}

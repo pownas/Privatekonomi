@@ -111,6 +111,7 @@ builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<ISalaryHistoryService, SalaryHistoryService>();
 builder.Services.AddScoped<ICurrencyAccountService, CurrencyAccountService>();
 builder.Services.AddScoped<ThemeService>();
+builder.Services.AddScoped<DashboardPreferencesService>();
 
 // Swedish-specific services
 builder.Services.AddScoped<ISieExporter, SieExporter>();

@@ -4,7 +4,12 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="En privatekonomi-applikation byggd med .NET 9, Blazor Server och MudBlazor" />
+    <meta name="theme-color" content="#594AE2" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <base href="/" />
+    <link rel="manifest" href="manifest.json" />
     <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" rel="stylesheet" />
     <link href="_content/MudBlazor/MudBlazor.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="@Assets["app.css"]" />
@@ -17,8 +22,10 @@
         (function() {
             try {
                 var darkMode = localStorage.getItem('darkMode');
+                var forceDark = document.documentElement.getAttribute('data-force-dark');
+                
                 // Three states: 'true' (dark), 'false' (light), null (use system)
-                if (darkMode === 'true') {
+                if (darkMode === 'true' || forceDark === 'true') {
                     document.documentElement.classList.add('mud-theme-dark');
                 } else if (darkMode === 'false') {
                     // User explicitly chose light mode, don't apply dark class
@@ -29,6 +36,9 @@
                         document.documentElement.classList.add('mud-theme-dark');
                     }
                 }
+                
+                // Clean up the temporary attribute
+                document.documentElement.removeAttribute('data-force-dark');
             } catch (e) {
                 // Ignore localStorage errors
             }
@@ -42,6 +52,10 @@
     <script src="_framework/blazor.web.js"></script>
     <script src="_content/MudBlazor/MudBlazor.min.js"></script>
     <script src="app.js"></script>
+    <script>
+        // Register service worker for PWA support
+        window.pwaManager.register();
+    </script>
 </body>
 
 </html>

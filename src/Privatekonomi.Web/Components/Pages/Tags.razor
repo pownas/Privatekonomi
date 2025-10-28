@@ -1,0 +1,316 @@
+@page "/tags"
+@rendermode InteractiveServer
+@inject ITransactionService TransactionService
+@inject ISnackbar Snackbar
+
+<PageTitle>Taggar - Privatekonomi</PageTitle>
+
+<div class="d-flex flex-column flex-md-row justify-space-between align-start align-md-center mb-4 gap-2">
+    <div>
+        <MudText Typo="Typo.h4">Taggar</MudText>
+        <MudText Typo="Typo.body2" Color="Color.Secondary">
+            Hantera och organisera taggar för transaktioner
+        </MudText>
+    </div>
+</div>
+
+@if (_loading)
+{
+    <div class="d-flex flex-column align-center pa-6">
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Large" />
+        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-4">Laddar taggar...</MudText>
+    </div>
+}
+else
+{
+    <!-- Tag Statistics -->
+    <MudGrid>
+        <MudItem xs="12" md="6" lg="3">
+            <MudCard Elevation="2">
+                <MudCardContent>
+                    <div class="d-flex align-center justify-space-between">
+                        <div>
+                            <MudText Typo="Typo.h6">Totalt Taggar</MudText>
+                            <MudText Typo="Typo.h4">@_tagUsage.Count</MudText>
+                        </div>
+                        <MudIcon Icon="@Icons.Material.Filled.Label" Size="Size.Large" Color="Color.Primary" />
+                    </div>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+        
+        <MudItem xs="12" md="6" lg="3">
+            <MudCard Elevation="2">
+                <MudCardContent>
+                    <div class="d-flex align-center justify-space-between">
+                        <div>
+                            <MudText Typo="Typo.h6">Taggade Transaktioner</MudText>
+                            <MudText Typo="Typo.h4">@_taggedTransactionsCount</MudText>
+                        </div>
+                        <MudIcon Icon="@Icons.Material.Filled.Bookmark" Size="Size.Large" Color="Color.Success" />
+                    </div>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+        
+        <MudItem xs="12" md="6" lg="3">
+            <MudCard Elevation="2">
+                <MudCardContent>
+                    <div class="d-flex align-center justify-space-between">
+                        <div>
+                            <MudText Typo="Typo.h6">Mest Använda</MudText>
+                            <MudText Typo="Typo.h5">
+                                @(_tagUsage.Any() ? _tagUsage.OrderByDescending(t => t.Count).First().Tag : "-")
+                            </MudText>
+                        </div>
+                        <MudIcon Icon="@Icons.Material.Filled.TrendingUp" Size="Size.Large" Color="Color.Info" />
+                    </div>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+        
+        <MudItem xs="12" md="6" lg="3">
+            <MudCard Elevation="2">
+                <MudCardContent>
+                    <div class="d-flex align-center justify-space-between">
+                        <div>
+                            <MudText Typo="Typo.h6">Genomsnitt/Trans.</MudText>
+                            <MudText Typo="Typo.h4">
+                                @(_taggedTransactionsCount > 0 ? (_tagUsage.Sum(t => t.Count) / (double)_taggedTransactionsCount).ToString("F1") : "0")
+                            </MudText>
+                        </div>
+                        <MudIcon Icon="@Icons.Material.Filled.Analytics" Size="Size.Large" Color="Color.Warning" />
+                    </div>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+
+    <!-- Tag Cloud -->
+    <MudPaper Class="pa-4 mt-4" Elevation="2">
+        <MudText Typo="Typo.h6" Class="mb-3">Tagg-moln</MudText>
+        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-3">
+            Storleken på varje tagg visar hur ofta den används
+        </MudText>
+        
+        @if (!_tagUsage.Any())
+        {
+            <MudAlert Severity="Severity.Info">
+                Inga taggar används ännu. Lägg till taggar till dina transaktioner för att se dem här.
+            </MudAlert>
+        }
+        else
+        {
+            <div class="tag-cloud">
+                @foreach (var tag in _tagUsage.OrderByDescending(t => t.Count))
+                {
+                    var fontSize = Math.Min(2.5, 0.8 + (tag.Count / (double)_maxTagCount) * 1.7);
+                    var color = GetColorForCount(tag.Count);
+                    
+                    <MudChip T="string" 
+                             Size="Size.Medium"
+                             Color="@color"
+                             Variant="Variant.Filled"
+                             OnClick="@(() => FilterByTag(tag.Tag))"
+                             Style="@($"font-size: {fontSize}rem; cursor: pointer;")"
+                             Class="ma-1">
+                        @tag.Tag (@tag.Count)
+                    </MudChip>
+                }
+            </div>
+        }
+    </MudPaper>
+
+    <!-- Filtered Transactions -->
+    @if (!string.IsNullOrEmpty(_selectedTag))
+    {
+        var filteredTransactions = _transactions.Where(t => 
+            !string.IsNullOrEmpty(t.Tags) && 
+            t.Tags.Split(',').Select(tag => tag.Trim()).Contains(_selectedTag)
+        ).OrderByDescending(t => t.Date);
+        
+        <MudPaper Class="pa-4 mt-4" Elevation="2">
+            <div class="d-flex justify-space-between align-center mb-3">
+                <MudText Typo="Typo.h6">
+                    Transaktioner med tagg: @_selectedTag
+                </MudText>
+                <MudButton OnClick="@ClearFilter" 
+                           Variant="Variant.Text" 
+                           Color="Color.Primary"
+                           StartIcon="@Icons.Material.Filled.Clear">
+                    Rensa filter
+                </MudButton>
+            </div>
+            
+            @if (!filteredTransactions.Any())
+            {
+                <MudText Color="Color.Secondary">Inga transaktioner hittades med denna tagg.</MudText>
+            }
+            else
+            {
+                <MudTable Items="@filteredTransactions" Dense="true" Hover="true" Striped="true">
+                    <HeaderContent>
+                        <MudTh>Datum</MudTh>
+                        <MudTh>Beskrivning</MudTh>
+                        <MudTh>Taggar</MudTh>
+                        <MudTh>Kategori</MudTh>
+                        <MudTh Style="text-align: right">Belopp</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="Datum">@context.Date.ToString("yyyy-MM-dd")</MudTd>
+                        <MudTd DataLabel="Beskrivning">@context.Description</MudTd>
+                        <MudTd DataLabel="Taggar">
+                            @if (!string.IsNullOrEmpty(context.Tags))
+                            {
+                                @foreach (var tag in context.Tags.Split(',').Select(t => t.Trim()))
+                                {
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Primary" Class="mr-1">
+                                        @tag
+                                    </MudChip>
+                                }
+                            }
+                        </MudTd>
+                        <MudTd DataLabel="Kategori">
+                            @if (context.TransactionCategories.Any())
+                            {
+                                @foreach (var tc in context.TransactionCategories)
+                                {
+                                    <MudChip T="string" 
+                                            Style="@($"background-color: {tc.Category.Color}; color: white;")" 
+                                            Size="Size.Small"
+                                            Class="mr-1">
+                                        @tc.Category.Name
+                                    </MudChip>
+                                }
+                            }
+                        </MudTd>
+                        <MudTd DataLabel="Belopp" Style="text-align: right">
+                            <MudText Color="@(context.IsIncome ? Color.Success : Color.Error)">
+                                @(context.IsIncome ? "+" : "-")@context.Amount.ToString("C", new System.Globalization.CultureInfo("sv-SE"))
+                            </MudText>
+                        </MudTd>
+                    </RowTemplate>
+                </MudTable>
+                
+                <div class="mt-3">
+                    <MudText Typo="Typo.body2">
+                        <strong>Totalt:</strong> @filteredTransactions.Count() transaktioner, 
+                        summa: @filteredTransactions.Sum(t => t.IsIncome ? t.Amount : -t.Amount).ToString("C", new System.Globalization.CultureInfo("sv-SE"))
+                    </MudText>
+                </div>
+            }
+        </MudPaper>
+    }
+
+    <!-- Tag Management Guide -->
+    <MudPaper Class="pa-4 mt-4" Elevation="2">
+        <MudText Typo="Typo.h6" Class="mb-3">Hur använder jag taggar?</MudText>
+        <MudText Typo="Typo.body2" Class="mb-2">
+            Taggar är ett flexibelt sätt att organisera transaktioner utöver kategorier.
+        </MudText>
+        <MudList T="string" Dense="true">
+            <MudListItem T="string" Icon="@Icons.Material.Filled.Edit">
+                Lägg till taggar genom att redigera en transaktion och fylla i fältet "Taggar"
+            </MudListItem>
+            <MudListItem T="string" Icon="@Icons.Material.Filled.Style">
+                Använd kommatecken för att separera flera taggar (t.ex. "semester, resa, frankrike")
+            </MudListItem>
+            <MudListItem T="string" Icon="@Icons.Material.Filled.Search">
+                Klicka på en tagg i molnet för att filtrera transaktioner
+            </MudListItem>
+            <MudListItem T="string" Icon="@Icons.Material.Filled.Lightbulb">
+                Förslag på taggar: semester, projekt, skatt, representation, firma, privat, osv.
+            </MudListItem>
+        </MudList>
+    </MudPaper>
+}
+
+<style>
+    .tag-cloud {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        padding: 1rem;
+    }
+</style>
+
+@code {
+    private bool _loading = true;
+    private IEnumerable<Transaction> _transactions = new List<Transaction>();
+    private List<TagUsage> _tagUsage = new();
+    private int _taggedTransactionsCount = 0;
+    private int _maxTagCount = 0;
+    private string? _selectedTag;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        _loading = true;
+        
+        _transactions = await TransactionService.GetAllTransactionsAsync();
+        
+        // Count tagged transactions
+        _taggedTransactionsCount = _transactions.Count(t => !string.IsNullOrEmpty(t.Tags));
+        
+        // Analyze tag usage
+        var tagCounts = new Dictionary<string, int>();
+        
+        foreach (var transaction in _transactions.Where(t => !string.IsNullOrEmpty(t.Tags)))
+        {
+            var tags = transaction.Tags!.Split(',').Select(t => t.Trim()).Where(t => !string.IsNullOrEmpty(t));
+            foreach (var tag in tags)
+            {
+                if (tagCounts.ContainsKey(tag))
+                {
+                    tagCounts[tag]++;
+                }
+                else
+                {
+                    tagCounts[tag] = 1;
+                }
+            }
+        }
+        
+        _tagUsage = tagCounts.Select(kvp => new TagUsage
+        {
+            Tag = kvp.Key,
+            Count = kvp.Value
+        }).ToList();
+        
+        _maxTagCount = _tagUsage.Any() ? _tagUsage.Max(t => t.Count) : 0;
+        
+        _loading = false;
+    }
+
+    private void FilterByTag(string tag)
+    {
+        _selectedTag = tag;
+    }
+
+    private void ClearFilter()
+    {
+        _selectedTag = null;
+    }
+
+    private Color GetColorForCount(int count)
+    {
+        if (_maxTagCount == 0) return Color.Default;
+        
+        var percentage = (double)count / _maxTagCount;
+        
+        if (percentage >= 0.75) return Color.Error;
+        if (percentage >= 0.50) return Color.Warning;
+        if (percentage >= 0.25) return Color.Info;
+        return Color.Default;
+    }
+
+    private class TagUsage
+    {
+        public string Tag { get; set; } = string.Empty;
+        public int Count { get; set; }
+    }
+}

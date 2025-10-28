@@ -54,3 +54,104 @@ window.themeManager = {
         }
     }
 };
+
+// Keyboard shortcuts manager
+window.keyboardShortcuts = {
+    init: function(dotNetHelper) {
+        // Store reference to .NET helper
+        this.dotNetHelper = dotNetHelper;
+        
+        // Add keyboard event listener
+        document.addEventListener('keydown', (e) => {
+            // Ignore if user is typing in an input field
+            if (e.target.tagName === 'INPUT' || 
+                e.target.tagName === 'TEXTAREA' || 
+                e.target.isContentEditable) {
+                return;
+            }
+            
+            // Ctrl/Cmd + N: New Transaction
+            if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+                e.preventDefault();
+                this.navigate('/transactions/new');
+            }
+            // Ctrl/Cmd + B: Budgets
+            else if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
+                e.preventDefault();
+                this.navigate('/budgets');
+            }
+            // Ctrl/Cmd + T: Transactions
+            else if ((e.ctrlKey || e.metaKey) && e.key === 't') {
+                e.preventDefault();
+                this.navigate('/transactions');
+            }
+            // Ctrl/Cmd + H: Home/Dashboard
+            else if ((e.ctrlKey || e.metaKey) && e.key === 'h') {
+                e.preventDefault();
+                this.navigate('/');
+            }
+            // Ctrl/Cmd + G: Goals
+            else if ((e.ctrlKey || e.metaKey) && e.key === 'g') {
+                e.preventDefault();
+                this.navigate('/goals');
+            }
+            // Ctrl/Cmd + I: Investments
+            else if ((e.ctrlKey || e.metaKey) && e.key === 'i') {
+                e.preventDefault();
+                this.navigate('/investments');
+            }
+            // Ctrl/Cmd + K: Calendar
+            else if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                e.preventDefault();
+                this.navigate('/transactions/calendar');
+            }
+            // Ctrl/Cmd + L: Tags
+            else if ((e.ctrlKey || e.metaKey) && e.key === 'l') {
+                e.preventDefault();
+                this.navigate('/tags');
+            }
+            // Ctrl/Cmd + /: Show keyboard shortcuts help
+            else if ((e.ctrlKey || e.metaKey) && e.key === '/') {
+                e.preventDefault();
+                if (this.dotNetHelper) {
+                    this.dotNetHelper.invokeMethodAsync('ShowKeyboardShortcutsHelp');
+                }
+            }
+        });
+    },
+    
+    // Navigate while preserving theme to prevent flash
+    navigate: function(url) {
+        // Ensure theme class persists during navigation
+        var isDark = document.documentElement.classList.contains('mud-theme-dark');
+        if (isDark) {
+            // Add a temporary attribute to ensure theme persists
+            document.documentElement.setAttribute('data-force-dark', 'true');
+        }
+        window.location.href = url;
+    },
+    
+    dispose: function() {
+        // Remove event listener if needed
+        this.dotNetHelper = null;
+    }
+};
+
+// PWA Service Worker registration
+window.pwaManager = {
+    register: function() {
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/service-worker.js')
+                .then((registration) => {
+                    console.log('Service Worker registered:', registration);
+                })
+                .catch((error) => {
+                    console.log('Service Worker registration failed:', error);
+                });
+        }
+    },
+    
+    isInstallable: function() {
+        return 'serviceWorker' in navigator && 'BeforeInstallPromptEvent' in window;
+    }
+};

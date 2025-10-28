@@ -1,0 +1,20 @@
+{
+  "name": "Privatekonomi",
+  "short_name": "Privatekonomi",
+  "description": "En privatekonomi-applikation byggd med .NET 9, Blazor Server och MudBlazor",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1a1a1f",
+  "theme_color": "#594AE2",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["finance", "productivity"],
+  "screenshots": []
+}

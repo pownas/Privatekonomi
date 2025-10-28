@@ -1,0 +1,290 @@
+@page "/transactions/calendar"
+@rendermode InteractiveServer
+@inject ITransactionService TransactionService
+@inject ICategoryService CategoryService
+@inject NavigationManager NavigationManager
+
+<PageTitle>Kalendervy - Privatekonomi</PageTitle>
+
+<div class="d-flex flex-column flex-md-row justify-space-between align-start align-md-center mb-4 gap-2">
+    <div>
+        <MudText Typo="Typo.h4">Transaktionskalender</MudText>
+        <MudText Typo="Typo.body2" Color="Color.Secondary">
+            Visualisera dina transaktioner över tid med kalendervy
+        </MudText>
+    </div>
+    <MudButton Href="/transactions/new" 
+               Variant="Variant.Filled" 
+               Color="Color.Primary" 
+               StartIcon="@Icons.Material.Filled.Add"
+               Size="Size.Small">
+        Ny Transaktion
+    </MudButton>
+</div>
+
+@if (_loading)
+{
+    <div class="d-flex flex-column align-center pa-6">
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Large" />
+        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-4">Laddar kalender...</MudText>
+    </div>
+}
+else
+{
+    <MudPaper Class="pa-4" Elevation="2">
+        <div class="d-flex justify-space-between align-center mb-4">
+            <MudIconButton Icon="@Icons.Material.Filled.ChevronLeft" 
+                           OnClick="@PreviousMonth"
+                           aria-label="Föregående månad" />
+            <MudText Typo="Typo.h6">
+                @_currentDate.ToString("MMMM yyyy", new System.Globalization.CultureInfo("sv-SE"))
+            </MudText>
+            <MudIconButton Icon="@Icons.Material.Filled.ChevronRight" 
+                           OnClick="@NextMonth"
+                           aria-label="Nästa månad" />
+        </div>
+
+        <!-- Calendar Grid -->
+        <div class="calendar-grid">
+            <!-- Weekday headers -->
+            @foreach (var day in new[] { "Mån", "Tis", "Ons", "Tor", "Fre", "Lör", "Sön" })
+            {
+                <div class="calendar-header">
+                    <MudText Typo="Typo.caption" Align="Align.Center">@day</MudText>
+                </div>
+            }
+
+            <!-- Calendar days -->
+            @foreach (var day in GetCalendarDays())
+            {
+                var dayTransactions = GetTransactionsForDay(day);
+                var isToday = day.Date == DateTime.Today;
+                var isCurrentMonth = day.Month == _currentDate.Month;
+                
+                <div class="calendar-day @(isToday ? "calendar-day-today" : "") @(!isCurrentMonth ? "calendar-day-other-month" : "")"
+                     @onclick="@(() => SelectDay(day))">
+                    <MudText Typo="Typo.caption" Class="calendar-day-number">@day.Day</MudText>
+                    
+                    @if (dayTransactions.Any())
+                    {
+                        var income = dayTransactions.Where(t => t.IsIncome).Sum(t => t.Amount);
+                        var expenses = dayTransactions.Where(t => !t.IsIncome).Sum(t => t.Amount);
+                        
+                        <div class="calendar-day-content">
+                            @if (income > 0)
+                            {
+                                <MudText Typo="Typo.caption" Color="Color.Success" Class="calendar-amount">
+                                    +@income.ToString("N0")
+                                </MudText>
+                            }
+                            @if (expenses > 0)
+                            {
+                                <MudText Typo="Typo.caption" Color="Color.Error" Class="calendar-amount">
+                                    -@expenses.ToString("N0")
+                                </MudText>
+                            }
+                            <MudText Typo="Typo.caption" Color="Color.Secondary" Class="calendar-count">
+                                @dayTransactions.Count() st
+                            </MudText>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </MudPaper>
+
+    <!-- Selected Day Details -->
+    @if (_selectedDate.HasValue)
+    {
+        var selectedTransactions = GetTransactionsForDay(_selectedDate.Value);
+        
+        <MudPaper Class="pa-4 mt-4" Elevation="2">
+            <MudText Typo="Typo.h6" Class="mb-3">
+                Transaktioner för @_selectedDate.Value.ToString("d MMMM yyyy", new System.Globalization.CultureInfo("sv-SE"))
+            </MudText>
+            
+            @if (!selectedTransactions.Any())
+            {
+                <MudText Color="Color.Secondary">Inga transaktioner denna dag</MudText>
+            }
+            else
+            {
+                <MudTable Items="@selectedTransactions" Dense="true" Hover="true" Striped="true">
+                    <HeaderContent>
+                        <MudTh>Tid</MudTh>
+                        <MudTh>Beskrivning</MudTh>
+                        <MudTh>Kategori</MudTh>
+                        <MudTh Style="text-align: right">Belopp</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="Tid">@context.Date.ToString("HH:mm")</MudTd>
+                        <MudTd DataLabel="Beskrivning">@context.Description</MudTd>
+                        <MudTd DataLabel="Kategori">
+                            @if (context.TransactionCategories.Any())
+                            {
+                                @foreach (var tc in context.TransactionCategories)
+                                {
+                                    <MudChip T="string" 
+                                            Style="@($"background-color: {tc.Category.Color}; color: white;")" 
+                                            Size="Size.Small"
+                                            Class="mr-1">
+                                        @tc.Category.Name
+                                    </MudChip>
+                                }
+                            }
+                        </MudTd>
+                        <MudTd DataLabel="Belopp" Style="text-align: right">
+                            <MudText Color="@(context.IsIncome ? Color.Success : Color.Error)">
+                                @(context.IsIncome ? "+" : "-")@context.Amount.ToString("C", new System.Globalization.CultureInfo("sv-SE"))
+                            </MudText>
+                        </MudTd>
+                    </RowTemplate>
+                </MudTable>
+                
+                <div class="d-flex justify-space-between mt-3">
+                    <div>
+                        <MudText Typo="Typo.body2">
+                            <strong>Inkomster:</strong> @selectedTransactions.Where(t => t.IsIncome).Sum(t => t.Amount).ToString("C", new System.Globalization.CultureInfo("sv-SE"))
+                        </MudText>
+                        <MudText Typo="Typo.body2">
+                            <strong>Utgifter:</strong> @selectedTransactions.Where(t => !t.IsIncome).Sum(t => t.Amount).ToString("C", new System.Globalization.CultureInfo("sv-SE"))
+                        </MudText>
+                    </div>
+                    <MudText Typo="Typo.body1" Color="@(selectedTransactions.Where(t => t.IsIncome).Sum(t => t.Amount) - selectedTransactions.Where(t => !t.IsIncome).Sum(t => t.Amount) >= 0 ? Color.Success : Color.Error)">
+                        <strong>Netto:</strong> @((selectedTransactions.Where(t => t.IsIncome).Sum(t => t.Amount) - selectedTransactions.Where(t => !t.IsIncome).Sum(t => t.Amount)).ToString("C", new System.Globalization.CultureInfo("sv-SE")))
+                    </MudText>
+                </div>
+            }
+        </MudPaper>
+    }
+}
+
+<style>
+    .calendar-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 2px;
+        margin-top: 1rem;
+    }
+    
+    .calendar-header {
+        padding: 8px;
+        font-weight: 500;
+        text-align: center;
+        background-color: var(--mud-palette-background-gray);
+    }
+    
+    .calendar-day {
+        min-height: 80px;
+        padding: 4px;
+        border: 1px solid var(--mud-palette-divider);
+        cursor: pointer;
+        transition: background-color 0.2s;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .calendar-day:hover {
+        background-color: var(--mud-palette-action-default-hover);
+    }
+    
+    .calendar-day-today {
+        background-color: rgba(89, 74, 226, 0.1);
+        border-color: var(--mud-palette-primary);
+        border-width: 2px;
+    }
+    
+    .calendar-day-other-month {
+        opacity: 0.4;
+    }
+    
+    .calendar-day-number {
+        font-weight: 500;
+        margin-bottom: 4px;
+    }
+    
+    .calendar-day-content {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        font-size: 0.7rem;
+    }
+    
+    .calendar-amount {
+        line-height: 1.2;
+    }
+    
+    .calendar-count {
+        font-size: 0.65rem;
+        margin-top: 2px;
+    }
+</style>
+
+@code {
+    private bool _loading = true;
+    private DateTime _currentDate = DateTime.Now;
+    private DateTime? _selectedDate;
+    private IEnumerable<Transaction> _transactions = new List<Transaction>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadTransactions();
+    }
+
+    private async Task LoadTransactions()
+    {
+        _loading = true;
+        _transactions = await TransactionService.GetAllTransactionsAsync();
+        _loading = false;
+    }
+
+    private void PreviousMonth()
+    {
+        _currentDate = _currentDate.AddMonths(-1);
+        _selectedDate = null;
+    }
+
+    private void NextMonth()
+    {
+        _currentDate = _currentDate.AddMonths(1);
+        _selectedDate = null;
+    }
+
+    private void SelectDay(DateTime day)
+    {
+        _selectedDate = day;
+    }
+
+    private IEnumerable<DateTime> GetCalendarDays()
+    {
+        var firstDayOfMonth = new DateTime(_currentDate.Year, _currentDate.Month, 1);
+        var lastDayOfMonth = firstDayOfMonth.AddMonths(1).AddDays(-1);
+        
+        // Get the Monday of the week containing the first day
+        var startDate = firstDayOfMonth;
+        while (startDate.DayOfWeek != DayOfWeek.Monday)
+        {
+            startDate = startDate.AddDays(-1);
+        }
+        
+        // Get the Sunday of the week containing the last day
+        var endDate = lastDayOfMonth;
+        while (endDate.DayOfWeek != DayOfWeek.Sunday)
+        {
+            endDate = endDate.AddDays(1);
+        }
+        
+        var days = new List<DateTime>();
+        for (var date = startDate; date <= endDate; date = date.AddDays(1))
+        {
+            days.Add(date);
+        }
+        
+        return days;
+    }
+
+    private IEnumerable<Transaction> GetTransactionsForDay(DateTime day)
+    {
+        return _transactions.Where(t => t.Date.Date == day.Date).OrderBy(t => t.Date);
+    }
+}
