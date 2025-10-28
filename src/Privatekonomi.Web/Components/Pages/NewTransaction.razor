@@ -8,26 +8,49 @@
 
 <PageTitle>Ny Transaktion - Privatekonomi</PageTitle>
 
-<MudText Typo="Typo.h4" Class="mb-4">Ny Transaktion</MudText>
+<div class="d-flex align-center mb-4">
+    <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" 
+                   Color="Color.Default" 
+                   OnClick="Cancel"
+                   aria-label="Tillbaka till transaktioner" 
+                   Class="mr-2" />
+    <MudText Typo="Typo.h4">Ny Transaktion</MudText>
+</div>
 
 <MudPaper Class="pa-4">
     <EditForm Model="@_transaction" OnValidSubmit="OnValidSubmit" FormName="NewTransactionForm">
         <MudGrid>
             <MudItem xs="12" md="6">
-                <MudDatePicker Label="Datum" @bind-Date="_date" Required="true" />
+                <MudDatePicker Label="Datum" 
+                               @bind-Date="_date" 
+                               Required="true"
+                               aria-label="Välj transaktionsdatum" />
             </MudItem>
             
             <MudItem xs="12" md="6">
-                <MudNumericField Label="Belopp" @bind-Value="_transaction.Amount" Required="true" 
-                                 Format="N2" Culture="@(new System.Globalization.CultureInfo("sv-SE"))" Adornment="Adornment.Start" AdornmentText="kr" />
+                <MudNumericField Label="Belopp" 
+                                 @bind-Value="_transaction.Amount" 
+                                 Required="true" 
+                                 Format="N2" 
+                                 Culture="@(new System.Globalization.CultureInfo("sv-SE"))" 
+                                 Adornment="Adornment.Start" 
+                                 AdornmentText="kr"
+                                 aria-label="Ange transaktionsbelopp i kronor" />
             </MudItem>
             
             <MudItem xs="12">
-                <MudTextField Label="Beskrivning" @bind-Value="_transaction.Description" Required="true" />
+                <MudTextField Label="Beskrivning" 
+                              @bind-Value="_transaction.Description" 
+                              Required="true"
+                              aria-label="Ange transaktionsbeskrivning" />
             </MudItem>
             
             <MudItem xs="12">
-                <MudSelect T="int?" Label="Bank" @bind-Value="_transaction.BankSourceId" Clearable="true">
+                <MudSelect T="int?" 
+                          Label="Bank" 
+                          @bind-Value="_transaction.BankSourceId" 
+                          Clearable="true"
+                          aria-label="Välj bank (valfritt)">
                     @foreach (var bank in _bankSources)
                     {
                         <MudSelectItem T="int?" Value="@bank.BankSourceId">
@@ -38,12 +61,19 @@
             </MudItem>
             
             <MudItem xs="12">
-                <MudSwitch @bind-Value="_transaction.IsIncome" Color="Color.Success" 
-                           Label="@(_transaction.IsIncome ? "Inkomst" : "Utgift")" />
+                <MudSwitch @bind-Value="_transaction.IsIncome" 
+                           Color="Color.Success" 
+                           Label="@(_transaction.IsIncome ? "Inkomst" : "Utgift")"
+                           aria-label="Välj om det är en inkomst eller utgift" />
             </MudItem>
             
             <MudItem xs="12">
-                <MudText Typo="Typo.h6" Class="mb-2">Kategorier</MudText>
+                <div class="d-flex align-center mb-2">
+                    <MudText Typo="Typo.h6">Kategorier</MudText>
+                    <MudTooltip Text="Välj en eller flera kategorier för transaktionen">
+                        <MudIconButton Icon="@Icons.Material.Filled.Info" Size="Size.Small" Color="Color.Info" aria-label="Information om kategorier" />
+                    </MudTooltip>
+                </div>
                 @if (_loading)
                 {
                     <MudProgressCircular Size="Size.Small" Indeterminate="true" />
@@ -71,8 +101,20 @@
             </MudItem>
             
             <MudItem xs="12" Class="d-flex justify-space-between mt-4">
-                <MudButton Variant="Variant.Outlined" Color="Color.Default" OnClick="Cancel">Avbryt</MudButton>
-                <MudButton Variant="Variant.Filled" Color="Color.Primary" ButtonType="ButtonType.Submit">Spara</MudButton>
+                <MudButton Variant="Variant.Outlined" 
+                           Color="Color.Default" 
+                           OnClick="Cancel"
+                           StartIcon="@Icons.Material.Filled.Close"
+                           aria-label="Avbryt och gå tillbaka">
+                    Avbryt
+                </MudButton>
+                <MudButton Variant="Variant.Filled" 
+                           Color="Color.Primary" 
+                           ButtonType="ButtonType.Submit"
+                           StartIcon="@Icons.Material.Filled.Save"
+                           aria-label="Spara transaktion">
+                    Spara Transaktion
+                </MudButton>
             </MudItem>
         </MudGrid>
     </EditForm>
