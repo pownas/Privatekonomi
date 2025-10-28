@@ -9,68 +9,99 @@
     <DialogContent>
         @if (_transaction != null)
         {
-            <MudGrid>
-                <MudItem xs="12">
-                    <MudTextField @bind-Value="_transaction.Description" 
-                                  Label="Beskrivning" 
-                                  Variant="Variant.Outlined" 
-                                  HelperText="Beskrivande namn för transaktionen" />
-                </MudItem>
-                <MudItem xs="12" md="6">
-                    <MudDatePicker @bind-Date="_transactionDate" 
-                                   Label="Datum" 
-                                   Variant="Variant.Outlined" 
-                                   HelperText="När transaktionen genomfördes" />
-                </MudItem>
-                <MudItem xs="12" md="6">
-                    <MudNumericField @bind-Value="_transaction.Amount" 
-                                     Label="Belopp" 
-                                     Variant="Variant.Outlined" 
-                                     Format="N2" 
-                                     Adornment="Adornment.End" 
-                                     AdornmentText="kr" />
-                </MudItem>
+            <MudForm @ref="_form" ValidationDelay="0">
+                <MudGrid>
+                    <MudItem xs="12">
+                        <MudTextField @bind-Value="_transaction.Description" 
+                                      Label="Beskrivning" 
+                                      Variant="Variant.Outlined" 
+                                      Required="true"
+                                      RequiredError="Beskrivning är obligatorisk"
+                                      HelperText="Beskrivande namn för transaktionen"
+                                      aria-label="Transaktionsbeskrivning" />
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudDatePicker @bind-Date="_transactionDate" 
+                                       Label="Datum" 
+                                       Variant="Variant.Outlined" 
+                                       Required="true"
+                                       RequiredError="Datum är obligatoriskt"
+                                       HelperText="När transaktionen genomfördes"
+                                       aria-label="Transaktionsdatum" />
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudNumericField @bind-Value="_transaction.Amount" 
+                                         Label="Belopp" 
+                                         Variant="Variant.Outlined" 
+                                         Format="N2" 
+                                         Required="true"
+                                         Min="0.01m"
+                                         RequiredError="Belopp är obligatoriskt"
+                                         Adornment="Adornment.End" 
+                                         AdornmentText="kr"
+                                         aria-label="Transaktionsbelopp" />
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudSwitch @bind-Value="_transaction.IsIncome" 
+                                   Color="Color.Success" 
+                                   Label="@(_transaction.IsIncome ? "Inkomst" : "Utgift")"
+                                   aria-label="Typ av transaktion: inkomst eller utgift" />
+                    </MudItem>
+                    <MudItem xs="12" md="6">
+                        <MudTextField @bind-Value="_transaction.Payee" 
+                                      Label="Mottagare/Betalare" 
+                                      Variant="Variant.Outlined" 
+                                      HelperText="Vem som mottog eller skickade betalningen"
+                                      aria-label="Mottagare eller betalare" />
+                    </MudItem>
                 <MudItem xs="12">
                     <MudText Typo="Typo.subtitle2" Class="mb-2">Kategorier</MudText>
                     @if (_availableCategories != null && _availableCategories.Any())
                     {
-                        <MudRadioGroup @bind-Value="_splitMode" Class="mb-3">
-                            <MudRadio T="SplitMode" Value="SplitMode.Single" Color="Color.Primary">En kategori</MudRadio>
-                            <MudRadio T="SplitMode" Value="SplitMode.Multiple" Color="Color.Primary">Dela på flera kategorier (2-4)</MudRadio>
+                        <MudRadioGroup @bind-Value="_splitMode" Class="mb-3" aria-label="Välj kategoriläge">
+                            <MudRadio T="SplitMode" Value="SplitMode.Single" Color="Color.Primary" aria-label="En kategori">En kategori</MudRadio>
+                            <MudRadio T="SplitMode" Value="SplitMode.Multiple" Color="Color.Primary" aria-label="Dela på flera kategorier">Dela på flera kategorier (2-4)</MudRadio>
                         </MudRadioGroup>
 
                         @if (_splitMode == SplitMode.Single)
                         {
-                            <MudSelect @bind-Value="_selectedCategoryId" Label="Välj kategori" Variant="Variant.Outlined" 
-                                       T="int?" Clearable="true" HelperText="Välj en kategori för transaktionen">
-                                @foreach (var category in _availableCategories)
-                                {
-                                    <MudSelectItem T="int?" Value="@category.CategoryId">
-                                        <div style="display: flex; align-items: center;">
-                                            <div style="width: 16px; height: 16px; border-radius: 50%; background-color: @category.Color; margin-right: 8px;"></div>
-                                            @category.Name
-                                        </div>
-                                    </MudSelectItem>
-                                }
-                            </MudSelect>
-                            @if (_selectedCategoryId.HasValue)
+                            <MudAutocomplete T="Category" 
+                                           @bind-Value="_selectedCategory"
+                                           Label="Sök och välj kategori" 
+                                           Variant="Variant.Outlined"
+                                           SearchFunc="@SearchCategories"
+                                           ToStringFunc="@(c => c?.Name ?? "")"
+                                           Clearable="true"
+                                           ResetValueOnEmptyText="true"
+                                           CoerceText="false"
+                                           CoerceValue="false"
+                                           HelperText="Börja skriva för att söka bland kategorier"
+                                           aria-label="Sök och välj kategori">
+                                <ItemTemplate Context="category">
+                                    <div style="display: flex; align-items: center;">
+                                        <div style="width: 16px; height: 16px; border-radius: 50%; background-color: @category.Color; margin-right: 8px;"></div>
+                                        @category.Name
+                                        @if (category.Parent != null)
+                                        {
+                                            <MudText Typo="Typo.caption" Class="ml-2" Color="Color.Secondary">(@category.Parent.Name)</MudText>
+                                        }
+                                    </div>
+                                </ItemTemplate>
+                            </MudAutocomplete>
+                            @if (_selectedCategory != null)
                             {
-                                var selectedCat = _availableCategories.FirstOrDefault(c => c.CategoryId == _selectedCategoryId.Value);
-                                if (selectedCat != null)
-                                {
-                                    <MudChip T="string" Size="Size.Small" 
-                                             Style="@($"background-color: {selectedCat.Color}; color: white; margin-top: 8px;")" 
-                                             OnClose="() => _selectedCategoryId = null">
-                                        @selectedCat.Name
-                                    </MudChip>
-                                }
+                                <MudChip T="string" Size="Size.Small" 
+                                         Style="@($"background-color: {_selectedCategory.Color}; color: white; margin-top: 8px;")" 
+                                         OnClose="() => _selectedCategory = null">
+                                    @_selectedCategory.Name
+                                </MudChip>
                             }
                         }
                         else
                         {
-                            <MudRadioGroup @bind-Value="_amountSplitType" Class="mb-3">
-                                <MudRadio T="AmountSplitType" Value="AmountSplitType.Percentage" Color="Color.Primary">Dela via procent</MudRadio>
-                                <MudRadio T="AmountSplitType" Value="AmountSplitType.Amount" Color="Color.Primary">Dela via exakta belopp</MudRadio>
+                            <MudRadioGroup @bind-Value="_amountSplitType" Class="mb-3" aria-label="Välj delningsmetod">
+                                <MudRadio T="AmountSplitType" Value="AmountSplitType.Percentage" Color="Color.Primary" aria-label="Dela via procent">Dela via procent</MudRadio>
+                                <MudRadio T="AmountSplitType" Value="AmountSplitType.Amount" Color="Color.Primary" aria-label="Dela via exakta belopp">Dela via exakta belopp</MudRadio>
                             </MudRadioGroup>
 
                             @for (int i = 0; i < _categorySplits.Count; i++)
@@ -80,40 +111,60 @@
                                 <MudPaper Class="pa-3 mb-2" Elevation="1">
                                     <MudGrid>
                                         <MudItem xs="12" sm="5">
-                                            <MudSelect @bind-Value="split.CategoryId" Label="@($"Kategori {index + 1}")" 
-                                                       Variant="Variant.Outlined" T="int?" Required="true">
-                                                <MudSelectItem T="int?" Value="@((int?)null)">-- Välj kategori --</MudSelectItem>
-                                                @foreach (var category in _availableCategories)
-                                                {
-                                                    <MudSelectItem T="int?" Value="@category.CategoryId">
-                                                        <div style="display: flex; align-items: center;">
-                                                            <div style="width: 16px; height: 16px; border-radius: 50%; background-color: @category.Color; margin-right: 8px;"></div>
-                                                            @category.Name
-                                                        </div>
-                                                    </MudSelectItem>
-                                                }
-                                            </MudSelect>
+                                            <MudAutocomplete T="Category"
+                                                           Value="@GetCategoryFromId(split.CategoryId)"
+                                                           ValueChanged="@(newCategory => OnCategorySplitChanged(index, newCategory))"
+                                                           Label="@($"Kategori {index + 1}")" 
+                                                           Variant="Variant.Outlined"
+                                                           SearchFunc="@SearchCategories"
+                                                           ToStringFunc="@(c => c?.Name ?? "")"
+                                                           Required="true"
+                                                           ResetValueOnEmptyText="true"
+                                                           CoerceText="false"
+                                                           CoerceValue="false"
+                                                           aria-label="@($"Sök kategori {index + 1}")">
+                                                <ItemTemplate Context="category">
+                                                    <div style="display: flex; align-items: center;">
+                                                        <div style="width: 16px; height: 16px; border-radius: 50%; background-color: @category.Color; margin-right: 8px;"></div>
+                                                        @category.Name
+                                                        @if (category.Parent != null)
+                                                        {
+                                                            <MudText Typo="Typo.caption" Class="ml-2" Color="Color.Secondary">(@category.Parent.Name)</MudText>
+                                                        }
+                                                    </div>
+                                                </ItemTemplate>
+                                            </MudAutocomplete>
                                         </MudItem>
                                         <MudItem xs="10" sm="5">
                                             @if (_amountSplitType == AmountSplitType.Percentage)
                                             {
-                                                <MudNumericField @bind-Value="split.Percentage" Label="Procent" 
-                                                                 Variant="Variant.Outlined" Min="0" Max="100" 
-                                                                 Adornment="Adornment.End" AdornmentText="%" 
-                                                                 Format="N1" />
+                                                <MudNumericField @bind-Value="split.Percentage" 
+                                                                 Label="Procent" 
+                                                                 Variant="Variant.Outlined" 
+                                                                 Min="0" 
+                                                                 Max="100" 
+                                                                 Adornment="Adornment.End" 
+                                                                 AdornmentText="%" 
+                                                                 Format="N1"
+                                                                 aria-label="@($"Procent för kategori {index + 1}")" />
                                             }
                                             else
                                             {
-                                                <MudNumericField @bind-Value="split.Amount" Label="Belopp" 
-                                                                 Variant="Variant.Outlined" Min="0" 
-                                                                 Format="N2" />
+                                                <MudNumericField @bind-Value="split.Amount" 
+                                                                 Label="Belopp" 
+                                                                 Variant="Variant.Outlined" 
+                                                                 Min="0" 
+                                                                 Format="N2"
+                                                                 aria-label="@($"Belopp för kategori {index + 1}")" />
                                             }
                                         </MudItem>
                                         <MudItem xs="2" sm="2" Style="display: flex; align-items: center;">
                                             @if (index > 0)
                                             {
-                                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" 
-                                                               OnClick="() => RemoveCategorySplit(index)" />
+                                                <MudIconButton Icon="@Icons.Material.Filled.Delete" 
+                                                               Color="Color.Error" 
+                                                               OnClick="() => RemoveCategorySplit(index)"
+                                                               aria-label="@($"Ta bort kategori {index + 1}")" />
                                             }
                                         </MudItem>
                                     </MudGrid>
@@ -122,8 +173,12 @@
 
                             @if (_categorySplits.Count < 4)
                             {
-                                <MudButton StartIcon="@Icons.Material.Filled.Add" Variant="Variant.Outlined" 
-                                           Color="Color.Primary" OnClick="AddCategorySplit" Class="mt-2">
+                                <MudButton StartIcon="@Icons.Material.Filled.Add" 
+                                           Variant="Variant.Outlined" 
+                                           Color="Color.Primary" 
+                                           OnClick="AddCategorySplit" 
+                                           Class="mt-2"
+                                           aria-label="Lägg till kategori">
                                     Lägg till kategori
                                 </MudButton>
                             }
@@ -158,32 +213,77 @@
                     }
                 </MudItem>
                 <MudItem xs="12">
-                    <MudSelect T="int?" @bind-Value="_transaction.HouseholdId" Label="Hushåll" Variant="Variant.Outlined" 
-                               Clearable="true" HelperText="Välj ett hushåll eller lämna tomt för personlig transaktion">
+                    <MudSelect T="int?" 
+                               @bind-Value="_transaction.HouseholdId" 
+                               Label="Hushåll" 
+                               Variant="Variant.Outlined" 
+                               Clearable="true" 
+                               HelperText="Välj ett hushåll eller lämna tomt för personlig transaktion"
+                               aria-label="Välj hushåll">
                         @foreach (var household in _households)
                         {
                             <MudSelectItem Value="@((int?)household.HouseholdId)">@household.Name</MudSelectItem>
                         }
                     </MudSelect>
                 </MudItem>
-                <MudItem xs="12">
-                    <MudTextField @bind-Value="_transaction.Tags" Label="Taggar (kommaseparerade)" 
+                <MudItem xs="12" md="6">
+                    <MudSelect T="string" 
+                               @bind-Value="_transaction.PaymentMethod" 
+                               Label="Betalningsmetod" 
+                               Variant="Variant.Outlined" 
+                               Clearable="true"
+                               HelperText="Välj betalningsmetod"
+                               aria-label="Välj betalningsmetod">
+                        <MudSelectItem Value="@("Swish")">Swish</MudSelectItem>
+                        <MudSelectItem Value="@("Autogiro")">Autogiro</MudSelectItem>
+                        <MudSelectItem Value="@("E-faktura")">E-faktura</MudSelectItem>
+                        <MudSelectItem Value="@("Banköverföring")">Banköverföring</MudSelectItem>
+                        <MudSelectItem Value="@("Kort")">Kort</MudSelectItem>
+                        <MudSelectItem Value="@("Kontant")">Kontant</MudSelectItem>
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudTextField @bind-Value="_transaction.Currency" 
+                                  Label="Valuta" 
                                   Variant="Variant.Outlined" 
-                                  HelperText="Exempel: mat, shopping, nödvändigt" />
+                                  HelperText="Valuta (standard: SEK)"
+                                  aria-label="Valuta" />
+                </MudItem>
+                <MudItem xs="12">
+                    <MudTextField @bind-Value="_transaction.Tags" 
+                                  Label="Taggar (kommaseparerade)" 
+                                  Variant="Variant.Outlined" 
+                                  HelperText="Exempel: mat, shopping, nödvändigt"
+                                  aria-label="Taggar" />
                 </MudItem>
                 <MudItem xs="12">
                     <MudTextField @bind-Value="_transaction.Notes" 
                                   Label="Noteringar" 
                                   Variant="Variant.Outlined" 
-                                  Lines="5"
-                                  HelperText="Lägg till anteckningar eller kommentarer om transaktionen" />
+                                  Lines="3"
+                                  HelperText="Lägg till anteckningar eller kommentarer om transaktionen"
+                                  aria-label="Noteringar" />
                 </MudItem>
             </MudGrid>
+            </MudForm>
         }
     </DialogContent>
     <DialogActions>
-        <MudButton OnClick="Cancel">Avbryt</MudButton>
-        <MudButton Color="Color.Primary" OnClick="Save">Spara</MudButton>
+        <MudButton OnClick="Cancel" aria-label="Avbryt">Avbryt</MudButton>
+        <MudButton Color="Color.Primary" 
+                   OnClick="Save" 
+                   Disabled="_isSaving"
+                   aria-label="Spara ändringar">
+            @if (_isSaving)
+            {
+                <MudProgressCircular Class="mr-2" Size="Size.Small" Indeterminate="true" />
+                <span>Sparar...</span>
+            }
+            else
+            {
+                <span>Spara</span>
+            }
+        </MudButton>
     </DialogActions>
 </MudDialog>
 
@@ -194,12 +294,14 @@
     [Parameter]
     public Transaction Transaction { get; set; } = null!;
 
+    private MudForm? _form;
     private Transaction _transaction = null!;
     private DateTime? _transactionDate;
     private List<Household> _households = new();
+    private bool _isSaving = false;
 
     private IEnumerable<Category> _availableCategories = new List<Category>();
-    private int? _selectedCategoryId;
+    private Category? _selectedCategory;
     private SplitMode _splitMode = SplitMode.Single;
     private AmountSplitType _amountSplitType = AmountSplitType.Percentage;
     private List<CategorySplit> _categorySplits = new();
@@ -250,6 +352,7 @@
             Imported = Transaction.Imported,
             ImportSource = Transaction.ImportSource,
             Cleared = Transaction.Cleared,
+            PaymentMethod = Transaction.PaymentMethod,
             CreatedAt = Transaction.CreatedAt,
             UpdatedAt = Transaction.UpdatedAt
         };
@@ -261,7 +364,8 @@
             if (Transaction.TransactionCategories.Count == 1)
             {
                 _splitMode = SplitMode.Single;
-                _selectedCategoryId = Transaction.TransactionCategories.First().CategoryId;
+                var firstCategoryId = Transaction.TransactionCategories.First().CategoryId;
+                _selectedCategory = _availableCategories.FirstOrDefault(c => c.CategoryId == firstCategoryId);
             }
             else
             {
@@ -289,6 +393,34 @@
             // Initialize with one empty split for multiple mode
             _categorySplits.Add(new CategorySplit { Amount = _transaction.Amount / 2, Percentage = 50 });
             _categorySplits.Add(new CategorySplit { Amount = _transaction.Amount / 2, Percentage = 50 });
+        }
+    }
+
+    private Task<IEnumerable<Category>> SearchCategories(string searchText, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(searchText))
+            return Task.FromResult(_availableCategories);
+
+        var results = _availableCategories.Where(c => 
+            c.Name.Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
+            (c.Parent != null && c.Parent.Name.Contains(searchText, StringComparison.OrdinalIgnoreCase))
+        );
+        
+        return Task.FromResult(results);
+    }
+
+    private Category? GetCategoryFromId(int? categoryId)
+    {
+        if (!categoryId.HasValue)
+            return null;
+        return _availableCategories.FirstOrDefault(c => c.CategoryId == categoryId.Value);
+    }
+
+    private void OnCategorySplitChanged(int index, Category? category)
+    {
+        if (index >= 0 && index < _categorySplits.Count)
+        {
+            _categorySplits[index].CategoryId = category?.CategoryId;
         }
     }
 
@@ -322,8 +454,21 @@
 
     private async Task Save()
     {
+        // Validate form
+        if (_form != null)
+        {
+            await _form.Validate();
+            if (!_form.IsValid)
+            {
+                Snackbar.Add("Vänligen fyll i alla obligatoriska fält korrekt", Severity.Warning);
+                return;
+            }
+        }
+
         try
         {
+            _isSaving = true;
+            
             if (_transactionDate.HasValue)
             {
                 _transaction.Date = _transactionDate.Value;
@@ -338,14 +483,14 @@
             
             if (_splitMode == SplitMode.Single)
             {
-                if (_selectedCategoryId.HasValue)
+                if (_selectedCategory != null)
                 {
                     newCategories = new List<TransactionCategory>
                     {
                         new TransactionCategory
                         {
                             TransactionId = _transaction.TransactionId,
-                            CategoryId = _selectedCategoryId.Value,
+                            CategoryId = _selectedCategory.CategoryId,
                             Amount = _transaction.Amount,
                             Percentage = 100
                         }
@@ -364,6 +509,7 @@
                 if (!validSplits.Any())
                 {
                     Snackbar.Add("Välj minst en kategori", Severity.Warning);
+                    _isSaving = false;
                     return;
                 }
 
@@ -373,6 +519,7 @@
                     if (Math.Abs(totalPercentage - 100) > 0.01m)
                     {
                         Snackbar.Add("Totalen måste vara 100%", Severity.Warning);
+                        _isSaving = false;
                         return;
                     }
                     
@@ -390,6 +537,7 @@
                     if (Math.Abs(totalAmount - _transaction.Amount) > 0.01m)
                     {
                         Snackbar.Add("Totalen måste matcha transaktionsbeloppet", Severity.Warning);
+                        _isSaving = false;
                         return;
                     }
                     
@@ -411,6 +559,10 @@
         catch (Exception ex)
         {
             Snackbar.Add($"Ett fel uppstod: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isSaving = false;
         }
     }
 }
