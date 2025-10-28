@@ -456,9 +456,15 @@ Se [tests/playwright/README.md](tests/playwright/README.md) för detaljerad doku
 
 ## 🎯 Förbättringsförslag
 
-För en omfattande analys av förbättringsmöjligheter, se:
+### Nya Förbättringsförslag 2025 🆕
+- **[Förbättringsförslag 2025](FÖRBÄTTRINGSFÖRSLAG_2025.md)** - 50+ nya idéer och förslag organiserade som en förslagslåda
+- **[Issue Examples](ISSUE_EXAMPLES.md)** - Färdiga GitHub issue-templates att kopiera och använda
+
+### Befintliga Analyser
 - **[Fullständiga Förbättringsförslag](docs/IMPROVEMENT_SUGGESTIONS.md)** - Detaljerad analys med 45+ förbättringsförslag
 - **[Sammanfattning](docs/IMPROVEMENT_SUMMARY.md)** - Snabböversikt och prioriterad plan
+- **[Funktionsanalys](FUNKTIONSANALYS.md)** - Omfattande funktionskartläggning
+- **[Åtgärdsplan](ATGARDSPLAN.md)** - Roadmap med prioriterade issues
 
 ### Högt Prioriterade
 - [ ] Byt från InMemory till persistent databas (SQL Server)
