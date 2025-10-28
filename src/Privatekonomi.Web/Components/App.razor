@@ -22,8 +22,10 @@
         (function() {
             try {
                 var darkMode = localStorage.getItem('darkMode');
+                var forceDark = document.documentElement.getAttribute('data-force-dark');
+                
                 // Three states: 'true' (dark), 'false' (light), null (use system)
-                if (darkMode === 'true') {
+                if (darkMode === 'true' || forceDark === 'true') {
                     document.documentElement.classList.add('mud-theme-dark');
                 } else if (darkMode === 'false') {
                     // User explicitly chose light mode, don't apply dark class
@@ -34,6 +36,9 @@
                         document.documentElement.classList.add('mud-theme-dark');
                     }
                 }
+                
+                // Clean up the temporary attribute
+                document.documentElement.removeAttribute('data-force-dark');
             } catch (e) {
                 // Ignore localStorage errors
             }

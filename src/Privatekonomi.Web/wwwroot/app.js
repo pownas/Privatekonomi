@@ -73,42 +73,42 @@ window.keyboardShortcuts = {
             // Ctrl/Cmd + N: New Transaction
             if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
                 e.preventDefault();
-                window.location.href = '/transactions/new';
+                this.navigate('/transactions/new');
             }
             // Ctrl/Cmd + B: Budgets
             else if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
                 e.preventDefault();
-                window.location.href = '/budgets';
+                this.navigate('/budgets');
             }
             // Ctrl/Cmd + T: Transactions
             else if ((e.ctrlKey || e.metaKey) && e.key === 't') {
                 e.preventDefault();
-                window.location.href = '/transactions';
+                this.navigate('/transactions');
             }
             // Ctrl/Cmd + H: Home/Dashboard
             else if ((e.ctrlKey || e.metaKey) && e.key === 'h') {
                 e.preventDefault();
-                window.location.href = '/';
+                this.navigate('/');
             }
             // Ctrl/Cmd + G: Goals
             else if ((e.ctrlKey || e.metaKey) && e.key === 'g') {
                 e.preventDefault();
-                window.location.href = '/goals';
+                this.navigate('/goals');
             }
             // Ctrl/Cmd + I: Investments
             else if ((e.ctrlKey || e.metaKey) && e.key === 'i') {
                 e.preventDefault();
-                window.location.href = '/investments';
+                this.navigate('/investments');
             }
             // Ctrl/Cmd + K: Calendar
             else if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
                 e.preventDefault();
-                window.location.href = '/transactions/calendar';
+                this.navigate('/transactions/calendar');
             }
             // Ctrl/Cmd + L: Tags
             else if ((e.ctrlKey || e.metaKey) && e.key === 'l') {
                 e.preventDefault();
-                window.location.href = '/tags';
+                this.navigate('/tags');
             }
             // Ctrl/Cmd + /: Show keyboard shortcuts help
             else if ((e.ctrlKey || e.metaKey) && e.key === '/') {
@@ -118,6 +118,17 @@ window.keyboardShortcuts = {
                 }
             }
         });
+    },
+    
+    // Navigate while preserving theme to prevent flash
+    navigate: function(url) {
+        // Ensure theme class persists during navigation
+        var isDark = document.documentElement.classList.contains('mud-theme-dark');
+        if (isDark) {
+            // Add a temporary attribute to ensure theme persists
+            document.documentElement.setAttribute('data-force-dark', 'true');
+        }
+        window.location.href = url;
     },
     
     dispose: function() {
