@@ -1,0 +1,106 @@
+@using Privatekonomi.Web.Services
+
+<MudDialog>
+    <DialogContent>
+        <MudText Typo="Typo.h6" Class="mb-4">Anpassa Dashboard</MudText>
+        
+        <MudText Typo="Typo.subtitle2" Class="mb-2">Välj vilka widgets som ska visas</MudText>
+        
+        <MudSwitch @bind-Value="@_preferences.ShowTotalCards" 
+                   Color="Color.Primary" 
+                   Label="Visa totalkort (Inkomster, Utgifter, Netto)" />
+        
+        <MudSwitch @bind-Value="@_preferences.ShowCashFlowChart" 
+                   Color="Color.Primary" 
+                   Label="Visa kassaflödesdiagram" 
+                   Class="mt-2" />
+        
+        <MudSwitch @bind-Value="@_preferences.ShowExpensePieChart" 
+                   Color="Color.Primary" 
+                   Label="Visa cirkeldiagram för utgifter" 
+                   Class="mt-2" />
+        
+        <MudSwitch @bind-Value="@_preferences.ShowIncomePieChart" 
+                   Color="Color.Primary" 
+                   Label="Visa cirkeldiagram för inkomster" 
+                   Class="mt-2" />
+        
+        <MudSwitch @bind-Value="@_preferences.ShowCategoryBarChart" 
+                   Color="Color.Primary" 
+                   Label="Visa stapeldiagram per kategori" 
+                   Class="mt-2" />
+        
+        <MudSwitch @bind-Value="@_preferences.ShowActiveBudgets" 
+                   Color="Color.Primary" 
+                   Label="Visa aktiva budgetar" 
+                   Class="mt-2" />
+        
+        <MudSwitch @bind-Value="@_preferences.ShowUnmappedTransactions" 
+                   Color="Color.Primary" 
+                   Label="Visa transaktioner utan kategori" 
+                   Class="mt-2" />
+        
+        <MudSwitch @bind-Value="@_preferences.ShowRecentTransactions" 
+                   Color="Color.Primary" 
+                   Label="Visa senaste transaktioner" 
+                   Class="mt-2" />
+        
+        <MudDivider Class="my-4" />
+        
+        <MudText Typo="Typo.subtitle2" Class="mb-2">Inställningar</MudText>
+        
+        <MudNumericField @bind-Value="@_preferences.RecentTransactionsCount" 
+                         Label="Antal senaste transaktioner att visa" 
+                         Variant="Variant.Outlined"
+                         Min="5"
+                         Max="50"
+                         Step="5"
+                         Class="mb-3" />
+        
+        <MudSelect @bind-Value="@_preferences.DefaultPeriodMonths" 
+                   Label="Standard tidsperiod för diagram" 
+                   Variant="Variant.Outlined"
+                   Class="mb-3">
+            <MudSelectItem Value="6">6 månader</MudSelectItem>
+            <MudSelectItem Value="12">12 månader</MudSelectItem>
+            <MudSelectItem Value="24">24 månader</MudSelectItem>
+            <MudSelectItem Value="36">36 månader</MudSelectItem>
+        </MudSelect>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel" Color="Color.Default">Avbryt</MudButton>
+        <MudButton OnClick="SaveAndClose" Color="Color.Primary" Variant="Variant.Filled">Spara</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] 
+    IMudDialogInstance? MudDialog { get; set; }
+    
+    [Parameter]
+    public DashboardPreferences Preferences { get; set; } = new();
+    
+    private DashboardPreferences _preferences = new();
+    
+    protected override void OnInitialized()
+    {
+        // Create a copy to allow cancellation
+        _preferences = new DashboardPreferences
+        {
+            ShowTotalCards = Preferences.ShowTotalCards,
+            ShowCashFlowChart = Preferences.ShowCashFlowChart,
+            ShowExpensePieChart = Preferences.ShowExpensePieChart,
+            ShowIncomePieChart = Preferences.ShowIncomePieChart,
+            ShowCategoryBarChart = Preferences.ShowCategoryBarChart,
+            ShowActiveBudgets = Preferences.ShowActiveBudgets,
+            ShowUnmappedTransactions = Preferences.ShowUnmappedTransactions,
+            ShowRecentTransactions = Preferences.ShowRecentTransactions,
+            RecentTransactionsCount = Preferences.RecentTransactionsCount,
+            DefaultPeriodMonths = Preferences.DefaultPeriodMonths
+        };
+    }
+    
+    private void Cancel() => MudDialog?.Close(DialogResult.Cancel());
+    
+    private void SaveAndClose() => MudDialog?.Close(DialogResult.Ok(_preferences));
+}

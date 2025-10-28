@@ -1,10 +1,16 @@
 ﻿@page "/"
 @rendermode InteractiveServer
+@using Privatekonomi.Web.Components.Dialogs
+@using Privatekonomi.Web.Services
 @inject ITransactionService TransactionService
 @inject ICategoryService CategoryService
 @inject IBudgetService BudgetService
 @inject IReportService ReportService
 @inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@inject DashboardPreferencesService PreferencesService
+@inject IJSRuntime JSRuntime
+@implements IDisposable
 
 <PageTitle>Dashboard - Privatekonomi</PageTitle>
 
@@ -16,6 +22,13 @@
         </MudText>
     </div>
     <div class="d-flex flex-wrap gap-2">
+        <MudButton OnClick="@CustomizeDashboard" 
+                   Variant="Variant.Text" 
+                   Color="Color.Default" 
+                   StartIcon="@Icons.Material.Filled.Tune"
+                   Size="Size.Small">
+            Anpassa
+        </MudButton>
         <MudButton Href="/transactions/new" 
                    Variant="Variant.Filled" 
                    Color="Color.Primary" 
@@ -42,6 +55,8 @@
 }
 else
 {
+    @if (_preferences.ShowTotalCards)
+    {
     <MudGrid>
         <MudItem xs="12" md="6" lg="3">
             <MudCard Elevation="2" Class="pa-4">
@@ -79,8 +94,9 @@ else
             </MudCard>
         </MudItem>
     </MudGrid>
+    }
 
-    @if (_transactions.Any())
+    @if (_transactions.Any() && (_preferences.ShowExpensePieChart || _preferences.ShowIncomePieChart || _preferences.ShowCashFlowChart || _preferences.ShowCategoryBarChart))
     {
         <MudPaper Class="pa-4 mt-4 chart-filters" Elevation="2">
             <div class="filter-group">
@@ -109,6 +125,8 @@ else
         </MudPaper>
 
         <MudGrid Class="mt-4" Spacing="3">
+            @if (_preferences.ShowExpensePieChart)
+            {
             <MudItem xs="12" md="6">
                 <MudPaper Class="pa-4 chart-wrapper" Elevation="2">
                     <div class="chart-header">
@@ -141,7 +159,10 @@ else
                     }
                 </MudPaper>
             </MudItem>
+            }
 
+            @if (_preferences.ShowIncomePieChart)
+            {
             <MudItem xs="12" md="6">
                 <MudPaper Class="pa-4 chart-wrapper" Elevation="2">
                     <div class="chart-header">
@@ -210,7 +231,10 @@ else
                     }
                 </MudPaper>
             </MudItem>
+            }
 
+            @if (_preferences.ShowCategoryBarChart)
+            {
             <MudItem xs="12">
                 <MudPaper Class="pa-4 chart-wrapper" Elevation="2">
                     <div class="chart-header">
@@ -246,11 +270,12 @@ else
                     }
                 </MudPaper>
             </MudItem>
+            }
         </MudGrid>
     }
 
     @* Active Budgets Overview *@
-    @if (_activeBudgets.Any())
+    @if (_activeBudgets.Any() && _preferences.ShowActiveBudgets)
     {
         <MudPaper Class="pa-4 mt-4">
             <MudText Typo="Typo.h6" Class="mb-4">Aktiva Budgetar</MudText>
@@ -367,7 +392,7 @@ else
     }
 
     @* Unmapped Transactions *@
-    @if (_unmappedTransactions.Any())
+    @if (_unmappedTransactions.Any() && _preferences.ShowUnmappedTransactions)
     {
         <MudPaper Class="pa-4 mt-4">
             <MudAlert Severity="Severity.Warning" Class="mb-3">
@@ -403,6 +428,8 @@ else
         </MudPaper>
     }
 
+    @if (_preferences.ShowRecentTransactions)
+    {
     <MudPaper Class="pa-4 mt-4">
         <MudText Typo="Typo.h6" Class="mb-4">Senaste Transaktioner</MudText>
         @if (!_transactions.Any())
@@ -411,7 +438,7 @@ else
         }
         else
         {
-            <MudTable Items="@_transactions.Take(10)" Hover="true" Striped="true">
+            <MudTable Items="@_transactions.Take(_preferences.RecentTransactionsCount)" Hover="true" Striped="true">
                 <HeaderContent>
                     <MudTh>Datum</MudTh>
                     <MudTh>Beskrivning</MudTh>
@@ -448,6 +475,7 @@ else
             </MudTable>
         }
     </MudPaper>
+    }
 }
 
 @code {
@@ -461,6 +489,7 @@ else
     private HashSet<int> _expandedBudgets = new();
     private Dictionary<int, Dictionary<int, decimal>> _budgetActualAmounts = new();
     private Dictionary<int, Dictionary<int, List<Transaction>>> _budgetTransactionsByCategory = new();
+    private DashboardPreferences _preferences = new();
 
     // Chart data
     private double[] _expensePieData = Array.Empty<double>();
@@ -479,6 +508,21 @@ else
 
     protected override async Task OnInitializedAsync()
     {
+        // Load preferences from localStorage
+        try
+        {
+            var json = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "dashboard_preferences");
+            PreferencesService.LoadPreferences(json);
+            _preferences = PreferencesService.Preferences;
+            _selectedMonths = _preferences.DefaultPeriodMonths;
+        }
+        catch
+        {
+            // Use default preferences if loading fails
+        }
+        
+        PreferencesService.OnPreferencesChanged += OnPreferencesChanged;
+        
         await LoadData();
     }
 
@@ -633,5 +677,45 @@ else
             _cashFlowSeries = new List<ChartSeries>();
             _cashFlowLabels = Array.Empty<string>();
         }
+    }
+    
+    private async Task CustomizeDashboard()
+    {
+        var parameters = new DialogParameters<DashboardCustomizeDialog>
+        {
+            { x => x.Preferences, _preferences }
+        };
+        
+        var dialog = await DialogService.ShowAsync<DashboardCustomizeDialog>("Anpassa Dashboard", parameters);
+        var result = await dialog.Result;
+        
+        if (!result.Canceled && result.Data is DashboardPreferences newPreferences)
+        {
+            _preferences = newPreferences;
+            PreferencesService.UpdatePreferences(_preferences);
+            
+            // Save to localStorage
+            try
+            {
+                var json = PreferencesService.SavePreferences();
+                await JSRuntime.InvokeVoidAsync("localStorage.setItem", "dashboard_preferences", json);
+                Snackbar.Add("Dashboard-inställningar sparade", Severity.Success);
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Kunde inte spara inställningar: {ex.Message}", Severity.Error);
+            }
+        }
+    }
+    
+    private void OnPreferencesChanged()
+    {
+        _preferences = PreferencesService.Preferences;
+        StateHasChanged();
+    }
+    
+    public void Dispose()
+    {
+        PreferencesService.OnPreferencesChanged -= OnPreferencesChanged;
     }
 }
