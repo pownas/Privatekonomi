@@ -84,6 +84,7 @@ else
     <!-- Statistics by Type -->
     @if (_investments.Any())
     {
+        <MudText Typo="Typo.h6" Class="mb-3">Fördelning per Typ</MudText>
         <MudGrid Class="mb-4">
             @foreach (var stat in _typeStats.OrderByDescending(s => s.Value))
             {
@@ -99,6 +100,33 @@ else
                             <MudText Typo="Typo.h6">@stat.Value.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))</MudText>
                             <MudProgressLinear Value="@((double)(stat.Value / _totalValue * 100))" 
                                              Color="@GetTypeColor(stat.Key)" 
+                                             Size="Size.Small" Class="mt-2" />
+                        </MudCardContent>
+                    </MudCard>
+                </MudItem>
+            }
+        </MudGrid>
+    }
+
+    <!-- Statistics by Account Type -->
+    @if (_investments.Any() && _accountTypeStats.Any())
+    {
+        <MudText Typo="Typo.h6" Class="mb-3">Fördelning per Kontotyp</MudText>
+        <MudGrid Class="mb-4">
+            @foreach (var stat in _accountTypeStats.OrderByDescending(s => s.Value))
+            {
+                <MudItem xs="12" sm="6" md="3">
+                    <MudCard Elevation="1">
+                        <MudCardContent>
+                            <div class="d-flex justify-space-between align-center mb-2">
+                                <MudChip T="string" Size="Size.Small" Color="@GetAccountTypeColor(stat.Key)">@stat.Key</MudChip>
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                    @((stat.Value / _totalValue * 100).ToString("F1"))%
+                                </MudText>
+                            </div>
+                            <MudText Typo="Typo.h6">@stat.Value.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))</MudText>
+                            <MudProgressLinear Value="@((double)(stat.Value / _totalValue * 100))" 
+                                             Color="@GetAccountTypeColor(stat.Key)" 
                                              Size="Size.Small" Class="mt-2" />
                         </MudCardContent>
                     </MudCard>
@@ -278,6 +306,7 @@ else
     private decimal _totalProfitLoss = 0;
     private decimal _totalProfitLossPercentage = 0;
     private Dictionary<string, decimal> _typeStats = new();
+    private Dictionary<string, decimal> _accountTypeStats = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -299,6 +328,7 @@ else
         ApplyFilters();
         CalculateTotals();
         CalculateTypeStats();
+        CalculateAccountTypeStats();
         _loading = false;
     }
 
@@ -335,6 +365,14 @@ else
             .ToDictionary(g => g.Key, g => g.Sum(i => i.TotalValue));
     }
 
+    private void CalculateAccountTypeStats()
+    {
+        _accountTypeStats = _investments
+            .Where(i => !string.IsNullOrEmpty(i.AccountType))
+            .GroupBy(i => i.AccountType!)
+            .ToDictionary(g => g.Key, g => g.Sum(i => i.TotalValue));
+    }
+
     private bool FilterFunc(Investment investment)
     {
         if (string.IsNullOrWhiteSpace(_searchString))
@@ -358,7 +396,22 @@ else
         {
             "Aktie" => Color.Primary,
             "Fond" => Color.Secondary,
+            "ETF" => Color.Info,
             "Certifikat" => Color.Warning,
+            "Krypto" => Color.Tertiary,
+            "P2P-lån" => Color.Dark,
+            _ => Color.Default
+        };
+    }
+
+    private Color GetAccountTypeColor(string accountType)
+    {
+        return accountType switch
+        {
+            "ISK" => Color.Success,
+            "KF" => Color.Primary,
+            "AF" => Color.Info,
+            "Depå" => Color.Secondary,
             _ => Color.Default
         };
     }
