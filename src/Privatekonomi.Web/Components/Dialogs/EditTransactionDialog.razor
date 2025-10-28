@@ -75,6 +75,8 @@
                                            ResetValueOnEmptyText="true"
                                            CoerceText="false"
                                            CoerceValue="false"
+                                           MaxItems="null"
+                                           DebounceInterval="300"
                                            HelperText="Börja skriva för att söka bland kategorier"
                                            aria-label="Sök och välj kategori">
                                 <ItemTemplate Context="category">
@@ -92,7 +94,7 @@
                             {
                                 <MudChip T="string" Size="Size.Small" 
                                          Style="@($"background-color: {_selectedCategory.Color}; color: white; margin-top: 8px;")" 
-                                         OnClose="() => _selectedCategory = null">
+                                         OnClose="ClearSelectedCategory">
                                     @_selectedCategory.Name
                                 </MudChip>
                             }
@@ -122,6 +124,8 @@
                                                            ResetValueOnEmptyText="true"
                                                            CoerceText="false"
                                                            CoerceValue="false"
+                                                           MaxItems="null"
+                                                           DebounceInterval="300"
                                                            aria-label="@($"Sök kategori {index + 1}")">
                                                 <ItemTemplate Context="category">
                                                     <div style="display: flex; align-items: center;">
@@ -422,6 +426,11 @@
         {
             _categorySplits[index].CategoryId = category?.CategoryId;
         }
+    }
+
+    private void ClearSelectedCategory()
+    {
+        _selectedCategory = null;
     }
 
     private void AddCategorySplit()
