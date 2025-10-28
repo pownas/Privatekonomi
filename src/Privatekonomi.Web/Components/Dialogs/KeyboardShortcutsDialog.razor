@@ -1,0 +1,53 @@
+@using Microsoft.AspNetCore.Components
+
+<MudDialog>
+    <DialogContent>
+        <MudText Typo="Typo.h6" Class="mb-4">Tangentbordsgenvägar</MudText>
+        
+        <MudTable Items="@_shortcuts" Dense="true" Hover="true" Elevation="0">
+            <HeaderContent>
+                <MudTh>Genväg</MudTh>
+                <MudTh>Åtgärd</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Genväg">
+                    <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">
+                        @context.Keys
+                    </MudChip>
+                </MudTd>
+                <MudTd DataLabel="Åtgärd">@context.Description</MudTd>
+            </RowTemplate>
+        </MudTable>
+        
+        <MudAlert Severity="Severity.Info" Class="mt-4" Dense="true">
+            Använd Ctrl (Windows/Linux) eller Cmd (Mac) tillsammans med tangenten.
+        </MudAlert>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Close" Color="Color.Primary" Variant="Variant.Filled">Stäng</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] 
+    IMudDialogInstance? MudDialog { get; set; }
+
+    private List<KeyboardShortcut> _shortcuts = new()
+    {
+        new KeyboardShortcut { Keys = "Ctrl + N", Description = "Ny transaktion" },
+        new KeyboardShortcut { Keys = "Ctrl + T", Description = "Transaktioner" },
+        new KeyboardShortcut { Keys = "Ctrl + B", Description = "Budgetar" },
+        new KeyboardShortcut { Keys = "Ctrl + H", Description = "Hem / Dashboard" },
+        new KeyboardShortcut { Keys = "Ctrl + G", Description = "Sparmål" },
+        new KeyboardShortcut { Keys = "Ctrl + I", Description = "Investeringar" },
+        new KeyboardShortcut { Keys = "Ctrl + /", Description = "Visa denna hjälp" }
+    };
+
+    private void Close() => MudDialog?.Close(DialogResult.Ok(true));
+
+    private class KeyboardShortcut
+    {
+        public string Keys { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+    }
+}

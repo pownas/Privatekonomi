@@ -5,12 +5,14 @@
 @using Privatekonomi.Core.Configuration
 @using Privatekonomi.Core.Services.Persistence
 @using Privatekonomi.Core.Data
+@using Privatekonomi.Web.Components.Dialogs
 @inject ThemeService ThemeService
 @inject IJSRuntime JSRuntime
 @inject NavigationManager NavigationManager
 @inject IOptions<StorageSettings> StorageSettings
 @inject IServiceProvider ServiceProvider
 @inject ISnackbar Snackbar
+@inject IDialogService DialogService
 @implements IDisposable
 
 <MudThemeProvider @ref="@_mudThemeProvider" Theme="@_theme" @bind-IsDarkMode="@_isDarkMode" />
@@ -42,6 +44,12 @@
                 <MudButton Href="/Account/Login" Color="Color.Inherit" StartIcon="@Icons.Material.Filled.Login">Logga in</MudButton>
             </NotAuthorized>
         </AuthorizeView>
+        <MudTooltip Text="Tangentbordsgenvägar (Ctrl + /)">
+            <MudIconButton Icon="@Icons.Material.Filled.Keyboard" 
+                           Color="Color.Inherit" 
+                           OnClick="@ShowKeyboardShortcuts"
+                           aria-label="Tangentbordsgenvägar" />
+        </MudTooltip>
         <MudIconButton Icon="@(_isDarkMode ? Icons.Material.Filled.LightMode : Icons.Material.Filled.DarkMode)" 
                        Color="Color.Inherit" 
                        OnClick="@ToggleTheme" 
@@ -157,6 +165,11 @@
                 }
                 
                 ThemeService.IsDarkMode = _isDarkMode;
+                
+                // Initialize keyboard shortcuts
+                var objRef = DotNetObjectReference.Create(this);
+                await JSRuntime.InvokeVoidAsync("keyboardShortcuts.init", objRef);
+                
                 StateHasChanged();
             }
             catch
@@ -196,6 +209,18 @@
     {
         _isDarkMode = ThemeService.IsDarkMode;
         StateHasChanged();
+    }
+    
+    private async Task ShowKeyboardShortcuts()
+    {
+        await DialogService.ShowAsync<KeyboardShortcutsDialog>("Tangentbordsgenvägar", 
+            new DialogOptions { MaxWidth = MaxWidth.Small });
+    }
+    
+    [JSInvokable]
+    public async Task ShowKeyboardShortcutsHelp()
+    {
+        await ShowKeyboardShortcuts();
     }
     
     public void Dispose()
