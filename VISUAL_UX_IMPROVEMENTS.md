@@ -62,10 +62,11 @@ All colors maintain WCAG AA contrast compliance for accessibility.
   - Better suited for financial data and numbers
 
 #### Font Loading
-Updated `App.razor` to load both Inter and Roboto:
+Updated `App.razor` to load Inter and Roboto fonts:
 ```html
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet" />
 ```
+Note: While Inter is the primary font with Roboto as a CSS fallback, both are loaded to ensure consistent rendering across components that may explicitly use Roboto.
 
 #### Typography Scale
 While MudBlazor doesn't support custom typography objects, the CSS provides:
@@ -99,9 +100,9 @@ Added comprehensive CSS variables in `app.css`:
 #### Shadows
 ```css
 --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
---shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1)...
---shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1)...
---shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1)...
+--shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+--shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+--shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 ```
 
 #### Transitions
