@@ -82,7 +82,7 @@ else
                 <div class="sankey-flow">
                     <MudIcon Icon="@Icons.Material.Filled.ArrowForward" Size="Size.Large" />
                     <MudText Typo="Typo.body2" Class="mt-2">
-                        Netto: @(_totalIncome - _totalExpenses).ToString("C0", new System.Globalization.CultureInfo("sv-SE"))
+                        Netto: @((_totalIncome - _totalExpenses).ToString("C0", new System.Globalization.CultureInfo("sv-SE")))
                     </MudText>
                 </div>
 
