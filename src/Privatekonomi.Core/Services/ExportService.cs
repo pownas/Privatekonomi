@@ -230,6 +230,167 @@ public class ExportService : IExportService
         return result;
     }
 
+    public async Task<List<int>> GetAvailableYearsAsync()
+    {
+        var query = _context.Transactions.AsQueryable();
+
+        // Filter by current user if authenticated
+        if (_currentUserService?.IsAuthenticated == true && _currentUserService.UserId != null)
+        {
+            query = query.Where(t => t.UserId == _currentUserService.UserId);
+        }
+
+        var years = await query
+            .Select(t => t.Date.Year)
+            .Distinct()
+            .OrderByDescending(y => y)
+            .ToListAsync();
+
+        return years;
+    }
+
+    public async Task<byte[]> ExportYearDataToJsonAsync(int year)
+    {
+        var startDate = new DateTime(year, 1, 1);
+        var endDate = new DateTime(year, 12, 31, 23, 59, 59);
+
+        var userId = _currentUserService?.UserId;
+
+        // Build queries for all data types for the year
+        var transactionsQuery = _context.Transactions
+            .Include(t => t.BankSource)
+            .Include(t => t.TransactionCategories)
+            .ThenInclude(tc => tc.Category)
+            .Where(t => t.Date >= startDate && t.Date <= endDate);
+
+        var budgetsQuery = _context.Budgets
+            .Include(b => b.BudgetCategories)
+            .ThenInclude(bc => bc.Category)
+            .Where(b => (b.StartDate.Year == year || b.EndDate.Year == year));
+
+        var goalsQuery = _context.Goals
+            .Where(g => g.CreatedAt.Year == year || (g.TargetDate.HasValue && g.TargetDate.Value.Year == year));
+
+        var investmentsQuery = _context.Investments.AsQueryable();
+        
+        var loansQuery = _context.Loans.AsQueryable();
+
+        var salaryHistoryQuery = _context.SalaryHistories
+            .Where(s => s.Period.Year == year);
+
+        // Filter by current user if authenticated
+        if (_currentUserService?.IsAuthenticated == true && userId != null)
+        {
+            transactionsQuery = transactionsQuery.Where(t => t.UserId == userId);
+            budgetsQuery = budgetsQuery.Where(b => b.UserId == userId);
+            goalsQuery = goalsQuery.Where(g => g.UserId == userId);
+            investmentsQuery = investmentsQuery.Where(i => i.UserId == userId);
+            loansQuery = loansQuery.Where(l => l.UserId == userId);
+            salaryHistoryQuery = salaryHistoryQuery.Where(s => s.UserId == userId);
+        }
+
+        var yearData = new
+        {
+            Year = year,
+            ExportDate = DateTime.UtcNow,
+            Version = "1.0",
+            Data = new
+            {
+                Transactions = await transactionsQuery.OrderBy(t => t.Date).ToListAsync(),
+                Budgets = await budgetsQuery.ToListAsync(),
+                Goals = await goalsQuery.ToListAsync(),
+                Investments = await investmentsQuery.ToListAsync(),
+                Loans = await loansQuery.ToListAsync(),
+                SalaryHistory = await salaryHistoryQuery.ToListAsync()
+            }
+        };
+
+        var options = new JsonSerializerOptions
+        {
+            WriteIndented = true,
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles
+        };
+
+        var json = JsonSerializer.Serialize(yearData, options);
+        
+        // Use UTF-8 with BOM for proper character encoding
+        var preamble = Encoding.UTF8.GetPreamble();
+        var content = Encoding.UTF8.GetBytes(json);
+        var result = new byte[preamble.Length + content.Length];
+        Buffer.BlockCopy(preamble, 0, result, 0, preamble.Length);
+        Buffer.BlockCopy(content, 0, result, preamble.Length, content.Length);
+        return result;
+    }
+
+    public async Task<byte[]> ExportYearDataToCsvAsync(int year)
+    {
+        var startDate = new DateTime(year, 1, 1);
+        var endDate = new DateTime(year, 12, 31, 23, 59, 59);
+
+        var query = _context.Transactions
+            .Include(t => t.BankSource)
+            .Include(t => t.TransactionCategories)
+            .ThenInclude(tc => tc.Category)
+            .Where(t => t.Date >= startDate && t.Date <= endDate);
+
+        // Filter by current user if authenticated
+        if (_currentUserService?.IsAuthenticated == true && _currentUserService.UserId != null)
+        {
+            query = query.Where(t => t.UserId == _currentUserService.UserId);
+        }
+
+        var transactions = await query.OrderBy(t => t.Date).ToListAsync();
+
+        var csv = new StringBuilder();
+        
+        // Header with year information
+        csv.AppendLine($"# Privatekonomi Export - År {year}");
+        csv.AppendLine($"# Exportdatum: {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
+        csv.AppendLine($"# Antal transaktioner: {transactions.Count}");
+        csv.AppendLine();
+        
+        // Column headers
+        csv.AppendLine("Datum,Beskrivning,Belopp,Typ,Bank,Kategorier,Taggar,Noteringar,Källa,Valuta");
+
+        // Data rows
+        foreach (var transaction in transactions)
+        {
+            var categories = string.Join("; ", transaction.TransactionCategories.Select(tc => tc.Category.Name));
+            var bankName = transaction.BankSource?.Name ?? "";
+            var type = transaction.IsIncome ? "Inkomst" : "Utgift";
+            
+            csv.AppendLine($"{transaction.Date:yyyy-MM-dd}," +
+                          $"\"{EscapeCsv(transaction.Description)}\"," +
+                          $"{transaction.Amount:F2}," +
+                          $"{type}," +
+                          $"\"{EscapeCsv(bankName)}\"," +
+                          $"\"{EscapeCsv(categories)}\"," +
+                          $"\"{EscapeCsv(transaction.Tags ?? "")}\"," +
+                          $"\"{EscapeCsv(transaction.Notes ?? "")}\"," +
+                          $"\"{EscapeCsv(transaction.ImportSource ?? "")}\"," +
+                          $"{transaction.Currency}");
+        }
+
+        // Summary section
+        csv.AppendLine();
+        csv.AppendLine($"# Summering {year}");
+        var totalIncome = transactions.Where(t => t.IsIncome).Sum(t => t.Amount);
+        var totalExpenses = transactions.Where(t => !t.IsIncome).Sum(t => t.Amount);
+        var netResult = totalIncome - totalExpenses;
+        csv.AppendLine($"# Totala inkomster: {totalIncome:F2} SEK");
+        csv.AppendLine($"# Totala utgifter: {totalExpenses:F2} SEK");
+        csv.AppendLine($"# Nettoresultat: {netResult:F2} SEK");
+
+        // Use UTF-8 with BOM for proper Excel compatibility with Swedish characters
+        var preamble = Encoding.UTF8.GetPreamble();
+        var content = Encoding.UTF8.GetBytes(csv.ToString());
+        var result = new byte[preamble.Length + content.Length];
+        Buffer.BlockCopy(preamble, 0, result, 0, preamble.Length);
+        Buffer.BlockCopy(content, 0, result, preamble.Length, content.Length);
+        return result;
+    }
+
     private static string EscapeCsv(string value)
     {
         if (string.IsNullOrEmpty(value))

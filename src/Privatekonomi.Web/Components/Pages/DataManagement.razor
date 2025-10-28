@@ -44,6 +44,67 @@
     </MudButton>
 </MudPaper>
 
+@* Year Export Section *@
+<MudPaper Class="pa-6 mb-4">
+    <MudText Typo="Typo.h5" Class="mb-3">
+        <MudIcon Icon="@Icons.Material.Filled.CalendarToday" Class="mr-2" />
+        Exportera per År
+    </MudText>
+    
+    <MudText Typo="Typo.body2" Class="mb-4">
+        Exportera ekonomisk data för ett specifikt år. Detta inkluderar transaktioner, budgetar, investeringar, lån och löneutveckling för det valda året.
+    </MudText>
+    
+    @if (_loadingYears)
+    {
+        <MudProgressCircular Size="Size.Small" Indeterminate="true" />
+    }
+    else if (!_availableYears.Any())
+    {
+        <MudAlert Severity="Severity.Info">
+            Inga år med data tillgängliga. Lägg till transaktioner för att exportera data per år.
+        </MudAlert>
+    }
+    else
+    {
+        <MudGrid>
+            <MudItem xs="12" md="6">
+                <MudSelect T="int?" @bind-Value="_selectedYear" Label="Välj år" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter">
+                    @foreach (var year in _availableYears)
+                    {
+                        <MudSelectItem Value="@((int?)year)">@year</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" md="6" Class="d-flex align-center">
+                <MudButtonGroup Variant="Variant.Outlined" Color="Color.Primary">
+                    <MudButton StartIcon="@Icons.Material.Filled.Download" 
+                               OnClick="ExportYearToJson"
+                               Disabled="!_selectedYear.HasValue || _exportingYear">
+                        JSON
+                    </MudButton>
+                    <MudButton StartIcon="@Icons.Material.Filled.Download" 
+                               OnClick="ExportYearToCsv"
+                               Disabled="!_selectedYear.HasValue || _exportingYear">
+                        CSV
+                    </MudButton>
+                </MudButtonGroup>
+                @if (_exportingYear)
+                {
+                    <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="ml-2" />
+                }
+            </MudItem>
+        </MudGrid>
+        
+        @if (_selectedYear.HasValue)
+        {
+            <MudAlert Severity="Severity.Info" Class="mt-3">
+                Exporterar data för år <strong>@_selectedYear.Value</strong>
+            </MudAlert>
+        }
+    }
+</MudPaper>
+
 @* Import Section *@
 <MudPaper Class="pa-6 mb-4">
     <MudText Typo="Typo.h5" Class="mb-3">
@@ -190,13 +251,106 @@
     private bool _mergeMode = false;
     private DateTime? _lastSaveTime = null;
     private string _storageProvider = "Unknown";
+    
+    // Year export fields
+    private bool _loadingYears = true;
+    private bool _exportingYear = false;
+    private List<int> _availableYears = new();
+    private int? _selectedYear = null;
 
     [Inject]
     private IOptions<StorageSettings>? StorageSettings { get; set; }
+    
+    [Inject]
+    private IExportService? ExportService { get; set; }
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         _storageProvider = StorageSettings?.Value?.Provider ?? "Unknown";
+        await LoadAvailableYears();
+    }
+
+    private async Task LoadAvailableYears()
+    {
+        _loadingYears = true;
+        StateHasChanged();
+        
+        try
+        {
+            if (ExportService != null)
+            {
+                _availableYears = await ExportService.GetAvailableYearsAsync();
+                if (_availableYears.Any())
+                {
+                    _selectedYear = _availableYears.First(); // Select most recent year by default
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Kunde inte ladda tillgängliga år: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loadingYears = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task ExportYearToJson()
+    {
+        if (!_selectedYear.HasValue || ExportService == null)
+            return;
+
+        _exportingYear = true;
+        StateHasChanged();
+
+        try
+        {
+            var data = await ExportService.ExportYearDataToJsonAsync(_selectedYear.Value);
+            var fileName = $"privatekonomi_{_selectedYear.Value}.json";
+            var base64 = Convert.ToBase64String(data);
+            
+            await JS.InvokeVoidAsync("downloadFile", fileName, "application/json", base64);
+            Snackbar.Add($"Data för år {_selectedYear.Value} exporterades som JSON!", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Ett fel uppstod vid export: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _exportingYear = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task ExportYearToCsv()
+    {
+        if (!_selectedYear.HasValue || ExportService == null)
+            return;
+
+        _exportingYear = true;
+        StateHasChanged();
+
+        try
+        {
+            var data = await ExportService.ExportYearDataToCsvAsync(_selectedYear.Value);
+            var fileName = $"privatekonomi_{_selectedYear.Value}.csv";
+            var base64 = Convert.ToBase64String(data);
+            
+            await JS.InvokeVoidAsync("downloadFile", fileName, "text/csv", base64);
+            Snackbar.Add($"Data för år {_selectedYear.Value} exporterades som CSV!", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Ett fel uppstod vid export: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _exportingYear = false;
+            StateHasChanged();
+        }
     }
 
     private async Task ExportFullBackup()
