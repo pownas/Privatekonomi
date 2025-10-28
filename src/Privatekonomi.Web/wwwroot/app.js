@@ -100,6 +100,16 @@ window.keyboardShortcuts = {
                 e.preventDefault();
                 window.location.href = '/investments';
             }
+            // Ctrl/Cmd + K: Calendar
+            else if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                e.preventDefault();
+                window.location.href = '/transactions/calendar';
+            }
+            // Ctrl/Cmd + L: Tags
+            else if ((e.ctrlKey || e.metaKey) && e.key === 'l') {
+                e.preventDefault();
+                window.location.href = '/tags';
+            }
             // Ctrl/Cmd + /: Show keyboard shortcuts help
             else if ((e.ctrlKey || e.metaKey) && e.key === '/') {
                 e.preventDefault();
