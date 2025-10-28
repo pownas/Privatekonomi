@@ -85,19 +85,7 @@
     protected override void OnInitialized()
     {
         // Create a copy to allow cancellation
-        _preferences = new DashboardPreferences
-        {
-            ShowTotalCards = Preferences.ShowTotalCards,
-            ShowCashFlowChart = Preferences.ShowCashFlowChart,
-            ShowExpensePieChart = Preferences.ShowExpensePieChart,
-            ShowIncomePieChart = Preferences.ShowIncomePieChart,
-            ShowCategoryBarChart = Preferences.ShowCategoryBarChart,
-            ShowActiveBudgets = Preferences.ShowActiveBudgets,
-            ShowUnmappedTransactions = Preferences.ShowUnmappedTransactions,
-            ShowRecentTransactions = Preferences.ShowRecentTransactions,
-            RecentTransactionsCount = Preferences.RecentTransactionsCount,
-            DefaultPeriodMonths = Preferences.DefaultPeriodMonths
-        };
+        _preferences = Preferences.Clone();
     }
     
     private void Cancel() => MudDialog?.Close(DialogResult.Cancel());

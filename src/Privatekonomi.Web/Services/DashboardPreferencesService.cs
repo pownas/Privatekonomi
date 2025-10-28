@@ -4,7 +4,7 @@ namespace Privatekonomi.Web.Services;
 
 public class DashboardPreferencesService
 {
-    private const string StorageKey = "dashboard_preferences";
+    public const string StorageKey = "dashboard_preferences";
     
     public event Action? OnPreferencesChanged;
     
@@ -54,4 +54,21 @@ public class DashboardPreferences
     public bool ShowRecentTransactions { get; set; } = true;
     public int RecentTransactionsCount { get; set; } = 10;
     public int DefaultPeriodMonths { get; set; } = 12;
+    
+    public DashboardPreferences Clone()
+    {
+        return new DashboardPreferences
+        {
+            ShowTotalCards = this.ShowTotalCards,
+            ShowCashFlowChart = this.ShowCashFlowChart,
+            ShowExpensePieChart = this.ShowExpensePieChart,
+            ShowIncomePieChart = this.ShowIncomePieChart,
+            ShowCategoryBarChart = this.ShowCategoryBarChart,
+            ShowActiveBudgets = this.ShowActiveBudgets,
+            ShowUnmappedTransactions = this.ShowUnmappedTransactions,
+            ShowRecentTransactions = this.ShowRecentTransactions,
+            RecentTransactionsCount = this.RecentTransactionsCount,
+            DefaultPeriodMonths = this.DefaultPeriodMonths
+        };
+    }
 }

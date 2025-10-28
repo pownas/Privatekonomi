@@ -511,7 +511,7 @@ else
         // Load preferences from localStorage
         try
         {
-            var json = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "dashboard_preferences");
+            var json = await JSRuntime.InvokeAsync<string>("localStorage.getItem", DashboardPreferencesService.StorageKey);
             PreferencesService.LoadPreferences(json);
             _preferences = PreferencesService.Preferences;
             _selectedMonths = _preferences.DefaultPeriodMonths;
@@ -698,7 +698,7 @@ else
             try
             {
                 var json = PreferencesService.SavePreferences();
-                await JSRuntime.InvokeVoidAsync("localStorage.setItem", "dashboard_preferences", json);
+                await JSRuntime.InvokeVoidAsync("localStorage.setItem", DashboardPreferencesService.StorageKey, json);
                 Snackbar.Add("Dashboard-inställningar sparade", Severity.Success);
             }
             catch (Exception ex)
