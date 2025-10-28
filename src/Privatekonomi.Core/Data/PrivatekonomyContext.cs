@@ -57,6 +57,14 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
     
     // Currency Accounts
     public DbSet<CurrencyAccount> CurrencyAccounts { get; set; }
+    
+    // Receipts, Bills and Subscriptions
+    public DbSet<Receipt> Receipts { get; set; }
+    public DbSet<ReceiptLineItem> ReceiptLineItems { get; set; }
+    public DbSet<Subscription> Subscriptions { get; set; }
+    public DbSet<SubscriptionPriceHistory> SubscriptionPriceHistory { get; set; }
+    public DbSet<Bill> Bills { get; set; }
+    public DbSet<BillReminder> BillReminders { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -1052,6 +1060,182 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
             
             // Ignore computed property
             entity.Ignore(e => e.ValueInSEK);
+        });
+        
+        // Receipt configuration
+        modelBuilder.Entity<Receipt>(entity =>
+        {
+            entity.HasKey(e => e.ReceiptId);
+            entity.Property(e => e.Merchant).IsRequired().HasMaxLength(200);
+            entity.Property(e => e.ReceiptDate).IsRequired();
+            entity.Property(e => e.TotalAmount).HasPrecision(18, 2);
+            entity.Property(e => e.Currency).IsRequired().HasMaxLength(3);
+            entity.Property(e => e.ReceiptType).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.ImagePath).HasMaxLength(500);
+            entity.Property(e => e.ReceiptNumber).HasMaxLength(100);
+            entity.Property(e => e.PaymentMethod).HasMaxLength(50);
+            entity.Property(e => e.Notes).HasMaxLength(500);
+            entity.Property(e => e.CreatedAt).IsRequired();
+            
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.HasOne(e => e.Transaction)
+                .WithMany()
+                .HasForeignKey(e => e.TransactionId)
+                .OnDelete(DeleteBehavior.SetNull);
+            
+            entity.HasIndex(e => e.UserId);
+            entity.HasIndex(e => e.ReceiptDate);
+            entity.HasIndex(e => e.Merchant);
+        });
+        
+        // ReceiptLineItem configuration
+        modelBuilder.Entity<ReceiptLineItem>(entity =>
+        {
+            entity.HasKey(e => e.ReceiptLineItemId);
+            entity.Property(e => e.Description).IsRequired().HasMaxLength(200);
+            entity.Property(e => e.Quantity).HasPrecision(18, 4);
+            entity.Property(e => e.UnitPrice).HasPrecision(18, 2);
+            entity.Property(e => e.TotalPrice).HasPrecision(18, 2);
+            entity.Property(e => e.TaxRate).HasPrecision(5, 2);
+            entity.Property(e => e.Notes).HasMaxLength(500);
+            entity.Property(e => e.CreatedAt).IsRequired();
+            
+            entity.HasOne(e => e.Receipt)
+                .WithMany(r => r.ReceiptLineItems)
+                .HasForeignKey(e => e.ReceiptId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.HasOne(e => e.Category)
+                .WithMany()
+                .HasForeignKey(e => e.CategoryId)
+                .OnDelete(DeleteBehavior.SetNull);
+            
+            entity.HasIndex(e => e.ReceiptId);
+        });
+        
+        // Subscription configuration
+        modelBuilder.Entity<Subscription>(entity =>
+        {
+            entity.HasKey(e => e.SubscriptionId);
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(200);
+            entity.Property(e => e.Description).HasMaxLength(500);
+            entity.Property(e => e.Price).HasPrecision(18, 2);
+            entity.Property(e => e.Currency).IsRequired().HasMaxLength(3);
+            entity.Property(e => e.BillingFrequency).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.StartDate).IsRequired();
+            entity.Property(e => e.IsActive).IsRequired();
+            entity.Property(e => e.CancellationUrl).HasMaxLength(500);
+            entity.Property(e => e.ManagementUrl).HasMaxLength(500);
+            entity.Property(e => e.AccountEmail).HasMaxLength(200);
+            entity.Property(e => e.Notes).HasMaxLength(500);
+            entity.Property(e => e.CreatedAt).IsRequired();
+            
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.HasOne(e => e.Category)
+                .WithMany()
+                .HasForeignKey(e => e.CategoryId)
+                .OnDelete(DeleteBehavior.SetNull);
+            
+            entity.HasIndex(e => e.UserId);
+            entity.HasIndex(e => e.IsActive);
+            entity.HasIndex(e => e.NextBillingDate);
+        });
+        
+        // SubscriptionPriceHistory configuration
+        modelBuilder.Entity<SubscriptionPriceHistory>(entity =>
+        {
+            entity.HasKey(e => e.SubscriptionPriceHistoryId);
+            entity.Property(e => e.OldPrice).HasPrecision(18, 2);
+            entity.Property(e => e.NewPrice).HasPrecision(18, 2);
+            entity.Property(e => e.ChangeDate).IsRequired();
+            entity.Property(e => e.Reason).HasMaxLength(500);
+            entity.Property(e => e.NotificationSent).IsRequired();
+            entity.Property(e => e.CreatedAt).IsRequired();
+            
+            entity.HasOne(e => e.Subscription)
+                .WithMany(s => s.PriceHistory)
+                .HasForeignKey(e => e.SubscriptionId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.HasIndex(e => e.SubscriptionId);
+            entity.HasIndex(e => e.ChangeDate);
+        });
+        
+        // Bill configuration
+        modelBuilder.Entity<Bill>(entity =>
+        {
+            entity.HasKey(e => e.BillId);
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(200);
+            entity.Property(e => e.Description).HasMaxLength(500);
+            entity.Property(e => e.Amount).HasPrecision(18, 2);
+            entity.Property(e => e.Currency).IsRequired().HasMaxLength(3);
+            entity.Property(e => e.IssueDate).IsRequired();
+            entity.Property(e => e.DueDate).IsRequired();
+            entity.Property(e => e.Status).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.IsRecurring).IsRequired();
+            entity.Property(e => e.RecurringFrequency).HasMaxLength(50);
+            entity.Property(e => e.PaymentMethod).HasMaxLength(50);
+            entity.Property(e => e.InvoiceNumber).HasMaxLength(100);
+            entity.Property(e => e.OCR).HasMaxLength(50);
+            entity.Property(e => e.Bankgiro).HasMaxLength(20);
+            entity.Property(e => e.Plusgiro).HasMaxLength(20);
+            entity.Property(e => e.Payee).HasMaxLength(200);
+            entity.Property(e => e.DocumentPath).HasMaxLength(500);
+            entity.Property(e => e.Notes).HasMaxLength(500);
+            entity.Property(e => e.CreatedAt).IsRequired();
+            
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.HasOne(e => e.Category)
+                .WithMany()
+                .HasForeignKey(e => e.CategoryId)
+                .OnDelete(DeleteBehavior.SetNull);
+            
+            entity.HasOne(e => e.Household)
+                .WithMany()
+                .HasForeignKey(e => e.HouseholdId)
+                .OnDelete(DeleteBehavior.SetNull);
+            
+            entity.HasOne(e => e.Transaction)
+                .WithMany()
+                .HasForeignKey(e => e.TransactionId)
+                .OnDelete(DeleteBehavior.SetNull);
+            
+            entity.HasIndex(e => e.UserId);
+            entity.HasIndex(e => e.Status);
+            entity.HasIndex(e => e.DueDate);
+            entity.HasIndex(e => e.IsRecurring);
+        });
+        
+        // BillReminder configuration
+        modelBuilder.Entity<BillReminder>(entity =>
+        {
+            entity.HasKey(e => e.BillReminderId);
+            entity.Property(e => e.ReminderDate).IsRequired();
+            entity.Property(e => e.IsSent).IsRequired();
+            entity.Property(e => e.ReminderMethod).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.Message).HasMaxLength(500);
+            entity.Property(e => e.CreatedAt).IsRequired();
+            
+            entity.HasOne(e => e.Bill)
+                .WithMany(b => b.Reminders)
+                .HasForeignKey(e => e.BillId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.HasIndex(e => e.BillId);
+            entity.HasIndex(e => e.ReminderDate);
+            entity.HasIndex(e => e.IsSent);
         });
     }
 }
