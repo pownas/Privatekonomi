@@ -142,7 +142,7 @@
         var dialog = await DialogService.ShowAsync<CategoryEditDialog>("Skapa Ny Kategori", parameters, options);
         var result = await dialog.Result;
 
-        if (!result.Canceled)
+        if (result is not null && !result.Canceled)
         {
             await LoadData();
         }
@@ -160,7 +160,7 @@
         var dialog = await DialogService.ShowAsync<CategoryEditDialog>("Redigera Kategori", parameters, options);
         var result = await dialog.Result;
 
-        if (!result.Canceled)
+        if (result is not null && !result.Canceled)
         {
             await LoadData();
         }
@@ -179,7 +179,7 @@
         var dialog = await DialogService.ShowAsync<CategoryEditDialog>("Skapa Underkategori", parameters, options);
         var result = await dialog.Result;
 
-        if (!result.Canceled)
+        if (result is not null && !result.Canceled)
         {
             await LoadData();
         }

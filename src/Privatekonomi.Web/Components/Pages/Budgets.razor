@@ -164,7 +164,19 @@
     {
         @if (!_budgets.Any())
         {
-            <MudText>Inga budgetar tillgängliga. Skapa din första budget för att börja planera din ekonomi!</MudText>
+            <MudPaper Class="pa-6" Elevation="0" Style="text-align: center;">
+                <MudIcon Icon="@Icons.Material.Filled.PieChart" Size="Size.Large" Color="Color.Secondary" Class="mb-4" Style="font-size: 4rem;" />
+                <MudText Typo="Typo.h6" Class="mb-2">Inga budgetar än</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">
+                    Skapa din första budget för att börja planera och följa upp din ekonomi. Välj mellan månads- eller årsbudget.
+                </MudText>
+                <MudButton Variant="Variant.Filled" 
+                           Color="Color.Primary" 
+                           StartIcon="@Icons.Material.Filled.Add"
+                           OnClick="ToggleCreateForm">
+                    Skapa Din Första Budget
+                </MudButton>
+            </MudPaper>
         }
         else
         {
