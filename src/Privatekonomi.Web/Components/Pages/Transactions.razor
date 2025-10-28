@@ -14,17 +14,19 @@
 
 <MudPaper Class="pa-4">
     <MudGrid>
-        <MudItem xs="12" Class="d-flex justify-space-between align-center mb-4">
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" 
+        <MudItem xs="12" Class="d-flex flex-column flex-sm-row justify-space-between align-start align-sm-center gap-2 mb-4">
+            <MudButton Variant="Variant.Filled" 
+                       Color="Color.Primary" 
+                       StartIcon="@Icons.Material.Filled.Add" 
                        OnClick="@(() => Navigation.NavigateTo("/transactions/new"))">
                 Ny Transaktion
             </MudButton>
             <MudButtonGroup Color="Color.Primary" Variant="Variant.Outlined">
                 <MudButton StartIcon="@Icons.Material.Filled.Download" OnClick="ExportToCsv">
-                    Exportera CSV
+                    <span class="d-none d-sm-inline">Exportera </span>CSV
                 </MudButton>
                 <MudButton StartIcon="@Icons.Material.Filled.Download" OnClick="ExportToJson">
-                    Exportera JSON
+                    <span class="d-none d-sm-inline">Exportera </span>JSON
                 </MudButton>
             </MudButtonGroup>
         </MudItem>
@@ -32,25 +34,71 @@
 
     @if (_loading)
     {
-        <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+        <div class="d-flex flex-column align-center pa-6">
+            <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Large" />
+            <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-4">Laddar transaktioner...</MudText>
+        </div>
     }
     else if (!_transactions.Any())
     {
-        <MudText>Inga transaktioner ännu.</MudText>
+        <MudPaper Class="pa-6" Elevation="0" Style="text-align: center;">
+            <MudIcon Icon="@Icons.Material.Filled.Receipt" Size="Size.Large" Color="Color.Secondary" Class="mb-4" Style="font-size: 4rem;" />
+            <MudText Typo="Typo.h6" Class="mb-2">Inga transaktioner än</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">
+                Kom igång genom att skapa din första transaktion eller importera transaktioner från din bank.
+            </MudText>
+            <div class="d-flex justify-center gap-2">
+                <MudButton Variant="Variant.Filled" 
+                           Color="Color.Primary" 
+                           StartIcon="@Icons.Material.Filled.Add"
+                           OnClick="@(() => Navigation.NavigateTo("/transactions/new"))">
+                    Skapa Transaktion
+                </MudButton>
+                <MudButton Variant="Variant.Outlined" 
+                           Color="Color.Primary" 
+                           StartIcon="@Icons.Material.Filled.Upload"
+                           OnClick="@(() => Navigation.NavigateTo("/import"))">
+                    Importera från Bank
+                </MudButton>
+            </div>
+        </MudPaper>
     }
     else
     {
-        <MudTable Items="@_transactions" Hover="true" Striped="true" Filter="new Func<Transaction,bool>(FilterFunc)">
+        <MudTable Items="@_transactions" 
+                  Hover="true" 
+                  Striped="true" 
+                  Filter="new Func<Transaction,bool>(FilterFunc)"
+                  Dense="@_dense"
+                  FixedHeader="true"
+                  Height="600px">
             <ToolBarContent>
-                <MudTextField @bind-Value="_searchString" Placeholder="Sök" Adornment="Adornment.Start" 
-                              AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0 mr-2"></MudTextField>
-                <MudSelect T="int?" @bind-Value="_selectedHouseholdId" Label="Filtrera efter hushåll" 
-                           Clearable="true" Style="min-width: 200px;" Class="mt-0">
+                <MudTextField @bind-Value="_searchString" 
+                              Placeholder="Sök transaktion..." 
+                              Adornment="Adornment.Start" 
+                              AdornmentIcon="@Icons.Material.Filled.Search" 
+                              IconSize="Size.Medium" 
+                              Class="mt-0 mr-2"
+                              aria-label="Sök i transaktioner"></MudTextField>
+                <MudSelect T="int?" 
+                          @bind-Value="_selectedHouseholdId" 
+                          Label="Filtrera efter hushåll" 
+                          Clearable="true" 
+                          Style="min-width: 200px;" 
+                          Class="mt-0"
+                          aria-label="Filtrera transaktioner efter hushåll">
                     @foreach (var household in _households)
                     {
                         <MudSelectItem Value="@((int?)household.HouseholdId)">@household.Name</MudSelectItem>
                     }
                 </MudSelect>
+                <MudSpacer />
+                <MudTooltip Text="Tät/luftig layout">
+                    <MudIconButton Icon="@Icons.Material.Filled.DensityMedium" 
+                                   OnClick="@(() => _dense = !_dense)"
+                                   Color="Color.Default"
+                                   aria-label="Växla mellan tät och luftig layout" />
+                </MudTooltip>
             </ToolBarContent>
             <HeaderContent>
                 <MudTh>Datum</MudTh>
@@ -160,6 +208,7 @@
 
 @code {
     private bool _loading = true;
+    private bool _dense = false;
     private IEnumerable<Transaction> _transactions = new List<Transaction>();
     private List<Household> _households = new();
     private string _searchString = "";
