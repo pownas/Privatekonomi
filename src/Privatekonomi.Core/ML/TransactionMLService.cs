@@ -40,90 +40,98 @@ public class TransactionMLService : ITransactionMLService
 
     public async Task<ModelMetrics?> TrainModelAsync(string userId)
     {
-        _logger.LogInformation("Starting model training for user {UserId}", userId);
-        
-        // Get all categorized transactions for the user
-        var transactions = await GetTrainingDataAsync(userId);
-        
-        if (transactions.Count < MinimumTransactionsRequired)
+        try
         {
-            _logger.LogWarning(
-                "Insufficient training data for user {UserId}. Found {Count} transactions, need at least {Required}",
-                userId, transactions.Count, MinimumTransactionsRequired);
+            _logger.LogInformation("Starting model training for user {UserId}", userId);
+            
+            // Get all categorized transactions for the user
+            var transactions = await GetTrainingDataAsync(userId);
+            
+            if (transactions.Count < MinimumTransactionsRequired)
+            {
+                _logger.LogWarning(
+                    "Insufficient training data for user {UserId}. Found {Count} transactions, need at least {Required}",
+                    userId, transactions.Count, MinimumTransactionsRequired);
+                return null;
+            }
+            
+            // Validate minimum examples per category
+            var categoryGroups = transactions.GroupBy(t => t.Category);
+            var insufficientCategories = categoryGroups
+                .Where(g => g.Count() < MinimumExamplesPerCategory)
+                .Select(g => g.Key)
+                .ToList();
+            
+            if (insufficientCategories.Any())
+            {
+                _logger.LogWarning(
+                    "Some categories have insufficient examples for user {UserId}: {Categories}",
+                    userId, string.Join(", ", insufficientCategories));
+            }
+            
+            // Filter out categories with too few examples
+            transactions = transactions
+                .GroupBy(t => t.Category)
+                .Where(g => g.Count() >= MinimumExamplesPerCategory)
+                .SelectMany(g => g)
+                .ToList();
+            
+            if (transactions.Count < MinimumTransactionsRequired)
+            {
+                _logger.LogWarning(
+                    "After filtering insufficient categories, not enough data remains for user {UserId}",
+                    userId);
+                return null;
+            }
+            
+            // Create data view
+            var dataView = _mlContext.Data.LoadFromEnumerable(transactions);
+            
+            // Split data for training and testing (80/20)
+            var trainTestSplit = _mlContext.Data.TrainTestSplit(dataView, testFraction: 0.2);
+            
+            // Build training pipeline
+            var pipeline = BuildTrainingPipeline();
+            
+            // Train the model
+            _logger.LogInformation("Training model for user {UserId} with {Count} transactions", userId, transactions.Count);
+            var model = pipeline.Fit(trainTestSplit.TrainSet);
+            
+            // Evaluate the model
+            var predictions = model.Transform(trainTestSplit.TestSet);
+            var metrics = _mlContext.MulticlassClassification.Evaluate(predictions, labelColumnName: "Label");
+            
+            // Save the model
+            var modelPath = GetModelPath(userId);
+            await SaveModelToDiskAsync(model, dataView.Schema, modelPath);
+            
+            // Store model in cache
+            _loadedModels[userId] = model;
+            
+            // Save model metadata to database
+            await SaveModelMetadataAsync(userId, modelPath, transactions.Count, metrics);
+            
+            var modelMetrics = new ModelMetrics
+            {
+                Accuracy = metrics.MicroAccuracy,
+                MacroPrecision = metrics.MacroAccuracy, // Note: ML.NET doesn't provide separate MacroPrecision for multiclass
+                MacroRecall = metrics.MacroAccuracy, // Note: ML.NET doesn't provide separate MacroRecall for multiclass
+                MicroAccuracy = metrics.MicroAccuracy,
+                LogLoss = metrics.LogLoss,
+                LogLossReduction = metrics.LogLossReduction
+            };
+            
+            _logger.LogInformation(
+                "Model training completed for user {UserId}. Accuracy: {Accuracy:P2}",
+                userId, modelMetrics.Accuracy);
+            
+            return modelMetrics;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error training model for user {UserId}", userId);
             return null;
         }
-        
-        // Validate minimum examples per category
-        var categoryGroups = transactions.GroupBy(t => t.Category);
-        var insufficientCategories = categoryGroups
-            .Where(g => g.Count() < MinimumExamplesPerCategory)
-            .Select(g => g.Key)
-            .ToList();
-        
-        if (insufficientCategories.Any())
-        {
-            _logger.LogWarning(
-                "Some categories have insufficient examples for user {UserId}: {Categories}",
-                userId, string.Join(", ", insufficientCategories));
-        }
-        
-        // Filter out categories with too few examples
-        transactions = transactions
-            .GroupBy(t => t.Category)
-            .Where(g => g.Count() >= MinimumExamplesPerCategory)
-            .SelectMany(g => g)
-            .ToList();
-        
-        if (transactions.Count < MinimumTransactionsRequired)
-        {
-            _logger.LogWarning(
-                "After filtering insufficient categories, not enough data remains for user {UserId}",
-                userId);
-            return null;
-        }
-        
-        // Create data view
-        var dataView = _mlContext.Data.LoadFromEnumerable(transactions);
-        
-        // Split data for training and testing (80/20)
-        var trainTestSplit = _mlContext.Data.TrainTestSplit(dataView, testFraction: 0.2);
-        
-        // Build training pipeline
-        var pipeline = BuildTrainingPipeline();
-        
-        // Train the model
-        _logger.LogInformation("Training model for user {UserId} with {Count} transactions", userId, transactions.Count);
-        var model = pipeline.Fit(trainTestSplit.TrainSet);
-        
-        // Evaluate the model
-        var predictions = model.Transform(trainTestSplit.TestSet);
-        var metrics = _mlContext.MulticlassClassification.Evaluate(predictions, labelColumnName: "Label");
-        
-        // Save the model
-        var modelPath = GetModelPath(userId);
-        await SaveModelToDiskAsync(model, dataView.Schema, modelPath);
-        
-        // Store model in cache
-        _loadedModels[userId] = model;
-        
-        // Save model metadata to database
-        await SaveModelMetadataAsync(userId, modelPath, transactions.Count, metrics);
-        
-        var modelMetrics = new ModelMetrics
-        {
-            Accuracy = metrics.MicroAccuracy,
-            MacroPrecision = metrics.MacroAccuracy,
-            MacroRecall = metrics.MacroAccuracy,
-            MicroAccuracy = metrics.MicroAccuracy,
-            LogLoss = metrics.LogLoss,
-            LogLossReduction = metrics.LogLossReduction
-        };
-        
-        _logger.LogInformation(
-            "Model training completed for user {UserId}. Accuracy: {Accuracy:P2}",
-            userId, modelMetrics.Accuracy);
-        
-        return modelMetrics;
     }
 
     public async Task<ModelMetrics?> EvaluateModelAsync(string userId)
@@ -145,13 +153,13 @@ public class TransactionMLService : ITransactionMLService
             
             var dataView = _mlContext.Data.LoadFromEnumerable(transactions);
             var predictions = model.Transform(dataView);
-            var metrics = _mlContext.MulticlassClassification.Evaluate(predictions, labelColumnName: "Category");
+            var metrics = _mlContext.MulticlassClassification.Evaluate(predictions, labelColumnName: "Label");
             
             return new ModelMetrics
             {
                 Accuracy = metrics.MicroAccuracy,
-                MacroPrecision = metrics.MacroAccuracy,
-                MacroRecall = metrics.MacroAccuracy,
+                MacroPrecision = metrics.MacroAccuracy, // Note: ML.NET doesn't provide separate MacroPrecision for multiclass
+                MacroRecall = metrics.MacroAccuracy, // Note: ML.NET doesn't provide separate MacroRecall for multiclass
                 MicroAccuracy = metrics.MicroAccuracy,
                 LogLoss = metrics.LogLoss,
                 LogLossReduction = metrics.LogLossReduction
@@ -428,8 +436,8 @@ public class TransactionMLService : ITransactionMLService
             TrainedAt = DateTime.UtcNow,
             TrainingRecordsCount = trainingRecordsCount,
             Accuracy = (float)metrics.MicroAccuracy,
-            Precision = (float)metrics.MacroAccuracy,
-            Recall = (float)metrics.MacroAccuracy,
+            Precision = (float)metrics.MacroAccuracy, // Note: ML.NET doesn't provide separate precision for multiclass
+            Recall = (float)metrics.MacroAccuracy, // Note: ML.NET doesn't provide separate recall for multiclass
             Metrics = System.Text.Json.JsonSerializer.Serialize(new
             {
                 MicroAccuracy = metrics.MicroAccuracy,
@@ -470,7 +478,6 @@ public class TransactionMLService : ITransactionMLService
     // Internal class for ML.NET prediction
     private class CategoryPredictionInternal
     {
-        [ColumnName("PredictedLabel")]
         public string PredictedCategory { get; set; } = string.Empty;
         
         public float[]? Score { get; set; }
