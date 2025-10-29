@@ -63,6 +63,10 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
     public DbSet<Dividend> Dividends { get; set; }
     public DbSet<InvestmentTransaction> InvestmentTransactions { get; set; }
     public DbSet<PortfolioAllocation> PortfolioAllocations { get; set; }
+    
+    // Savings Challenges
+    public DbSet<SavingsChallenge> SavingsChallenges { get; set; }
+    public DbSet<SavingsChallengeProgress> SavingsChallengeProgress { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
