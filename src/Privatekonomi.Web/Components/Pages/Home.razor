@@ -96,6 +96,66 @@ else
     </MudGrid>
     }
 
+    @* Net Worth Widget *@
+    @if (_netWorthReport != null)
+    {
+        <MudGrid Class="mt-4">
+            <MudItem xs="12">
+                <MudCard Elevation="2">
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.h6">Nettoförmögenhet</MudText>
+                        </CardHeaderContent>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudGrid>
+                            <MudItem xs="12" md="4">
+                                <MudText Typo="Typo.h4" Color="@GetNetWorthColor()">
+                                    @_netWorthReport.NetWorth.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))
+                                </MudText>
+                                <MudText Typo="Typo.body2" Color="@GetChangeColor()" Class="mt-2">
+                                    @_netWorthReport.PercentageChange.ToString("+0.00%;-0.00%;0%")
+                                    <MudIcon Icon="@GetChangeIcon()" Size="Size.Small" />
+                                </MudText>
+                                
+                                <MudGrid Class="mt-4">
+                                    <MudItem xs="12">
+                                        <MudText Typo="Typo.body2" Color="Color.Success">
+                                            Tillgångar: @_netWorthReport.TotalAssets.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))
+                                        </MudText>
+                                    </MudItem>
+                                    <MudItem xs="12">
+                                        <MudText Typo="Typo.body2" Color="Color.Error">
+                                            Skulder: @_netWorthReport.TotalLiabilities.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))
+                                        </MudText>
+                                    </MudItem>
+                                </MudGrid>
+                            </MudItem>
+                            
+                            <MudItem xs="12" md="8">
+                                @if (_netWorthReport.History.Any())
+                                {
+                                    <MudChart ChartType="ChartType.Line" 
+                                              ChartSeries="@_netWorthSeries" 
+                                              XAxisLabels="@_netWorthLabels"
+                                              Width="100%" 
+                                              Height="250px"
+                                              ChartOptions="@_chartOptions" />
+                                }
+                                else
+                                {
+                                    <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                        Ingen historisk data tillgänglig ännu.
+                                    </MudText>
+                                }
+                            </MudItem>
+                        </MudGrid>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+    }
+
     @if (_transactions.Any() && (_preferences.ShowExpensePieChart || _preferences.ShowIncomePieChart || _preferences.ShowCashFlowChart || _preferences.ShowCategoryBarChart))
     {
         <MudPaper Class="pa-4 mt-4 chart-filters" Elevation="2">
@@ -506,6 +566,11 @@ else
         YAxisFormat = "C0"
     };
 
+    // Net Worth data
+    private NetWorthReport? _netWorthReport = null;
+    private List<ChartSeries> _netWorthSeries = new();
+    private string[] _netWorthLabels = Array.Empty<string>();
+
     protected override async Task OnInitializedAsync()
     {
         // Load preferences from localStorage
@@ -543,6 +608,7 @@ else
         _totalIncome = _transactions.Where(t => t.IsIncome).Sum(t => t.Amount);
         _totalExpenses = _transactions.Where(t => !t.IsIncome).Sum(t => t.Amount);
         await UpdateChartData();
+        await LoadNetWorthData();
         _loading = false;
     }
 
@@ -753,6 +819,57 @@ else
             // Show all labels for 6 months or less
             return months.Select(m => m.ToString("MMM yyyy", culture)).ToArray();
         }
+    }
+    
+    private async Task LoadNetWorthData()
+    {
+        try
+        {
+            _netWorthReport = await ReportService.GetNetWorthReportAsync();
+            
+            if (_netWorthReport?.History != null && _netWorthReport.History.Any())
+            {
+                var culture = new System.Globalization.CultureInfo("sv-SE");
+                _netWorthLabels = _netWorthReport.History
+                    .Select(h => h.Date.ToString("MMM yyyy", culture))
+                    .ToArray();
+                
+                _netWorthSeries = new List<ChartSeries>
+                {
+                    new ChartSeries
+                    {
+                        Name = "Nettoförmögenhet",
+                        Data = _netWorthReport.History.Select(h => (double)h.NetWorth).ToArray()
+                    }
+                };
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Kunde inte ladda nettoförmögenhet: {ex.Message}", Severity.Warning);
+        }
+    }
+    
+    private Color GetNetWorthColor()
+    {
+        if (_netWorthReport == null) return Color.Default;
+        return _netWorthReport.NetWorth >= 0 ? Color.Success : Color.Error;
+    }
+    
+    private Color GetChangeColor()
+    {
+        if (_netWorthReport == null) return Color.Default;
+        if (_netWorthReport.PercentageChange > 0) return Color.Success;
+        if (_netWorthReport.PercentageChange < 0) return Color.Error;
+        return Color.Default;
+    }
+    
+    private string GetChangeIcon()
+    {
+        if (_netWorthReport == null) return Icons.Material.Filled.Remove;
+        if (_netWorthReport.PercentageChange > 0) return Icons.Material.Filled.TrendingUp;
+        if (_netWorthReport.PercentageChange < 0) return Icons.Material.Filled.TrendingDown;
+        return Icons.Material.Filled.Remove;
     }
     
     public void Dispose()

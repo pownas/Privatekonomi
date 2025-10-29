@@ -10,9 +10,9 @@ public interface IReportService
     Task<CashFlowReport> GetCashFlowReportAsync(DateTime fromDate, DateTime toDate, string groupBy = "month", int? householdId = null);
     
     /// <summary>
-    /// Get net worth calculation (assets - liabilities)
+    /// Get net worth calculation (assets - liabilities) with historical trend data
     /// </summary>
-    Task<NetWorthReport> GetNetWorthReportAsync();
+    Task<NetWorthReport> GetNetWorthReportAsync(string? userId = null);
     
     /// <summary>
     /// Get trend analysis for a specific category
@@ -57,11 +57,22 @@ public class CashFlowPeriod
 public class NetWorthReport
 {
     public decimal TotalAssets { get; set; }
+    public decimal TotalInvestments { get; set; }
     public decimal TotalLiabilities { get; set; }
     public decimal NetWorth { get; set; }
+    public decimal PercentageChange { get; set; }
     public List<AssetItem> Assets { get; set; } = new();
     public List<LiabilityItem> Liabilities { get; set; } = new();
+    public List<NetWorthDataPoint> History { get; set; } = new();
     public DateTime CalculatedAt { get; set; }
+}
+
+public class NetWorthDataPoint
+{
+    public DateTime Date { get; set; }
+    public decimal Assets { get; set; }
+    public decimal Liabilities { get; set; }
+    public decimal NetWorth { get; set; }
 }
 
 public class AssetItem
