@@ -1,0 +1,393 @@
+@page "/subscriptions"
+@rendermode InteractiveServer
+@using Privatekonomi.Core.Models
+@using Privatekonomi.Core.Services
+@inject ISubscriptionService SubscriptionService
+@inject ICategoryService CategoryService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<PageTitle>Abonnemang - Privatekonomi</PageTitle>
+
+<div class="d-flex justify-space-between align-center mb-4">
+    <MudText Typo="Typo.h4">Abonnemang</MudText>
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="ToggleCreateForm">
+        Nytt Abonnemang
+    </MudButton>
+</div>
+
+@if (_showCreateForm)
+{
+    <MudPaper Class="pa-4 mb-4">
+        <MudText Typo="Typo.h6" Class="mb-3">@(_editingSubscription != null ? "Redigera Abonnemang" : "Lägg till Nytt Abonnemang")</MudText>
+        
+        <MudTextField @bind-Value="_formSubscription.Name" 
+                      Label="Namn" 
+                      Variant="Variant.Outlined"
+                      Required="true"
+                      MaxLength="200"
+                      Class="mb-3" />
+        
+        <MudTextField @bind-Value="_formSubscription.Description" 
+                      Label="Beskrivning" 
+                      Variant="Variant.Outlined"
+                      Lines="2"
+                      MaxLength="500"
+                      Class="mb-3" />
+
+        <MudNumericField @bind-Value="_formSubscription.Price" 
+                         Label="Pris (kr)" 
+                         Variant="Variant.Outlined"
+                         Min="0"
+                         Format="N2"
+                         Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                         Class="mb-3" />
+
+        <MudSelect @bind-Value="_formSubscription.BillingFrequency" Label="Faktureringsfrekvens" Variant="Variant.Outlined" Class="mb-3">
+            <MudSelectItem Value="@("Monthly")">Månadsvis</MudSelectItem>
+            <MudSelectItem Value="@("Yearly")">Årligen</MudSelectItem>
+            <MudSelectItem Value="@("Quarterly")">Kvartalsvis</MudSelectItem>
+        </MudSelect>
+
+        <MudDatePicker @bind-Date="_formStartDate"
+                       Label="Startdatum"
+                       Variant="Variant.Outlined"
+                       Class="mb-3" />
+
+        <MudDatePicker @bind-Date="_formNextBillingDate"
+                       Label="Nästa fakturadatum (valfritt)"
+                       Variant="Variant.Outlined"
+                       Class="mb-3" />
+
+        <MudSelect @bind-Value="_formSubscription.CategoryId" 
+                   Label="Kategori (valfritt)" 
+                   Variant="Variant.Outlined" 
+                   Class="mb-3"
+                   Clearable="true">
+            @foreach (var category in _categories)
+            {
+                <MudSelectItem Value="@((int?)category.CategoryId)">@category.Name</MudSelectItem>
+            }
+        </MudSelect>
+
+        <MudTextField @bind-Value="_formSubscription.CancellationUrl" 
+                      Label="Uppsägningslänk (valfritt)" 
+                      Variant="Variant.Outlined"
+                      MaxLength="500"
+                      Class="mb-3" />
+
+        <MudTextField @bind-Value="_formSubscription.ManagementUrl" 
+                      Label="Hanteringslänk (valfritt)" 
+                      Variant="Variant.Outlined"
+                      MaxLength="500"
+                      Class="mb-3" />
+
+        <MudTextField @bind-Value="_formSubscription.AccountEmail" 
+                      Label="Kontoepost (valfritt)" 
+                      Variant="Variant.Outlined"
+                      MaxLength="200"
+                      Class="mb-3" />
+
+        <MudTextField @bind-Value="_formSubscription.Notes" 
+                      Label="Anteckningar (valfritt)" 
+                      Variant="Variant.Outlined"
+                      Lines="2"
+                      MaxLength="500"
+                      Class="mb-3" />
+
+        <MudSwitch @bind-Value="_formSubscription.IsActive" Label="Aktivt" Color="Color.Primary" Class="mb-3" />
+
+        <div class="d-flex gap-2">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveSubscription">
+                @(_editingSubscription != null ? "Uppdatera" : "Lägg till")
+            </MudButton>
+            <MudButton Variant="Variant.Outlined" OnClick="CancelForm">Avbryt</MudButton>
+        </div>
+    </MudPaper>
+}
+
+@if (_loading)
+{
+    <div class="d-flex flex-column align-center pa-6">
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Large" />
+        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-4">Laddar abonnemang...</MudText>
+    </div>
+}
+else
+{
+    <MudPaper Class="pa-4 mb-4">
+        <MudGrid>
+            <MudItem xs="12" md="4">
+                <MudCard Elevation="2" Class="pa-4">
+                    <MudCardContent>
+                        <MudText Typo="Typo.h6">Aktiva Abonnemang</MudText>
+                        <MudText Typo="Typo.h4" Color="Color.Primary">@_activeCount</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <MudCard Elevation="2" Class="pa-4">
+                    <MudCardContent>
+                        <MudText Typo="Typo.h6">Månadskostnad</MudText>
+                        <MudText Typo="Typo.h4" Color="Color.Secondary">@_monthlyCost.ToString("C", new System.Globalization.CultureInfo("sv-SE"))</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <MudCard Elevation="2" Class="pa-4">
+                    <MudCardContent>
+                        <MudText Typo="Typo.h6">Årskostnad</MudText>
+                        <MudText Typo="Typo.h4" Color="Color.Info">@_yearlyCost.ToString("C", new System.Globalization.CultureInfo("sv-SE"))</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+
+    <MudTabs Elevation="2" Rounded="true" Class="mb-4">
+        <MudTabPanel Text="Aktiva" Icon="@Icons.Material.Filled.CheckCircle">
+            <MudPaper Class="pa-4">
+                @if (_activeSubscriptions.Any())
+                {
+                    <MudTable Items="_activeSubscriptions" Hover="true" Striped="true">
+                        <HeaderContent>
+                            <MudTh>Namn</MudTh>
+                            <MudTh>Pris</MudTh>
+                            <MudTh>Frekvens</MudTh>
+                            <MudTh>Nästa faktura</MudTh>
+                            <MudTh>Kategori</MudTh>
+                            <MudTh>Länkar</MudTh>
+                            <MudTh>Åtgärder</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd>@context.Name</MudTd>
+                            <MudTd>@context.Price.ToString("C", new System.Globalization.CultureInfo("sv-SE"))</MudTd>
+                            <MudTd>@GetFrequencyLabel(context.BillingFrequency)</MudTd>
+                            <MudTd>@(context.NextBillingDate?.ToString("yyyy-MM-dd") ?? "-")</MudTd>
+                            <MudTd>
+                                @if (context.Category != null)
+                                {
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Default" Style="@($"background-color: {context.Category.Color}; color: white;")">
+                                        @context.Category.Name
+                                    </MudChip>
+                                }
+                            </MudTd>
+                            <MudTd>
+                                @if (!string.IsNullOrEmpty(context.CancellationUrl))
+                                {
+                                    <MudIconButton Icon="@Icons.Material.Filled.Cancel" Size="Size.Small" Color="Color.Error" 
+                                                   Href="@context.CancellationUrl" Target="_blank" Title="Säg upp" />
+                                }
+                                @if (!string.IsNullOrEmpty(context.ManagementUrl))
+                                {
+                                    <MudIconButton Icon="@Icons.Material.Filled.Settings" Size="Size.Small" Color="Color.Info" 
+                                                   Href="@context.ManagementUrl" Target="_blank" Title="Hantera" />
+                                }
+                            </MudTd>
+                            <MudTd>
+                                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Primary" 
+                                               OnClick="@(() => EditSubscription(context))" />
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" 
+                                               OnClick="@(() => DeleteSubscription(context))" />
+                            </MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                }
+                else
+                {
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">Inga aktiva abonnemang.</MudText>
+                }
+            </MudPaper>
+        </MudTabPanel>
+        <MudTabPanel Text="Inaktiva" Icon="@Icons.Material.Filled.Cancel">
+            <MudPaper Class="pa-4">
+                @if (_inactiveSubscriptions.Any())
+                {
+                    <MudTable Items="_inactiveSubscriptions" Hover="true" Striped="true">
+                        <HeaderContent>
+                            <MudTh>Namn</MudTh>
+                            <MudTh>Pris</MudTh>
+                            <MudTh>Frekvens</MudTh>
+                            <MudTh>Startdatum</MudTh>
+                            <MudTh>Slutdatum</MudTh>
+                            <MudTh>Åtgärder</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd>@context.Name</MudTd>
+                            <MudTd>@context.Price.ToString("C", new System.Globalization.CultureInfo("sv-SE"))</MudTd>
+                            <MudTd>@GetFrequencyLabel(context.BillingFrequency)</MudTd>
+                            <MudTd>@context.StartDate.ToString("yyyy-MM-dd")</MudTd>
+                            <MudTd>@(context.EndDate?.ToString("yyyy-MM-dd") ?? "-")</MudTd>
+                            <MudTd>
+                                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Primary" 
+                                               OnClick="@(() => EditSubscription(context))" />
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" 
+                                               OnClick="@(() => DeleteSubscription(context))" />
+                            </MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                }
+                else
+                {
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">Inga inaktiva abonnemang.</MudText>
+                }
+            </MudPaper>
+        </MudTabPanel>
+    </MudTabs>
+}
+
+@code {
+    private bool _loading = true;
+    private bool _showCreateForm = false;
+    private List<Subscription> _subscriptions = new();
+    private List<Subscription> _activeSubscriptions = new();
+    private List<Subscription> _inactiveSubscriptions = new();
+    private List<Category> _categories = new();
+    private Subscription _formSubscription = new();
+    private Subscription? _editingSubscription = null;
+    private DateTime? _formStartDate;
+    private DateTime? _formNextBillingDate;
+    private string _userId = string.Empty;
+    private int _activeCount = 0;
+    private decimal _monthlyCost = 0;
+    private decimal _yearlyCost = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        _userId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
+        
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        _loading = true;
+        _subscriptions = await SubscriptionService.GetSubscriptionsAsync(_userId);
+        _activeSubscriptions = _subscriptions.Where(s => s.IsActive).ToList();
+        _inactiveSubscriptions = _subscriptions.Where(s => !s.IsActive).ToList();
+        _activeCount = _activeSubscriptions.Count;
+        _monthlyCost = await SubscriptionService.GetMonthlySubscriptionCostAsync(_userId);
+        _yearlyCost = await SubscriptionService.GetYearlySubscriptionCostAsync(_userId);
+        _categories = (await CategoryService.GetAllCategoriesAsync()).ToList();
+        _loading = false;
+    }
+
+    private void ToggleCreateForm()
+    {
+        _showCreateForm = !_showCreateForm;
+        if (_showCreateForm)
+        {
+            _formSubscription = new Subscription 
+            { 
+                UserId = _userId, 
+                BillingFrequency = "Monthly",
+                IsActive = true,
+                Currency = "SEK"
+            };
+            _formStartDate = DateTime.Today;
+            _formNextBillingDate = null;
+            _editingSubscription = null;
+        }
+    }
+
+    private void EditSubscription(Subscription subscription)
+    {
+        _editingSubscription = subscription;
+        _formSubscription = new Subscription
+        {
+            SubscriptionId = subscription.SubscriptionId,
+            UserId = subscription.UserId,
+            Name = subscription.Name,
+            Description = subscription.Description,
+            Price = subscription.Price,
+            Currency = subscription.Currency,
+            BillingFrequency = subscription.BillingFrequency,
+            StartDate = subscription.StartDate,
+            EndDate = subscription.EndDate,
+            NextBillingDate = subscription.NextBillingDate,
+            IsActive = subscription.IsActive,
+            CategoryId = subscription.CategoryId,
+            CancellationUrl = subscription.CancellationUrl,
+            ManagementUrl = subscription.ManagementUrl,
+            AccountEmail = subscription.AccountEmail,
+            Notes = subscription.Notes
+        };
+        _formStartDate = subscription.StartDate;
+        _formNextBillingDate = subscription.NextBillingDate;
+        _showCreateForm = true;
+    }
+
+    private async Task SaveSubscription()
+    {
+        if (string.IsNullOrWhiteSpace(_formSubscription.Name))
+        {
+            Snackbar.Add("Namn är obligatoriskt", Severity.Error);
+            return;
+        }
+
+        _formSubscription.StartDate = _formStartDate ?? DateTime.Today;
+        _formSubscription.NextBillingDate = _formNextBillingDate;
+
+        try
+        {
+            if (_editingSubscription != null)
+            {
+                await SubscriptionService.UpdateSubscriptionAsync(_formSubscription);
+                Snackbar.Add("Abonnemang uppdaterat!", Severity.Success);
+            }
+            else
+            {
+                await SubscriptionService.CreateSubscriptionAsync(_formSubscription);
+                Snackbar.Add("Abonnemang skapat!", Severity.Success);
+            }
+
+            _showCreateForm = false;
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Fel: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void CancelForm()
+    {
+        _showCreateForm = false;
+        _editingSubscription = null;
+    }
+
+    private async Task DeleteSubscription(Subscription subscription)
+    {
+        bool? confirm = await DialogService.ShowMessageBox(
+            "Bekräfta borttagning",
+            $"Är du säker på att du vill ta bort abonnemanget '{subscription.Name}'?",
+            yesText: "Ta bort", cancelText: "Avbryt");
+
+        if (confirm == true)
+        {
+            try
+            {
+                await SubscriptionService.DeleteSubscriptionAsync(subscription.SubscriptionId, _userId);
+                Snackbar.Add("Abonnemang borttaget", Severity.Success);
+                await LoadData();
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Fel: {ex.Message}", Severity.Error);
+            }
+        }
+    }
+
+    private string GetFrequencyLabel(string frequency)
+    {
+        return frequency switch
+        {
+            "Monthly" => "Månadsvis",
+            "Yearly" => "Årligen",
+            "Quarterly" => "Kvartalsvis",
+            _ => frequency
+        };
+    }
+}
