@@ -263,7 +263,7 @@ Se [AVANZA_IMPORT_GUIDE.md](wiki/AVANZA_IMPORT_GUIDE.md) för detaljerad guide m
 
 ## 📊 Skärmdumpar
 
-> **📸 Se [SCREENSHOTS.md](SCREENSHOTS.md) för fullständig screenshot-dokumentation av alla funktioner!**
+> **📸 Se [SCREENSHOTS.md](docs/SCREENSHOTS.md) för fullständig screenshot-dokumentation av alla funktioner!**
 
 Dokumentationen innehåller screenshots av:
 - Dashboard (ljust och mörkt läge)
@@ -468,14 +468,14 @@ Se [tests/playwright/README.md](tests/playwright/README.md) för detaljerad doku
 ## 🎯 Förbättringsförslag
 
 ### Nya Förbättringsförslag 2025 🆕
-- **[Förbättringsförslag 2025](FÖRBÄTTRINGSFÖRSLAG_2025.md)** - 50+ nya idéer och förslag organiserade som en förslagslåda
-- **[Issue Examples](ISSUE_EXAMPLES.md)** - Färdiga GitHub issue-templates att kopiera och använda
+- **[Förbättringsförslag 2025](docs/FÖRBÄTTRINGSFÖRSLAG_2025.md)** - 50+ nya idéer och förslag organiserade som en förslagslåda
+- **[Issue Examples](docs/ISSUE_EXAMPLES.md)** - Färdiga GitHub issue-templates att kopiera och använda
 
 ### Befintliga Analyser
 - **[Fullständiga Förbättringsförslag](docs/IMPROVEMENT_SUGGESTIONS.md)** - Detaljerad analys med 45+ förbättringsförslag
 - **[Sammanfattning](docs/IMPROVEMENT_SUMMARY.md)** - Snabböversikt och prioriterad plan
-- **[Funktionsanalys](FUNKTIONSANALYS.md)** - Omfattande funktionskartläggning
-- **[Åtgärdsplan](ATGARDSPLAN.md)** - Roadmap med prioriterade issues
+- **[Funktionsanalys](docs/FUNKTIONSANALYS.md)** - Omfattande funktionskartläggning
+- **[Åtgärdsplan](docs/ATGARDSPLAN.md)** - Roadmap med prioriterade issues
 
 ### Högt Prioriterade
 - [ ] Byt från InMemory till persistent databas (SQL Server)
