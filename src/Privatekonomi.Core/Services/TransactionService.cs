@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Privatekonomi.Core.Data;
 using Privatekonomi.Core.Models;
+using Privatekonomi.Core.ML;
 
 namespace Privatekonomi.Core.Services;
 
@@ -10,17 +11,20 @@ public class TransactionService : ITransactionService
     private readonly ICurrentUserService? _currentUserService;
     private readonly ICategoryRuleService _categoryRuleService;
     private readonly IAuditLogService _auditLogService;
+    private readonly ITransactionMLService? _mlService;
 
     public TransactionService(
         PrivatekonomyContext context, 
         ICategoryRuleService categoryRuleService, 
         IAuditLogService auditLogService,
-        ICurrentUserService? currentUserService = null)
+        ICurrentUserService? currentUserService = null,
+        ITransactionMLService? mlService = null)
     {
         _context = context;
         _currentUserService = currentUserService;
         _categoryRuleService = categoryRuleService;
         _auditLogService = auditLogService;
+        _mlService = mlService;
     }
 
     public async Task<IEnumerable<Transaction>> GetAllTransactionsAsync()
@@ -70,25 +74,40 @@ public class TransactionService : ITransactionService
             transaction.UserId = _currentUserService.UserId;
         }
         
-        // Auto-categorize based on similar descriptions if no categories assigned
-        // Auto-categorize based on rules or similar descriptions if no categories assigned
+        // Auto-categorize based on ML, rules, or similar descriptions if no categories assigned
         if (!transaction.TransactionCategories.Any())
         {
-            // First try rule-based categorization
-            var ruleCategoryId = await _categoryRuleService.ApplyCategoryRulesAsync(
-                transaction.Description, 
-                transaction.Payee);
-            
             Category? suggestedCategory = null;
             
-            if (ruleCategoryId.HasValue)
+            // First try ML-based categorization if available
+            if (_mlService != null && !string.IsNullOrEmpty(transaction.UserId))
             {
-                suggestedCategory = await _context.Categories.FindAsync(ruleCategoryId.Value);
+                var mlPrediction = await _mlService.PredictCategoryAsync(transaction, transaction.UserId);
+                
+                // Use ML prediction if confidence is high enough
+                if (mlPrediction != null && !mlPrediction.IsUncertain)
+                {
+                    suggestedCategory = await _context.Categories
+                        .FirstOrDefaultAsync(c => c.Name == mlPrediction.Category);
+                }
             }
-            else
+            
+            // Fall back to rule-based categorization
+            if (suggestedCategory == null)
             {
-                // Fall back to similarity-based categorization
-                suggestedCategory = await SuggestCategoryAsync(transaction.Description);
+                var ruleCategoryId = await _categoryRuleService.ApplyCategoryRulesAsync(
+                    transaction.Description, 
+                    transaction.Payee);
+                
+                if (ruleCategoryId.HasValue)
+                {
+                    suggestedCategory = await _context.Categories.FindAsync(ruleCategoryId.Value);
+                }
+                else
+                {
+                    // Fall back to similarity-based categorization
+                    suggestedCategory = await SuggestCategoryAsync(transaction.Description);
+                }
             }
             
             if (suggestedCategory != null)

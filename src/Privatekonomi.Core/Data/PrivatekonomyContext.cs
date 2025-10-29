@@ -63,6 +63,10 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
     public DbSet<Dividend> Dividends { get; set; }
     public DbSet<InvestmentTransaction> InvestmentTransactions { get; set; }
     public DbSet<PortfolioAllocation> PortfolioAllocations { get; set; }
+    
+    // ML-related entities
+    public DbSet<MLModel> MLModels { get; set; }
+    public DbSet<UserFeedback> UserFeedbacks { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -1172,6 +1176,54 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
             
             entity.HasIndex(e => e.UserId);
             entity.HasIndex(e => e.IsActive);
+        });
+
+        // ML Model configuration
+        modelBuilder.Entity<MLModel>(entity =>
+        {
+            entity.HasKey(e => e.ModelId);
+            entity.Property(e => e.UserId).IsRequired().HasMaxLength(450);
+            entity.Property(e => e.ModelPath).IsRequired().HasMaxLength(500);
+            entity.Property(e => e.TrainedAt).IsRequired();
+            entity.Property(e => e.TrainingRecordsCount).IsRequired();
+            entity.Property(e => e.Accuracy).IsRequired();
+            entity.Property(e => e.Precision).IsRequired();
+            entity.Property(e => e.Recall).IsRequired();
+            entity.Property(e => e.Metrics).HasMaxLength(2000);
+            
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.HasIndex(e => e.UserId);
+        });
+
+        // User Feedback configuration
+        modelBuilder.Entity<UserFeedback>(entity =>
+        {
+            entity.HasKey(e => e.FeedbackId);
+            entity.Property(e => e.UserId).IsRequired().HasMaxLength(450);
+            entity.Property(e => e.TransactionId).IsRequired();
+            entity.Property(e => e.PredictedCategory).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.PredictedConfidence).IsRequired();
+            entity.Property(e => e.ActualCategory).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.WasCorrectionNeeded).IsRequired();
+            entity.Property(e => e.FeedbackDate).IsRequired();
+            
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.HasOne(e => e.Transaction)
+                .WithMany()
+                .HasForeignKey(e => e.TransactionId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.HasIndex(e => e.UserId);
+            entity.HasIndex(e => e.TransactionId);
+            entity.HasIndex(e => e.FeedbackDate);
         });
     }
 }
