@@ -15,17 +15,23 @@ public class SavingsChallengeService : ISavingsChallengeService
         _currentUserService = currentUserService;
     }
 
+    private IQueryable<SavingsChallenge> ApplyUserFilter(IQueryable<SavingsChallenge> query)
+    {
+        // Filter by current user if authenticated
+        if (_currentUserService?.IsAuthenticated == true && _currentUserService.UserId != null)
+        {
+            query = query.Where(c => c.UserId == _currentUserService.UserId);
+        }
+        return query;
+    }
+
     public async Task<IEnumerable<SavingsChallenge>> GetAllChallengesAsync()
     {
         var query = _context.SavingsChallenges
             .Include(c => c.ProgressEntries)
             .AsQueryable();
 
-        // Filter by current user if authenticated
-        if (_currentUserService?.IsAuthenticated == true && _currentUserService.UserId != null)
-        {
-            query = query.Where(c => c.UserId == _currentUserService.UserId);
-        }
+        query = ApplyUserFilter(query);
 
         return await query.OrderByDescending(c => c.CreatedAt).ToListAsync();
     }
@@ -36,11 +42,7 @@ public class SavingsChallengeService : ISavingsChallengeService
             .Include(c => c.ProgressEntries)
             .AsQueryable();
 
-        // Filter by current user if authenticated
-        if (_currentUserService?.IsAuthenticated == true && _currentUserService.UserId != null)
-        {
-            query = query.Where(c => c.UserId == _currentUserService.UserId);
-        }
+        query = ApplyUserFilter(query);
 
         return await query.FirstOrDefaultAsync(c => c.SavingsChallengeId == id);
     }
@@ -70,6 +72,13 @@ public class SavingsChallengeService : ISavingsChallengeService
 
     public async Task<SavingsChallenge> UpdateChallengeAsync(SavingsChallenge challenge)
     {
+        // Verify ownership
+        var existingChallenge = await GetChallengeByIdAsync(challenge.SavingsChallengeId);
+        if (existingChallenge == null)
+        {
+            throw new InvalidOperationException($"Challenge with ID {challenge.SavingsChallengeId} not found or you don't have permission to update it.");
+        }
+
         challenge.UpdatedAt = DateTime.UtcNow;
         _context.Entry(challenge).State = EntityState.Modified;
         await _context.SaveChangesAsync();
@@ -78,7 +87,8 @@ public class SavingsChallengeService : ISavingsChallengeService
 
     public async Task DeleteChallengeAsync(int id)
     {
-        var challenge = await _context.SavingsChallenges.FindAsync(id);
+        // Verify ownership before deleting
+        var challenge = await GetChallengeByIdAsync(id);
         if (challenge != null)
         {
             _context.SavingsChallenges.Remove(challenge);
@@ -93,11 +103,7 @@ public class SavingsChallengeService : ISavingsChallengeService
             .Where(c => c.Status == ChallengeStatus.Active)
             .AsQueryable();
 
-        // Filter by current user if authenticated
-        if (_currentUserService?.IsAuthenticated == true && _currentUserService.UserId != null)
-        {
-            query = query.Where(c => c.UserId == _currentUserService.UserId);
-        }
+        query = ApplyUserFilter(query);
 
         return await query.OrderBy(c => c.EndDate).ToListAsync();
     }
@@ -109,11 +115,7 @@ public class SavingsChallengeService : ISavingsChallengeService
             .Where(c => c.Status == ChallengeStatus.Completed)
             .AsQueryable();
 
-        // Filter by current user if authenticated
-        if (_currentUserService?.IsAuthenticated == true && _currentUserService.UserId != null)
-        {
-            query = query.Where(c => c.UserId == _currentUserService.UserId);
-        }
+        query = ApplyUserFilter(query);
 
         return await query.OrderByDescending(c => c.UpdatedAt).ToListAsync();
     }
@@ -125,11 +127,7 @@ public class SavingsChallengeService : ISavingsChallengeService
             .Where(c => c.Type == type)
             .AsQueryable();
 
-        // Filter by current user if authenticated
-        if (_currentUserService?.IsAuthenticated == true && _currentUserService.UserId != null)
-        {
-            query = query.Where(c => c.UserId == _currentUserService.UserId);
-        }
+        query = ApplyUserFilter(query);
 
         return await query.OrderByDescending(c => c.CreatedAt).ToListAsync();
     }
@@ -145,11 +143,23 @@ public class SavingsChallengeService : ISavingsChallengeService
             throw new InvalidOperationException($"Challenge with ID {challengeId} not found.");
         }
 
+        // Verify ownership
+        if (_currentUserService?.IsAuthenticated == true && 
+            _currentUserService.UserId != null && 
+            challenge.UserId != _currentUserService.UserId)
+        {
+            throw new InvalidOperationException($"You don't have permission to update this challenge.");
+        }
+
         // Check if progress for this date already exists
         var existingProgress = challenge.ProgressEntries.FirstOrDefault(p => p.Date.Date == date.Date);
         
         if (existingProgress != null)
         {
+            // Adjust the current amount by removing the old amount and adding the new amount
+            challenge.CurrentAmount -= existingProgress.AmountSaved;
+            challenge.CurrentAmount += amountSaved;
+            
             // Update existing progress
             existingProgress.Completed = completed;
             existingProgress.AmountSaved = amountSaved;
@@ -171,10 +181,12 @@ public class SavingsChallengeService : ISavingsChallengeService
 
             _context.SavingsChallengeProgress.Add(progress);
             existingProgress = progress;
+            
+            // Add the new amount
+            challenge.CurrentAmount += amountSaved;
         }
 
-        // Update challenge current amount and streak
-        challenge.CurrentAmount += amountSaved;
+        // Update challenge streak
         challenge.CurrentStreak = await CalculateCurrentStreakAsync(challengeId);
         
         if (challenge.CurrentStreak > challenge.BestStreak)
@@ -204,7 +216,8 @@ public class SavingsChallengeService : ISavingsChallengeService
 
     public async Task UpdateChallengeStatusAsync(int challengeId, ChallengeStatus status)
     {
-        var challenge = await _context.SavingsChallenges.FindAsync(challengeId);
+        // Verify ownership before updating
+        var challenge = await GetChallengeByIdAsync(challengeId);
         if (challenge != null)
         {
             challenge.Status = status;
@@ -250,11 +263,7 @@ public class SavingsChallengeService : ISavingsChallengeService
             .Where(c => c.Status == ChallengeStatus.Active)
             .AsQueryable();
 
-        // Filter by current user if authenticated
-        if (_currentUserService?.IsAuthenticated == true && _currentUserService.UserId != null)
-        {
-            query = query.Where(c => c.UserId == _currentUserService.UserId);
-        }
+        query = ApplyUserFilter(query);
 
         return await query.CountAsync();
     }
@@ -265,11 +274,7 @@ public class SavingsChallengeService : ISavingsChallengeService
             .Where(c => c.Status == ChallengeStatus.Completed)
             .AsQueryable();
 
-        // Filter by current user if authenticated
-        if (_currentUserService?.IsAuthenticated == true && _currentUserService.UserId != null)
-        {
-            query = query.Where(c => c.UserId == _currentUserService.UserId);
-        }
+        query = ApplyUserFilter(query);
 
         return await query.CountAsync();
     }
@@ -278,11 +283,7 @@ public class SavingsChallengeService : ISavingsChallengeService
     {
         var query = _context.SavingsChallenges.AsQueryable();
 
-        // Filter by current user if authenticated
-        if (_currentUserService?.IsAuthenticated == true && _currentUserService.UserId != null)
-        {
-            query = query.Where(c => c.UserId == _currentUserService.UserId);
-        }
+        query = ApplyUserFilter(query);
 
         return await query.SumAsync(c => c.CurrentAmount);
     }
