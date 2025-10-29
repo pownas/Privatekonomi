@@ -607,7 +607,8 @@ else
             })
             .ToList();
 
-        _barChartLabels = monthlyData.Select(m => m.Month.ToString("MMM yyyy", new System.Globalization.CultureInfo("sv-SE"))).ToArray();
+        // Generate chart labels with smart formatting based on number of months
+        _barChartLabels = GenerateChartLabels(monthlyData.Select(m => m.Month).ToList(), _selectedMonths);
 
         // Get top 5 categories by total amount
         var topCategories = expensesByCategory.Take(5).Select(x => x.Category).ToList();
@@ -634,7 +635,12 @@ else
             // Check if we have enough data points for chart rendering (minimum 4 required for MudChart Line)
             if (cashFlowReport.Periods.Count >= 4)
             {
-                _cashFlowLabels = cashFlowReport.Periods.Select(p => p.Period).ToArray();
+                var cashFlowDates = cashFlowReport.Periods.Select(p => {
+                    var parts = p.Period.Split('-');
+                    return new DateTime(int.Parse(parts[0]), int.Parse(parts[1]), 1);
+                }).ToList();
+                
+                _cashFlowLabels = GenerateChartLabels(cashFlowDates, _selectedMonths);
                 
                 _cashFlowSeries = new List<ChartSeries>
                 {
@@ -712,6 +718,41 @@ else
     {
         _preferences = PreferencesService.Preferences;
         StateHasChanged();
+    }
+    
+    /// <summary>
+    /// Generates chart labels with smart formatting based on number of months.
+    /// For 12 months: shows every 3rd label (quarterly)
+    /// For 24 months: shows every 6th label (bi-annually)
+    /// For 6 months or less: shows all labels
+    /// </summary>
+    private string[] GenerateChartLabels(List<DateTime> months, int totalMonths)
+    {
+        if (months.Count == 0)
+            return Array.Empty<string>();
+            
+        var culture = new System.Globalization.CultureInfo("sv-SE");
+        
+        // For mobile responsiveness, reduce label density for longer periods
+        if (totalMonths >= 24)
+        {
+            // Show every 6th month for 24 months (e.g., "jan. 2024", "juli 2024", "jan. 2025")
+            return months.Select((m, index) => 
+                index % 6 == 0 ? m.ToString("MMM yyyy", culture) : ""
+            ).ToArray();
+        }
+        else if (totalMonths >= 12)
+        {
+            // Show every 3rd month for 12 months (e.g., "jan.", "apr.", "juli", "okt.")
+            return months.Select((m, index) => 
+                index % 3 == 0 ? m.ToString("MMM yyyy", culture) : ""
+            ).ToArray();
+        }
+        else
+        {
+            // Show all labels for 6 months or less
+            return months.Select(m => m.ToString("MMM yyyy", culture)).ToArray();
+        }
     }
     
     public void Dispose()

@@ -416,6 +416,48 @@
     .chart-summary-cards {
         grid-template-columns: 1fr;
     }
+    
+    /* Improve chart wrapper padding on mobile */
+    .chart-wrapper {
+        padding: 0.75rem;
+    }
+    
+    /* Reduce chart header spacing */
+    .chart-header {
+        margin-bottom: 1rem;
+        gap: 0.5rem;
+    }
+    
+    /* Make chart title smaller */
+    .chart-title {
+        font-size: 1rem;
+    }
+    
+    .chart-subtitle {
+        font-size: 0.75rem;
+    }
+    
+    /* Optimize filter layout for mobile */
+    .chart-filters {
+        padding: 0.75rem;
+    }
+    
+    /* Make legend items more compact */
+    .chart-legend {
+        gap: 0.5rem;
+        margin-top: 0.75rem;
+        padding-top: 0.75rem;
+    }
+    
+    .chart-legend-item {
+        padding: 0.125rem 0.25rem;
+        font-size: 0.75rem;
+    }
+    
+    .chart-legend-color {
+        width: 12px;
+        height: 12px;
+    }
 }
 
 /* ============================================
