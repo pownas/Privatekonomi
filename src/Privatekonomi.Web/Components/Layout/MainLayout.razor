@@ -21,9 +21,9 @@
 <MudSnackbarProvider />
 
 <MudLayout>
-    <MudAppBar Elevation="1">
+    <MudAppBar Elevation="2">
         <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@ToggleDrawer" />
-        <MudText Typo="Typo.h5" Class="ml-3">Privatekonomi</MudText>
+        <MudText Typo="Typo.h5" Class="ml-3" Style="font-weight: 600;">Privatekonomi</MudText>
         <MudSpacer />
         @if (IsJsonFileStorage)
         {
@@ -58,13 +58,13 @@
     
     <MudDrawer @bind-Open="@_drawerOpen" 
                ClipMode="DrawerClipMode.Always" 
-               Elevation="2"
+               Elevation="3"
                Breakpoint="Breakpoint.Md"
                Variant="@DrawerVariant.Responsive">
         <NavMenu />
     </MudDrawer>
     
-    <MudMainContent Class="pa-2 pa-md-4">
+    <MudMainContent Class="pa-3 pa-md-6">
         @Body
     </MudMainContent>
 </MudLayout>
@@ -78,33 +78,61 @@
     {
         PaletteLight = new PaletteLight()
         {
-            Primary = "#594AE2",
-            Secondary = "#FF4081",
-            AppbarBackground = "#594AE2",
+            Primary = "#6366F1",          // Modern indigo
+            Secondary = "#EC4899",         // Vibrant pink
+            Tertiary = "#8B5CF6",         // Purple accent
+            AppbarBackground = "#6366F1",
+            Success = "#10B981",          // Fresh green
+            Info = "#3B82F6",             // Bright blue
+            Warning = "#F59E0B",          // Warm orange
+            Error = "#EF4444",            // Clear red
+            Dark = "#1F2937",             // Deep gray
+            Background = "#F9FAFB",       // Subtle off-white
+            BackgroundGray = "#F3F4F6",   // Light gray
+            Surface = "#FFFFFF",
+            DrawerBackground = "#FFFFFF",
+            AppbarText = "#FFFFFF",
+            TextPrimary = "#111827",      // Rich black
+            TextSecondary = "#6B7280",    // Medium gray
+            ActionDefault = "#111827",
+            Divider = "#E5E7EB",
+            DividerLight = "#F3F4F6",
         },
         PaletteDark = new PaletteDark()
         {
-            Primary = "#776BE7",
-            Secondary = "#FF4081",
-            AppbarBackground = "#27272f",
-            AppbarText = "rgba(255,255,255, 0.87)",
-            Background = "#1a1a1f",
-            BackgroundGray = "#27272f",
-            Surface = "#27272f",
-            DrawerBackground = "#27272f",
-            DrawerText = "rgba(255,255,255, 0.87)",
-            DrawerIcon = "rgba(255,255,255, 0.87)",
-            TextPrimary = "rgba(255,255,255, 0.87)",
-            TextSecondary = "rgba(255,255,255, 0.60)",
-            ActionDefault = "rgba(255,255,255, 0.87)",
-            ActionDisabled = "rgba(255,255,255, 0.26)",
+            Primary = "#818CF8",          // Lighter indigo for dark mode
+            Secondary = "#F472B6",         // Lighter pink
+            Tertiary = "#A78BFA",         // Lighter purple
+            AppbarBackground = "#1F2937",
+            AppbarText = "rgba(255,255,255, 0.95)",
+            Background = "#111827",       // Deep dark
+            BackgroundGray = "#1F2937",   // Slightly lighter dark
+            Surface = "#1F2937",
+            DrawerBackground = "#1F2937",
+            DrawerText = "rgba(255,255,255, 0.95)",
+            DrawerIcon = "rgba(255,255,255, 0.95)",
+            Success = "#34D399",          // Lighter green
+            Info = "#60A5FA",             // Lighter blue
+            Warning = "#FBBF24",          // Lighter orange
+            Error = "#F87171",            // Lighter red
+            TextPrimary = "rgba(255,255,255, 0.95)",
+            TextSecondary = "rgba(255,255,255, 0.65)",
+            ActionDefault = "rgba(255,255,255, 0.95)",
+            ActionDisabled = "rgba(255,255,255, 0.3)",
             ActionDisabledBackground = "rgba(255,255,255, 0.12)",
             Divider = "rgba(255,255,255, 0.12)",
             DividerLight = "rgba(255,255,255, 0.06)",
             TableLines = "rgba(255,255,255, 0.12)",
             LinesDefault = "rgba(255,255,255, 0.12)",
-            LinesInputs = "rgba(255,255,255, 0.3)",
+            LinesInputs = "rgba(255,255,255, 0.35)",
             TextDisabled = "rgba(255,255,255, 0.38)",
+        },
+        LayoutProperties = new LayoutProperties()
+        {
+            DefaultBorderRadius = "8px",
+            DrawerWidthLeft = "280px",
+            DrawerWidthRight = "280px",
+            AppbarHeight = "64px"
         }
     };
 
