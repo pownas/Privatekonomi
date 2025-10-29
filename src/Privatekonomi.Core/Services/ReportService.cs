@@ -415,4 +415,113 @@ public class ReportService : IReportService
 
         return snapshot;
     }
+
+    public async Task<PeriodComparisonReport> GetPeriodComparisonAsync(DateTime? referenceDate = null, int? householdId = null)
+    {
+        var refDate = referenceDate ?? DateTime.Today;
+        
+        // Define current period (current month)
+        var currentPeriodStart = new DateTime(refDate.Year, refDate.Month, 1);
+        var currentPeriodEnd = currentPeriodStart.AddMonths(1).AddDays(-1);
+        
+        // Define previous period (previous month)
+        var previousPeriodStart = currentPeriodStart.AddMonths(-1);
+        var previousPeriodEnd = previousPeriodStart.AddMonths(1).AddDays(-1);
+        
+        // Define year ago period (same month last year)
+        var yearAgoPeriodStart = currentPeriodStart.AddYears(-1);
+        var yearAgoPeriodEnd = yearAgoPeriodStart.AddMonths(1).AddDays(-1);
+
+        // Get transactions for all periods
+        var query = _context.Transactions.AsQueryable();
+        
+        if (householdId.HasValue)
+        {
+            query = query.Where(t => t.HouseholdId == householdId.Value);
+        }
+
+        var allTransactions = await query
+            .Where(t => t.Date >= yearAgoPeriodStart && t.Date <= currentPeriodEnd)
+            .ToListAsync();
+
+        // Current period
+        var currentTransactions = allTransactions.Where(t => t.Date >= currentPeriodStart && t.Date <= currentPeriodEnd).ToList();
+        var currentIncome = currentTransactions.Where(t => t.IsIncome).Sum(t => t.Amount);
+        var currentExpenses = currentTransactions.Where(t => !t.IsIncome).Sum(t => t.Amount);
+        var currentNetFlow = currentIncome - currentExpenses;
+
+        // Previous period
+        var previousTransactions = allTransactions.Where(t => t.Date >= previousPeriodStart && t.Date <= previousPeriodEnd).ToList();
+        var previousIncome = previousTransactions.Where(t => t.IsIncome).Sum(t => t.Amount);
+        var previousExpenses = previousTransactions.Where(t => !t.IsIncome).Sum(t => t.Amount);
+        var previousNetFlow = previousIncome - previousExpenses;
+
+        // Year ago period
+        var yearAgoTransactions = allTransactions.Where(t => t.Date >= yearAgoPeriodStart && t.Date <= yearAgoPeriodEnd).ToList();
+        var yearAgoIncome = yearAgoTransactions.Where(t => t.IsIncome).Sum(t => t.Amount);
+        var yearAgoExpenses = yearAgoTransactions.Where(t => !t.IsIncome).Sum(t => t.Amount);
+        var yearAgoNetFlow = yearAgoIncome - yearAgoExpenses;
+
+        // Calculate sparkline data (last 6 months of expenses)
+        var sparklineData = new List<double>();
+        for (int i = 5; i >= 0; i--)
+        {
+            var monthStart = currentPeriodStart.AddMonths(-i);
+            var monthEnd = monthStart.AddMonths(1).AddDays(-1);
+            var monthExpenses = allTransactions
+                .Where(t => !t.IsIncome && t.Date >= monthStart && t.Date <= monthEnd)
+                .Sum(t => t.Amount);
+            sparklineData.Add((double)monthExpenses);
+        }
+
+        return new PeriodComparisonReport
+        {
+            Income = CreatePeriodComparison(currentIncome, previousIncome, yearAgoIncome, true),
+            Expenses = CreatePeriodComparison(currentExpenses, previousExpenses, yearAgoExpenses, false),
+            NetFlow = CreatePeriodComparison(currentNetFlow, previousNetFlow, yearAgoNetFlow, true),
+            SparklineData = sparklineData,
+            CurrentPeriodStart = currentPeriodStart,
+            CurrentPeriodEnd = currentPeriodEnd,
+            PreviousPeriodStart = previousPeriodStart,
+            PreviousPeriodEnd = previousPeriodEnd,
+            YearAgoPeriodStart = yearAgoPeriodStart,
+            YearAgoPeriodEnd = yearAgoPeriodEnd
+        };
+    }
+
+    private PeriodComparison CreatePeriodComparison(decimal current, decimal previous, decimal yearAgo, bool higherIsBetter)
+    {
+        var changeFromPrevious = current - previous;
+        var changeFromYearAgo = current - yearAgo;
+        
+        var percentageFromPrevious = previous != 0 ? (changeFromPrevious / Math.Abs(previous)) * 100 : 0;
+        var percentageFromYearAgo = yearAgo != 0 ? (changeFromYearAgo / Math.Abs(yearAgo)) * 100 : 0;
+
+        // Determine trend direction based on whether higher values are better
+        string trendDirection;
+        if (Math.Abs(percentageFromPrevious) < 5)
+        {
+            trendDirection = "Stable";
+        }
+        else if (higherIsBetter)
+        {
+            trendDirection = changeFromPrevious > 0 ? "Improving" : "Worsening";
+        }
+        else
+        {
+            trendDirection = changeFromPrevious < 0 ? "Improving" : "Worsening";
+        }
+
+        return new PeriodComparison
+        {
+            CurrentPeriod = current,
+            PreviousPeriod = previous,
+            YearAgoPeriod = yearAgo,
+            ChangeFromPrevious = changeFromPrevious,
+            ChangeFromYearAgo = changeFromYearAgo,
+            PercentageChangeFromPrevious = percentageFromPrevious,
+            PercentageChangeFromYearAgo = percentageFromYearAgo,
+            TrendDirection = trendDirection
+        };
+    }
 }

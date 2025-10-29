@@ -10,6 +10,11 @@
                    Color="Color.Primary" 
                    Label="Visa totalkort (Inkomster, Utgifter, Netto)" />
         
+        <MudSwitch @bind-Value="@_preferences.ShowPeriodComparison" 
+                   Color="Color.Primary" 
+                   Label="Visa periodjämförelse (Denna vs Förra månaden)" 
+                   Class="mt-2" />
+        
         <MudSwitch @bind-Value="@_preferences.ShowCashFlowChart" 
                    Color="Color.Primary" 
                    Label="Visa kassaflödesdiagram" 

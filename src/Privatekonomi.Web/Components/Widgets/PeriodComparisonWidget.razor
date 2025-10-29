@@ -1,0 +1,174 @@
+@using Privatekonomi.Core.Services
+
+@if (ComparisonData != null)
+{
+    <MudPaper Class="pa-4" Elevation="2">
+        <MudText Typo="Typo.h6" Class="mb-3">
+            <MudIcon Icon="@Icons.Material.Filled.CompareArrows" Class="mr-2" />
+            Jämförelse - Denna Period vs Tidigare
+        </MudText>
+        
+        <MudGrid Spacing="2">
+            @* Expenses Comparison *@
+            <MudItem xs="12" md="4">
+                <MudCard Outlined="true" Class="comparison-card">
+                    <MudCardContent>
+                        <MudText Typo="Typo.subtitle2" Color="Color.Secondary">Utgifter denna månad</MudText>
+                        <MudText Typo="Typo.h5" Class="my-2">
+                            @ComparisonData.Expenses.CurrentPeriod.ToString("C", new System.Globalization.CultureInfo("sv-SE"))
+                        </MudText>
+                        
+                        <MudDivider Class="my-2" />
+                        
+                        <div class="d-flex justify-space-between align-center mb-1">
+                            <MudText Typo="Typo.body2">Förra månaden:</MudText>
+                            <MudText Typo="Typo.body2">
+                                @ComparisonData.Expenses.PreviousPeriod.ToString("C", new System.Globalization.CultureInfo("sv-SE"))
+                            </MudText>
+                        </div>
+                        
+                        <div class="d-flex justify-space-between align-center">
+                            <MudText Typo="Typo.body2">Förändring:</MudText>
+                            <MudChip T="string"
+                                     Size="Size.Small" 
+                                     Color="@GetComparisonColor(ComparisonData.Expenses.TrendDirection)"
+                                     Icon="@GetTrendIcon(ComparisonData.Expenses.PercentageChangeFromPrevious)">
+                                @ComparisonData.Expenses.PercentageChangeFromPrevious.ToString("+0.0;-0.0;0")% @GetTrendText(ComparisonData.Expenses.TrendDirection)
+                            </MudChip>
+                        </div>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            
+            @* Income Comparison *@
+            <MudItem xs="12" md="4">
+                <MudCard Outlined="true" Class="comparison-card">
+                    <MudCardContent>
+                        <MudText Typo="Typo.subtitle2" Color="Color.Secondary">Inkomster denna månad</MudText>
+                        <MudText Typo="Typo.h5" Class="my-2">
+                            @ComparisonData.Income.CurrentPeriod.ToString("C", new System.Globalization.CultureInfo("sv-SE"))
+                        </MudText>
+                        
+                        <MudDivider Class="my-2" />
+                        
+                        <div class="d-flex justify-space-between align-center mb-1">
+                            <MudText Typo="Typo.body2">Förra månaden:</MudText>
+                            <MudText Typo="Typo.body2">
+                                @ComparisonData.Income.PreviousPeriod.ToString("C", new System.Globalization.CultureInfo("sv-SE"))
+                            </MudText>
+                        </div>
+                        
+                        <div class="d-flex justify-space-between align-center">
+                            <MudText Typo="Typo.body2">Förändring:</MudText>
+                            <MudChip T="string"
+                                     Size="Size.Small" 
+                                     Color="@GetComparisonColor(ComparisonData.Income.TrendDirection)"
+                                     Icon="@GetTrendIcon(ComparisonData.Income.PercentageChangeFromPrevious)">
+                                @ComparisonData.Income.PercentageChangeFromPrevious.ToString("+0.0;-0.0;0")% @GetTrendText(ComparisonData.Income.TrendDirection)
+                            </MudChip>
+                        </div>
+                        
+                        @* Year-over-year comparison *@
+                        <div class="mt-3">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                Samma period förra året: @ComparisonData.Income.YearAgoPeriod.ToString("C", new System.Globalization.CultureInfo("sv-SE"))
+                            </MudText>
+                            <MudText Typo="Typo.caption" Color="@GetYearComparisonColor(ComparisonData.Income.PercentageChangeFromYearAgo, true)">
+                                År-mot-år: @ComparisonData.Income.PercentageChangeFromYearAgo.ToString("+0.0;-0.0;0")%
+                            </MudText>
+                        </div>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            
+            @* Net Flow Comparison *@
+            <MudItem xs="12" md="4">
+                <MudCard Outlined="true" Class="comparison-card">
+                    <MudCardContent>
+                        <MudText Typo="Typo.subtitle2" Color="Color.Secondary">Nettoresultat denna månad</MudText>
+                        <MudText Typo="Typo.h5" Class="my-2" Color="@(ComparisonData.NetFlow.CurrentPeriod >= 0 ? Color.Success : Color.Error)">
+                            @ComparisonData.NetFlow.CurrentPeriod.ToString("C", new System.Globalization.CultureInfo("sv-SE"))
+                        </MudText>
+                        
+                        <MudDivider Class="my-2" />
+                        
+                        <div class="d-flex justify-space-between align-center mb-1">
+                            <MudText Typo="Typo.body2">Förra månaden:</MudText>
+                            <MudText Typo="Typo.body2">
+                                @ComparisonData.NetFlow.PreviousPeriod.ToString("C", new System.Globalization.CultureInfo("sv-SE"))
+                            </MudText>
+                        </div>
+                        
+                        <div class="d-flex justify-space-between align-center">
+                            <MudText Typo="Typo.body2">Förändring:</MudText>
+                            <MudChip T="string"
+                                     Size="Size.Small" 
+                                     Color="@GetComparisonColor(ComparisonData.NetFlow.TrendDirection)"
+                                     Icon="@GetTrendIcon(ComparisonData.NetFlow.PercentageChangeFromPrevious)">
+                                @ComparisonData.NetFlow.PercentageChangeFromPrevious.ToString("+0.0;-0.0;0")% @GetTrendText(ComparisonData.NetFlow.TrendDirection)
+                            </MudChip>
+                        </div>
+                        
+                        @* Year-over-year comparison *@
+                        <div class="mt-3">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                Samma period förra året: @ComparisonData.NetFlow.YearAgoPeriod.ToString("C", new System.Globalization.CultureInfo("sv-SE"))
+                            </MudText>
+                            <MudText Typo="Typo.caption" Color="@GetYearComparisonColor(ComparisonData.NetFlow.PercentageChangeFromYearAgo, true)">
+                                År-mot-år: @ComparisonData.NetFlow.PercentageChangeFromYearAgo.ToString("+0.0;-0.0;0")%
+                            </MudText>
+                        </div>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+}
+
+@code {
+    [Parameter]
+    public PeriodComparisonReport? ComparisonData { get; set; }
+    
+    [Parameter]
+    public bool ShowSparkline { get; set; } = true;
+
+    private Color GetComparisonColor(string trendDirection)
+    {
+        return trendDirection switch
+        {
+            "Improving" => Color.Success,
+            "Worsening" => Color.Error,
+            _ => Color.Default
+        };
+    }
+    
+    private Color GetYearComparisonColor(decimal percentage, bool higherIsBetter)
+    {
+        if (Math.Abs(percentage) < 5) return Color.Default;
+        
+        if (higherIsBetter)
+        {
+            return percentage > 0 ? Color.Success : Color.Error;
+        }
+        else
+        {
+            return percentage < 0 ? Color.Success : Color.Error;
+        }
+    }
+
+    private string GetTrendIcon(decimal percentage)
+    {
+        if (Math.Abs(percentage) < 5) return Icons.Material.Filled.TrendingFlat;
+        return percentage > 0 ? Icons.Material.Filled.TrendingUp : Icons.Material.Filled.TrendingDown;
+    }
+    
+    private string GetTrendText(string trendDirection)
+    {
+        return trendDirection switch
+        {
+            "Improving" => "(Bra!)",
+            "Worsening" => "(Försämring)",
+            _ => ""
+        };
+    }
+}
