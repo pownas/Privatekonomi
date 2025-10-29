@@ -16,7 +16,17 @@ En privatekonomi-applikation byggd med .NET 9, Blazor Server och MudBlazor för 
   - Transaktionshistorik och notifieringar
   - Rollbaserad åtkomstkontroll (Owner/Participant)
   - Se [detaljerad dokumentation](wiki/README_Gemensamma_Sparmal.md)
-- **Investeringshantering**: Hantera aktier, fonder och certifikat med översikt över värde och avkastning
+- **Investeringshantering**: Hantera aktier, fonder, ETF, certifikat, krypto och P2P-lån med översikt över värde och avkastning
+  - Stöd för ISK, KF, AF och Depå
+  - Aggregering per kontotyp och investeringstyp
+  - Import från Avanza Bank
+  - CSV-export för analys
+- **Pensionshantering**: ⭐ NYT!
+  - Spåra pensioner från flera leverantörer (AMF, Alecta, SEB, etc.)
+  - Tjänstepension, privat pension och allmän pension
+  - Avkastningsberäkning och månatliga inbetalningar
+  - Rekommendation att hämta data från minpension.se
+  - Se [Investeringar & Pension guide](docs/INVESTMENT_PENSION_GUIDE.md)
 - **Automatisk kursuppdatering**: Uppdatera aktiekurser via Yahoo Finance API med ett knapptryck
 - **Kategorisystem**: Förkonfigurerade kategorier med färgkodning och hierarkisk struktur
   - **BAS 2025-baserad kontoplan**: Kontonummer inspirerade av svensk BAS-standard för strukturerad bokföring
@@ -398,6 +408,7 @@ Se [STORAGE_GUIDE.md](docs/STORAGE_GUIDE.md) för detaljerad information om:
 - **[PSD2_API_GUIDE.md](wiki/PSD2_API_GUIDE.md)**: Guide för automatisk bankimport via PSD2-API (Swedbank, Avanza, ICA Banken)
 - **[AVANZA_IMPORT_GUIDE.md](wiki/AVANZA_IMPORT_GUIDE.md)**: Guide för import av investeringar från Avanza Bank
 - **[STOCK_PRICE_API_GUIDE.md](wiki/STOCK_PRICE_API_GUIDE.md)**: Guide för automatisk uppdatering av aktiekurser via API
+- **[INVESTMENT_PENSION_GUIDE.md](docs/INVESTMENT_PENSION_GUIDE.md)**: ⭐ NYT! Guide för investeringar och pensionshantering
 - **[BUDGET_GUIDE.md](wiki/BUDGET_GUIDE.md)**: Guide för budgethantering
 - **[AUTOMATIC_CATEGORIZATION.md](docs/AUTOMATIC_CATEGORIZATION.md)**: Guide för automatisk kategorisering av transaktioner
 - **[FAMILY_COLLABORATION_GUIDE.md](wiki/FAMILY_COLLABORATION_GUIDE.md)**: Guide för familjesamarbete, barnkonton och veckopeng

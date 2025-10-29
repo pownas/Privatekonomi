@@ -113,6 +113,8 @@ builder.Services.AddScoped<ICurrencyAccountService, CurrencyAccountService>();
 builder.Services.AddScoped<IReceiptService, ReceiptService>();
 builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
 builder.Services.AddScoped<IBillService, BillService>();
+builder.Services.AddScoped<IPensionService, PensionService>();
+builder.Services.AddScoped<IDividendService, DividendService>();
 builder.Services.AddScoped<ThemeService>();
 builder.Services.AddScoped<DashboardPreferencesService>();
 

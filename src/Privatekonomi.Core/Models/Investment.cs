@@ -4,7 +4,7 @@ public class Investment : ITemporalEntity
 {
     public int InvestmentId { get; set; }
     public string Name { get; set; } = string.Empty;
-    public string Type { get; set; } = string.Empty; // "Aktie", "Fond", "Certifikat"
+    public string Type { get; set; } = string.Empty; // "Aktie", "Fond", "ETF", "Certifikat", "Krypto", "P2P-lån"
     public decimal Quantity { get; set; }
     public decimal PurchasePrice { get; set; }
     public decimal CurrentPrice { get; set; }
