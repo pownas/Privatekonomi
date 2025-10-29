@@ -494,8 +494,8 @@ public class ReportService : IReportService
         var changeFromPrevious = current - previous;
         var changeFromYearAgo = current - yearAgo;
         
-        var percentageFromPrevious = previous != 0 ? (changeFromPrevious / Math.Abs(previous)) * 100 : 0;
-        var percentageFromYearAgo = yearAgo != 0 ? (changeFromYearAgo / Math.Abs(yearAgo)) * 100 : 0;
+        var percentageFromPrevious = previous != 0 ? (changeFromPrevious / previous) * 100 : 0;
+        var percentageFromYearAgo = yearAgo != 0 ? (changeFromYearAgo / yearAgo) * 100 : 0;
 
         // Determine trend direction based on whether higher values are better
         string trendDirection;
