@@ -110,6 +110,8 @@ builder.Services.AddScoped<IDataImportService, DataImportService>();
 builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<ISalaryHistoryService, SalaryHistoryService>();
 builder.Services.AddScoped<ICurrencyAccountService, CurrencyAccountService>();
+builder.Services.AddScoped<IPensionService, PensionService>();
+builder.Services.AddScoped<IDividendService, DividendService>();
 builder.Services.AddScoped<ThemeService>();
 builder.Services.AddScoped<DashboardPreferencesService>();
 
