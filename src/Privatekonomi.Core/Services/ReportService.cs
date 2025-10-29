@@ -223,9 +223,14 @@ public class ReportService : IReportService
                     loansQuery = loansQuery.Where(l => l.UserId == userId);
                 }
 
-                var investmentValue = await investmentsQuery.SumAsync(inv => inv.TotalValue);
-                var assetValue = await assetsQuery.SumAsync(a => a.CurrentValue);
-                var loanValue = await loansQuery.SumAsync(l => l.CurrentBalance);
+                // Materialize the queries before using computed properties
+                var investments = await investmentsQuery.ToListAsync();
+                var assets = await assetsQuery.ToListAsync();
+                var loans = await loansQuery.ToListAsync();
+
+                var investmentValue = investments.Sum(inv => inv.TotalValue);
+                var assetValue = assets.Sum(a => a.CurrentValue);
+                var loanValue = loans.Sum(l => l.CurrentBalance);
 
                 var totalAssets = investmentValue + assetValue;
                 var totalLiabilities = loanValue;
