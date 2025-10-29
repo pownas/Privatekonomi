@@ -1321,9 +1321,6 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
             entity.HasIndex(e => e.BillId);
             entity.HasIndex(e => e.ReminderDate);
             entity.HasIndex(e => e.IsSent);
-            
-            entity.HasIndex(e => e.UserId);
-            entity.HasIndex(e => e.IsActive);
         });
         
         // PortfolioAllocation configuration
