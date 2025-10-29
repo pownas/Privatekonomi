@@ -81,6 +81,45 @@
             </MudItem>
         </MudGrid>
 
+        <MudText Typo="Typo.h6" Class="mb-3 mt-4">Kvittobild</MudText>
+        <MudGrid>
+            <MudItem xs="12">
+                <MudFileUpload T="IBrowserFile" FilesChanged="OnReceiptImageSelected" Accept="image/*">
+                    <ActivatorContent>
+                        <MudPaper Outlined="true" Class="pa-4 d-flex flex-column align-center justify-center" Style="min-height: 150px; cursor: pointer;">
+                            <MudIcon Icon="@Icons.Material.Filled.Image" Size="Size.Large" Class="mb-2" />
+                            <MudText Typo="Typo.body1">Ladda upp kvittobild</MudText>
+                            <MudText Typo="Typo.body2" Class="mt-2">eller dra och släpp här</MudText>
+                            <MudButton Variant="Variant.Text" Color="Color.Primary" Class="mt-2">
+                                Välj bild
+                            </MudButton>
+                        </MudPaper>
+                    </ActivatorContent>
+                </MudFileUpload>
+            </MudItem>
+            @if (_selectedReceiptImage != null)
+            {
+                <MudItem xs="12">
+                    <MudAlert Severity="Severity.Info">
+                        Vald bild: <strong>@_selectedReceiptImage.Name</strong> (@FormatFileSize(_selectedReceiptImage.Size))
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" 
+                                       OnClick="ClearReceiptImage" Class="ml-2" />
+                    </MudAlert>
+                </MudItem>
+            }
+            @if (!string.IsNullOrEmpty(_formReceipt.ImagePath))
+            {
+                <MudItem xs="12">
+                    <MudPaper Class="pa-3" Elevation="1">
+                        <MudText Typo="Typo.body2" Class="mb-2">Nuvarande bild:</MudText>
+                        <MudImage Src="@GetImageUrl(_formReceipt.ImagePath)" Alt="Kvittobild" Style="max-width: 300px; max-height: 300px;" Class="rounded" />
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" 
+                                       OnClick="DeleteCurrentImage" Class="ml-2" />
+                    </MudPaper>
+                </MudItem>
+            }
+        </MudGrid>
+
         <MudText Typo="Typo.h6" Class="mb-3 mt-4">Radposter</MudText>
         @foreach (var item in _formLineItems)
         {
@@ -237,6 +276,8 @@ else
     private decimal _totalAmount = 0;
     private int _thisMonthCount = 0;
     private string _searchString = string.Empty;
+    private IBrowserFile? _selectedReceiptImage = null;
+    private const long MaxFileSize = 10 * 1024 * 1024; // 10 MB
 
     protected override async Task OnInitializedAsync()
     {
@@ -270,6 +311,7 @@ else
             };
             _formReceiptDate = DateTime.Today;
             _formLineItems = new();
+            _selectedReceiptImage = null;
             _editingReceipt = null;
         }
     }
@@ -288,7 +330,8 @@ else
             ReceiptType = receipt.ReceiptType,
             ReceiptNumber = receipt.ReceiptNumber,
             PaymentMethod = receipt.PaymentMethod,
-            Notes = receipt.Notes
+            Notes = receipt.Notes,
+            ImagePath = receipt.ImagePath
         };
         _formReceiptDate = receipt.ReceiptDate;
         _formLineItems = receipt.ReceiptLineItems.Select(li => new ReceiptLineItem
@@ -300,6 +343,7 @@ else
             TotalPrice = li.TotalPrice,
             CategoryId = li.CategoryId
         }).ToList();
+        _selectedReceiptImage = null;
         _showCreateForm = true;
     }
 
@@ -337,6 +381,16 @@ else
 
         try
         {
+            // Upload image if a new one was selected
+            if (_selectedReceiptImage != null)
+            {
+                var fileName = await SaveReceiptImageAsync();
+                if (fileName != null)
+                {
+                    _formReceipt.ImagePath = fileName;
+                }
+            }
+
             if (_editingReceipt != null)
             {
                 await ReceiptService.UpdateReceiptAsync(_formReceipt);
@@ -349,6 +403,7 @@ else
             }
 
             _showCreateForm = false;
+            _selectedReceiptImage = null;
             await LoadData();
         }
         catch (Exception ex)
@@ -427,4 +482,92 @@ else
             _ => receiptType
         };
     }
+
+    private void OnReceiptImageSelected(IBrowserFile file)
+    {
+        if (file.Size > MaxFileSize)
+        {
+            Snackbar.Add($"Filen är för stor. Max storlek är {MaxFileSize / 1024 / 1024} MB.", Severity.Error);
+            return;
+        }
+
+        // Validate file type
+        var allowedTypes = new[] { "image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp" };
+        if (!allowedTypes.Contains(file.ContentType.ToLower()))
+        {
+            Snackbar.Add("Endast bildfiler är tillåtna (JPEG, PNG, GIF, WebP).", Severity.Error);
+            return;
+        }
+
+        _selectedReceiptImage = file;
+    }
+
+    private void ClearReceiptImage()
+    {
+        _selectedReceiptImage = null;
+    }
+
+    private void DeleteCurrentImage()
+    {
+        _formReceipt.ImagePath = null;
+    }
+
+    private string GetImageUrl(string imagePath)
+    {
+        if (string.IsNullOrEmpty(imagePath))
+            return string.Empty;
+        
+        // If it's already a full URL, return it
+        if (imagePath.StartsWith("http://") || imagePath.StartsWith("https://"))
+            return imagePath;
+        
+        // Otherwise construct the URL from the uploads path
+        return $"/uploads/receipts/{imagePath}";
+    }
+
+    private string FormatFileSize(long bytes)
+    {
+        string[] sizes = { "B", "KB", "MB", "GB" };
+        double len = bytes;
+        int order = 0;
+        while (len >= 1024 && order < sizes.Length - 1)
+        {
+            order++;
+            len = len / 1024;
+        }
+        return $"{len:0.##} {sizes[order]}";
+    }
+
+    private async Task<string?> SaveReceiptImageAsync()
+    {
+        if (_selectedReceiptImage == null)
+            return null;
+
+        try
+        {
+            // Create uploads directory if it doesn't exist
+            var uploadsPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "receipts");
+            Directory.CreateDirectory(uploadsPath);
+
+            // Generate unique filename
+            var extension = Path.GetExtension(_selectedReceiptImage.Name);
+            var fileName = $"{Guid.NewGuid()}{extension}";
+            var filePath = Path.Combine(uploadsPath, fileName);
+
+            // Save the file
+            using (var stream = _selectedReceiptImage.OpenReadStream(MaxFileSize))
+            using (var fileStream = new FileStream(filePath, FileMode.Create))
+            {
+                await stream.CopyToAsync(fileStream);
+            }
+
+            return fileName;
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Fel vid uppladdning av bild: {ex.Message}", Severity.Error);
+            return null;
+        }
+    }
 }
+

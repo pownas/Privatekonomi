@@ -423,3 +423,6 @@ tests/playwright/test-results/
 tests/playwright/playwright-report/
 tests/playwright/.cache/
 **/playwright/.cache/
+
+# Uploaded files
+src/Privatekonomi.Web/wwwroot/uploads/
