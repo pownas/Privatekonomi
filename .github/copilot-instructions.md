@@ -184,6 +184,7 @@ Services are registered in `Program.cs` of each project. Follow existing pattern
 - Technical docs: Can be English or Swedish (in `docs/`)
 - Code comments: English or Swedish (prefer Swedish for business domain concepts)
 - API documentation: XML comments in English
+- Try to always add printscreens of the new features in PR. 
 
 ## Testing Requirements
 
