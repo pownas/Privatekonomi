@@ -75,6 +75,15 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
     // Savings Challenges
     public DbSet<SavingsChallenge> SavingsChallenges { get; set; }
     public DbSet<SavingsChallengeProgress> SavingsChallengeProgress { get; set; }
+    
+    // Social Features
+    public DbSet<GoalShare> GoalShares { get; set; }
+    public DbSet<SavingsGroup> SavingsGroups { get; set; }
+    public DbSet<SavingsGroupMember> SavingsGroupMembers { get; set; }
+    public DbSet<GroupComment> GroupComments { get; set; }
+    public DbSet<CommentLike> CommentLikes { get; set; }
+    public DbSet<GroupGoal> GroupGoals { get; set; }
+    public DbSet<UserPrivacySettings> UserPrivacySettings { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
