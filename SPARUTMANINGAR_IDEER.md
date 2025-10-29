@@ -18,6 +18,30 @@ Detta dokument innehåller kreativa sparmålsutmaningar utöver de redan listade
 
 ---
 
+## Snabböversikt - Alla 17 Utmaningar
+
+| # | Emoji | Namn | Längd | Svårighetsgrad | Besparing |
+|---|-------|------|-------|----------------|-----------|
+| 1 | 🛍️ | No Spend Weekend | 2 dagar | ⭐⭐ | 500-2000 kr |
+| 2 | 🍱 | Matlåda varje dag | 14 dagar | ⭐⭐⭐ | 1000-1500 kr |
+| 3 | 🚴 | Endast cykel/kollektiv | 14 dagar | ⭐⭐⭐ | 500-2000 kr |
+| 4 | 📦 | Sälja 5 saker | 30 dagar | ⭐⭐⭐ | 500-5000 kr |
+| 5 | 🪙 | Växelpengsburken | 30 dagar | ⭐ | 200-800 kr |
+| 6 | 🛒 | Noll spontanhandel | 30 dagar | ⭐⭐⭐⭐ | 1000-3000 kr |
+| 7 | 📺 | Strömnings-detox | 30 dagar | ⭐⭐⭐ | 200-800 kr |
+| 8 | 🍷 | Alkoholfri månad | 30 dagar | ⭐⭐⭐/⭐⭐⭐⭐ | 1000-5000 kr |
+| 9 | 🎁 | Gåvofri period | 60 dagar | ⭐⭐⭐ | 500-2000 kr |
+| 10 | 🏋️ | Hemma-gymmet | 90 dagar | ⭐⭐⭐ | 1500-3000 kr |
+| 11 | 💰 | Spara för specifikt mål | 90-180 dagar | ⭐⭐⭐⭐ | 5000-50000 kr |
+| 12 | 🏠 | Hushålls-challenge | 90-180 dagar | ⭐⭐⭐⭐ | 10000-100000 kr |
+| 13 | 🌍 | Klimatsmart-utmaning | 90 dagar | ⭐⭐⭐⭐ | 2000-6000 kr |
+| 14 | 📈 | Progressivt sparande | 180 dagar | ⭐⭐⭐⭐⭐ | 15000-50000 kr |
+| 15 | 🎲 | Slump-spararen | 90 dagar | ⭐⭐ | 1000-3000 kr |
+| 16 | 👥 | Spargruppen | 60 dagar | ⭐⭐⭐ | Varierande |
+| 17 | 🥇 | Leaderboard-tävling | 30 dagar/mån | ⭐⭐⭐⭐ | Varierande |
+
+---
+
 ## Nya Sparmålsutmaningar
 
 ### 📱 Kortsiktiga Utmaningar (1-4 veckor)
