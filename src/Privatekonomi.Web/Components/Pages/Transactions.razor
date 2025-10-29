@@ -7,6 +7,7 @@
 @inject ISnackbar Snackbar
 @inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime
+@implements IDisposable
 
 <PageTitle>Transaktioner - Privatekonomi</PageTitle>
 
@@ -110,7 +111,7 @@
                 <MudTh>Åtgärder</MudTh>
             </HeaderContent>
             <RowTemplate>
-                <MudTd DataLabel="Datum">@context.Date.ToString("yyyy-MM-dd")</MudTd>
+                <MudTd DataLabel="Datum" id="@($"transaction-row-{context.TransactionId}")" class="transaction-row-swipeable">@context.Date.ToString("yyyy-MM-dd")</MudTd>
                 <MudTd DataLabel="Beskrivning">
                     <div class="d-flex align-center">
                         @context.Description
@@ -214,10 +215,67 @@
     private string _searchString = "";
     private int? _expandedTransactionId = null;
     private int? _selectedHouseholdId = null;
+    private DotNetObjectReference<Transactions>? _dotNetHelper;
 
     protected override async Task OnInitializedAsync()
     {
         await LoadData();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _dotNetHelper = DotNetObjectReference.Create(this);
+            await JSRuntime.InvokeVoidAsync("mobileGestureHandler.init", _dotNetHelper);
+            await AttachGestureListeners();
+        }
+    }
+
+    private async Task AttachGestureListeners()
+    {
+        // Attach swipe listeners to transaction rows
+        foreach (var transaction in _transactions)
+        {
+            var elementId = $"transaction-row-{transaction.TransactionId}";
+            await JSRuntime.InvokeVoidAsync("eval", 
+                $@"(function() {{
+                    var element = document.getElementById('{elementId}');
+                    if (element) {{
+                        window.mobileGestureHandler.attachSwipeListeners(element, {transaction.TransactionId});
+                    }}
+                }})()");
+        }
+    }
+
+    [JSInvokable]
+    public async Task HandleSwipeGesture(string direction, int transactionId)
+    {
+        var transaction = _transactions.FirstOrDefault(t => t.TransactionId == transactionId);
+        if (transaction == null) return;
+
+        if (direction == "left")
+        {
+            // Swipe left - delete
+            await DeleteTransaction(transactionId);
+        }
+        else if (direction == "right")
+        {
+            // Swipe right - edit
+            await EditTransaction(transaction);
+        }
+    }
+
+    [JSInvokable]
+    public async Task HandlePullToRefresh()
+    {
+        await LoadData();
+        Snackbar.Add("Transaktioner uppdaterade", Severity.Success);
+    }
+
+    public void Dispose()
+    {
+        _dotNetHelper?.Dispose();
     }
 
     private async Task LoadData()
