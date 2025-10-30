@@ -1,0 +1,192 @@
+@using Privatekonomi.Core.Models
+
+<MudDialog>
+    <DialogContent>
+        @if (Receipt != null)
+        {
+            <MudGrid>
+                <!-- Kvittobild -->
+                @if (!string.IsNullOrEmpty(Receipt.ImagePath))
+                {
+                    <MudItem xs="12" md="5">
+                        <MudPaper Class="pa-3" Elevation="2">
+                            <MudText Typo="Typo.h6" Class="mb-3">Kvittobild</MudText>
+                            <MudImage Src="@GetImageUrl(Receipt.ImagePath)" 
+                                     Alt="Kvittobild" 
+                                     ObjectFit="ObjectFit.Contain"
+                                     Class="rounded" 
+                                     Style="max-width: 100%; max-height: 500px; width: auto; height: auto; display: block; margin: 0 auto;" />
+                        </MudPaper>
+                    </MudItem>
+                }
+
+                <!-- Kvittodetaljer -->
+                <MudItem xs="12" md="@(string.IsNullOrEmpty(Receipt.ImagePath) ? 12 : 7)">
+                    <MudPaper Class="pa-3" Elevation="2">
+                        <MudText Typo="Typo.h6" Class="mb-3">Detaljer</MudText>
+                        
+                        <MudGrid Spacing="2">
+                            <MudItem xs="6">
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">Butik/Återförsäljare</MudText>
+                                <MudText Typo="Typo.body1" Class="font-weight-medium">@Receipt.Merchant</MudText>
+                            </MudItem>
+                            
+                            <MudItem xs="6">
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">Datum</MudText>
+                                <MudText Typo="Typo.body1" Class="font-weight-medium">@Receipt.ReceiptDate.ToString("yyyy-MM-dd")</MudText>
+                            </MudItem>
+                            
+                            <MudItem xs="6">
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">Totalt belopp</MudText>
+                                <MudText Typo="Typo.h6" Color="Color.Primary">@Receipt.TotalAmount.ToString("C", new System.Globalization.CultureInfo("sv-SE"))</MudText>
+                            </MudItem>
+                            
+                            <MudItem xs="6">
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">Kvittotyp</MudText>
+                                <MudChip T="string" Size="Size.Small" Color="@GetReceiptTypeColor(Receipt.ReceiptType)">
+                                    @GetReceiptTypeLabel(Receipt.ReceiptType)
+                                </MudChip>
+                            </MudItem>
+                            
+                            @if (!string.IsNullOrEmpty(Receipt.ReceiptNumber))
+                            {
+                                <MudItem xs="6">
+                                    <MudText Typo="Typo.body2" Color="Color.Secondary">Kvittonummer</MudText>
+                                    <MudText Typo="Typo.body1" Class="font-weight-medium">@Receipt.ReceiptNumber</MudText>
+                                </MudItem>
+                            }
+                            
+                            @if (!string.IsNullOrEmpty(Receipt.PaymentMethod))
+                            {
+                                <MudItem xs="6">
+                                    <MudText Typo="Typo.body2" Color="Color.Secondary">Betalningsmetod</MudText>
+                                    <MudText Typo="Typo.body1" Class="font-weight-medium">@Receipt.PaymentMethod</MudText>
+                                </MudItem>
+                            }
+                            
+                            @if (!string.IsNullOrEmpty(Receipt.Notes))
+                            {
+                                <MudItem xs="12">
+                                    <MudText Typo="Typo.body2" Color="Color.Secondary">Anteckningar</MudText>
+                                    <MudText Typo="Typo.body1" Class="font-weight-medium">@Receipt.Notes</MudText>
+                                </MudItem>
+                            }
+                        </MudGrid>
+                    </MudPaper>
+                    
+                    <!-- Radposter -->
+                    @if (Receipt.ReceiptLineItems.Any())
+                    {
+                        <MudPaper Class="pa-3 mt-3" Elevation="2">
+                            <MudText Typo="Typo.h6" Class="mb-3">Radposter (@Receipt.ReceiptLineItems.Count st)</MudText>
+                            
+                            <MudSimpleTable Striped="true" Dense="true" Hover="true">
+                                <thead>
+                                    <tr>
+                                        <th>Beskrivning</th>
+                                        <th style="text-align: right;">Antal</th>
+                                        <th style="text-align: right;">A-pris</th>
+                                        <th style="text-align: right;">Totalt</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in Receipt.ReceiptLineItems)
+                                    {
+                                        <tr>
+                                            <td>
+                                                @item.Description
+                                                @if (item.Category != null)
+                                                {
+                                                    <MudChip T="string" Size="Size.Small" Style="@($"background-color: {item.Category.Color}; color: white;")" Class="ml-2">
+                                                        @item.Category.Name
+                                                    </MudChip>
+                                                }
+                                            </td>
+                                            <td style="text-align: right;">@item.Quantity.ToString("N2")</td>
+                                            <td style="text-align: right;">@item.UnitPrice.ToString("C", _svCulture)</td>
+                                            <td style="text-align: right;">
+                                                <strong>@item.TotalPrice.ToString("C", _svCulture)</strong>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td colspan="3" style="text-align: right;"><strong>Summa:</strong></td>
+                                        <td style="text-align: right;">
+                                            <MudText Typo="Typo.h6" Color="Color.Primary">
+                                                @Receipt.ReceiptLineItems.Sum(i => i.TotalPrice).ToString("C", _svCulture)
+                                            </MudText>
+                                        </td>
+                                    </tr>
+                                </tfoot>
+                            </MudSimpleTable>
+                        </MudPaper>
+                    }
+                    
+                    @if (!string.IsNullOrEmpty(Receipt.OcrText))
+                    {
+                        <MudPaper Class="pa-3 mt-3" Elevation="2">
+                            <MudText Typo="Typo.h6" Class="mb-2">OCR-text</MudText>
+                            <MudText Typo="Typo.body2" Style="white-space: pre-wrap; font-family: monospace;">@Receipt.OcrText</MudText>
+                        </MudPaper>
+                    }
+                </MudItem>
+            </MudGrid>
+        }
+        else
+        {
+            <MudAlert Severity="Severity.Warning">Kvitto saknas eller kunde inte laddas.</MudAlert>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Close" Color="Color.Primary" Variant="Variant.Filled">Stäng</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    public required IMudDialogInstance MudDialog { get; set; }
+
+    [Parameter]
+    public Receipt? Receipt { get; set; }
+
+    private readonly System.Globalization.CultureInfo _svCulture = new("sv-SE");
+
+    private string GetImageUrl(string imagePath)
+    {
+        if (string.IsNullOrEmpty(imagePath))
+            return string.Empty;
+        
+        // If it's already a full URL, return it
+        if (imagePath.StartsWith("http://") || imagePath.StartsWith("https://"))
+            return imagePath;
+        
+        // Otherwise construct the URL from the uploads path
+        return $"/uploads/receipts/{imagePath}";
+    }
+
+    private Color GetReceiptTypeColor(string receiptType)
+    {
+        return receiptType switch
+        {
+            "Physical" => Color.Default,
+            "E-Receipt" => Color.Info,
+            "Scanned" => Color.Success,
+            _ => Color.Default
+        };
+    }
+
+    private string GetReceiptTypeLabel(string receiptType)
+    {
+        return receiptType switch
+        {
+            "Physical" => "Fysiskt",
+            "E-Receipt" => "E-kvitto",
+            "Scanned" => "Skannat",
+            _ => receiptType
+        };
+    }
+
+    private void Close() => MudDialog.Close();
+}
