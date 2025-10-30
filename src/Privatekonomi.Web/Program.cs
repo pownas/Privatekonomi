@@ -121,6 +121,7 @@ builder.Services.AddScoped<INotificationPreferenceService, NotificationPreferenc
 builder.Services.AddScoped<ILifeTimelinePlannerService, LifeTimelinePlannerService>();
 builder.Services.AddScoped<ISavingsChallengeService, SavingsChallengeService>();
 builder.Services.AddScoped<IKonsumentverketComparisonService, KonsumentverketComparisonService>();
+builder.Services.AddScoped<IKalpService, KalpService>();
 builder.Services.AddScoped<ThemeService>();
 builder.Services.AddScoped<DashboardPreferencesService>();
 
