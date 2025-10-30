@@ -1,0 +1,258 @@
+@page "/notifications"
+@using Privatekonomi.Core.Models
+@using Privatekonomi.Core.Services
+@inject INotificationService NotificationService
+@inject ICurrentUserService CurrentUserService
+@inject NavigationManager NavigationManager
+
+<PageTitle>Notifikationer</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+    <MudText Typo="Typo.h4" GutterBottom="true">
+        <MudIcon Icon="@Icons.Material.Filled.Notifications" Class="mr-2" />
+        Notifikationer
+    </MudText>
+
+    <MudPaper Class="pa-4 mt-4">
+        <div class="d-flex justify-space-between align-center mb-4">
+            <MudText Typo="Typo.h6">
+                @if (_showUnreadOnly)
+                {
+                    <text>Olästa notifikationer (@_unreadCount)</text>
+                }
+                else
+                {
+                    <text>Alla notifikationer</text>
+                }
+            </MudText>
+            <div>
+                <MudButton OnClick="ToggleUnreadFilter" 
+                           Color="Color.Primary" 
+                           Variant="Variant.Outlined" 
+                           Size="Size.Small"
+                           Class="mr-2">
+                    @if (_showUnreadOnly)
+                    {
+                        <text>Visa alla</text>
+                    }
+                    else
+                    {
+                        <text>Visa olästa</text>
+                    }
+                </MudButton>
+                @if (_notifications.Any(n => !n.IsRead))
+                {
+                    <MudButton OnClick="MarkAllAsRead" 
+                               Color="Color.Primary" 
+                               Variant="Variant.Filled" 
+                               Size="Size.Small"
+                               StartIcon="@Icons.Material.Filled.DoneAll">
+                        Markera alla som lästa
+                    </MudButton>
+                }
+            </div>
+        </div>
+
+        @if (_loading)
+        {
+            <div class="d-flex justify-center pa-8">
+                <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+            </div>
+        }
+        else if (!_notifications.Any())
+        {
+            <MudAlert Severity="Severity.Info">
+                @if (_showUnreadOnly)
+                {
+                    <text>Du har inga olästa notifikationer.</text>
+                }
+                else
+                {
+                    <text>Du har inga notifikationer än.</text>
+                }
+            </MudAlert>
+        }
+        else
+        {
+            @foreach (var notification in _notifications)
+            {
+                <MudPaper Class="pa-3 mb-2" Elevation="1">
+                    <div class="d-flex align-center" style="cursor: pointer;" @onclick="@(() => HandleNotificationClick(notification))">
+                        <MudIcon Icon="@GetNotificationIcon(notification.Type)" 
+                                 Color="@GetNotificationColor(notification.Priority)" 
+                                 Class="mr-3" />
+                        <div style="flex: 1;">
+                            <MudText Typo="Typo.subtitle1" Style="@(notification.IsRead ? "" : "font-weight: bold;")">
+                                @notification.Title
+                            </MudText>
+                            <MudText Typo="Typo.body2" Color="Color.Default">
+                                @notification.Message
+                            </MudText>
+                            <MudText Typo="Typo.caption" Color="Color.Default">
+                                @notification.CreatedAt.ToString("g")
+                                @if (notification.IsRead && notification.ReadAt.HasValue)
+                                {
+                                    <text> - Läst @notification.ReadAt.Value.ToString("g")</text>
+                                }
+                            </MudText>
+                        </div>
+                        <div class="d-flex gap-2">
+                            @if (!notification.IsRead)
+                            {
+                                <MudIconButton Icon="@Icons.Material.Filled.Done" 
+                                               Size="Size.Small"
+                                               Color="Color.Success"
+                                               OnClick="@(() => MarkAsRead(notification))"
+                                               aria-label="Markera som läst" />
+                            }
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" 
+                                           Size="Size.Small"
+                                           Color="Color.Error"
+                                           OnClick="@(() => DeleteNotification(notification))"
+                                           aria-label="Ta bort" />
+                        </div>
+                    </div>
+                </MudPaper>
+            }
+        }
+    </MudPaper>
+</MudContainer>
+
+@code {
+    private List<Notification> _notifications = new();
+    private int _unreadCount = 0;
+    private bool _loading = true;
+    private bool _showUnreadOnly = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadNotifications();
+    }
+
+    private async Task LoadNotifications()
+    {
+        _loading = true;
+        try
+        {
+            var userId = CurrentUserService.UserId;
+            if (userId != null)
+            {
+                _notifications = await NotificationService.GetUserNotificationsAsync(userId, _showUnreadOnly);
+                _unreadCount = await NotificationService.GetUnreadCountAsync(userId);
+            }
+        }
+        catch (Exception ex)
+        {
+            // Log error
+            Console.WriteLine($"Error loading notifications: {ex.Message}");
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task ToggleUnreadFilter()
+    {
+        _showUnreadOnly = !_showUnreadOnly;
+        await LoadNotifications();
+    }
+
+    private async Task MarkAsRead(Notification notification)
+    {
+        var userId = CurrentUserService.UserId;
+        if (userId != null)
+        {
+            await NotificationService.MarkAsReadAsync(notification.NotificationId, userId);
+            notification.IsRead = true;
+            notification.ReadAt = DateTime.UtcNow;
+            _unreadCount--;
+            StateHasChanged();
+        }
+    }
+
+    private async Task MarkAllAsRead()
+    {
+        var userId = CurrentUserService.UserId;
+        if (userId != null)
+        {
+            await NotificationService.MarkAllAsReadAsync(userId);
+            foreach (var notification in _notifications)
+            {
+                notification.IsRead = true;
+                notification.ReadAt = DateTime.UtcNow;
+            }
+            _unreadCount = 0;
+            StateHasChanged();
+        }
+    }
+
+    private async Task DeleteNotification(Notification notification)
+    {
+        var userId = CurrentUserService.UserId;
+        if (userId != null)
+        {
+            await NotificationService.DeleteNotificationAsync(notification.NotificationId, userId);
+            _notifications.Remove(notification);
+            if (!notification.IsRead)
+            {
+                _unreadCount--;
+            }
+            StateHasChanged();
+        }
+    }
+
+    private async Task HandleNotificationClick(Notification notification)
+    {
+        if (!notification.IsRead)
+        {
+            await MarkAsRead(notification);
+        }
+
+        if (!string.IsNullOrEmpty(notification.ActionUrl))
+        {
+            NavigationManager.NavigateTo(notification.ActionUrl);
+        }
+    }
+
+    private string GetNotificationIcon(SystemNotificationType type)
+    {
+        return type switch
+        {
+            SystemNotificationType.BudgetExceeded => Icons.Material.Filled.MoneyOff,
+            SystemNotificationType.BudgetWarning => Icons.Material.Filled.Warning,
+            SystemNotificationType.LowBalance => Icons.Material.Filled.AccountBalance,
+            SystemNotificationType.UpcomingBill => Icons.Material.Filled.Event,
+            SystemNotificationType.BillDue => Icons.Material.Filled.EventAvailable,
+            SystemNotificationType.BillOverdue => Icons.Material.Filled.EventBusy,
+            SystemNotificationType.GoalAchieved => Icons.Material.Filled.EmojiEvents,
+            SystemNotificationType.GoalMilestone => Icons.Material.Filled.TrendingUp,
+            SystemNotificationType.InvestmentChange => Icons.Material.Filled.ShowChart,
+            SystemNotificationType.SignificantGain => Icons.Material.Filled.TrendingUp,
+            SystemNotificationType.SignificantLoss => Icons.Material.Filled.TrendingDown,
+            SystemNotificationType.UnusualTransaction => Icons.Material.Filled.ReportProblem,
+            SystemNotificationType.LargeTransaction => Icons.Material.Filled.Receipt,
+            SystemNotificationType.BankSyncFailed => Icons.Material.Filled.SyncProblem,
+            SystemNotificationType.BankSyncSuccess => Icons.Material.Filled.Sync,
+            SystemNotificationType.HouseholdActivity => Icons.Material.Filled.People,
+            SystemNotificationType.HouseholdInvitation => Icons.Material.Filled.GroupAdd,
+            SystemNotificationType.SubscriptionPriceIncrease => Icons.Material.Filled.TrendingUp,
+            SystemNotificationType.SubscriptionRenewal => Icons.Material.Filled.Autorenew,
+            SystemNotificationType.SystemMaintenance => Icons.Material.Filled.Build,
+            SystemNotificationType.SystemAlert => Icons.Material.Filled.Error,
+            _ => Icons.Material.Filled.Notifications
+        };
+    }
+
+    private Color GetNotificationColor(NotificationPriority priority)
+    {
+        return priority switch
+        {
+            NotificationPriority.Critical => Color.Error,
+            NotificationPriority.High => Color.Warning,
+            NotificationPriority.Normal => Color.Primary,
+            NotificationPriority.Low => Color.Info,
+            _ => Color.Default
+        };
+    }
+}

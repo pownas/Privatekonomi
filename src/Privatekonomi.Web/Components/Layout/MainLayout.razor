@@ -37,6 +37,7 @@
         }
         <AuthorizeView>
             <Authorized>
+                <NotificationBell />
                 <MudText Typo="Typo.body2" Class="mr-2">@context.User.Identity?.Name</MudText>
                 <MudButton Href="/Account/Logout" Color="Color.Inherit" StartIcon="@Icons.Material.Filled.Logout">Logga ut</MudButton>
             </Authorized>
