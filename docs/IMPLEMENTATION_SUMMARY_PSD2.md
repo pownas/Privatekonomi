@@ -251,7 +251,7 @@ Both API and Web projects configured to:
 - `Program.cs` (modified)
 
 ### Documentation:
-- `wiki/PSD2_API_GUIDE.md` (new)
+- `docs/PSD2_API_GUIDE.md` (new)
 - `README.md` (modified)
 
 ## Conclusion

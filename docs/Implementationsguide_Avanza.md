@@ -364,4 +364,4 @@ Avanza Bank Holding|AZA|6|2248,20|216,25|216,25|SEK|SE|SE0012454072|XSTO|STOCK
 
 Efter implementering:
 - README.md: Lägg till sektion om Avanza-import
-- Skapa AVANZA_IMPORT_GUIDE.md i wiki/
+- Skapa AVANZA_IMPORT_GUIDE.md i docs/

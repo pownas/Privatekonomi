@@ -213,6 +213,6 @@ npm test
 ## Additional Resources
 
 - [Full Implementation Documentation](BANK_CONNECTIONS_GUI.md)
-- [PSD2 API Guide](../wiki/PSD2_API_GUIDE.md)
+- [PSD2 API Guide](PSD2_API_GUIDE.md)
 - [MudBlazor Documentation](https://mudblazor.com/)
 - [.NET Aspire Documentation](https://learn.microsoft.com/en-us/dotnet/aspire/)

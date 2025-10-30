@@ -122,9 +122,9 @@ Task<IEnumerable<Investment>> GetInvestmentsByAccountAsync(string accountNumber)
 
 ### Nya filer:
 ```
-wiki/Kravspecifikation_Avanza_Integration.md
-wiki/Implementationsguide_Avanza.md
-wiki/AVANZA_IMPORT_GUIDE.md
+docs/Kravspecifikation_Avanza_Integration.md
+docs/Implementationsguide_Avanza.md
+docs/AVANZA_IMPORT_GUIDE.md
 src/Privatekonomi.Core/Services/Parsers/IInvestmentCsvParser.cs
 src/Privatekonomi.Core/Services/Parsers/AvanzaHoldingsPerAccountParser.cs
 src/Privatekonomi.Core/Services/Parsers/AvanzaConsolidatedHoldingsParser.cs

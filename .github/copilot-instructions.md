@@ -37,8 +37,7 @@ Privatekonomi/
 │   ├── Privatekonomi.Core.Tests/     # Unit tests for Core
 │   ├── Privatekonomi.Api.Tests/      # Unit tests for API
 │   └── playwright/                   # E2E tests
-├── docs/                             # Technical documentation
-└── wiki/                             # User guides and specifications
+└── docs/                             # Documentation (user guides, technical docs, and specifications)
 ```
 
 ## Development Workflow
@@ -174,13 +173,12 @@ Services are registered in `Program.cs` of each project. Follow existing pattern
 ### When to Update Documentation
 
 - **README.md:** For new major features
-- **wiki/\*.md:** For user-facing guides and feature specifications
-- **docs/\*.md:** For technical implementation details
+- **docs/\*.md:** For all documentation including user guides, feature specifications, and technical implementation details
 - **Code comments:** For complex business logic
 
 ### Documentation Style
 
-- User guides: Swedish (in `wiki/`)
+- User guides: Swedish (in `docs/`)
 - Technical docs: Can be English or Swedish (in `docs/`)
 - Code comments: English or Swedish (prefer Swedish for business domain concepts)
 - API documentation: XML comments in English

@@ -38,7 +38,7 @@ Alla skärmdumpar är sparade i `docs/images/` och refereras via GitHub-URLs i d
 
 **Resultat:** README är nu mer lättläst, visuell och aktuell.
 
-### 3. wiki/ProgramSpecifikation.md
+### 3. docs/ProgramSpecifikation.md
 
 **Omfattande uppdatering av:**
 
@@ -97,19 +97,19 @@ Alla skärmdumpar är sparade i `docs/images/` och refereras via GitHub-URLs i d
 
 **Resultat:** ProgramSpecifikation.md är nu en komplett och aktuell referens för hela projektet.
 
-### 4. wiki/BUDGET_GUIDE.md
+### 4. docs/BUDGET_GUIDE.md
 
 **Ändringar:**
 - ✅ Lagt till skärmdump av budgethanteringen
 - ✅ Innehållet är redan aktuellt och väldokumenterat
 
-### 5. wiki/CSV_IMPORT_GUIDE.md
+### 5. docs/CSV_IMPORT_GUIDE.md
 
 **Ändringar:**
 - ✅ Lagt till skärmdump av importvyn
 - ✅ Innehållet är redan aktuellt och omfattande
 
-### 6. wiki/AVANZA_IMPORT_GUIDE.md
+### 6. docs/AVANZA_IMPORT_GUIDE.md
 
 **Ändringar:**
 - ✅ Lagt till skärmdump av importvyn för Avanza
@@ -118,12 +118,12 @@ Alla skärmdumpar är sparade i `docs/images/` och refereras via GitHub-URLs i d
 ### 7. Övriga wiki-filer
 
 Följande filer har granskats och verifierats som aktuella:
-- ✅ `wiki/ASPIRE_GUIDE.md` - Aktuell och relevant
-- ✅ `wiki/IMPLEMENTATION_SUMMARY.md` - Aktuell
-- ✅ `wiki/IMPLEMENTATION_SUMMARY_AVANZA.md` - Aktuell
-- ✅ `wiki/Kravspecifikation_CSV_Import.md` - Aktuell
-- ✅ `wiki/Kravspecifikation_Avanza_Integration.md` - Aktuell
-- ✅ `wiki/Implementationsguide_Avanza.md` - Aktuell
+- ✅ `docs/ASPIRE_GUIDE.md` - Aktuell och relevant
+- ✅ `docs/IMPLEMENTATION_SUMMARY.md` - Aktuell
+- ✅ `docs/IMPLEMENTATION_SUMMARY_AVANZA.md` - Aktuell
+- ✅ `docs/Kravspecifikation_CSV_Import.md` - Aktuell
+- ✅ `docs/Kravspecifikation_Avanza_Integration.md` - Aktuell
+- ✅ `docs/Implementationsguide_Avanza.md` - Aktuell
 
 ## Filstatistik
 
@@ -135,10 +135,10 @@ docs/images/dashboard.png    | Bin 0 -> 261453 bytes
 docs/images/import.png       | Bin 0 -> 29669 bytes
 docs/images/investments.png  | Bin 0 -> 24022 bytes
 docs/images/transactions.png | Bin 0 -> 458287 bytes
-wiki/AVANZA_IMPORT_GUIDE.md  |   3 +
-wiki/BUDGET_GUIDE.md         |   3 +
-wiki/CSV_IMPORT_GUIDE.md     |   2 +
-wiki/ProgramSpecifikation.md | 477 +++++++++++++++++++++++++++++
+docs/AVANZA_IMPORT_GUIDE.md  |   3 +
+docs/BUDGET_GUIDE.md         |   3 +
+docs/CSV_IMPORT_GUIDE.md     |   2 +
+docs/ProgramSpecifikation.md | 477 +++++++++++++++++++++++++++++
 11 files changed, 410 insertions(+), 109 deletions(-)
 ```
 

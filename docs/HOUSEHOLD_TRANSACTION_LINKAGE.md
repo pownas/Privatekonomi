@@ -222,5 +222,5 @@ Potential improvements for consideration:
 
 - Issue: #[Issue Number]
 - Related Documentation:
-  - [FAMILY_COLLABORATION_GUIDE.md](../wiki/FAMILY_COLLABORATION_GUIDE.md)
-  - [ProgramSpecifikation.md](../wiki/ProgramSpecifikation.md)
+  - [FAMILY_COLLABORATION_GUIDE.md](FAMILY_COLLABORATION_GUIDE.md)
+  - [ProgramSpecifikation.md](ProgramSpecifikation.md)

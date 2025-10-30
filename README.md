@@ -15,7 +15,7 @@ En privatekonomi-applikation byggd med .NET 9, Blazor Server och MudBlazor för 
   - Förslagssystem med demokratiska ändringar
   - Transaktionshistorik och notifieringar
   - Rollbaserad åtkomstkontroll (Owner/Participant)
-  - Se [detaljerad dokumentation](wiki/README_Gemensamma_Sparmal.md)
+  - Se [detaljerad dokumentation](docs/README_Gemensamma_Sparmal.md)
 - **Investeringshantering**: Hantera aktier, fonder, ETF, certifikat, krypto och P2P-lån med översikt över värde och avkastning
   - Stöd för ISK, KF, AF och Depå
   - Aggregering per kontotyp och investeringstyp
@@ -115,7 +115,7 @@ Projektet använder .NET Aspire för förbättrad utvecklarupplevelse:
 - **Health checks** för övervaking av tjänsters hälsa
 - **Resilience patterns** (retry, circuit breaker, timeout)
 
-Se [ASPIRE_GUIDE.md](wiki/ASPIRE_GUIDE.md) för mer information.
+Se [ASPIRE_GUIDE.md](docs/ASPIRE_GUIDE.md) för mer information.
 
 ## 🚀 Komma igång
 
@@ -172,7 +172,7 @@ dotnet run
 
 4. Aspire Dashboard öppnas automatiskt och visar alla tjänster, logs, traces och metrics.
 
-Se [ASPIRE_GUIDE.md](wiki/ASPIRE_GUIDE.md) för detaljerad information om Aspire-funktionalitet.
+Se [ASPIRE_GUIDE.md](docs/ASPIRE_GUIDE.md) för detaljerad information om Aspire-funktionalitet.
 
 #### Alternativ 2: Kör tjänster individuellt
 
@@ -251,7 +251,7 @@ Applikationen stöder import av transaktioner från CSV-filer från ICA-banken o
 - Förhandsvisning innan import
 - Detaljerad sammanfattning efter import
 
-Se [CSV_IMPORT_GUIDE.md](wiki/CSV_IMPORT_GUIDE.md) för detaljerad guide och exempel.
+Se [CSV_IMPORT_GUIDE.md](docs/CSV_IMPORT_GUIDE.md) för detaljerad guide och exempel.
 
 #### Import av investeringar från Avanza
 
@@ -275,7 +275,7 @@ Applikationen stöder import av investeringar från Avanza Bank:
 - Filtrering per bank och konto
 - Export till CSV för analys
 
-Se [AVANZA_IMPORT_GUIDE.md](wiki/AVANZA_IMPORT_GUIDE.md) för detaljerad guide med skärmdumpar och felsökning.
+Se [AVANZA_IMPORT_GUIDE.md](docs/AVANZA_IMPORT_GUIDE.md) för detaljerad guide med skärmdumpar och felsökning.
 
 ## 📊 Skärmdumpar
 
@@ -419,25 +419,25 @@ Se [STORAGE_GUIDE.md](docs/STORAGE_GUIDE.md) för detaljerad information om:
 - **[USER_AUTHENTICATION.md](docs/USER_AUTHENTICATION.md)**: Guide för användarregistrering, inloggning och datahantering
 - **[RASPBERRY_PI_GUIDE.md](docs/RASPBERRY_PI_GUIDE.md)**: ⭐ Komplett guide för installation på Raspberry Pi med lokal datalagring
 - **[STORAGE_GUIDE.md](docs/STORAGE_GUIDE.md)**: Guide för olika lagringsalternativ och konfiguration
-- **[YEAR_EXPORT_GUIDE.md](wiki/YEAR_EXPORT_GUIDE.md)**: Guide för export av ekonomisk data per år
-- **[CSV_IMPORT_GUIDE.md](wiki/CSV_IMPORT_GUIDE.md)**: Guide för import av transaktioner från ICA-banken och Swedbank
-- **[PSD2_API_GUIDE.md](wiki/PSD2_API_GUIDE.md)**: Guide för automatisk bankimport via PSD2-API (Swedbank, Avanza, ICA Banken)
-- **[AVANZA_IMPORT_GUIDE.md](wiki/AVANZA_IMPORT_GUIDE.md)**: Guide för import av investeringar från Avanza Bank
-- **[STOCK_PRICE_API_GUIDE.md](wiki/STOCK_PRICE_API_GUIDE.md)**: Guide för automatisk uppdatering av aktiekurser via API
+- **[YEAR_EXPORT_GUIDE.md](docs/YEAR_EXPORT_GUIDE.md)**: Guide för export av ekonomisk data per år
+- **[CSV_IMPORT_GUIDE.md](docs/CSV_IMPORT_GUIDE.md)**: Guide för import av transaktioner från ICA-banken och Swedbank
+- **[PSD2_API_GUIDE.md](docs/PSD2_API_GUIDE.md)**: Guide för automatisk bankimport via PSD2-API (Swedbank, Avanza, ICA Banken)
+- **[AVANZA_IMPORT_GUIDE.md](docs/AVANZA_IMPORT_GUIDE.md)**: Guide för import av investeringar från Avanza Bank
+- **[STOCK_PRICE_API_GUIDE.md](docs/STOCK_PRICE_API_GUIDE.md)**: Guide för automatisk uppdatering av aktiekurser via API
 - **[INVESTMENT_PENSION_GUIDE.md](docs/INVESTMENT_PENSION_GUIDE.md)**: ⭐ NYT! Guide för investeringar och pensionshantering
-- **[BUDGET_GUIDE.md](wiki/BUDGET_GUIDE.md)**: Guide för budgethantering
+- **[BUDGET_GUIDE.md](docs/BUDGET_GUIDE.md)**: Guide för budgethantering
 - **[MOBILE_GESTURES_GUIDE.md](docs/MOBILE_GESTURES_GUIDE.md)**: ⭐ NYT! Guide för mobil-optimerad UI med touch-gester
 - **[AUTOMATIC_CATEGORIZATION.md](docs/AUTOMATIC_CATEGORIZATION.md)**: Guide för automatisk kategorisering av transaktioner
-- **[FAMILY_COLLABORATION_GUIDE.md](wiki/FAMILY_COLLABORATION_GUIDE.md)**: Guide för familjesamarbete, barnkonton och veckopeng
+- **[FAMILY_COLLABORATION_GUIDE.md](docs/FAMILY_COLLABORATION_GUIDE.md)**: Guide för familjesamarbete, barnkonton och veckopeng
 - **[DARK_MODE_IMPLEMENTATION.md](docs/DARK_MODE_IMPLEMENTATION.md)**: Guide för MudBlazor Dark Mode och WCAG-compliance
 - **[DARK_MODE_TESTING.md](docs/DARK_MODE_TESTING.md)**: Testguide för dark mode och tillgänglighet
-- **[SALARY_HISTORY_GUIDE.md](wiki/SALARY_HISTORY_GUIDE.md)**: Guide för löneutveckling och lönehistorik
+- **[SALARY_HISTORY_GUIDE.md](docs/SALARY_HISTORY_GUIDE.md)**: Guide för löneutveckling och lönehistorik
 
 ### Sverige-specifika integrationer (NYT!)
 
-- **[SWEDISH_INTEGRATIONS_SUMMARY.md](wiki/SWEDISH_INTEGRATIONS_SUMMARY.md)**: Sammanfattning av Sverige-specifika funktioner
-- **[SWEDISH_INTEGRATIONS_EVALUATION.md](wiki/SWEDISH_INTEGRATIONS_EVALUATION.md)**: Utvärdering av genomförbarhet
-- **[SWEDISH_INTEGRATIONS_IMPLEMENTATION.md](wiki/SWEDISH_INTEGRATIONS_IMPLEMENTATION.md)**: Implementationsguide
+- **[SWEDISH_INTEGRATIONS_SUMMARY.md](docs/SWEDISH_INTEGRATIONS_SUMMARY.md)**: Sammanfattning av Sverige-specifika funktioner
+- **[SWEDISH_INTEGRATIONS_EVALUATION.md](docs/SWEDISH_INTEGRATIONS_EVALUATION.md)**: Utvärdering av genomförbarhet
+- **[SWEDISH_INTEGRATIONS_IMPLEMENTATION.md](docs/SWEDISH_INTEGRATIONS_IMPLEMENTATION.md)**: Implementationsguide
 
 **Funktioner:**
 - ✅ ROT/RUT-avdrag
@@ -452,12 +452,12 @@ Se [STORAGE_GUIDE.md](docs/STORAGE_GUIDE.md) för detaljerad information om:
 
 ### Teknisk dokumentation
 
-- **[ProgramSpecifikation.md](wiki/ProgramSpecifikation.md)**: Övergripande programspecifikation
-- **[ASPIRE_GUIDE.md](wiki/ASPIRE_GUIDE.md)**: Guide för .NET Aspire Orchestrator
-- **[Kravspecifikation_Loneutveckling.md](wiki/Kravspecifikation_Loneutveckling.md)**: Kravspecifikation för löneutvecklingsfunktionen
-- **[Kravspecifikation_CSV_Import.md](wiki/Kravspecifikation_CSV_Import.md)**: Kravspecifikation för CSV-import av transaktioner
-- **[Kravspecifikation_Avanza_Integration.md](wiki/Kravspecifikation_Avanza_Integration.md)**: Kravspecifikation för Avanza-integration
-- **[Implementationsguide_Avanza.md](wiki/Implementationsguide_Avanza.md)**: Implementationsguide för Avanza-funktionalitet
+- **[ProgramSpecifikation.md](docs/ProgramSpecifikation.md)**: Övergripande programspecifikation
+- **[ASPIRE_GUIDE.md](docs/ASPIRE_GUIDE.md)**: Guide för .NET Aspire Orchestrator
+- **[Kravspecifikation_Loneutveckling.md](docs/Kravspecifikation_Loneutveckling.md)**: Kravspecifikation för löneutvecklingsfunktionen
+- **[Kravspecifikation_CSV_Import.md](docs/Kravspecifikation_CSV_Import.md)**: Kravspecifikation för CSV-import av transaktioner
+- **[Kravspecifikation_Avanza_Integration.md](docs/Kravspecifikation_Avanza_Integration.md)**: Kravspecifikation för Avanza-integration
+- **[Implementationsguide_Avanza.md](docs/Implementationsguide_Avanza.md)**: Implementationsguide för Avanza-funktionalitet
 - **[Datamodell_Forbattringar.md](docs/Datamodell_Forbattringar.md)**: Dokumentation av datamodellförbättringar och nya funktioner
 
 ## 🧪 Testning
