@@ -1,0 +1,505 @@
+@page "/savingschallenges"
+@rendermode InteractiveServer
+@using Privatekonomi.Core.Models
+@using Privatekonomi.Core.Services
+@inject ISavingsChallengeService ChallengeService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+<PageTitle>Sparmåls-utmaningar - Privatekonomi</PageTitle>
+
+<div class="d-flex justify-space-between align-center mb-4">
+    <MudText Typo="Typo.h4">🏆 Sparmåls-utmaningar</MudText>
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="ToggleCreateForm">
+        Ny Utmaning
+    </MudButton>
+</div>
+
+@if (_showCreateForm)
+{
+    <MudPaper Class="pa-4 mb-4">
+        <MudText Typo="Typo.h6" Class="mb-3">@(_editingChallenge != null ? "Redigera Utmaning" : "Skapa Ny Utmaning")</MudText>
+        
+        <MudTextField @bind-Value="_formChallenge.Name" 
+                      Label="Namn" 
+                      Variant="Variant.Outlined"
+                      Required="true"
+                      MaxLength="200"
+                      Class="mb-3" />
+        
+        <MudTextField @bind-Value="_formChallenge.Description" 
+                      Label="Beskrivning" 
+                      Variant="Variant.Outlined"
+                      Lines="3"
+                      MaxLength="500"
+                      Class="mb-3" />
+
+        <MudSelect @bind-Value="_formChallenge.Type" 
+                   Label="Typ av utmaning" 
+                   Variant="Variant.Outlined" 
+                   Class="mb-3">
+            <MudSelectItem Value="ChallengeType.SaveDaily">💰 Spara dagligen</MudSelectItem>
+            <MudSelectItem Value="ChallengeType.NoRestaurant">🍽️ Ingen restaurang</MudSelectItem>
+            <MudSelectItem Value="ChallengeType.NoTakeaway">🍕 Ingen takeaway</MudSelectItem>
+            <MudSelectItem Value="ChallengeType.NoCoffeeOut">☕ Inget kaffe på café</MudSelectItem>
+            <MudSelectItem Value="ChallengeType.SavePercentOfIncome">📊 Spara % av inkomst</MudSelectItem>
+            <MudSelectItem Value="ChallengeType.SpendingLimit">🔒 Utgiftsgräns</MudSelectItem>
+            <MudSelectItem Value="ChallengeType.Custom">✏️ Anpassad</MudSelectItem>
+        </MudSelect>
+
+        <MudNumericField @bind-Value="_formChallenge.TargetAmount" 
+                         Label="Målbelopp (kr)" 
+                         Variant="Variant.Outlined"
+                         Min="0"
+                         Format="N2"
+                         Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                         Class="mb-3" />
+
+        <MudNumericField @bind-Value="_formChallenge.DurationDays" 
+                         Label="Antal dagar" 
+                         Variant="Variant.Outlined"
+                         Min="1"
+                         Class="mb-3" />
+
+        <MudDatePicker @bind-Date="_formChallengeStartDate"
+                       Label="Startdatum"
+                       Variant="Variant.Outlined"
+                       Class="mb-3" />
+
+        <div class="d-flex gap-2">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveChallenge">
+                @(_editingChallenge != null ? "Uppdatera" : "Skapa")
+            </MudButton>
+            <MudButton Variant="Variant.Outlined" OnClick="CancelForm">Avbryt</MudButton>
+        </div>
+    </MudPaper>
+}
+
+@if (_loading)
+{
+    <div class="d-flex flex-column align-center pa-6">
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Large" />
+        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-4">Laddar utmaningar...</MudText>
+    </div>
+}
+else
+{
+    <!-- Statistics Cards -->
+    <MudPaper Class="pa-4 mb-4">
+        <MudGrid>
+            <MudItem xs="12" md="4">
+                <MudCard Elevation="2" Class="pa-4">
+                    <MudCardContent>
+                        <MudText Typo="Typo.h6">Aktiva Utmaningar</MudText>
+                        <MudText Typo="Typo.h4" Color="Color.Primary">@_totalActive</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <MudCard Elevation="2" Class="pa-4">
+                    <MudCardContent>
+                        <MudText Typo="Typo.h6">Genomförda</MudText>
+                        <MudText Typo="Typo.h4" Color="Color.Success">@_totalCompleted</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <MudCard Elevation="2" Class="pa-4">
+                    <MudCardContent>
+                        <MudText Typo="Typo.h6">Totalt Sparat</MudText>
+                        <MudText Typo="Typo.h4" Color="Color.Success">@_totalAmountSaved.ToString("C", new System.Globalization.CultureInfo("sv-SE"))</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+
+    <!-- Active Challenges -->
+    @if (_activeChallenges.Any())
+    {
+        <MudText Typo="Typo.h5" Class="mb-3">🏆 Aktiva Utmaningar</MudText>
+        <MudGrid Class="mb-4">
+            @foreach (var challenge in _activeChallenges)
+            {
+                <MudItem xs="12" md="6" lg="4">
+                    <MudCard Elevation="3" Class="pa-4">
+                        <MudCardContent>
+                            <div class="d-flex justify-space-between align-center mb-2">
+                                <MudText Typo="Typo.h6">@GetChallengeIcon(challenge.Type) @challenge.Name</MudText>
+                                <MudChip T="string" Color="Color.Success" Size="Size.Small">Aktiv</MudChip>
+                            </div>
+                            <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-3">@challenge.Description</MudText>
+                            
+                            <div class="mb-3">
+                                <div class="d-flex justify-space-between mb-1">
+                                    <MudText Typo="Typo.body2">Dag @challenge.DaysCompleted/@challenge.DurationDays</MudText>
+                                    <MudText Typo="Typo.body2">@challenge.ProgressPercentage.ToString("F0")% klart!</MudText>
+                                </div>
+                                <MudProgressLinear Color="@GetProgressColor(challenge)" 
+                                                   Rounded="true" 
+                                                   Size="Size.Large" 
+                                                   Value="@((double)challenge.ProgressPercentage)" />
+                            </div>
+
+                            <MudText Typo="Typo.body2" Class="mb-2">
+                                <strong>Sparat:</strong> @challenge.CurrentAmount.ToString("C", new System.Globalization.CultureInfo("sv-SE")) av @challenge.TargetAmount.ToString("C", new System.Globalization.CultureInfo("sv-SE"))
+                            </MudText>
+
+                            @if (challenge.CurrentStreak > 0)
+                            {
+                                <MudAlert Severity="Severity.Info" Dense="true" Class="mb-2">
+                                    🔥 Streak: @challenge.CurrentStreak dagar i rad!
+                                </MudAlert>
+                            }
+
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                <strong>Återstår:</strong> @challenge.RemainingDays dagar
+                            </MudText>
+                        </MudCardContent>
+                        <MudCardActions>
+                            <MudButton Variant="Variant.Filled" 
+                                       Color="Color.Primary" 
+                                       Size="Size.Small" 
+                                       OnClick="@(() => RecordProgress(challenge))">
+                                Registrera framsteg
+                            </MudButton>
+                            <MudIconButton Icon="@Icons.Material.Filled.Edit" 
+                                           Size="Size.Small" 
+                                           OnClick="@(() => EditChallenge(challenge))" 
+                                           Color="Color.Primary" />
+                            <MudIconButton Icon="@Icons.Material.Filled.Pause" 
+                                           Size="Size.Small" 
+                                           OnClick="@(() => PauseChallenge(challenge.SavingsChallengeId))" 
+                                           Color="Color.Warning" />
+                            <MudIconButton Icon="@Icons.Material.Filled.CheckCircle" 
+                                           Size="Size.Small" 
+                                           OnClick="@(() => CompleteChallenge(challenge.SavingsChallengeId))" 
+                                           Color="Color.Success" />
+                        </MudCardActions>
+                    </MudCard>
+                </MudItem>
+            }
+        </MudGrid>
+    }
+
+    <!-- Completed Challenges -->
+    @if (_completedChallenges.Any())
+    {
+        <MudText Typo="Typo.h5" Class="mb-3 mt-4">✅ Genomförda Utmaningar</MudText>
+        <MudTable Items="@_completedChallenges" Hover="true" Striped="true" Dense="true">
+            <HeaderContent>
+                <MudTh>Namn</MudTh>
+                <MudTh>Typ</MudTh>
+                <MudTh>Sparat belopp</MudTh>
+                <MudTh>Bästa streak</MudTh>
+                <MudTh>Datum</MudTh>
+                <MudTh>Åtgärder</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Namn">@GetChallengeIcon(context.Type) @context.Name</MudTd>
+                <MudTd DataLabel="Typ">@GetChallengeTypeName(context.Type)</MudTd>
+                <MudTd DataLabel="Sparat belopp">@context.CurrentAmount.ToString("C", new System.Globalization.CultureInfo("sv-SE"))</MudTd>
+                <MudTd DataLabel="Bästa streak">🔥 @context.BestStreak dagar</MudTd>
+                <MudTd DataLabel="Datum">
+                    @context.StartDate.ToString("yyyy-MM-dd") - @(context.EndDate?.ToString("yyyy-MM-dd") ?? "N/A")
+                </MudTd>
+                <MudTd DataLabel="Åtgärder">
+                    <MudIconButton Icon="@Icons.Material.Filled.Visibility" 
+                                   Size="Size.Small" 
+                                   OnClick="@(() => ViewChallengeDetails(context))" 
+                                   Color="Color.Info" />
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete" 
+                                   Size="Size.Small" 
+                                   OnClick="@(() => DeleteChallenge(context.SavingsChallengeId))" 
+                                   Color="Color.Error" />
+                </MudTd>
+            </RowTemplate>
+        </MudTable>
+    }
+
+    @if (!_activeChallenges.Any() && !_completedChallenges.Any())
+    {
+        <MudPaper Class="pa-6 mt-4" Elevation="0" Style="text-align: center;">
+            <MudIcon Icon="@Icons.Material.Filled.EmojiEvents" Size="Size.Large" Color="Color.Secondary" Class="mb-4" Style="font-size: 4rem;" />
+            <MudText Typo="Typo.h6" Class="mb-2">Inga utmaningar än</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">
+                Skapa din första sparutmaning för att motivera ditt sparande! Välj från fördefinierade utmaningar eller skapa din egen.
+            </MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                <strong>Exempel på utmaningar:</strong><br />
+                ☕ Ingen kaffe på uteställe (14 dgr)<br />
+                🍕 Ingen takeaway (30 dgr)<br />
+                💰 Spara 10% av lön (90 dgr)
+            </MudText>
+        </MudPaper>
+    }
+}
+
+<!-- Progress Dialog -->
+@if (_showProgressDialog && _selectedChallenge != null)
+{
+    <MudDialog @bind-Visible="_showProgressDialog">
+        <TitleContent>
+            <MudText Typo="Typo.h6">Registrera framsteg för @_selectedChallenge.Name</MudText>
+        </TitleContent>
+        <DialogContent>
+            <MudDatePicker @bind-Date="_progressDate"
+                           Label="Datum"
+                           Variant="Variant.Outlined"
+                           Class="mb-3" />
+            
+            <MudSwitch @bind-Value="_progressCompleted" 
+                       Label="Utmaning genomförd idag" 
+                       Color="Color.Primary"
+                       Class="mb-3" />
+
+            <MudNumericField @bind-Value="_progressAmount" 
+                             Label="Sparat belopp (kr)" 
+                             Variant="Variant.Outlined"
+                             Min="0"
+                             Format="N2"
+                             Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                             Class="mb-3" />
+
+            <MudTextField @bind-Value="_progressNotes" 
+                          Label="Anteckningar (valfritt)" 
+                          Variant="Variant.Outlined"
+                          Lines="3"
+                          MaxLength="500" />
+        </DialogContent>
+        <DialogActions>
+            <MudButton OnClick="CancelProgressDialog">Avbryt</MudButton>
+            <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="SaveProgress">Spara</MudButton>
+        </DialogActions>
+    </MudDialog>
+}
+
+@code {
+    private IEnumerable<SavingsChallenge> _activeChallenges = new List<SavingsChallenge>();
+    private IEnumerable<SavingsChallenge> _completedChallenges = new List<SavingsChallenge>();
+    private bool _loading = true;
+    private bool _showCreateForm = false;
+    private SavingsChallenge _formChallenge = new();
+    private DateTime? _formChallengeStartDate;
+    private SavingsChallenge? _editingChallenge;
+
+    private int _totalActive = 0;
+    private int _totalCompleted = 0;
+    private decimal _totalAmountSaved = 0;
+
+    // Progress dialog
+    private bool _showProgressDialog = false;
+    private SavingsChallenge? _selectedChallenge;
+    private DateTime? _progressDate;
+    private bool _progressCompleted = true;
+    private decimal _progressAmount = 0;
+    private string? _progressNotes;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _loading = true;
+        await LoadChallenges();
+        await LoadStatistics();
+        _loading = false;
+    }
+
+    private async Task LoadChallenges()
+    {
+        _activeChallenges = await ChallengeService.GetActiveChallengesAsync();
+        _completedChallenges = await ChallengeService.GetCompletedChallengesAsync();
+    }
+
+    private async Task LoadStatistics()
+    {
+        _totalActive = await ChallengeService.GetTotalActiveChallengesAsync();
+        _totalCompleted = await ChallengeService.GetTotalCompletedChallengesAsync();
+        _totalAmountSaved = await ChallengeService.GetTotalAmountSavedAsync();
+    }
+
+    private void ToggleCreateForm()
+    {
+        _showCreateForm = !_showCreateForm;
+        if (_showCreateForm)
+        {
+            _formChallenge = new SavingsChallenge 
+            { 
+                DurationDays = 30,
+                TargetAmount = 1000,
+                Type = ChallengeType.SaveDaily
+            };
+            _formChallengeStartDate = DateTime.Today;
+            _editingChallenge = null;
+        }
+    }
+
+    private void EditChallenge(SavingsChallenge challenge)
+    {
+        _editingChallenge = challenge;
+        _formChallenge = new SavingsChallenge
+        {
+            SavingsChallengeId = challenge.SavingsChallengeId,
+            Name = challenge.Name,
+            Description = challenge.Description,
+            Type = challenge.Type,
+            TargetAmount = challenge.TargetAmount,
+            DurationDays = challenge.DurationDays,
+            CurrentAmount = challenge.CurrentAmount,
+            Status = challenge.Status
+        };
+        _formChallengeStartDate = challenge.StartDate;
+        _showCreateForm = true;
+    }
+
+    private async Task SaveChallenge()
+    {
+        try
+        {
+            _formChallenge.StartDate = _formChallengeStartDate ?? DateTime.Today;
+
+            if (_editingChallenge != null)
+            {
+                await ChallengeService.UpdateChallengeAsync(_formChallenge);
+                Snackbar.Add("Utmaningen har uppdaterats!", Severity.Success);
+            }
+            else
+            {
+                await ChallengeService.CreateChallengeAsync(_formChallenge);
+                Snackbar.Add("Utmaningen har skapats!", Severity.Success);
+            }
+
+            await LoadChallenges();
+            await LoadStatistics();
+            CancelForm();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Ett fel uppstod: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void CancelForm()
+    {
+        _showCreateForm = false;
+        _formChallenge = new();
+        _formChallengeStartDate = null;
+        _editingChallenge = null;
+    }
+
+    private async Task DeleteChallenge(int challengeId)
+    {
+        bool? result = await DialogService.ShowMessageBox(
+            "Bekräfta borttagning",
+            "Är du säker på att du vill ta bort denna utmaning?",
+            yesText: "Ja", cancelText: "Avbryt");
+
+        if (result == true)
+        {
+            await ChallengeService.DeleteChallengeAsync(challengeId);
+            Snackbar.Add("Utmaningen har tagits bort", Severity.Info);
+            await LoadChallenges();
+            await LoadStatistics();
+        }
+    }
+
+    private void RecordProgress(SavingsChallenge challenge)
+    {
+        _selectedChallenge = challenge;
+        _progressDate = DateTime.Today;
+        _progressCompleted = true;
+        _progressAmount = 0;
+        _progressNotes = null;
+        _showProgressDialog = true;
+    }
+
+    private void CancelProgressDialog()
+    {
+        _showProgressDialog = false;
+        _selectedChallenge = null;
+    }
+
+    private async Task SaveProgress()
+    {
+        if (_selectedChallenge == null || _progressDate == null) return;
+
+        try
+        {
+            await ChallengeService.RecordProgressAsync(
+                _selectedChallenge.SavingsChallengeId,
+                _progressDate.Value,
+                _progressCompleted,
+                _progressAmount,
+                _progressNotes);
+
+            Snackbar.Add("Framsteg registrerat!", Severity.Success);
+            _showProgressDialog = false;
+            await LoadChallenges();
+            await LoadStatistics();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Ett fel uppstod: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task PauseChallenge(int challengeId)
+    {
+        await ChallengeService.UpdateChallengeStatusAsync(challengeId, ChallengeStatus.Paused);
+        Snackbar.Add("Utmaningen har pausats", Severity.Info);
+        await LoadChallenges();
+        await LoadStatistics();
+    }
+
+    private async Task CompleteChallenge(int challengeId)
+    {
+        await ChallengeService.UpdateChallengeStatusAsync(challengeId, ChallengeStatus.Completed);
+        Snackbar.Add("Grattis! Utmaningen är genomförd! 🎉", Severity.Success);
+        await LoadChallenges();
+        await LoadStatistics();
+    }
+
+    private void ViewChallengeDetails(SavingsChallenge challenge)
+    {
+        // TODO: Implement detailed view with progress history
+        Snackbar.Add("Detaljvy kommer snart!", Severity.Info);
+    }
+
+    private Color GetProgressColor(SavingsChallenge challenge)
+    {
+        var progress = (double)challenge.ProgressPercentage;
+        if (progress >= 100) return Color.Success;
+        if (progress >= 75) return Color.Info;
+        if (progress >= 50) return Color.Primary;
+        if (progress >= 25) return Color.Warning;
+        return Color.Error;
+    }
+
+    private string GetChallengeIcon(ChallengeType type)
+    {
+        return type switch
+        {
+            ChallengeType.SaveDaily => "💰",
+            ChallengeType.NoRestaurant => "🍽️",
+            ChallengeType.NoTakeaway => "🍕",
+            ChallengeType.NoCoffeeOut => "☕",
+            ChallengeType.SavePercentOfIncome => "📊",
+            ChallengeType.SpendingLimit => "🔒",
+            ChallengeType.Custom => "✏️",
+            _ => "🎯"
+        };
+    }
+
+    private string GetChallengeTypeName(ChallengeType type)
+    {
+        return type switch
+        {
+            ChallengeType.SaveDaily => "Spara dagligen",
+            ChallengeType.NoRestaurant => "Ingen restaurang",
+            ChallengeType.NoTakeaway => "Ingen takeaway",
+            ChallengeType.NoCoffeeOut => "Inget kaffe på café",
+            ChallengeType.SavePercentOfIncome => "Spara % av inkomst",
+            ChallengeType.SpendingLimit => "Utgiftsgräns",
+            ChallengeType.Custom => "Anpassad",
+            _ => "Okänd"
+        };
+    }
+}
