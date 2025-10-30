@@ -11,7 +11,7 @@ Systemet analyserar dina transaktioner och identifierar automatiskt återkommand
 **Hur det fungerar:**
 - Analyserar transaktioner från de senaste 12 månaderna
 - Identifierar betalningar som förekommer regelbundet (månadsvis, kvartalsvis, årligen)
-- Kontrollerar att beloppen är konsekventa (inom 10% variation)
+- Kontrollerar att beloppen är relativt konsekventa (inom 10% variation - kan justeras för att hantera kampanjpriser)
 - Känner igen kända prenumerationstjänster (Netflix, Spotify, HBO, etc.)
 - Kräver minst 3 transaktioner för att upptäcka ett mönster
 
@@ -29,8 +29,8 @@ Håll koll på när du måste säga upp prenumerationer för att undvika automat
 - **Uppsägningstid (dagar)**: Antal dagar innan förnyelse som uppsägning krävs
 
 **Varningar:**
-- Systemet visar en varning när uppsägningsfristen närmar sig (inom 30 dagar)
-- Alerts visas högst upp på sidan med antal dagar kvar
+- Systemet visar en varning (gul alert) när uppsägningsfristen närmar sig (inom 30 dagar)
+- Alerts visas högst upp på sidan med exakt antal dagar kvar tills fristen
 
 ### 3. Oanvänd Prenumeration-Detektion
 Identifiera prenumerationer som du inte använder och potentiellt kan spara pengar på.
@@ -126,9 +126,12 @@ Task<Subscription?> CreateSubscriptionFromTransactionAsync(int transactionId, st
 1. Hämtar alla transaktioner från senaste året
 2. Grupperar efter payee/beskrivning
 3. Kräver minst 3 förekomster
-4. Kontrollerar beloppskonsekvens (±10%)
+4. Kontrollerar beloppskonsekvens (±10% - för att tillåta mindre prisvariationer)
 5. Analyserar intervall mellan transaktioner
-6. Identifierar frekvens (månadsvis 25-35 dagar, kvartalsvis 85-95 dagar, årligen 350-380 dagar)
+6. Identifierar frekvens baserat på genomsnittligt intervall (justerat för olika månadslängder):
+   - Månadsvis: 25-35 dagar
+   - Kvartalsvis: 85-95 dagar  
+   - Årligen: 350-380 dagar
 7. Filtrerar mot kända prenumerationstjänster
 8. Returnerar förslag för användaren att bekräfta
 
@@ -177,7 +180,7 @@ Task<Subscription?> CreateSubscriptionFromTransactionAsync(int transactionId, st
 
 ## Besparingsmöjligheter
 Med Smart Avtalshantering kan du:
-- 💰 Identifiera oanvända prenumerationer (genomsnittlig besparing: 500-1000 kr/mån)
+- 💰 Identifiera oanvända prenumerationer och potentiellt spara pengar varje månad
 - ⏰ Undvika automatiska förnyelelser du inte vill ha
 - 👨‍👩‍👧‍👦 Optimera familjeabonnemang
 - 📊 Se tydlig översikt över totala abonnemangskostnader
