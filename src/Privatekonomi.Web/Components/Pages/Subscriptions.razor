@@ -11,11 +11,66 @@
 <PageTitle>Abonnemang - Privatekonomi</PageTitle>
 
 <div class="d-flex justify-space-between align-center mb-4">
-    <MudText Typo="Typo.h4">Abonnemang</MudText>
-    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="ToggleCreateForm">
-        Nytt Abonnemang
-    </MudButton>
+    <MudText Typo="Typo.h4">📋 Smart Avtalshantering</MudText>
+    <div class="d-flex gap-2">
+        <MudButton Variant="Variant.Outlined" Color="Color.Info" StartIcon="@Icons.Material.Filled.Search" OnClick="DetectSubscriptions">
+            Upptäck Abonnemang
+        </MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="ToggleCreateForm">
+            Nytt Abonnemang
+        </MudButton>
+    </div>
 </div>
+
+@* Alerts for unused subscriptions and cancellation deadlines *@
+@if (!_loading && (_unusedSubscriptions.Any() || _upcomingDeadlines.Any()))
+{
+    <MudPaper Class="pa-4 mb-4">
+        @if (_upcomingDeadlines.Any())
+        {
+            <MudAlert Severity="Severity.Warning" Class="mb-2">
+                <MudText Typo="Typo.body2">
+                    <strong>⏰ Uppsägningsfrister närmar sig (@_upcomingDeadlines.Count st):</strong>
+                </MudText>
+                @foreach (var sub in _upcomingDeadlines.Take(3))
+                {
+                    var daysLeft = (sub.CancellationDeadline!.Value - DateTime.UtcNow).Days;
+                    <MudText Typo="Typo.body2" Class="ml-4">
+                        • @sub.Name - Uppsägning senast @sub.CancellationDeadline.Value.ToString("yyyy-MM-dd") (@daysLeft dagar kvar)
+                    </MudText>
+                }
+            </MudAlert>
+        }
+        
+        @if (_unusedSubscriptions.Any())
+        {
+            <MudAlert Severity="Severity.Info">
+                <MudText Typo="Typo.body2">
+                    <strong>⚠️ Oanvända prenumerationer (@_unusedSubscriptions.Count st):</strong>
+                </MudText>
+                @foreach (var sub in _unusedSubscriptions.Take(3))
+                {
+                    var daysUnused = sub.LastUsedDate.HasValue 
+                        ? (DateTime.UtcNow - sub.LastUsedDate.Value).Days 
+                        : -1;
+                    <MudText Typo="Typo.body2" Class="ml-4">
+                        • @sub.Name - @sub.Price.ToString("C", new System.Globalization.CultureInfo("sv-SE"))/@GetFrequencyLabel(sub.BillingFrequency).ToLower() 
+                        @if (daysUnused > 0)
+                        {
+                            <text>(Senast använd: @daysUnused dagar sedan)</text>
+                        }
+                        else
+                        {
+                            <text>(Aldrig använd)</text>
+                        }
+                        <MudIconButton Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Small" Color="Color.Success" 
+                                       OnClick="@(() => MarkAsUsed(sub))" aria-label="Markera som använd" />
+                    </MudText>
+                }
+            </MudAlert>
+        }
+    </MudPaper>
+}
 
 @if (_showCreateForm)
 {
@@ -96,6 +151,32 @@
                       MaxLength="500"
                       Class="mb-3" />
 
+        <MudDatePicker @bind-Date="_formCancellationDeadline"
+                       Label="Uppsägningsfrist (valfritt)"
+                       Variant="Variant.Outlined"
+                       Class="mb-3"
+                       HelperText="Datum då uppsägningen senast måste göras" />
+
+        <MudNumericField @bind-Value="_formSubscription.CancellationNoticeDays" 
+                         Label="Uppsägningstid (dagar)"
+                         Variant="Variant.Outlined"
+                         Min="0"
+                         Class="mb-3"
+                         HelperText="Antal dagar innan förnyelse som uppsägning krävs" />
+
+        <MudDatePicker @bind-Date="_formLastUsedDate"
+                       Label="Senast använd (valfritt)"
+                       Variant="Variant.Outlined"
+                       Class="mb-3"
+                       HelperText="När du senast använde denna tjänst" />
+
+        <MudTextField @bind-Value="_formSubscription.SharedWith" 
+                      Label="Delad med (valfritt)" 
+                      Variant="Variant.Outlined"
+                      MaxLength="500"
+                      Class="mb-3"
+                      HelperText="T.ex. 'Anna, Per, Lisa' för familjeabonnemang" />
+
         <MudSwitch @bind-Value="_formSubscription.IsActive" Label="Aktivt" Color="Color.Primary" Class="mb-3" />
 
         <div class="d-flex gap-2">
@@ -156,21 +237,63 @@ else
                             <MudTh>Pris</MudTh>
                             <MudTh>Frekvens</MudTh>
                             <MudTh>Nästa faktura</MudTh>
-                            <MudTh>Kategori</MudTh>
+                            <MudTh>Status</MudTh>
+                            <MudTh>Delad med</MudTh>
                             <MudTh>Länkar</MudTh>
                             <MudTh>Åtgärder</MudTh>
                         </HeaderContent>
                         <RowTemplate>
-                            <MudTd>@context.Name</MudTd>
+                            <MudTd>
+                                <div class="d-flex align-center">
+                                    @context.Name
+                                    @if (context.AutoDetected)
+                                    {
+                                        <MudChip T="string" Size="Size.Small" Color="Color.Info" Class="ml-2">Auto</MudChip>
+                                    }
+                                </div>
+                            </MudTd>
                             <MudTd>@context.Price.ToString("C", new System.Globalization.CultureInfo("sv-SE"))</MudTd>
                             <MudTd>@GetFrequencyLabel(context.BillingFrequency)</MudTd>
                             <MudTd>@(context.NextBillingDate?.ToString("yyyy-MM-dd") ?? "-")</MudTd>
                             <MudTd>
-                                @if (context.Category != null)
+                                @if (IsUnused(context))
+                                {
+                                    var daysUnused = context.LastUsedDate.HasValue 
+                                        ? (DateTime.UtcNow - context.LastUsedDate.Value).Days 
+                                        : -1;
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Warning" Icon="@Icons.Material.Filled.Warning">
+                                        @if (daysUnused > 0)
+                                        {
+                                            <text>@daysUnused d sedan</text>
+                                        }
+                                        else
+                                        {
+                                            <text>Aldrig använd</text>
+                                        }
+                                    </MudChip>
+                                }
+                                else if (context.CancellationDeadline.HasValue && context.CancellationDeadline.Value <= DateTime.UtcNow.AddDays(30))
+                                {
+                                    var daysLeft = (context.CancellationDeadline.Value - DateTime.UtcNow).Days;
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Error" Icon="@Icons.Material.Filled.Alarm">
+                                        Frist: @daysLeft d
+                                    </MudChip>
+                                }
+                                else if (context.Category != null)
                                 {
                                     <MudChip T="string" Size="Size.Small" Color="Color.Default" Style="@($"background-color: {context.Category.Color}; color: white;")">
                                         @context.Category.Name
                                     </MudChip>
+                                }
+                            </MudTd>
+                            <MudTd>
+                                @if (!string.IsNullOrWhiteSpace(context.SharedWith))
+                                {
+                                    <MudTooltip Text="@context.SharedWith">
+                                        <MudChip T="string" Size="Size.Small" Color="Color.Success" Icon="@Icons.Material.Filled.Group">
+                                            Delad
+                                        </MudChip>
+                                    </MudTooltip>
                                 }
                             </MudTd>
                             <MudTd>
@@ -243,11 +366,15 @@ else
     private List<Subscription> _subscriptions = new();
     private List<Subscription> _activeSubscriptions = new();
     private List<Subscription> _inactiveSubscriptions = new();
+    private List<Subscription> _unusedSubscriptions = new();
+    private List<Subscription> _upcomingDeadlines = new();
     private List<Category> _categories = new();
     private Subscription _formSubscription = new();
     private Subscription? _editingSubscription = null;
     private DateTime? _formStartDate;
     private DateTime? _formNextBillingDate;
+    private DateTime? _formCancellationDeadline;
+    private DateTime? _formLastUsedDate;
     private string _userId = string.Empty;
     private int _activeCount = 0;
     private decimal _monthlyCost = 0;
@@ -271,6 +398,11 @@ else
         _monthlyCost = await SubscriptionService.GetMonthlySubscriptionCostAsync(_userId);
         _yearlyCost = await SubscriptionService.GetYearlySubscriptionCostAsync(_userId);
         _categories = (await CategoryService.GetAllCategoriesAsync()).ToList();
+        
+        // Load smart features data
+        _unusedSubscriptions = await SubscriptionService.GetUnusedSubscriptionsAsync(_userId, 45);
+        _upcomingDeadlines = await SubscriptionService.GetSubscriptionsWithUpcomingCancellationDeadlineAsync(_userId, 30);
+        
         _loading = false;
     }
 
@@ -288,6 +420,8 @@ else
             };
             _formStartDate = DateTime.Today;
             _formNextBillingDate = null;
+            _formCancellationDeadline = null;
+            _formLastUsedDate = null;
             _editingSubscription = null;
         }
     }
@@ -312,10 +446,18 @@ else
             CancellationUrl = subscription.CancellationUrl,
             ManagementUrl = subscription.ManagementUrl,
             AccountEmail = subscription.AccountEmail,
-            Notes = subscription.Notes
+            Notes = subscription.Notes,
+            CancellationDeadline = subscription.CancellationDeadline,
+            CancellationNoticeDays = subscription.CancellationNoticeDays,
+            LastUsedDate = subscription.LastUsedDate,
+            SharedWith = subscription.SharedWith,
+            AutoDetected = subscription.AutoDetected,
+            DetectedFromTransactionId = subscription.DetectedFromTransactionId
         };
         _formStartDate = subscription.StartDate;
         _formNextBillingDate = subscription.NextBillingDate;
+        _formCancellationDeadline = subscription.CancellationDeadline;
+        _formLastUsedDate = subscription.LastUsedDate;
         _showCreateForm = true;
     }
 
@@ -329,6 +471,8 @@ else
 
         _formSubscription.StartDate = _formStartDate ?? DateTime.Today;
         _formSubscription.NextBillingDate = _formNextBillingDate;
+        _formSubscription.CancellationDeadline = _formCancellationDeadline;
+        _formSubscription.LastUsedDate = _formLastUsedDate;
 
         try
         {
@@ -378,6 +522,71 @@ else
                 Snackbar.Add($"Fel: {ex.Message}", Severity.Error);
             }
         }
+    }
+
+    private async Task DetectSubscriptions()
+    {
+        try
+        {
+            _loading = true;
+            var detected = await SubscriptionService.DetectSubscriptionsFromTransactionsAsync(_userId);
+            
+            if (detected.Any())
+            {
+                var parameters = new DialogParameters
+                {
+                    { "Subscriptions", detected }
+                };
+                
+                var dialog = await DialogService.ShowAsync<ConfirmDetectedSubscriptionsDialog>("Upptäckta Abonnemang", parameters);
+                var result = await dialog.Result;
+                
+                if (!result.Canceled && result.Data is List<Subscription> confirmed)
+                {
+                    foreach (var sub in confirmed)
+                    {
+                        await SubscriptionService.CreateSubscriptionAsync(sub);
+                    }
+                    Snackbar.Add($"Lade till {confirmed.Count} upptäckta abonnemang!", Severity.Success);
+                    await LoadData();
+                }
+            }
+            else
+            {
+                Snackbar.Add("Inga nya abonnemang upptäcktes", Severity.Info);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Fel vid upptäckt: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task MarkAsUsed(Subscription subscription)
+    {
+        try
+        {
+            await SubscriptionService.UpdateLastUsedDateAsync(subscription.SubscriptionId, DateTime.UtcNow);
+            Snackbar.Add($"{subscription.Name} markerad som använd!", Severity.Success);
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Fel: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private bool IsUnused(Subscription subscription)
+    {
+        if (subscription.LastUsedDate == null)
+            return true;
+        
+        var daysSinceUse = (DateTime.UtcNow - subscription.LastUsedDate.Value).Days;
+        return daysSinceUse >= 45;
     }
 
     private string GetFrequencyLabel(string frequency)
