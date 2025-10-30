@@ -423,7 +423,9 @@ else
     {
         var parameters = new DialogParameters<ReceiptViewDialog>
         {
-            { x => x.Receipt, receipt }
+            { x => x.Receipt, receipt },
+            { x => x.OnEdit, EventCallback.Factory.Create<Receipt>(this, EditReceiptFromDialog) },
+            { x => x.OnDelete, EventCallback.Factory.Create<Receipt>(this, DeleteReceiptFromDialog) }
         };
 
         var options = new DialogOptions 
@@ -435,6 +437,16 @@ else
         };
 
         await DialogService.ShowAsync<ReceiptViewDialog>("Kvittodetaljer", parameters, options);
+    }
+
+    private void EditReceiptFromDialog(Receipt receipt)
+    {
+        EditReceipt(receipt);
+    }
+
+    private async Task DeleteReceiptFromDialog(Receipt receipt)
+    {
+        await DeleteReceipt(receipt);
     }
 
     private async Task DeleteReceipt(Receipt receipt)

@@ -1,4 +1,5 @@
 @using Privatekonomi.Core.Models
+@inject IDialogService DialogService
 
 <MudDialog>
     <DialogContent>
@@ -15,7 +16,9 @@
                                      Alt="Kvittobild" 
                                      ObjectFit="ObjectFit.Contain"
                                      Class="rounded" 
-                                     Style="max-width: 100%; max-height: 500px; width: auto; height: auto; display: block; margin: 0 auto;" />
+                                     Style="max-width: 100%; max-height: 500px; width: auto; height: auto; display: block; margin: 0 auto; cursor: pointer;" 
+                                     @onclick="OpenFullscreenImage" />
+                            <MudText Typo="Typo.caption" Class="mt-2 text-center" Color="Color.Secondary">Klicka på bilden för att se i helskärm</MudText>
                         </MudPaper>
                     </MudItem>
                 }
@@ -140,7 +143,10 @@
         }
     </DialogContent>
     <DialogActions>
-        <MudButton OnClick="Close" Color="Color.Primary" Variant="Variant.Filled">Stäng</MudButton>
+        <MudButton OnClick="Close" Variant="Variant.Text">Stäng</MudButton>
+        <MudSpacer />
+        <MudButton OnClick="EditReceipt" Color="Color.Primary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Edit">Redigera</MudButton>
+        <MudButton OnClick="DeleteReceipt" Color="Color.Error" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Delete">Ta bort</MudButton>
     </DialogActions>
 </MudDialog>
 
@@ -151,7 +157,53 @@
     [Parameter]
     public Receipt? Receipt { get; set; }
 
+    [Parameter]
+    public EventCallback<Receipt> OnEdit { get; set; }
+
+    [Parameter]
+    public EventCallback<Receipt> OnDelete { get; set; }
+
     private readonly System.Globalization.CultureInfo _svCulture = new("sv-SE");
+
+    private async Task OpenFullscreenImage()
+    {
+        if (Receipt != null && !string.IsNullOrEmpty(Receipt.ImagePath))
+        {
+            var parameters = new DialogParameters<ImageFullscreenDialog>
+            {
+                { x => x.ImageUrl, GetImageUrl(Receipt.ImagePath) },
+                { x => x.ImageAlt, $"Kvitto från {Receipt.Merchant}" }
+            };
+
+            var options = new DialogOptions
+            {
+                MaxWidth = MaxWidth.ExtraExtraLarge,
+                FullWidth = true,
+                CloseButton = true,
+                CloseOnEscapeKey = true
+            };
+
+            await DialogService.ShowAsync<ImageFullscreenDialog>("Kvittobild", parameters, options);
+        }
+    }
+
+    private async Task EditReceipt()
+    {
+        if (Receipt != null && OnEdit.HasDelegate)
+        {
+            await OnEdit.InvokeAsync(Receipt);
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+    }
+
+    private async Task DeleteReceipt()
+    {
+        if (Receipt != null && OnDelete.HasDelegate)
+        {
+            await OnDelete.InvokeAsync(Receipt);
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+    }
 
     private string GetImageUrl(string imagePath)
     {
