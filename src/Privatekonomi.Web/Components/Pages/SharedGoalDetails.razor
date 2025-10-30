@@ -20,7 +20,10 @@ else
     <MudBreadcrumbs Items="_breadcrumbs" Class="mb-4"></MudBreadcrumbs>
     
     <div class="d-flex justify-space-between align-center mb-4">
-        <MudText Typo="Typo.h4">@_sharedGoal.Name</MudText>
+        <MudText Typo="Typo.h4">
+            <MudIcon Icon="@Icons.Material.Filled.Groups" Color="Color.Primary" Class="mr-2" aria-hidden="true" />
+            @_sharedGoal.Name
+        </MudText>
         <div>
             @if (_isOwner)
             {
