@@ -117,6 +117,7 @@ builder.Services.AddScoped<IBillService, BillService>();
 builder.Services.AddScoped<IPensionService, PensionService>();
 builder.Services.AddScoped<IDividendService, DividendService>();
 builder.Services.AddScoped<ILifeTimelinePlannerService, LifeTimelinePlannerService>();
+builder.Services.AddScoped<ISavingsChallengeService, SavingsChallengeService>();
 builder.Services.AddScoped<ThemeService>();
 builder.Services.AddScoped<DashboardPreferencesService>();
 
