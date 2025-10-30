@@ -60,7 +60,7 @@ Detta dokument analyserar Privatekonomi-applikationen mot en omfattande kravspec
 - ✅ Realtidsdata från banker
 - **Modell:** `BankConnection.cs`, `BankApiAccount.cs`
 - **Service:** `BankConnectionService.cs`, `BankApiServiceBase.cs`
-- **Dokumentation:** `wiki/PSD2_API_GUIDE.md`
+- **Dokumentation:** `docs/PSD2_API_GUIDE.md`
 
 **3. Kassaflödesanalys (Cash Flow)** ⭐⭐
 - ✅ Visualisering av inkomster/utgifter över tid
@@ -155,7 +155,7 @@ Detta dokument analyserar Privatekonomi-applikationen mot en omfattande kravspec
 - **Service:** `CsvImportService.cs`, `ExportService.cs`
 - **Parsers:** `IcaBankenParser.cs`, `SwedbankParser.cs`, `AvanzaHoldingsPerAccountParser.cs`
 - **Sida:** `Import.razor`, `ImportInvestments.razor`
-- **Dokumentation:** `wiki/CSV_IMPORT_GUIDE.md`, `wiki/AVANZA_IMPORT_GUIDE.md`
+- **Dokumentation:** `docs/CSV_IMPORT_GUIDE.md`, `docs/AVANZA_IMPORT_GUIDE.md`
 
 ### ❌ Saknas
 
@@ -194,7 +194,7 @@ Detta dokument analyserar Privatekonomi-applikationen mot en omfattande kravspec
 - **Modell:** `Budget.cs`, `BudgetCategory.cs`
 - **Service:** `BudgetService.cs`, `BudgetTemplateService.cs`
 - **Sida:** `Budgets.razor`
-- **Dokumentation:** `wiki/BUDGET_GUIDE.md`
+- **Dokumentation:** `docs/BUDGET_GUIDE.md`
 
 **2. Budgetuppföljning** ⭐⭐⭐
 - ✅ Jämförelse planerat vs faktiskt utfall
@@ -339,7 +339,7 @@ Detta dokument analyserar Privatekonomi-applikationen mot en omfattande kravspec
 - ✅ Uppdatera alla aktiekurser med ett knapptryck
 - ✅ Automatisk ISIN-sökning
 - **Service:** `YahooFinanceStockPriceService.cs`
-- **Dokumentation:** `wiki/STOCK_PRICE_API_GUIDE.md`
+- **Dokumentation:** `docs/STOCK_PRICE_API_GUIDE.md`
 
 **4. Import/Export** ⭐⭐⭐
 - ✅ Import från Avanza (två format)
@@ -414,7 +414,7 @@ Detta dokument analyserar Privatekonomi-applikationen mot en omfattande kravspec
 - **Service:** `K4Generator.cs`, `TaxDeductionService.cs`, `SieExporter.cs`
 - **Modell:** `CapitalGain.cs`, `TaxDeduction.cs`, `CommuteDeduction.cs`
 - **Sida:** `K4Report.razor`, `TaxDeductions.razor`, `SieExport.razor`
-- **Dokumentation:** `wiki/SWEDISH_INTEGRATIONS_SUMMARY.md`
+- **Dokumentation:** `docs/SWEDISH_INTEGRATIONS_SUMMARY.md`
 
 ### ❌ Saknas
 
@@ -528,20 +528,20 @@ Detta dokument analyserar Privatekonomi-applikationen mot en omfattande kravspec
 - **Modell:** `Household.cs`, `HouseholdMember.cs`, `SharedExpense.cs`, `ExpenseShare.cs`, `ChildAllowance.cs`, `AllowanceTask.cs`, `AllowanceTransaction.cs`
 - **Service:** `HouseholdService.cs`, `ChildAllowanceService.cs`
 - **Sida:** `Households.razor`, `HouseholdDetails.razor`, `ChildAllowances.razor`
-- **Dokumentation:** `wiki/FAMILY_COLLABORATION_GUIDE.md`, `docs/FAMILY_FEATURES_SUMMARY.md`
+- **Dokumentation:** `docs/FAMILY_COLLABORATION_GUIDE.md`, `docs/FAMILY_FEATURES_SUMMARY.md`
 
 **2. Automatisk Bankimport** ⭐⭐⭐
 - ✅ PSD2/Open Banking
 - ✅ Swedbank, Avanza, ICA Banken
 - ✅ Automatisk synkronisering
 - **Service:** `BankConnectionService.cs`
-- **Dokumentation:** `wiki/PSD2_API_GUIDE.md`
+- **Dokumentation:** `docs/PSD2_API_GUIDE.md`
 
 **3. CSV-import från Banker** ⭐⭐⭐
 - ✅ ICA-banken, Swedbank, Avanza
 - ✅ Dubbletthantering
 - **Service:** `CsvImportService.cs`
-- **Dokumentation:** `wiki/CSV_IMPORT_GUIDE.md`
+- **Dokumentation:** `docs/CSV_IMPORT_GUIDE.md`
 
 **4. Sverige-specifika Funktioner** ⭐⭐⭐
 - ✅ ROT/RUT-avdrag
@@ -551,7 +551,7 @@ Detta dokument analyserar Privatekonomi-applikationen mot en omfattande kravspec
 - ✅ Bolån med bindningstid
 - ✅ CSN-lån
 - ✅ Reseavdrag
-- **Dokumentation:** `wiki/SWEDISH_INTEGRATIONS_SUMMARY.md`
+- **Dokumentation:** `docs/SWEDISH_INTEGRATIONS_SUMMARY.md`
 
 ### ❌ Saknas
 

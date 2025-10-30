@@ -162,9 +162,9 @@ Investeringar kan aggregeras på flera sätt:
 3. Rebalansera regelbundet (t.ex. årligen)
 
 ## 📚 Relaterad dokumentation
-- [STOCK_PRICE_API_GUIDE.md](../wiki/STOCK_PRICE_API_GUIDE.md) - Automatisk kursuppdatering
-- [AVANZA_IMPORT_GUIDE.md](../wiki/AVANZA_IMPORT_GUIDE.md) - Import från Avanza
-- [SWEDISH_INTEGRATIONS_IMPLEMENTATION.md](../wiki/SWEDISH_INTEGRATIONS_IMPLEMENTATION.md) - ISK/KF schablonbeskattning
+- [STOCK_PRICE_API_GUIDE.md](STOCK_PRICE_API_GUIDE.md) - Automatisk kursuppdatering
+- [AVANZA_IMPORT_GUIDE.md](AVANZA_IMPORT_GUIDE.md) - Import från Avanza
+- [SWEDISH_INTEGRATIONS_IMPLEMENTATION.md](SWEDISH_INTEGRATIONS_IMPLEMENTATION.md) - ISK/KF schablonbeskattning
 
 ## 🔒 Säkerhet och integritet
 - All data lagras lokalt eller i din egen databas

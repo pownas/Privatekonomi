@@ -328,8 +328,7 @@ Fas 4: Nice-to-have (1-2 veckor)
 
 ### Om Projektet:
 - **README.md** - Komma igång, installation, översikt
-- **docs/** - Användardokumentation
-- **wiki/** - Teknisk dokumentation
+- **docs/** - All dokumentation (användarguider och teknisk dokumentation)
 
 ---
 
