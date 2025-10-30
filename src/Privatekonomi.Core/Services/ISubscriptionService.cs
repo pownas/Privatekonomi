@@ -15,4 +15,11 @@ public interface ISubscriptionService
     Task<List<Subscription>> GetSubscriptionsDueSoonAsync(string userId, int daysAhead);
     Task<List<SubscriptionPriceHistory>> GetPriceChangesAsync(string userId);
     Task AddPriceChangeAsync(int subscriptionId, decimal newPrice, string? reason);
+    
+    // Smart contract management features
+    Task<List<Subscription>> GetUnusedSubscriptionsAsync(string userId, int daysUnused = 45);
+    Task<List<Subscription>> GetSubscriptionsWithUpcomingCancellationDeadlineAsync(string userId, int daysAhead = 30);
+    Task UpdateLastUsedDateAsync(int subscriptionId, DateTime? lastUsedDate);
+    Task<List<Subscription>> DetectSubscriptionsFromTransactionsAsync(string userId);
+    Task<Subscription?> CreateSubscriptionFromTransactionAsync(int transactionId, string userId);
 }

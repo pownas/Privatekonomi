@@ -25,7 +25,7 @@ Detta dokument sammanfattar arbetet med att skapa en omfattande förslagslåda f
    - Detaljerad teknisk spec
    - Åtgärdslistor
 
-3. **[README.md](README.md)** (uppdaterad)
+3. **[README.md](../README.md)** (uppdaterad)
    - Nya länkar till förbättringsdokument
    - Tydligare struktur
 
@@ -268,8 +268,8 @@ Detta dokument sammanfattar arbetet med att skapa en omfattande förslagslåda f
 - **[FUNKTIONSANALYS.md](FUNKTIONSANALYS.md)** - Funktionskartläggning
 - **[ATGARDSPLAN.md](ATGARDSPLAN.md)** - Prioriterad roadmap
 - **[ISSUE_TEMPLATES.md](ISSUE_TEMPLATES.md)** - Tidigare templates
-- **[docs/IMPROVEMENT_SUGGESTIONS.md](docs/IMPROVEMENT_SUGGESTIONS.md)** - Tekniska förbättringar
-- **[docs/IMPROVEMENT_SUMMARY.md](docs/IMPROVEMENT_SUMMARY.md)** - Sammanfattning
+- **[IMPROVEMENT_SUGGESTIONS.md](IMPROVEMENT_SUGGESTIONS.md)** - Tekniska förbättringar
+- **[IMPROVEMENT_SUMMARY.md](IMPROVEMENT_SUMMARY.md)** - Sammanfattning
 
 ---
 
