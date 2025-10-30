@@ -130,7 +130,7 @@
                             <div class="mt-1">
                                 <MudText Typo="Typo.caption" Color="Color.Secondary" Style="font-style: italic;">
                                     <MudIcon Icon="@Icons.Material.Filled.StickyNote2" Size="Size.Small" Style="vertical-align: middle;" />
-                                    @(context.Notes.Length > 50 ? context.Notes.Substring(0, 50) + "..." : context.Notes)
+                                    @(context.Notes.Length > MaxNotePreviewLength ? context.Notes.Substring(0, MaxNotePreviewLength) + "..." : context.Notes)
                                 </MudText>
                             </div>
                         }
@@ -190,6 +190,8 @@
 </MudPaper>
 
 @code {
+    private const int MaxNotePreviewLength = 50;
+    
     private bool _loading = true;
     private bool _dense = false;
     private IEnumerable<Transaction> _transactions = new List<Transaction>();
