@@ -26,7 +26,12 @@ public interface ILifeTimelinePlannerService
     // Planning and calculations
     Task<decimal> CalculateRequiredMonthlySavingsAsync(int milestoneId);
     Task<decimal> CalculateProjectedRetirementWealthAsync(int scenarioId);
+    Task<decimal> CalculateExpectedMonthlyPensionAsync(int scenarioId);
     Task<Dictionary<string, decimal>> GetMilestonesByTypeAsync();
     Task<int> GetYearsToRetirementAsync();
     Task<decimal> GetTotalMilestoneCostsAsync();
+    
+    // Life insurance and inheritance planning
+    Task<decimal> CalculateLifeInsuranceNeedAsync();
+    Task<decimal> CalculateRecommendedLifeInsuranceAsync();
 }
