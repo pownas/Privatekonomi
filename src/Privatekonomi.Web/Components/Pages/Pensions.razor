@@ -13,9 +13,162 @@
     </MudButton>
 </div>
 
-<MudAlert Severity="Severity.Info" Class="mb-4">
-    <MudText Typo="Typo.body2"><strong>Tips:</strong> Hämta dina pensionsuppgifter från <a href="https://www.minpension.se" target="_blank">minpension.se</a> för en komplett översikt.</MudText>
-</MudAlert>
+<!-- Information and External Links Section -->
+<MudPaper Class="pa-4 mb-4">
+    <MudText Typo="Typo.h6" Class="mb-3">
+        <MudIcon Icon="@Icons.Material.Filled.Info" Class="mr-2" />
+        Information och externa resurser
+    </MudText>
+    <MudGrid>
+        <MudItem xs="12" md="6">
+            <MudAlert Severity="Severity.Info" Class="mb-2">
+                <MudText Typo="Typo.body2" Class="mb-2">
+                    <strong>Min Pension</strong>
+                </MudText>
+                <MudText Typo="Typo.body2">
+                    Få en samlad översikt över hela din pension från olika myndigheter och bolag. 
+                    Här kan du se prognoser och planera för din pension.
+                </MudText>
+                <MudButton Href="https://www.minpension.se" Target="_blank" 
+                          Variant="Variant.Text" Color="Color.Primary" 
+                          StartIcon="@Icons.Material.Filled.OpenInNew" Class="mt-2">
+                    Besök minpension.se
+                </MudButton>
+            </MudAlert>
+        </MudItem>
+        <MudItem xs="12" md="6">
+            <MudAlert Severity="Severity.Info" Class="mb-2">
+                <MudText Typo="Typo.body2" Class="mb-2">
+                    <strong>Pensionsmyndigheten</strong>
+                </MudText>
+                <MudText Typo="Typo.body2">
+                    Lär dig mer om pensionssystemet, hur pensionen räknas ut och hur du kan påverka din pension. 
+                    Hitta information om allmän pension och premiepension.
+                </MudText>
+                <MudButton Href="https://www.pensionsmyndigheten.se" Target="_blank" 
+                          Variant="Variant.Text" Color="Color.Primary" 
+                          StartIcon="@Icons.Material.Filled.OpenInNew" Class="mt-2">
+                    Besök pensionsmyndigheten.se
+                </MudButton>
+            </MudAlert>
+        </MudItem>
+    </MudGrid>
+</MudPaper>
+
+<!-- Recommendations Section -->
+@if (_pensions.Any())
+{
+    <MudPaper Class="pa-4 mb-4">
+        <MudText Typo="Typo.h6" Class="mb-3">
+            <MudIcon Icon="@Icons.Material.Filled.Lightbulb" Class="mr-2" />
+            Rekommendationer och tips
+        </MudText>
+        
+        @if (_averageRetirementAge.HasValue)
+        {
+            var yearsToRetirement = _averageRetirementAge.Value - _estimatedCurrentAge;
+            
+            @if (yearsToRetirement > 30)
+            {
+                <MudAlert Severity="Severity.Success" Class="mb-3">
+                    <MudText Typo="Typo.body2" Class="mb-2"><strong>Långsiktig pensionsplanering (över 30 år till pension)</strong></MudText>
+                    <MudText Typo="Typo.body2">
+                        • Du har lång tid på dig vilket ger dig möjlighet att ta större risk i dina placeringar<br/>
+                        • Överväg aktiefonder för långsiktig tillväxt - historiskt ger aktier högre avkastning över tid<br/>
+                        • Använd ränteavdrag för pensionssparande - du kan spara upp till 35 200 kr/år och få 30% tillbaka på skatten<br/>
+                        • Börja redan nu - tack vare ränta-på-ränta effekten kan även små belopp växa stort över tid
+                    </MudText>
+                </MudAlert>
+            }
+            else if (yearsToRetirement > 15 && yearsToRetirement <= 30)
+            {
+                <MudAlert Severity="Severity.Info" Class="mb-3">
+                    <MudText Typo="Typo.body2" Class="mb-2"><strong>Mellanlång pensionsplanering (15-30 år till pension)</strong></MudText>
+                    <MudText Typo="Typo.body2">
+                        • Fortsätt spara regelbundet - öka gärna din månatliga sparandel om möjligt<br/>
+                        • Börja fundera på om din riskprofil passar din tidshorisont<br/>
+                        • Kontrollera och balansera din portfölj årligen<br/>
+                        • Se över dina tjänstepensioner och hur de är placerade<br/>
+                        • Kom ihåg att du fortfarande har god tid för tillväxt
+                    </MudText>
+                </MudAlert>
+            }
+            else if (yearsToRetirement > 5 && yearsToRetirement <= 15)
+            {
+                <MudAlert Severity="Severity.Warning" Class="mb-3">
+                    <MudText Typo="Typo.body2" Class="mb-2"><strong>Närmar dig pension (5-15 år kvar)</strong></MudText>
+                    <MudText Typo="Typo.body2">
+                        • Börja planera för övergången till pension - vad vill du leva på?<br/>
+                        • Överväg att gradvis minska risken i din portfölj<br/>
+                        • Kontrollera din förväntade pension på minpension.se<br/>
+                        • Fundera på om du behöver komplettera med extra sparande<br/>
+                        • Planera för när du vill ta ut pension - varje år du väntar efter 65 ger 6-7% högre pension
+                    </MudText>
+                </MudAlert>
+            }
+            else if (yearsToRetirement > 0 && yearsToRetirement <= 5)
+            {
+                <MudAlert Severity="Severity.Warning" Class="mb-3">
+                    <MudText Typo="Typo.body2" Class="mb-2"><strong>Snart pension (0-5 år kvar)</strong></MudText>
+                    <MudText Typo="Typo.body2">
+                        • Kontrollera att du har en säker portfölj som klarar marknadssvängningar<br/>
+                        • Planera i detalj för din pension - kontakta pensionsbolagen<br/>
+                        • Besluta när du vill börja ta ut pension<br/>
+                        • Se över din ekonomi: hur mycket behöver du leva på per månad?<br/>
+                        • Tänk på att du kan kombinera pension och arbete
+                    </MudText>
+                </MudAlert>
+            }
+            else
+            {
+                <MudAlert Severity="Severity.Normal" Class="mb-3">
+                    <MudText Typo="Typo.body2" Class="mb-2"><strong>Efter pension</strong></MudText>
+                    <MudText Typo="Typo.body2">
+                        • Se över din portfölj för att säkerställa att du har tillräckligt med säkra placeringar<br/>
+                        • Planera uttag från dina pensioner för att minimera skatt<br/>
+                        • Håll koll på din ekonomi och justera vid behov
+                    </MudText>
+                </MudAlert>
+            }
+        }
+        
+        @if (_totalMonthlyContributions > 0)
+        {
+            var projectedValue10Years = CalculateProjectedPensionValue(10);
+            var projectedValue20Years = CalculateProjectedPensionValue(20);
+            var projectedValue30Years = CalculateProjectedPensionValue(30);
+            
+            <MudAlert Severity="Severity.Success" Class="mb-3">
+                <MudText Typo="Typo.body2" Class="mb-2"><strong>Hur ditt pensionssparande kan växa</strong></MudText>
+                <MudText Typo="Typo.body2" Class="mb-2">
+                    Med en månatlig inbetalning på <strong>@_totalMonthlyContributions.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))</strong> 
+                    och en genomsnittlig avkastning på 7% per år kan ditt pensionsvärde växa till:
+                </MudText>
+                <MudText Typo="Typo.body2">
+                    • <strong>Om 10 år:</strong> @projectedValue10Years.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))<br/>
+                    • <strong>Om 20 år:</strong> @projectedValue20Years.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))<br/>
+                    • <strong>Om 30 år:</strong> @projectedValue30Years.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))
+                </MudText>
+                <MudText Typo="Typo.body2" Class="mt-2" Style="font-style: italic; font-size: 0.875rem;">
+                    Tips: Om du ökar din månatliga inbetalning med bara 500 kr skulle värdet om 30 år bli 
+                    @CalculateProjectedPensionValueWithExtra(30, 500).ToString("C0", new System.Globalization.CultureInfo("sv-SE")) 
+                    - en ökning på @((CalculateProjectedPensionValueWithExtra(30, 500) - projectedValue30Years).ToString("C0", new System.Globalization.CultureInfo("sv-SE")))!
+                </MudText>
+            </MudAlert>
+        }
+        
+        <MudAlert Severity="Severity.Info">
+            <MudText Typo="Typo.body2" Class="mb-2"><strong>Allmänna tips för pensionssparande</strong></MudText>
+            <MudText Typo="Typo.body2">
+                • <strong>Börja tidigt:</strong> Ju tidigare du börjar, desto mer tid har pengarna att växa<br/>
+                • <strong>Spara regelbundet:</strong> Automatiska månatliga överföringar gör det enklare<br/>
+                • <strong>Utnyttja avdrag:</strong> Privat pensionssparande ger upp till 30% skatteavdrag på inbetalningar upp till 35 200 kr/år<br/>
+                • <strong>Diversifiera:</strong> Sprid din risk mellan olika pensionsformer och investeringar<br/>
+                • <strong>Följ upp:</strong> Kontrollera dina pensioner minst en gång om året
+            </MudText>
+        </MudAlert>
+    </MudPaper>
+}
 
 @if (_showCreateForm)
 {
@@ -220,6 +373,11 @@ else
     private decimal? _monthlyContribution;
     private decimal? _expectedMonthlyPension;
     private int? _retirementAge;
+    
+    // Fields for recommendations
+    private int? _averageRetirementAge;
+    private decimal _totalMonthlyContributions;
+    private int _estimatedCurrentAge = 40; // Default estimate
 
     protected override async Task OnInitializedAsync()
     {
@@ -236,7 +394,79 @@ else
         _totalContributions = await PensionService.GetTotalPensionContributionsAsync();
         _totalReturn = _totalValue - _totalContributions;
         
+        // Calculate recommendation data
+        CalculateRecommendationData();
+        
         _loading = false;
+    }
+    
+    private void CalculateRecommendationData()
+    {
+        // Calculate average retirement age from pensions
+        var pensionsWithRetirementAge = _pensions.Where(p => p.RetirementAge.HasValue).ToList();
+        if (pensionsWithRetirementAge.Any())
+        {
+            _averageRetirementAge = (int)pensionsWithRetirementAge.Average(p => p.RetirementAge!.Value);
+        }
+        else
+        {
+            _averageRetirementAge = 65; // Default Swedish retirement age
+        }
+        
+        // Calculate total monthly contributions
+        _totalMonthlyContributions = _pensions
+            .Where(p => p.MonthlyContribution.HasValue)
+            .Sum(p => p.MonthlyContribution!.Value);
+        
+        // Estimate current age based on retirement age minus years to retirement
+        // This is a simple estimation - actual age would require user profile data
+        if (_averageRetirementAge.HasValue)
+        {
+            // Assume user set retirement age realistically (typically 20-40 years in future)
+            _estimatedCurrentAge = _averageRetirementAge.Value - 25; // Conservative estimate
+        }
+    }
+    
+    /// <summary>
+    /// Calculate projected pension value after a number of years
+    /// Assumes 7% annual return (historical average for mixed portfolio)
+    /// </summary>
+    private decimal CalculateProjectedPensionValue(int years)
+    {
+        const decimal annualReturn = 0.07m;
+        var monthlyReturn = annualReturn / 12;
+        var months = years * 12;
+        
+        // Future value of current balance
+        var futureValueOfCurrent = _totalValue * (decimal)Math.Pow((double)(1 + annualReturn), years);
+        
+        // Future value of monthly contributions (annuity formula)
+        var futureValueOfContributions = _totalMonthlyContributions > 0
+            ? _totalMonthlyContributions * (((decimal)Math.Pow((double)(1 + monthlyReturn), months) - 1) / monthlyReturn)
+            : 0;
+        
+        return futureValueOfCurrent + futureValueOfContributions;
+    }
+    
+    /// <summary>
+    /// Calculate projected pension value with an extra monthly contribution
+    /// </summary>
+    private decimal CalculateProjectedPensionValueWithExtra(int years, decimal extraMonthlyAmount)
+    {
+        const decimal annualReturn = 0.07m;
+        var monthlyReturn = annualReturn / 12;
+        var months = years * 12;
+        
+        // Future value of current balance
+        var futureValueOfCurrent = _totalValue * (decimal)Math.Pow((double)(1 + annualReturn), years);
+        
+        // Future value of monthly contributions including extra
+        var totalMonthly = _totalMonthlyContributions + extraMonthlyAmount;
+        var futureValueOfContributions = totalMonthly > 0
+            ? totalMonthly * (((decimal)Math.Pow((double)(1 + monthlyReturn), months) - 1) / monthlyReturn)
+            : 0;
+        
+        return futureValueOfCurrent + futureValueOfContributions;
     }
 
     private void ToggleCreateForm()
