@@ -1,5 +1,6 @@
 @page "/transactions"
 @rendermode InteractiveServer
+@using Privatekonomi.Web.Components.Dialogs
 @inject ITransactionService TransactionService
 @inject IHouseholdService HouseholdService
 @inject IExportService ExportService
@@ -11,7 +12,15 @@
 
 <PageTitle>Transaktioner - Privatekonomi</PageTitle>
 
-<MudText Typo="Typo.h4" Class="mb-4">Transaktioner</MudText>
+<MudText Typo="Typo.h4" Class="mb-4">
+    Transaktioner
+    <MudIconButton Icon="@Icons.Material.Filled.Help" 
+                   Color="Color.Default" 
+                   Size="Size.Small"
+                   Class="mobile-only ml-2"
+                   OnClick="ShowGestureHelp"
+                   Title="Visa touch-gester hjälp" />
+</MudText>
 
 <MudPaper Class="pa-4">
     <MudGrid>
@@ -351,6 +360,15 @@
             Snackbar.Add("Transaktion borttagen", Severity.Success);
             await LoadData();
         }
+    }
+
+    private async Task ShowGestureHelp()
+    {
+        await DialogService.ShowAsync<GestureHelpDialog>("Touch-gester", new DialogOptions 
+        { 
+            MaxWidth = MaxWidth.Small,
+            FullWidth = true
+        });
     }
 
     private async Task ExportToCsv()

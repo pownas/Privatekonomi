@@ -73,6 +73,14 @@ En privatekonomi-applikation byggd med .NET 9, Blazor Server och MudBlazor för 
   - WCAG 2.1 Nivå AA compliance
   - Tangentbordsnavigation och fokusindikatorer
   - Optimerade färgkontraster för ljust och mörkt läge
+- **Mobil-optimerad UI med Gester**: ⭐ NYT!
+  - Touch-optimerade gester för mobil användning
+  - Swipe vänster/höger för ta bort/redigera transaktioner
+  - Pull-to-refresh för uppdatering av data
+  - Större touch targets (min 44×44px) enligt WCAG
+  - Thumbzone-optimerad layout för enkel navigering
+  - Bottom sheets för mobilmenyer
+  - Se [Mobile Gestures Guide](docs/MOBILE_GESTURES_GUIDE.md)
 - **Löneutveckling**:
   - Spåra och följa din lön över tid (hela karriären, 50+ år)
   - Visualisera löneutveckling med interaktiv graf
@@ -410,6 +418,7 @@ Se [STORAGE_GUIDE.md](docs/STORAGE_GUIDE.md) för detaljerad information om:
 - **[STOCK_PRICE_API_GUIDE.md](wiki/STOCK_PRICE_API_GUIDE.md)**: Guide för automatisk uppdatering av aktiekurser via API
 - **[INVESTMENT_PENSION_GUIDE.md](docs/INVESTMENT_PENSION_GUIDE.md)**: ⭐ NYT! Guide för investeringar och pensionshantering
 - **[BUDGET_GUIDE.md](wiki/BUDGET_GUIDE.md)**: Guide för budgethantering
+- **[MOBILE_GESTURES_GUIDE.md](docs/MOBILE_GESTURES_GUIDE.md)**: ⭐ NYT! Guide för mobil-optimerad UI med touch-gester
 - **[AUTOMATIC_CATEGORIZATION.md](docs/AUTOMATIC_CATEGORIZATION.md)**: Guide för automatisk kategorisering av transaktioner
 - **[FAMILY_COLLABORATION_GUIDE.md](wiki/FAMILY_COLLABORATION_GUIDE.md)**: Guide för familjesamarbete, barnkonton och veckopeng
 - **[DARK_MODE_IMPLEMENTATION.md](docs/DARK_MODE_IMPLEMENTATION.md)**: Guide för MudBlazor Dark Mode och WCAG-compliance
