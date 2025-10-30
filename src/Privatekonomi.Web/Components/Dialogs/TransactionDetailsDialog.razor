@@ -73,14 +73,69 @@
                                 </MudItem>
                             }
 
-                            @if (!string.IsNullOrEmpty(Transaction.Currency) && Transaction.Currency != "SEK")
+                            <MudItem xs="12" sm="6">
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">Valuta</MudText>
+                                <MudText Typo="Typo.body1" Class="font-weight-medium">@Transaction.Currency</MudText>
+                            </MudItem>
+
+                            @if (Transaction.Pocket != null)
                             {
                                 <MudItem xs="12" sm="6">
-                                    <MudText Typo="Typo.body2" Color="Color.Secondary">Valuta</MudText>
-                                    <MudText Typo="Typo.body1" Class="font-weight-medium">@Transaction.Currency</MudText>
+                                    <MudText Typo="Typo.body2" Color="Color.Secondary">Sparficka</MudText>
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Info" Variant="Variant.Outlined">
+                                        <MudIcon Icon="@Icons.Material.Filled.AccountBalanceWallet" Size="Size.Small" /> @Transaction.Pocket.Name
+                                    </MudChip>
+                                </MudItem>
+                            }
+
+                            @if (!string.IsNullOrEmpty(Transaction.RecipientBankgiro))
+                            {
+                                <MudItem xs="12" sm="6">
+                                    <MudText Typo="Typo.body2" Color="Color.Secondary">Bankgiro</MudText>
+                                    <MudText Typo="Typo.body1" Class="font-weight-medium">@Transaction.RecipientBankgiro</MudText>
+                                </MudItem>
+                            }
+
+                            @if (!string.IsNullOrEmpty(Transaction.RecipientPlusgiro))
+                            {
+                                <MudItem xs="12" sm="6">
+                                    <MudText Typo="Typo.body2" Color="Color.Secondary">Plusgiro</MudText>
+                                    <MudText Typo="Typo.body1" Class="font-weight-medium">@Transaction.RecipientPlusgiro</MudText>
                                 </MudItem>
                             }
                         </MudGrid>
+                    </MudPaper>
+                </MudItem>
+
+                <!-- Status och egenskaper -->
+                <MudItem xs="12">
+                    <MudPaper Class="pa-3" Elevation="2">
+                        <MudText Typo="Typo.h6" Class="mb-3">Status</MudText>
+                        
+                        <MudStack Row="true" Spacing="2" Wrap="Wrap.Wrap">
+                            @if (Transaction.IsRecurring)
+                            {
+                                <MudChip T="string" Size="Size.Small" Color="Color.Info" Variant="Variant.Filled" Icon="@Icons.Material.Filled.Replay">
+                                    Återkommande
+                                </MudChip>
+                            }
+                            @if (Transaction.Cleared)
+                            {
+                                <MudChip T="string" Size="Size.Small" Color="Color.Success" Variant="Variant.Filled" Icon="@Icons.Material.Filled.CheckCircle">
+                                    Avstämd
+                                </MudChip>
+                            }
+                            @if (Transaction.IsLocked)
+                            {
+                                <MudChip T="string" Size="Size.Small" Color="Color.Warning" Variant="Variant.Filled" Icon="@Icons.Material.Filled.Lock">
+                                    Låst
+                                </MudChip>
+                            }
+                            @if (!Transaction.IsRecurring && !Transaction.Cleared && !Transaction.IsLocked)
+                            {
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">Inga särskilda statusar</MudText>
+                            }
+                        </MudStack>
                     </MudPaper>
                 </MudItem>
 
@@ -149,13 +204,18 @@
                 }
 
                 <!-- Teknisk information -->
-                @if (Transaction.Imported || !string.IsNullOrEmpty(Transaction.ImportSource) || !string.IsNullOrEmpty(Transaction.OCR))
+                @if (Transaction.Imported || !string.IsNullOrEmpty(Transaction.ImportSource) || !string.IsNullOrEmpty(Transaction.OCR) || !string.IsNullOrEmpty(Transaction.InvoiceNumber) || Transaction.ValidFrom != default || Transaction.ValidTo.HasValue)
                 {
                     <MudItem xs="12">
                         <MudPaper Class="pa-3" Elevation="2">
                             <MudText Typo="Typo.h6" Class="mb-3">Teknisk information</MudText>
                             
                             <MudGrid Spacing="2">
+                                <MudItem xs="12" sm="6">
+                                    <MudText Typo="Typo.body2" Color="Color.Secondary">Transaktions-ID</MudText>
+                                    <MudText Typo="Typo.body1" Class="font-weight-medium">@Transaction.TransactionId</MudText>
+                                </MudItem>
+
                                 @if (Transaction.Imported)
                                 {
                                     <MudItem xs="12" sm="6">
@@ -187,6 +247,22 @@
                                     <MudItem xs="12" sm="6">
                                         <MudText Typo="Typo.body2" Color="Color.Secondary">Fakturanummer</MudText>
                                         <MudText Typo="Typo.body1" Class="font-weight-medium">@Transaction.InvoiceNumber</MudText>
+                                    </MudItem>
+                                }
+
+                                @if (Transaction.ValidFrom != default)
+                                {
+                                    <MudItem xs="12" sm="6">
+                                        <MudText Typo="Typo.body2" Color="Color.Secondary">Giltig från</MudText>
+                                        <MudText Typo="Typo.body1" Class="font-weight-medium">@Transaction.ValidFrom.ToString("yyyy-MM-dd HH:mm")</MudText>
+                                    </MudItem>
+                                }
+
+                                @if (Transaction.ValidTo.HasValue)
+                                {
+                                    <MudItem xs="12" sm="6">
+                                        <MudText Typo="Typo.body2" Color="Color.Secondary">Giltig till</MudText>
+                                        <MudText Typo="Typo.body1" Class="font-weight-medium">@Transaction.ValidTo.Value.ToString("yyyy-MM-dd HH:mm")</MudText>
                                     </MudItem>
                                 }
 
