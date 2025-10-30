@@ -76,7 +76,7 @@
                                    Label="Livsmedel totalt" 
                                    Variant="Variant.Outlined"
                                    Format="N0"
-                                   Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                                   Culture="@SwedishCulture"
                                    Adornment="Adornment.Start"
                                    AdornmentText="kr"
                                    Min="0"
@@ -88,7 +88,7 @@
                                    Label="Kläder och skor" 
                                    Variant="Variant.Outlined"
                                    Format="N0"
-                                   Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                                   Culture="@SwedishCulture"
                                    Adornment="Adornment.Start"
                                    AdornmentText="kr"
                                    Min="0"
@@ -98,7 +98,7 @@
                                    Label="Fritid och lek" 
                                    Variant="Variant.Outlined"
                                    Format="N0"
-                                   Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                                   Culture="@SwedishCulture"
                                    Adornment="Adornment.Start"
                                    AdornmentText="kr"
                                    Min="0"
@@ -108,7 +108,7 @@
                                    Label="Mobiltelefon" 
                                    Variant="Variant.Outlined"
                                    Format="N0"
-                                   Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                                   Culture="@SwedishCulture"
                                    Adornment="Adornment.Start"
                                    AdornmentText="kr"
                                    Min="0"
@@ -118,7 +118,7 @@
                                    Label="Personlig hygien" 
                                    Variant="Variant.Outlined"
                                    Format="N0"
-                                   Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                                   Culture="@SwedishCulture"
                                    Adornment="Adornment.Start"
                                    AdornmentText="kr"
                                    Min="0"
@@ -128,7 +128,7 @@
                                    Label="Barn- och ungdomsförsäkring" 
                                    Variant="Variant.Outlined"
                                    Format="N0"
-                                   Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                                   Culture="@SwedishCulture"
                                    Adornment="Adornment.Start"
                                    AdornmentText="kr"
                                    Min="0"
@@ -138,7 +138,7 @@
                                    Label="Övrig barnutrustning" 
                                    Variant="Variant.Outlined"
                                    Format="N0"
-                                   Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                                   Culture="@SwedishCulture"
                                    Adornment="Adornment.Start"
                                    AdornmentText="kr"
                                    Min="0"
@@ -150,7 +150,7 @@
                                    Label="Förbrukningsvaror" 
                                    Variant="Variant.Outlined"
                                    Format="N0"
-                                   Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                                   Culture="@SwedishCulture"
                                    Adornment="Adornment.Start"
                                    AdornmentText="kr"
                                    Min="0"
@@ -160,7 +160,7 @@
                                    Label="Hemutrustning" 
                                    Variant="Variant.Outlined"
                                    Format="N0"
-                                   Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                                   Culture="@SwedishCulture"
                                    Adornment="Adornment.Start"
                                    AdornmentText="kr"
                                    Min="0"
@@ -170,7 +170,7 @@
                                    Label="Internet- och mobilabonnemang" 
                                    Variant="Variant.Outlined"
                                    Format="N0"
-                                   Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                                   Culture="@SwedishCulture"
                                    Adornment="Adornment.Start"
                                    AdornmentText="kr"
                                    Min="0"
@@ -180,7 +180,7 @@
                                    Label="Övriga medietjänster" 
                                    Variant="Variant.Outlined"
                                    Format="N0"
-                                   Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                                   Culture="@SwedishCulture"
                                    Adornment="Adornment.Start"
                                    AdornmentText="kr"
                                    Min="0"
@@ -190,7 +190,7 @@
                                    Label="Hushållsel" 
                                    Variant="Variant.Outlined"
                                    Format="N0"
-                                   Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                                   Culture="@SwedishCulture"
                                    Adornment="Adornment.Start"
                                    AdornmentText="kr"
                                    Min="0"
@@ -200,7 +200,7 @@
                                    Label="Vatten och avlopp" 
                                    Variant="Variant.Outlined"
                                    Format="N0"
-                                   Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                                   Culture="@SwedishCulture"
                                    Adornment="Adornment.Start"
                                    AdornmentText="kr"
                                    Min="0"
@@ -210,7 +210,7 @@
                                    Label="Hemförsäkring" 
                                    Variant="Variant.Outlined"
                                    Format="N0"
-                                   Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                                   Culture="@SwedishCulture"
                                    Adornment="Adornment.Start"
                                    AdornmentText="kr"
                                    Min="0"
@@ -267,10 +267,16 @@
                                 @{
                                     var totalDiff = _userCosts.TotalCosts - _comparisonResult.ReferenceTotalCosts;
                                     var diffColor = totalDiff > 0 ? Color.Error : Color.Success;
+                                    var diffPercentage = _comparisonResult.ReferenceTotalCosts > 0 
+                                        ? (totalDiff / _comparisonResult.ReferenceTotalCosts * 100) 
+                                        : 0;
                                 }
                                 <MudText Typo="Typo.h5" Color="@diffColor">
                                     @totalDiff.ToString("+#,0;-#,0;0") kr 
-                                    (@((totalDiff / _comparisonResult.ReferenceTotalCosts * 100).ToString("+0.0;-0.0;0"))%)
+                                    @if (_comparisonResult.ReferenceTotalCosts > 0)
+                                    {
+                                        <text>(@diffPercentage.ToString("+0.0;-0.0;0")%)</text>
+                                    }
                                 </MudText>
                                 @if (totalDiff > 0)
                                 {
@@ -382,6 +388,8 @@
         YAxisFormat = "N0",
         ChartPalette = new[] { "#2196F3", "#4CAF50" }
     };
+    private static readonly System.Globalization.CultureInfo SwedishCulture = System.Globalization.CultureInfo.GetCultureInfo("sv-SE");
+    private const int MaxChartCategories = 6;
 
     protected override void OnInitialized()
     {
@@ -397,14 +405,8 @@
     private void RemoveMember(KonsumentverketHouseholdMember member)
     {
         _householdMembers.Remove(member);
-        if (_householdMembers.Any())
-        {
-            CalculateComparison();
-        }
-        else
-        {
-            _comparisonResult = null;
-        }
+        // Clear result when removing members to avoid showing outdated comparison
+        _comparisonResult = null;
     }
 
     private void CalculateComparison()
@@ -417,11 +419,11 @@
 
         _comparisonResult = ComparisonService.CompareWithReference(_householdMembers, _userCosts);
         
-        // Prepare chart data - show top 6 categories with biggest differences
+        // Prepare chart data - show top categories with biggest differences
         var topCategories = _comparisonResult.CategoryComparisons.Values
             .Where(c => c.UserCost > 0 || c.ReferenceCost > 0)
             .OrderByDescending(c => Math.Abs(c.Difference))
-            .Take(6)
+            .Take(MaxChartCategories)
             .ToList();
         
         _chartLabels = topCategories.Select(c => c.CategoryName).ToArray();
