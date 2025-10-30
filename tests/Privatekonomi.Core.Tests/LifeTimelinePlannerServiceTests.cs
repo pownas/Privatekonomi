@@ -320,5 +320,103 @@ public class LifeTimelinePlannerServiceTests : IDisposable
         Assert.Equal(1500000m, result); // Should only include non-completed milestones
     }
 
+    [Fact]
+    public async Task CalculateExpectedMonthlyPensionAsync_ValidScenario_ReturnsMonthlyPension()
+    {
+        // Arrange
+        var scenario = new LifeTimelineScenario
+        {
+            Name = "Test Scenario",
+            MonthlySavings = 5000m,
+            ExpectedReturnRate = 7.0m,
+            RetirementAge = 65,
+            IsActive = true
+        };
+
+        await _service.CreateScenarioAsync(scenario);
+
+        // Act
+        var monthlyPension = await _service.CalculateExpectedMonthlyPensionAsync(scenario.LifeTimelineScenarioId);
+
+        // Assert
+        Assert.True(monthlyPension > 0);
+        // With 35 years of saving 5000 kr/month at 7% return, monthly pension should be substantial
+        Assert.True(monthlyPension > 10000m); // Should be at least 10,000 kr/month
+    }
+
+    [Fact]
+    public async Task CalculateLifeInsuranceNeedAsync_WithMilestones_ReturnsPositiveAmount()
+    {
+        // Arrange
+        var milestone1 = new LifeTimelineMilestone
+        {
+            Name = "Köpa bostad",
+            MilestoneType = "HousePurchase",
+            PlannedDate = DateTime.UtcNow.AddYears(5),
+            EstimatedCost = 2000000m,
+            CurrentSavings = 500000m
+        };
+
+        var milestone2 = new LifeTimelineMilestone
+        {
+            Name = "Barn",
+            MilestoneType = "Child",
+            PlannedDate = DateTime.UtcNow.AddYears(3),
+            EstimatedCost = 500000m,
+            CurrentSavings = 50000m
+        };
+
+        var scenario = new LifeTimelineScenario
+        {
+            Name = "Test Scenario",
+            MonthlySavings = 10000m,
+            IsActive = true
+        };
+
+        await _service.CreateMilestoneAsync(milestone1);
+        await _service.CreateMilestoneAsync(milestone2);
+        await _service.CreateScenarioAsync(scenario);
+
+        // Act
+        var insuranceNeed = await _service.CalculateLifeInsuranceNeedAsync();
+
+        // Assert
+        Assert.True(insuranceNeed > 0);
+        // Should include outstanding milestone costs plus income replacement
+        Assert.True(insuranceNeed > 1950000m); // Outstanding costs (1,500,000 + 450,000) 
+    }
+
+    [Fact]
+    public async Task CalculateRecommendedLifeInsuranceAsync_ReturnsRoundedAmount()
+    {
+        // Arrange
+        var milestone = new LifeTimelineMilestone
+        {
+            Name = "Test",
+            MilestoneType = "HousePurchase",
+            PlannedDate = DateTime.UtcNow.AddYears(5),
+            EstimatedCost = 2500000m,
+            CurrentSavings = 0m
+        };
+
+        var scenario = new LifeTimelineScenario
+        {
+            Name = "Test Scenario",
+            MonthlySavings = 5000m,
+            IsActive = true
+        };
+
+        await _service.CreateMilestoneAsync(milestone);
+        await _service.CreateScenarioAsync(scenario);
+
+        // Act
+        var recommended = await _service.CalculateRecommendedLifeInsuranceAsync();
+
+        // Assert
+        Assert.True(recommended > 0);
+        // Should be rounded to nearest 100,000
+        Assert.Equal(0, recommended % 100000);
+    }
+
     #endregion
 }

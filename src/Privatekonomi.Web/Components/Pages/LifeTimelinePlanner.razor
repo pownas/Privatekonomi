@@ -48,7 +48,7 @@ else
             @if (_activeScenario != null)
             {
                 <MudGrid Class="mt-4">
-                    <MudItem xs="12" md="3">
+                    <MudItem xs="12" md="2">
                         <MudCard Elevation="2" Class="pa-3">
                             <MudCardContent>
                                 <MudText Typo="Typo.body2" Color="Color.Secondary">Månadssparande</MudText>
@@ -56,7 +56,7 @@ else
                             </MudCardContent>
                         </MudCard>
                     </MudItem>
-                    <MudItem xs="12" md="3">
+                    <MudItem xs="12" md="2">
                         <MudCard Elevation="2" Class="pa-3">
                             <MudCardContent>
                                 <MudText Typo="Typo.body2" Color="Color.Secondary">Förväntad avkastning</MudText>
@@ -64,7 +64,7 @@ else
                             </MudCardContent>
                         </MudCard>
                     </MudItem>
-                    <MudItem xs="12" md="3">
+                    <MudItem xs="12" md="2">
                         <MudCard Elevation="2" Class="pa-3">
                             <MudCardContent>
                                 <MudText Typo="Typo.body2" Color="Color.Secondary">Pensionsålder</MudText>
@@ -77,6 +77,14 @@ else
                             <MudCardContent>
                                 <MudText Typo="Typo.body2" Color="Color.Secondary">Prognos pension</MudText>
                                 <MudText Typo="Typo.h6" Color="Color.Success">@_projectedWealth.ToString("N0") kr</MudText>
+                            </MudCardContent>
+                        </MudCard>
+                    </MudItem>
+                    <MudItem xs="12" md="3">
+                        <MudCard Elevation="2" Class="pa-3">
+                            <MudCardContent>
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">Månatlig pension</MudText>
+                                <MudText Typo="Typo.h6" Color="Color.Info">@_monthlyPension.ToString("N0") kr</MudText>
                             </MudCardContent>
                         </MudCard>
                     </MudItem>
@@ -217,6 +225,75 @@ else
         </MudPaper>
     }
 
+    <!-- Life Insurance and Inheritance Planning -->
+    @if (_activeScenario != null)
+    {
+        <MudPaper Class="pa-4 mb-4">
+            <MudText Typo="Typo.h6" Class="mb-4">💼 Livförsäkring & Arv</MudText>
+            
+            <MudGrid>
+                <MudItem xs="12" md="6">
+                    <MudCard Elevation="2" Class="pa-4">
+                        <MudCardContent>
+                            <div class="d-flex align-center gap-2 mb-3">
+                                <MudIcon Icon="@Icons.Material.Filled.Security" Color="Color.Primary" />
+                                <MudText Typo="Typo.h6">Livförsäkringsbehov</MudText>
+                            </div>
+                            
+                            <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-3">
+                                Beräknat utifrån framtida utgifter och inkomstbortfall vid händelse av dödsfall.
+                            </MudText>
+                            
+                            <MudGrid>
+                                <MudItem xs="12">
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">Beräknat behov</MudText>
+                                    <MudText Typo="Typo.h5" Color="Color.Warning">@_lifeInsuranceNeed.ToString("N0") kr</MudText>
+                                </MudItem>
+                                <MudItem xs="12" Class="mt-2">
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">Rekommenderat försäkringsbelopp</MudText>
+                                    <MudText Typo="Typo.h5" Color="Color.Info">@_recommendedLifeInsurance.ToString("N0") kr</MudText>
+                                </MudItem>
+                            </MudGrid>
+                            
+                            <MudAlert Severity="Severity.Info" Class="mt-4" Dense="true">
+                                Beräkningen baseras på DIME-metoden: Skulder + Inkomstbortfall + Bostadskostnader + Utbildningskostnader
+                            </MudAlert>
+                        </MudCardContent>
+                    </MudCard>
+                </MudItem>
+                
+                <MudItem xs="12" md="6">
+                    <MudCard Elevation="2" Class="pa-4">
+                        <MudCardContent>
+                            <div class="d-flex align-center gap-2 mb-3">
+                                <MudIcon Icon="@Icons.Material.Filled.CardGiftcard" Color="Color.Secondary" />
+                                <MudText Typo="Typo.h6">Arv & Gåvor</MudText>
+                            </div>
+                            
+                            <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-3">
+                                Planera för arv och gåvor som del av din långsiktiga ekonomiska strategi.
+                            </MudText>
+                            
+                            <MudText Typo="Typo.body2" Class="mb-2">
+                                <strong>Tips för arvs- och gåvoplanering:</strong>
+                            </MudText>
+                            <ul class="mud-typography-body2 mb-2">
+                                <li>Utnyttja gåvoskattefria gränser årligen</li>
+                                <li>Överväg testamente för att säkerställa önskad fördelning</li>
+                                <li>Tänk på skattekonsekvenser vid arv av tillgångar</li>
+                                <li>Överväg generationsskifte i god tid</li>
+                            </ul>
+                            
+                            <MudAlert Severity="Severity.Normal" Class="mt-4" Dense="true">
+                                Lägg till milstolpar av typen "Other" för planerade gåvor eller förväntade arv
+                            </MudAlert>
+                        </MudCardContent>
+                    </MudCard>
+                </MudItem>
+            </MudGrid>
+        </MudPaper>
+    }
+
     <!-- Timeline Visualization -->
     @if (_milestones.Any())
     {
@@ -318,6 +395,9 @@ else
     private LifeTimelineMilestone? _editingMilestone;
     private LifeTimelineScenario _formScenario = new();
     private decimal _projectedWealth;
+    private decimal _monthlyPension;
+    private decimal _lifeInsuranceNeed;
+    private decimal _recommendedLifeInsurance;
     private int? _selectedScenarioId;
 
     protected override async Task OnInitializedAsync()
@@ -351,6 +431,9 @@ else
         {
             _selectedScenarioId = _activeScenario.LifeTimelineScenarioId;
             _projectedWealth = await TimelinePlannerService.CalculateProjectedRetirementWealthAsync(_activeScenario.LifeTimelineScenarioId);
+            _monthlyPension = await TimelinePlannerService.CalculateExpectedMonthlyPensionAsync(_activeScenario.LifeTimelineScenarioId);
+            _lifeInsuranceNeed = await TimelinePlannerService.CalculateLifeInsuranceNeedAsync();
+            _recommendedLifeInsurance = await TimelinePlannerService.CalculateRecommendedLifeInsuranceAsync();
         }
     }
 

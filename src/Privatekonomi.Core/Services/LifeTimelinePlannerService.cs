@@ -11,6 +11,11 @@ public class LifeTimelinePlannerService : ILifeTimelinePlannerService
 {
     private readonly PrivatekonomyContext _context;
     private readonly ICurrentUserService? _currentUserService;
+    
+    // Constants for life insurance calculations
+    private const decimal INCOME_TO_SAVINGS_MULTIPLIER = 3m;
+    private const int INCOME_REPLACEMENT_YEARS = 7;
+    private const decimal INSURANCE_ROUNDING_AMOUNT = 100000m;
 
     public LifeTimelinePlannerService(PrivatekonomyContext context, ICurrentUserService? currentUserService = null)
     {
@@ -250,6 +255,82 @@ public class LifeTimelinePlannerService : ILifeTimelinePlannerService
         }
 
         return await query.Where(m => !m.IsCompleted).SumAsync(m => m.EstimatedCost);
+    }
+
+    public async Task<decimal> CalculateExpectedMonthlyPensionAsync(int scenarioId)
+    {
+        var scenario = await GetScenarioByIdAsync(scenarioId);
+        if (scenario == null) return 0;
+
+        var projectedWealth = await CalculateProjectedRetirementWealthAsync(scenarioId);
+        if (projectedWealth <= 0) return 0;
+
+        // Assume pension is withdrawn over 25 years (age 65-90)
+        var yearsInRetirement = 25;
+        var monthsInRetirement = yearsInRetirement * 12;
+
+        // Calculate monthly pension using a conservative withdrawal rate
+        // Accounting for continued growth during retirement
+        var monthlyRate = scenario.ExpectedReturnRate / 100 / 12;
+        
+        if (monthlyRate == 0)
+        {
+            return Math.Round(projectedWealth / monthsInRetirement, 2);
+        }
+
+        // Calculate sustainable monthly withdrawal using present value of annuity formula
+        // PMT = PV × (r × (1 + r)^n) / ((1 + r)^n - 1)
+        var powerTerm = (decimal)Math.Pow((double)(1 + monthlyRate), monthsInRetirement);
+        var denominator = powerTerm - 1;
+        
+        // Prevent division by zero for very small rates
+        if (denominator == 0)
+        {
+            return Math.Round(projectedWealth / monthsInRetirement, 2);
+        }
+        
+        var monthlyPension = projectedWealth * (monthlyRate * powerTerm) / denominator;
+
+        return Math.Round(monthlyPension, 2);
+    }
+
+    #endregion
+
+    #region Life Insurance and Inheritance Planning
+
+    public async Task<decimal> CalculateLifeInsuranceNeedAsync()
+    {
+        var query = _context.LifeTimelineMilestones.AsQueryable();
+
+        if (_currentUserService?.IsAuthenticated == true && _currentUserService.UserId != null)
+        {
+            query = query.Where(m => m.UserId == _currentUserService.UserId);
+        }
+
+        // Calculate outstanding costs for major life events (house, children, etc.)
+        var futureCosts = await query
+            .Where(m => !m.IsCompleted && (m.MilestoneType == "HousePurchase" || m.MilestoneType == "Child"))
+            .SumAsync(m => m.EstimatedCost - m.CurrentSavings);
+
+        // Add recommended coverage for income replacement
+        // Typically 5-10 years of income, we'll use the constant as default
+        var activeScenario = await GetActiveScenarioAsync();
+        var estimatedAnnualIncome = activeScenario != null 
+            ? activeScenario.MonthlySavings * 12 * INCOME_TO_SAVINGS_MULTIPLIER 
+            : 500000m; // Estimate income as multiple of savings
+        var incomeReplacement = estimatedAnnualIncome * INCOME_REPLACEMENT_YEARS;
+
+        return futureCosts + incomeReplacement;
+    }
+
+    public async Task<decimal> CalculateRecommendedLifeInsuranceAsync()
+    {
+        // Calculate recommended life insurance based on the DIME method
+        // (Debt + Income + Mortgage + Education)
+        var insuranceNeed = await CalculateLifeInsuranceNeedAsync();
+        
+        // Round to nearest INSURANCE_ROUNDING_AMOUNT for practical policy amounts
+        return Math.Ceiling(insuranceNeed / INSURANCE_ROUNDING_AMOUNT) * INSURANCE_ROUNDING_AMOUNT;
     }
 
     #endregion
