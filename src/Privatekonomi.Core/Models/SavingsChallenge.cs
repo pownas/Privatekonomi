@@ -17,6 +17,14 @@ public class SavingsChallenge
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
     
+    // New properties for enhanced gamification
+    public string Icon { get; set; } = "🎯";
+    public DifficultyLevel Difficulty { get; set; } = DifficultyLevel.Medium;
+    public ChallengeCategory Category { get; set; } = ChallengeCategory.Individual;
+    public decimal? EstimatedSavingsMin { get; set; }
+    public decimal? EstimatedSavingsMax { get; set; }
+    public bool IsTemplate { get; set; } = false; // True for predefined challenge templates
+    
     // User ownership
     public string? UserId { get; set; }
     public ApplicationUser? User { get; set; }
@@ -44,13 +52,39 @@ public class SavingsChallenge
 
 public enum ChallengeType
 {
+    // Original challenges
     SaveDaily,          // Save X kr/day
     NoRestaurant,       // No restaurant spending
     NoTakeaway,         // No takeaway spending
     NoCoffeeOut,        // No coffee at cafes
     SavePercentOfIncome, // Save X% of income
     SpendingLimit,      // Limit spending in a category
-    Custom              // User-defined challenge
+    Custom,             // User-defined challenge
+    
+    // New short-term challenges (1-4 weeks)
+    NoSpendWeekend,     // 🛍️ No shopping or non-essential spending for a weekend
+    LunchBox,           // 🍱 Bring lunch to work every day
+    BikeOrPublic,       // 🚴 Only bike/public transport, no car/taxi
+    SellItems,          // 📦 Sell 5 items online
+    ChangeJar,          // 🪙 Save all coins in a jar
+    
+    // Medium-term challenges (1-3 months)
+    NoImpulseBuying,    // 🛒 No spontaneous purchases, only planned shopping
+    StreamingDetox,     // 📺 Pause all paid streaming services
+    AlcoholFree,        // 🍷 No alcohol for a month
+    GiftFree,           // 🎁 No gifts except birthdays/holidays
+    HomeGym,            // 🏋️ Cancel gym membership, workout at home
+    
+    // Long-term challenges (3-6 months)
+    SpecificGoal,       // 💰 Save for a specific goal (trip, gadget, etc.)
+    HouseholdGoal,      // 🏠 Household-wide savings challenge
+    ClimateChallenge,   // 🌍 Eco-friendly spending reduction
+    ProgressiveSaving,  // 📈 Save increasing % of income each month
+    RandomChallenge,    // 🎲 Weekly random savings challenges
+    
+    // Social challenges
+    SavingsGroup,       // 👥 Group savings challenge with friends
+    Leaderboard         // 🥇 Monthly competition with rankings
 }
 
 public enum ChallengeStatus
@@ -59,4 +93,26 @@ public enum ChallengeStatus
     Completed,
     Failed,
     Paused
+}
+
+public enum DifficultyLevel
+{
+    VeryEasy = 1,
+    Easy = 2,
+    Medium = 3,
+    Hard = 4,
+    VeryHard = 5
+}
+
+public enum ChallengeCategory
+{
+    Individual,
+    Social,
+    Household,
+    Health,
+    Environment,
+    Minimalism,
+    Thematic,
+    GoalBased,
+    Fun
 }

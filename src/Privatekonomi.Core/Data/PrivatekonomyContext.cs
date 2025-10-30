@@ -79,6 +79,7 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
     // Savings Challenges
     public DbSet<SavingsChallenge> SavingsChallenges { get; set; }
     public DbSet<SavingsChallengeProgress> SavingsChallengeProgress { get; set; }
+    public DbSet<ChallengeTemplate> ChallengeTemplates { get; set; }
     
     // Notifications
     public DbSet<Notification> Notifications { get; set; }

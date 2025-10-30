@@ -28,6 +28,7 @@ public static class TestDataSeeder
         SeedSalaryHistory(context, testUserId);
         SeedNetWorthSnapshots(context, testUserId);
         SeedPockets(context, testUserId);
+        SeedChallengeTemplates(context);
     }
     
     private static async Task<string> SeedUsers(UserManager<ApplicationUser> userManager)
@@ -1264,6 +1265,301 @@ public static class TestDataSeeder
         }
         
         context.NetWorthSnapshots.AddRange(snapshots);
+        context.SaveChanges();
+    }
+
+    private static void SeedChallengeTemplates(PrivatekonomyContext context)
+    {
+        // Only seed if no templates exist
+        if (context.ChallengeTemplates.Any())
+        {
+            return;
+        }
+
+        var templates = new List<ChallengeTemplate>
+        {
+            // Short-term challenges (1-4 weeks)
+            new ChallengeTemplate
+            {
+                Name = "No Spend Weekend",
+                Description = "Ingen shopping eller icke-nödvändiga utgifter under en helg. Mat som redan finns hemma, gratis aktiviteter, och kvalitetstid utan konsumtion.",
+                Icon = "🛍️",
+                Type = ChallengeType.NoSpendWeekend,
+                DurationDays = 2,
+                Difficulty = DifficultyLevel.Easy,
+                Category = ChallengeCategory.Individual,
+                EstimatedSavingsMin = 500,
+                EstimatedSavingsMax = 2000,
+                SuggestedTargetAmount = 1000,
+                Tags = new List<string> { "kortsiktig", "helg", "minimalism" },
+                SortOrder = 1,
+                CreatedAt = DateTime.UtcNow
+            },
+            new ChallengeTemplate
+            {
+                Name = "Matlåda varje dag",
+                Description = "Ta med egen lunch till jobbet/skolan varje dag i 2 veckor. Ingen lunch ute, ingen lunchmeny, ingen foodcourt.",
+                Icon = "🍱",
+                Type = ChallengeType.LunchBox,
+                DurationDays = 14,
+                Difficulty = DifficultyLevel.Medium,
+                Category = ChallengeCategory.Health,
+                EstimatedSavingsMin = 1000,
+                EstimatedSavingsMax = 1500,
+                SuggestedTargetAmount = 1250,
+                Tags = new List<string> { "kortsiktig", "hälsa", "mat" },
+                SortOrder = 2,
+                CreatedAt = DateTime.UtcNow
+            },
+            new ChallengeTemplate
+            {
+                Name = "Endast cykel/kollektivtrafik",
+                Description = "Ingen bilkörning eller taxiresor i 2 veckor. Använd endast cykel, promenader eller kollektivtrafik.",
+                Icon = "🚴",
+                Type = ChallengeType.BikeOrPublic,
+                DurationDays = 14,
+                Difficulty = DifficultyLevel.Medium,
+                Category = ChallengeCategory.Environment,
+                EstimatedSavingsMin = 500,
+                EstimatedSavingsMax = 2000,
+                SuggestedTargetAmount = 1000,
+                Tags = new List<string> { "kortsiktig", "miljö", "hälsa", "transport" },
+                SortOrder = 3,
+                CreatedAt = DateTime.UtcNow
+            },
+            new ChallengeTemplate
+            {
+                Name = "Sälja 5 saker på 30 dagar",
+                Description = "Rensa ut hemma och sälja minst 5 saker på Blocket, Facebook Marketplace, Tradera eller liknande under en månad.",
+                Icon = "📦",
+                Type = ChallengeType.SellItems,
+                DurationDays = 30,
+                Difficulty = DifficultyLevel.Medium,
+                Category = ChallengeCategory.Minimalism,
+                EstimatedSavingsMin = 500,
+                EstimatedSavingsMax = 5000,
+                SuggestedTargetAmount = 2000,
+                Tags = new List<string> { "kortsiktig", "minimalism", "försäljning" },
+                SortOrder = 4,
+                CreatedAt = DateTime.UtcNow
+            },
+            new ChallengeTemplate
+            {
+                Name = "Växelpengsburken",
+                Description = "Spara alla växelpengar (mynt) i en burk varje dag i en månad. Vid månadens slut, räkna och överför till sparkonto.",
+                Icon = "🪙",
+                Type = ChallengeType.ChangeJar,
+                DurationDays = 30,
+                Difficulty = DifficultyLevel.VeryEasy,
+                Category = ChallengeCategory.Individual,
+                EstimatedSavingsMin = 200,
+                EstimatedSavingsMax = 800,
+                SuggestedTargetAmount = 500,
+                Tags = new List<string> { "kortsiktig", "enkelt", "dagligt" },
+                SortOrder = 5,
+                CreatedAt = DateTime.UtcNow
+            },
+
+            // Medium-term challenges (1-3 months)
+            new ChallengeTemplate
+            {
+                Name = "Noll spontanhandel",
+                Description = "Endast planerade inköp under en månad. Allt som inte står på inköpslistan är förbjudet. Handlingsplan krävs före varje shoppingrunda.",
+                Icon = "🛒",
+                Type = ChallengeType.NoImpulseBuying,
+                DurationDays = 30,
+                Difficulty = DifficultyLevel.Hard,
+                Category = ChallengeCategory.Minimalism,
+                EstimatedSavingsMin = 1000,
+                EstimatedSavingsMax = 3000,
+                SuggestedTargetAmount = 2000,
+                Tags = new List<string> { "medellång", "minimalism", "planering" },
+                SortOrder = 6,
+                CreatedAt = DateTime.UtcNow
+            },
+            new ChallengeTemplate
+            {
+                Name = "Strömnings-detox",
+                Description = "Pausa alla betalda strömningsabonnemang (Netflix, HBO, Spotify Premium, etc.) i en månad. Använd gratisalternativ eller bibliotek.",
+                Icon = "📺",
+                Type = ChallengeType.StreamingDetox,
+                DurationDays = 30,
+                Difficulty = DifficultyLevel.Medium,
+                Category = ChallengeCategory.Minimalism,
+                EstimatedSavingsMin = 200,
+                EstimatedSavingsMax = 800,
+                SuggestedTargetAmount = 400,
+                Tags = new List<string> { "medellång", "abonnemang", "digital" },
+                SortOrder = 7,
+                CreatedAt = DateTime.UtcNow
+            },
+            new ChallengeTemplate
+            {
+                Name = "Alkoholfri månad",
+                Description = "Ingen alkohol på en månad - varken hemma eller ute. Inspirerad av 'Dry January' eller 'Sober October'.",
+                Icon = "🍷",
+                Type = ChallengeType.AlcoholFree,
+                DurationDays = 30,
+                Difficulty = DifficultyLevel.Hard,
+                Category = ChallengeCategory.Health,
+                EstimatedSavingsMin = 1000,
+                EstimatedSavingsMax = 5000,
+                SuggestedTargetAmount = 2500,
+                Tags = new List<string> { "medellång", "hälsa", "livsstil" },
+                SortOrder = 8,
+                CreatedAt = DateTime.UtcNow
+            },
+            new ChallengeTemplate
+            {
+                Name = "Gåvofri period (utom födelsedag)",
+                Description = "Inga presenter till vuxna (exkl. faktiska födelsedagar och högtider). Fokus på upplevelser och tid istället för materiella ting.",
+                Icon = "🎁",
+                Type = ChallengeType.GiftFree,
+                DurationDays = 60,
+                Difficulty = DifficultyLevel.Medium,
+                Category = ChallengeCategory.Minimalism,
+                EstimatedSavingsMin = 500,
+                EstimatedSavingsMax = 2000,
+                SuggestedTargetAmount = 1000,
+                Tags = new List<string> { "medellång", "minimalism", "relationer" },
+                SortOrder = 9,
+                CreatedAt = DateTime.UtcNow
+            },
+            new ChallengeTemplate
+            {
+                Name = "Hemma-gymmet",
+                Description = "Pausa gym-medlemskap och träna hemma eller utomhus istället i 3 månader.",
+                Icon = "🏋️",
+                Type = ChallengeType.HomeGym,
+                DurationDays = 90,
+                Difficulty = DifficultyLevel.Medium,
+                Category = ChallengeCategory.Health,
+                EstimatedSavingsMin = 1500,
+                EstimatedSavingsMax = 3000,
+                SuggestedTargetAmount = 2000,
+                Tags = new List<string> { "medellång", "hälsa", "träning" },
+                SortOrder = 10,
+                CreatedAt = DateTime.UtcNow
+            },
+
+            // Long-term challenges (3-6 months)
+            new ChallengeTemplate
+            {
+                Name = "Spara för ett specifikt mål",
+                Description = "Sätt upp ett konkret sparmål (t.ex. resa, ny dator, möbel) och spara systematiskt med delmål och progress-tracking.",
+                Icon = "💰",
+                Type = ChallengeType.SpecificGoal,
+                DurationDays = 90,
+                Difficulty = DifficultyLevel.Hard,
+                Category = ChallengeCategory.GoalBased,
+                EstimatedSavingsMin = 5000,
+                EstimatedSavingsMax = 50000,
+                SuggestedTargetAmount = 10000,
+                Tags = new List<string> { "långsiktig", "målbaserad", "sparande" },
+                SortOrder = 11,
+                CreatedAt = DateTime.UtcNow
+            },
+            new ChallengeTemplate
+            {
+                Name = "Hushålls-challenge: Gemensamt sparmål",
+                Description = "Hela hushållet sparar tillsammans mot ett gemensamt mål (semester, renovering, ny bil). Alla bidrar enligt sina förutsättningar.",
+                Icon = "🏠",
+                Type = ChallengeType.HouseholdGoal,
+                DurationDays = 90,
+                Difficulty = DifficultyLevel.Hard,
+                Category = ChallengeCategory.Household,
+                EstimatedSavingsMin = 10000,
+                EstimatedSavingsMax = 100000,
+                SuggestedTargetAmount = 30000,
+                Tags = new List<string> { "långsiktig", "hushåll", "social", "målbaserad" },
+                SortOrder = 12,
+                CreatedAt = DateTime.UtcNow
+            },
+            new ChallengeTemplate
+            {
+                Name = "Klimatsmart-utmaning",
+                Description = "Kombinerad utmaning för att minska konsumtion och klimatpåverkan samtidigt som man sparar pengar. Fokus på: ingen onlineshopping, lokala/begagnade köp, mindre kött, cykel istället för bil.",
+                Icon = "🌍",
+                Type = ChallengeType.ClimateChallenge,
+                DurationDays = 90,
+                Difficulty = DifficultyLevel.Hard,
+                Category = ChallengeCategory.Environment,
+                EstimatedSavingsMin = 2000,
+                EstimatedSavingsMax = 6000,
+                SuggestedTargetAmount = 4000,
+                Tags = new List<string> { "långsiktig", "miljö", "livsstil" },
+                SortOrder = 13,
+                CreatedAt = DateTime.UtcNow
+            },
+            new ChallengeTemplate
+            {
+                Name = "Spara X% mer varje månad",
+                Description = "Börja med att spara 5% av inkomsten månad 1, sedan öka med 1-2% varje månad tills du når 10-15%. Progressiv sparutmaning.",
+                Icon = "📈",
+                Type = ChallengeType.ProgressiveSaving,
+                DurationDays = 180,
+                Difficulty = DifficultyLevel.VeryHard,
+                Category = ChallengeCategory.GoalBased,
+                EstimatedSavingsMin = 15000,
+                EstimatedSavingsMax = 50000,
+                SuggestedTargetAmount = 25000,
+                Tags = new List<string> { "långsiktig", "progressiv", "procent", "inkomst" },
+                SortOrder = 14,
+                CreatedAt = DateTime.UtcNow
+            },
+            new ChallengeTemplate
+            {
+                Name = "Slump-spararen",
+                Description = "Varje vecka får du en slumpmässig sparutmaning (spara 50 kr extra, ingen fika i 3 dagar, sälja något, etc.). Gamified och oförutsägbar!",
+                Icon = "🎲",
+                Type = ChallengeType.RandomChallenge,
+                DurationDays = 90,
+                Difficulty = DifficultyLevel.Easy,
+                Category = ChallengeCategory.Fun,
+                EstimatedSavingsMin = 1000,
+                EstimatedSavingsMax = 3000,
+                SuggestedTargetAmount = 2000,
+                Tags = new List<string> { "långsiktig", "rolig", "överraskning", "varierad" },
+                SortOrder = 15,
+                CreatedAt = DateTime.UtcNow
+            },
+
+            // Social challenges
+            new ChallengeTemplate
+            {
+                Name = "Spargruppen",
+                Description = "Skapa eller gå med i en spargrupp med vänner. Gemensamt mål att alla sparar minst X kr eller X% av lön. Support och accountability.",
+                Icon = "👥",
+                Type = ChallengeType.SavingsGroup,
+                DurationDays = 60,
+                Difficulty = DifficultyLevel.Medium,
+                Category = ChallengeCategory.Social,
+                EstimatedSavingsMin = 5000,
+                EstimatedSavingsMax = 20000,
+                SuggestedTargetAmount = 10000,
+                Tags = new List<string> { "social", "grupp", "support" },
+                SortOrder = 16,
+                CreatedAt = DateTime.UtcNow
+            },
+            new ChallengeTemplate
+            {
+                Name = "Månadsutmaning med Leaderboard",
+                Description = "Varje månad en ny tävling: vem kan spara mest? Vem kan minska utgifterna mest? Vem har bäst streak? Poäng och ranking.",
+                Icon = "🥇",
+                Type = ChallengeType.Leaderboard,
+                DurationDays = 30,
+                Difficulty = DifficultyLevel.Hard,
+                Category = ChallengeCategory.Social,
+                EstimatedSavingsMin = 2000,
+                EstimatedSavingsMax = 10000,
+                SuggestedTargetAmount = 5000,
+                Tags = new List<string> { "social", "tävling", "leaderboard", "månatlig" },
+                SortOrder = 17,
+                CreatedAt = DateTime.UtcNow
+            }
+        };
+
+        context.ChallengeTemplates.AddRange(templates);
         context.SaveChanges();
     }
 }

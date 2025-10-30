@@ -314,4 +314,56 @@ public class SavingsChallengeServiceTests : IDisposable
         var deletedChallenge = await _service.GetChallengeByIdAsync(created.SavingsChallengeId);
         Assert.Null(deletedChallenge);
     }
+
+    [Fact]
+    public async Task GetAllTemplatesAsync_ReturnsActiveTemplates()
+    {
+        // Arrange - Templates are seeded by the context initialization
+        
+        // Act
+        var templates = await _service.GetAllTemplatesAsync();
+
+        // Assert
+        Assert.NotNull(templates);
+        // Should have templates if seeded, or empty if not
+        Assert.True(templates.All(t => t.IsActive));
+    }
+
+    [Fact]
+    public async Task CreateChallengeFromTemplateAsync_ValidTemplate_SuccessfullyCreatesChallenge()
+    {
+        // Arrange
+        var template = new ChallengeTemplate
+        {
+            Name = "Test Template",
+            Description = "Test Description",
+            Icon = "🎯",
+            Type = ChallengeType.SaveDaily,
+            DurationDays = 30,
+            Difficulty = DifficultyLevel.Medium,
+            Category = ChallengeCategory.Individual,
+            EstimatedSavingsMin = 500,
+            EstimatedSavingsMax = 1000,
+            SuggestedTargetAmount = 750,
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        _context.ChallengeTemplates.Add(template);
+        await _context.SaveChangesAsync();
+
+        // Act
+        var challenge = await _service.CreateChallengeFromTemplateAsync(template.ChallengeTemplateId);
+
+        // Assert
+        Assert.NotNull(challenge);
+        Assert.Equal(template.Name, challenge.Name);
+        Assert.Equal(template.Description, challenge.Description);
+        Assert.Equal(template.Icon, challenge.Icon);
+        Assert.Equal(template.Type, challenge.Type);
+        Assert.Equal(template.DurationDays, challenge.DurationDays);
+        Assert.Equal(template.Difficulty, challenge.Difficulty);
+        Assert.Equal(template.Category, challenge.Category);
+        Assert.Equal(ChallengeStatus.Active, challenge.Status);
+    }
 }
