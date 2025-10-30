@@ -252,6 +252,10 @@ h1:focus {
     font-weight: var(--font-weight-semibold);
 }
 
+.mud-nav-link:hover {
+    transform: translateX(2px);
+}
+
 /* Progress Indicators */
 .mud-progress-circular,
 .mud-progress-linear {
