@@ -48,6 +48,8 @@ builder.Services.AddScoped<IExportService, ExportService>();
 builder.Services.AddScoped<IDataImportService, DataImportService>();
 builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<ISalaryHistoryService, SalaryHistoryService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<INotificationPreferenceService, NotificationPreferenceService>();
 
 // Register bank API services and dependencies
 builder.Services.AddBankApiServices(builder.Configuration);

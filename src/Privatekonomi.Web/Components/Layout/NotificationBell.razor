@@ -1,0 +1,63 @@
+@using Privatekonomi.Core.Models
+@using Privatekonomi.Core.Services
+@inject INotificationService NotificationService
+@inject ICurrentUserService CurrentUserService
+@inject NavigationManager NavigationManager
+@implements IDisposable
+
+<MudBadge Content="@_unreadCount" 
+          Overlap="true" 
+          Color="Color.Error" 
+          Visible="@(_unreadCount > 0)">
+    <MudIconButton Icon="@Icons.Material.Filled.Notifications" 
+                   Color="Color.Inherit" 
+                   OnClick="NavigateToNotifications"
+                   aria-label="Notifikationer" />
+</MudBadge>
+
+@code {
+    private int _unreadCount = 0;
+    private System.Threading.Timer? _timer;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await UpdateUnreadCount();
+        
+        // Update unread count every 30 seconds
+        _timer = new System.Threading.Timer(async _ =>
+        {
+            await InvokeAsync(async () =>
+            {
+                await UpdateUnreadCount();
+                StateHasChanged();
+            });
+        }, null, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30));
+    }
+
+    private async Task UpdateUnreadCount()
+    {
+        try
+        {
+            var userId = CurrentUserService.UserId;
+            if (userId != null)
+            {
+                _unreadCount = await NotificationService.GetUnreadCountAsync(userId);
+            }
+        }
+        catch (Exception ex)
+        {
+            // Log error silently
+            Console.WriteLine($"Error updating unread count: {ex.Message}");
+        }
+    }
+
+    private void NavigateToNotifications()
+    {
+        NavigationManager.NavigateTo("/notifications");
+    }
+
+    public void Dispose()
+    {
+        _timer?.Dispose();
+    }
+}

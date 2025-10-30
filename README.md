@@ -87,6 +87,14 @@ En privatekonomi-applikation byggd med .NET 9, Blazor Server och MudBlazor för 
   - Beräkna genomsnittslön och lönetillväxt
   - Dokumentera jobbbyten och löneförhöjningar
   - Hantera befattning, arbetsgivare och anställningstyp
+- **Smart Notifikationssystem**: ⭐ NYT!
+  - Multi-kanal notifikationer (In-app, Email, SMS, Push, Slack, Teams)
+  - Konfigurerbart per notifikationstyp
+  - Do Not Disturb-scheman
+  - Digest-läge för grupperade notifikationer
+  - Prioritetsnivåer (Low, Normal, High, Critical)
+  - 20+ notifikationstyper (budget, räkningar, sparmål, investeringar, etc.)
+  - Se [Notifikationssystem guide](docs/NOTIFICATION_SYSTEM.md)
 
 ## 🏗️ Arkitektur
 

@@ -80,6 +80,12 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
     public DbSet<SavingsChallenge> SavingsChallenges { get; set; }
     public DbSet<SavingsChallengeProgress> SavingsChallengeProgress { get; set; }
     
+    // Notifications
+    public DbSet<Notification> Notifications { get; set; }
+    public DbSet<NotificationPreference> NotificationPreferences { get; set; }
+    public DbSet<DoNotDisturbSchedule> DoNotDisturbSchedules { get; set; }
+    public DbSet<NotificationIntegration> NotificationIntegrations { get; set; }
+    
     // Life Timeline Planning
     public DbSet<LifeTimelineMilestone> LifeTimelineMilestones { get; set; }
     public DbSet<LifeTimelineScenario> LifeTimelineScenarios { get; set; }
