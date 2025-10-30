@@ -117,43 +117,26 @@
                 <MudTh>Hushåll</MudTh>
                 <MudTh>Kategori</MudTh>
                 <MudTh Style="text-align: right">Belopp</MudTh>
-                <MudTh>Åtgärder</MudTh>
             </HeaderContent>
             <RowTemplate>
-                <MudTd DataLabel="Datum" id="@($"transaction-row-{context.TransactionId}")" class="transaction-row-swipeable">@context.Date.ToString("yyyy-MM-dd")</MudTd>
-                <MudTd DataLabel="Beskrivning">
-                    <div class="d-flex align-center">
+                <MudTd DataLabel="Datum" id="@($"transaction-row-{context.TransactionId}")" class="transaction-row-swipeable" Style="cursor: pointer;" @onclick="@(() => ViewTransactionDetails(context))">
+                    @context.Date.ToString("yyyy-MM-dd")
+                </MudTd>
+                <MudTd DataLabel="Beskrivning" Style="cursor: pointer;" @onclick="@(() => ViewTransactionDetails(context))">
+                    <div>
                         @context.Description
-                        @if (!string.IsNullOrWhiteSpace(context.Notes) || !string.IsNullOrWhiteSpace(context.Tags))
+                        @if (!string.IsNullOrWhiteSpace(context.Notes))
                         {
-                            <MudIconButton Icon="@Icons.Material.Filled.Info" Size="Size.Small" Color="Color.Info"
-                                           OnClick="@(() => ToggleDetails(context.TransactionId))" />
+                            <div class="mt-1">
+                                <MudText Typo="Typo.caption" Color="Color.Secondary" Style="font-style: italic;">
+                                    <MudIcon Icon="@Icons.Material.Filled.StickyNote2" Size="Size.Small" Style="vertical-align: middle;" />
+                                    @(context.Notes.Length > MaxNotePreviewLength ? context.Notes.Substring(0, MaxNotePreviewLength) + "..." : context.Notes)
+                                </MudText>
+                            </div>
                         }
                     </div>
-                    @if (_expandedTransactionId == context.TransactionId)
-                    {
-                        <MudPaper Class="pa-2 mt-2" Elevation="0" Style="background-color: #f5f5f5;">
-                            @if (!string.IsNullOrWhiteSpace(context.Tags))
-                            {
-                                <div class="mb-2">
-                                    <MudText Typo="Typo.caption" Style="font-weight: 600;">Taggar:</MudText>
-                                    @foreach (var tag in context.Tags.Split(',', StringSplitOptions.RemoveEmptyEntries))
-                                    {
-                                        <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Outlined">@tag.Trim()</MudChip>
-                                    }
-                                </div>
-                            }
-                            @if (!string.IsNullOrWhiteSpace(context.Notes))
-                            {
-                                <div>
-                                    <MudText Typo="Typo.caption" Style="font-weight: 600;">Noteringar:</MudText>
-                                    <MudText Typo="Typo.body2">@context.Notes</MudText>
-                                </div>
-                            }
-                        </MudPaper>
-                    }
                 </MudTd>
-                <MudTd DataLabel="Bank">
+                <MudTd DataLabel="Bank" Style="cursor: pointer;" @onclick="@(() => ViewTransactionDetails(context))">
                     @if (context.BankSource != null)
                     {
                         <MudChip T="string" Size="Size.Small" Variant="Variant.Filled"
@@ -166,7 +149,7 @@
                         <MudText Typo="Typo.body2" Color="Color.Default">-</MudText>
                     }
                 </MudTd>
-                <MudTd DataLabel="Hushåll">
+                <MudTd DataLabel="Hushåll" Style="cursor: pointer;" @onclick="@(() => ViewTransactionDetails(context))">
                     @if (context.Household != null)
                     {
                         <MudChip T="string" Size="Size.Small" Color="Color.Secondary" Variant="Variant.Outlined">
@@ -178,7 +161,7 @@
                         <MudText Typo="Typo.caption" Color="Color.Default">Personlig</MudText>
                     }
                 </MudTd>
-                <MudTd DataLabel="Kategori">
+                <MudTd DataLabel="Kategori" Style="cursor: pointer;" @onclick="@(() => ViewTransactionDetails(context))">
                     @if (context.TransactionCategories.Any())
                     {
                         @foreach (var tc in context.TransactionCategories)
@@ -196,20 +179,10 @@
                         </MudChip>
                     }
                 </MudTd>
-                <MudTd DataLabel="Belopp" Style="text-align: right">
+                <MudTd DataLabel="Belopp" Style="text-align: right; cursor: pointer;" @onclick="@(() => ViewTransactionDetails(context))">
                     <MudText Typo="Typo.body1" Style="@($"font-weight: 600; color: {(context.IsIncome ? "#2e7d32" : "#d32f2f")};")">
                         @(context.IsIncome ? "+" : "")@context.Amount.ToString("N2", new System.Globalization.CultureInfo("sv-SE")) kr
                     </MudText>
-                </MudTd>
-                <MudTd DataLabel="Åtgärder">
-                    <MudTooltip Text="Redigera transaktion">
-                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small"
-                                       OnClick="@(() => EditTransaction(context))" />
-                    </MudTooltip>
-                    <MudTooltip Text="Ta bort transaktion">
-                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small"
-                                       OnClick="@(() => DeleteTransaction(context.TransactionId))" />
-                    </MudTooltip>
                 </MudTd>
             </RowTemplate>
         </MudTable>
@@ -217,12 +190,13 @@
 </MudPaper>
 
 @code {
+    private const int MaxNotePreviewLength = 50;
+    
     private bool _loading = true;
     private bool _dense = false;
     private IEnumerable<Transaction> _transactions = new List<Transaction>();
     private List<Household> _households = new();
     private string _searchString = "";
-    private int? _expandedTransactionId = null;
     private int? _selectedHouseholdId = null;
     private DotNetObjectReference<Transactions>? _dotNetHelper;
 
@@ -321,9 +295,37 @@
         return false;
     }
 
-    private void ToggleDetails(int transactionId)
+    private async Task ViewTransactionDetails(Transaction transaction)
     {
-        _expandedTransactionId = _expandedTransactionId == transactionId ? null : transactionId;
+        var parameters = new DialogParameters<TransactionDetailsDialog>
+        {
+            { x => x.Transaction, transaction },
+            { x => x.OnEdit, EventCallback.Factory.Create<Transaction>(this, EditTransactionFromDetails) },
+            { x => x.OnDelete, EventCallback.Factory.Create<Transaction>(this, DeleteTransactionFromDetails) }
+        };
+
+        var dialog = await DialogService.ShowAsync<TransactionDetailsDialog>("Transaktionsdetaljer", parameters, new DialogOptions 
+        { 
+            MaxWidth = MaxWidth.Large, 
+            FullWidth = true 
+        });
+        
+        var result = await dialog.Result;
+        
+        if (result is not null && !result.Canceled)
+        {
+            await LoadData();
+        }
+    }
+
+    private async Task EditTransactionFromDetails(Transaction transaction)
+    {
+        await EditTransaction(transaction);
+    }
+
+    private async Task DeleteTransactionFromDetails(Transaction transaction)
+    {
+        await DeleteTransaction(transaction.TransactionId);
     }
 
     private async Task EditTransaction(Transaction transaction)
