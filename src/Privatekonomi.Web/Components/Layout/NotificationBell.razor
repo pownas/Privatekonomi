@@ -1,9 +1,11 @@
 @using Privatekonomi.Core.Models
 @using Privatekonomi.Core.Services
+@using Microsoft.AspNetCore.SignalR.Client
 @inject INotificationService NotificationService
 @inject ICurrentUserService CurrentUserService
 @inject NavigationManager NavigationManager
-@implements IDisposable
+@inject ISnackbar Snackbar
+@implements IAsyncDisposable
 
 <MudBadge Content="@_unreadCount" 
           Overlap="true" 
@@ -17,21 +19,80 @@
 
 @code {
     private int _unreadCount = 0;
-    private System.Threading.Timer? _timer;
+    private HubConnection? _hubConnection;
 
     protected override async Task OnInitializedAsync()
     {
         await UpdateUnreadCount();
-        
-        // Update unread count every 30 seconds
-        _timer = new System.Threading.Timer(async _ =>
+        await InitializeSignalR();
+    }
+
+    private async Task InitializeSignalR()
+    {
+        try
         {
-            await InvokeAsync(async () =>
+            var userId = CurrentUserService.UserId;
+            if (userId == null)
             {
-                await UpdateUnreadCount();
-                StateHasChanged();
+                return;
+            }
+
+            // Build the hub connection
+            _hubConnection = new HubConnectionBuilder()
+                .WithUrl(NavigationManager.ToAbsoluteUri("/notificationHub"))
+                .WithAutomaticReconnect()
+                .Build();
+
+            // Handle incoming notifications
+            _hubConnection.On<Notification>("ReceiveNotification", async (notification) =>
+            {
+                await InvokeAsync(() =>
+                {
+                    _unreadCount++;
+                    
+                    // Show toast notification
+                    var severity = GetSeverity(notification.Priority);
+                    Snackbar.Add(notification.Message, severity, config =>
+                    {
+                        config.VisibleStateDuration = 5000;
+                        config.ShowCloseIcon = true;
+                    });
+                    
+                    StateHasChanged();
+                });
             });
-        }, null, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30));
+
+            // Handle unread count updates
+            _hubConnection.On<int>("UpdateUnreadCount", async (count) =>
+            {
+                await InvokeAsync(() =>
+                {
+                    _unreadCount = count;
+                    StateHasChanged();
+                });
+            });
+
+            // Handle reconnection
+            _hubConnection.Reconnecting += error =>
+            {
+                Console.WriteLine($"Connection lost. Reconnecting... Error: {error?.Message}");
+                return Task.CompletedTask;
+            };
+
+            _hubConnection.Reconnected += async connectionId =>
+            {
+                Console.WriteLine($"Reconnected with connection ID: {connectionId}");
+                await UpdateUnreadCount();
+            };
+
+            // Start the connection
+            await _hubConnection.StartAsync();
+            Console.WriteLine("SignalR connection established for notifications");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error initializing SignalR: {ex.Message}");
+        }
     }
 
     private async Task UpdateUnreadCount()
@@ -46,7 +107,6 @@
         }
         catch (Exception ex)
         {
-            // Log error silently
             Console.WriteLine($"Error updating unread count: {ex.Message}");
         }
     }
@@ -56,8 +116,23 @@
         NavigationManager.NavigateTo("/notifications");
     }
 
-    public void Dispose()
+    private Severity GetSeverity(NotificationPriority priority)
     {
-        _timer?.Dispose();
+        return priority switch
+        {
+            NotificationPriority.Critical => Severity.Error,
+            NotificationPriority.High => Severity.Warning,
+            NotificationPriority.Normal => Severity.Info,
+            NotificationPriority.Low => Severity.Info,
+            _ => Severity.Normal
+        };
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_hubConnection is not null)
+        {
+            await _hubConnection.DisposeAsync();
+        }
     }
 }
