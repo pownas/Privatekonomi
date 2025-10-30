@@ -62,7 +62,6 @@ a:hover, .btn-link:hover {
 .btn-primary:hover {
     background-color: #4F46E5;
     border-color: #4F46E5;
-    transform: translateY(-1px);
     box-shadow: var(--shadow-md);
 }
 
@@ -154,11 +153,10 @@ h1:focus {
 
 /* Modern Card Styles */
 .mud-paper {
-    transition: box-shadow var(--transition-base), transform var(--transition-base);
+    transition: box-shadow var(--transition-base);
 }
 
 .mud-paper:hover {
-    transform: translateY(-2px);
     box-shadow: var(--shadow-lg) !important;
 }
 
@@ -166,10 +164,6 @@ h1:focus {
 .mud-button-root {
     border-radius: var(--radius-md);
     transition: all var(--transition-fast);
-}
-
-.mud-button-root:hover:not(:disabled) {
-    transform: translateY(-1px);
 }
 
 .mud-button-root:active:not(:disabled) {
@@ -181,10 +175,6 @@ h1:focus {
     border-radius: var(--radius-lg);
     font-weight: var(--font-weight-medium);
     transition: all var(--transition-fast);
-}
-
-.mud-chip:hover {
-    transform: scale(1.05);
 }
 
 /* Table Enhancements */
@@ -210,7 +200,6 @@ h1:focus {
 
 .mud-icon-button:hover:not(:disabled) {
     background-color: rgba(99, 102, 241, 0.08);
-    transform: scale(1.1);
 }
 
 .mud-theme-dark .mud-icon-button:hover:not(:disabled) {
@@ -259,12 +248,12 @@ h1:focus {
     font-weight: var(--font-weight-medium);
 }
 
-.mud-nav-link:hover {
-    transform: translateX(4px);
-}
-
 .mud-nav-link.active {
     font-weight: var(--font-weight-semibold);
+}
+
+.mud-nav-link:hover {
+    transform: translateX(2px);
 }
 
 /* Progress Indicators */
