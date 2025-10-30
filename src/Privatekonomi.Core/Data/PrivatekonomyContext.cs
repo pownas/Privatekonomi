@@ -452,6 +452,7 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
         {
             entity.HasKey(e => e.BudgetCategoryId);
             entity.Property(e => e.PlannedAmount).HasPrecision(18, 2);
+            entity.Property(e => e.RecurrencePeriodMonths).IsRequired().HasDefaultValue(1);
             
             entity.HasOne(e => e.Budget)
                 .WithMany(b => b.BudgetCategories)
@@ -462,6 +463,9 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
                 .WithMany()
                 .HasForeignKey(e => e.CategoryId)
                 .OnDelete(DeleteBehavior.Restrict);
+            
+            // Ignore computed property
+            entity.Ignore(e => e.MonthlyAmount);
         });
 
         // Goal configuration
