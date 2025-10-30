@@ -104,6 +104,7 @@ builder.Services.AddScoped<IChildAllowanceService, ChildAllowanceService>();
 builder.Services.AddScoped<IGoalService, GoalService>();
 builder.Services.AddScoped<IPocketService, PocketService>();
 builder.Services.AddScoped<ISharedGoalService, SharedGoalService>();
+builder.Services.AddScoped<ISocialFeatureService, SocialFeatureService>();
 builder.Services.AddScoped<IAuditLogService, AuditLogService>();
 builder.Services.AddScoped<IExportService, ExportService>();
 builder.Services.AddScoped<IDataImportService, DataImportService>();
@@ -117,6 +118,7 @@ builder.Services.AddScoped<IPensionService, PensionService>();
 builder.Services.AddScoped<IDividendService, DividendService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<INotificationPreferenceService, NotificationPreferenceService>();
+builder.Services.AddScoped<ILifeTimelinePlannerService, LifeTimelinePlannerService>();
 builder.Services.AddScoped<ThemeService>();
 builder.Services.AddScoped<DashboardPreferencesService>();
 

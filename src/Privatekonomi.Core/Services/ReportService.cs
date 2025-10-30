@@ -87,11 +87,31 @@ public class ReportService : IReportService
         };
     }
 
-    public async Task<NetWorthReport> GetNetWorthReportAsync()
+    public async Task<NetWorthReport> GetNetWorthReportAsync(string? userId = null)
     {
-        var investments = await _context.Investments.ToListAsync();
-        var assets = await _context.Assets.ToListAsync();
-        var loans = await _context.Loans.ToListAsync();
+        // Query investments with optional user filter
+        var investmentsQuery = _context.Investments.AsQueryable();
+        if (!string.IsNullOrEmpty(userId))
+        {
+            investmentsQuery = investmentsQuery.Where(i => i.UserId == userId);
+        }
+        var investments = await investmentsQuery.ToListAsync();
+
+        // Query assets with optional user filter
+        var assetsQuery = _context.Assets.AsQueryable();
+        if (!string.IsNullOrEmpty(userId))
+        {
+            assetsQuery = assetsQuery.Where(a => a.UserId == userId);
+        }
+        var assets = await assetsQuery.ToListAsync();
+
+        // Query loans with optional user filter
+        var loansQuery = _context.Loans.AsQueryable();
+        if (!string.IsNullOrEmpty(userId))
+        {
+            loansQuery = loansQuery.Where(l => l.UserId == userId);
+        }
+        var loans = await loansQuery.ToListAsync();
 
         var assetItems = new List<AssetItem>();
         var liabilityItems = new List<LiabilityItem>();
@@ -130,17 +150,145 @@ public class ReportService : IReportService
         }
 
         var totalAssets = assetItems.Sum(a => a.Value);
+        var totalInvestments = investments.Sum(i => i.TotalValue);
         var totalLiabilities = liabilityItems.Sum(l => l.Amount);
+        var netWorth = totalAssets - totalLiabilities;
+
+        // Create historical data for the last 12 months
+        var history = await CreateNetWorthHistory(userId, 12);
+        
+        // Calculate percentage change from previous month
+        var percentageChange = CalculatePercentageChange(history, netWorth);
 
         return new NetWorthReport
         {
             TotalAssets = totalAssets,
+            TotalInvestments = totalInvestments,
             TotalLiabilities = totalLiabilities,
-            NetWorth = totalAssets - totalLiabilities,
+            NetWorth = netWorth,
+            PercentageChange = percentageChange,
             Assets = assetItems,
             Liabilities = liabilityItems,
+            History = history,
             CalculatedAt = DateTime.UtcNow
         };
+    }
+
+    private async Task<List<NetWorthDataPoint>> CreateNetWorthHistory(string? userId, int months)
+    {
+        var history = new List<NetWorthDataPoint>();
+        var endDate = DateTime.Today;
+        var startDate = endDate.AddMonths(-months);
+
+        // Get snapshots for the date range
+        var snapshotsQuery = _context.NetWorthSnapshots
+            .Where(s => s.Date >= startDate && s.Date <= endDate);
+        
+        if (!string.IsNullOrEmpty(userId))
+        {
+            snapshotsQuery = snapshotsQuery.Where(s => s.UserId == userId);
+        }
+
+        var snapshots = await snapshotsQuery
+            .OrderBy(s => s.Date)
+            .ToListAsync();
+
+        // Group by month and take the latest snapshot per month
+        var monthlySnapshots = snapshots
+            .GroupBy(s => new { s.Date.Year, s.Date.Month })
+            .Select(g => g.OrderByDescending(s => s.Date).First())
+            .OrderBy(s => s.Date)
+            .ToList();
+
+        // If we don't have historical snapshots, calculate current values for each month
+        if (!monthlySnapshots.Any())
+        {
+            // Create data points based on current values
+            // This is a simplified approach - in production, you'd want actual historical data
+            for (int i = months - 1; i >= 0; i--)
+            {
+                var date = DateTime.Today.AddMonths(-i);
+                var monthStart = new DateTime(date.Year, date.Month, 1);
+                
+                // For now, we'll use current values as approximation
+                // In a real scenario, you'd query historical data
+                var investmentsQuery = _context.Investments.AsQueryable();
+                var assetsQuery = _context.Assets.AsQueryable();
+                var loansQuery = _context.Loans.AsQueryable();
+
+                if (!string.IsNullOrEmpty(userId))
+                {
+                    investmentsQuery = investmentsQuery.Where(inv => inv.UserId == userId);
+                    assetsQuery = assetsQuery.Where(a => a.UserId == userId);
+                    loansQuery = loansQuery.Where(l => l.UserId == userId);
+                }
+
+                // Materialize the queries before using computed properties
+                var investments = await investmentsQuery.ToListAsync();
+                var assets = await assetsQuery.ToListAsync();
+                var loans = await loansQuery.ToListAsync();
+
+                var investmentValue = investments.Sum(inv => inv.TotalValue);
+                var assetValue = assets.Sum(a => a.CurrentValue);
+                var loanValue = loans.Sum(l => l.CurrentBalance);
+
+                var totalAssets = investmentValue + assetValue;
+                var totalLiabilities = loanValue;
+
+                history.Add(new NetWorthDataPoint
+                {
+                    Date = monthStart,
+                    Assets = totalAssets,
+                    Liabilities = totalLiabilities,
+                    NetWorth = totalAssets - totalLiabilities
+                });
+            }
+        }
+        else
+        {
+            // Use actual snapshots
+            foreach (var snapshot in monthlySnapshots)
+            {
+                history.Add(new NetWorthDataPoint
+                {
+                    Date = snapshot.Date,
+                    Assets = snapshot.TotalAssets,
+                    Liabilities = snapshot.TotalLiabilities,
+                    NetWorth = snapshot.NetWorth
+                });
+            }
+
+            // If we don't have a full 12 months, pad with current values
+            while (history.Count < months)
+            {
+                var lastDate = history.Any() ? history[0].Date : DateTime.Today;
+                var newDate = new DateTime(lastDate.Year, lastDate.Month, 1).AddMonths(-1);
+                
+                history.Insert(0, new NetWorthDataPoint
+                {
+                    Date = newDate,
+                    Assets = history.FirstOrDefault()?.Assets ?? 0,
+                    Liabilities = history.FirstOrDefault()?.Liabilities ?? 0,
+                    NetWorth = history.FirstOrDefault()?.NetWorth ?? 0
+                });
+            }
+        }
+
+        return history.OrderBy(h => h.Date).ToList();
+    }
+
+    private decimal CalculatePercentageChange(List<NetWorthDataPoint> history, decimal currentNetWorth)
+    {
+        if (!history.Any() || history.Count < 2)
+            return 0;
+
+        // Get the previous month's net worth (second to last in history)
+        var previousNetWorth = history[history.Count - 2].NetWorth;
+        
+        if (previousNetWorth == 0)
+            return 0;
+
+        return ((currentNetWorth - previousNetWorth) / Math.Abs(previousNetWorth)) * 100;
     }
 
     public async Task<TrendAnalysis> GetTrendAnalysisAsync(int? categoryId, int months = 6, int? householdId = null)
