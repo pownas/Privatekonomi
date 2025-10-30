@@ -1,0 +1,445 @@
+@page "/budgets/konsumentverket-comparison"
+@rendermode InteractiveServer
+@inject IKonsumentverketComparisonService ComparisonService
+@inject ISnackbar Snackbar
+
+<PageTitle>Konsumentverket Jämförelse - Privatekonomi</PageTitle>
+
+<div class="d-flex justify-space-between align-center mb-4">
+    <div>
+        <MudText Typo="Typo.h4">Jämför med Konsumentverket</MudText>
+        <MudText Typo="Typo.body2" Color="Color.Secondary">
+            Jämför din hushållsbudget med Konsumentverkets riktlinjer för 2025
+        </MudText>
+    </div>
+</div>
+
+<MudGrid>
+    <!-- Left column - Input form -->
+    <MudItem xs="12" md="6">
+        <MudPaper Class="pa-4 mb-4">
+            <MudText Typo="Typo.h6" Class="mb-3">
+                <MudIcon Icon="@Icons.Material.Filled.Groups" Class="mr-2" />
+                Hushållssammansättning
+            </MudText>
+            
+            @foreach (var member in _householdMembers)
+            {
+                <MudCard Class="mb-3" Elevation="2">
+                    <MudCardContent>
+                        <div class="d-flex align-center gap-2 mb-2">
+                            <MudIcon Icon="@Icons.Material.Filled.Person" />
+                            <MudText Typo="Typo.subtitle1">Medlem @(_householdMembers.IndexOf(member) + 1)</MudText>
+                            <MudSpacer />
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" 
+                                         Size="Size.Small" 
+                                         Color="Color.Error"
+                                         OnClick="@(() => RemoveMember(member))" />
+                        </div>
+                        <MudGrid>
+                            <MudItem xs="12" sm="6">
+                                <MudNumericField @bind-Value="member.Age" 
+                                               Label="Ålder" 
+                                               Variant="Variant.Outlined"
+                                               Min="0"
+                                               Max="120"
+                                               HelperText="Ålder i år" />
+                            </MudItem>
+                            <MudItem xs="12" sm="6">
+                                <MudCheckBox @bind-Value="member.HasLunchOutOnWeekdays" 
+                                           Label="Lunch ute på vardagar"
+                                           Color="Color.Primary" />
+                            </MudItem>
+                        </MudGrid>
+                    </MudCardContent>
+                </MudCard>
+            }
+            
+            <MudButton Variant="Variant.Outlined" 
+                     Color="Color.Primary" 
+                     StartIcon="@Icons.Material.Filled.PersonAdd"
+                     OnClick="AddMember"
+                     FullWidth="true">
+                Lägg till medlem
+            </MudButton>
+        </MudPaper>
+        
+        <MudPaper Class="pa-4">
+            <MudText Typo="Typo.h6" Class="mb-3">
+                <MudIcon Icon="@Icons.Material.Filled.MonetizationOn" Class="mr-2" />
+                Dina faktiska kostnader (SEK/månad)
+            </MudText>
+            
+            <MudExpansionPanels MultiExpansion="true">
+                <MudExpansionPanel Text="Livsmedelskostnader" IsExpanded="true">
+                    <MudNumericField @bind-Value="_userCosts.FoodCosts" 
+                                   Label="Livsmedel totalt" 
+                                   Variant="Variant.Outlined"
+                                   Format="N0"
+                                   Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                                   Adornment="Adornment.Start"
+                                   AdornmentText="kr"
+                                   Min="0"
+                                   Class="mb-3" />
+                </MudExpansionPanel>
+                
+                <MudExpansionPanel Text="Individuella kostnader">
+                    <MudNumericField @bind-Value="_userCosts.ClothesCosts" 
+                                   Label="Kläder och skor" 
+                                   Variant="Variant.Outlined"
+                                   Format="N0"
+                                   Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                                   Adornment="Adornment.Start"
+                                   AdornmentText="kr"
+                                   Min="0"
+                                   Class="mb-3" />
+                    
+                    <MudNumericField @bind-Value="_userCosts.LeisureCosts" 
+                                   Label="Fritid och lek" 
+                                   Variant="Variant.Outlined"
+                                   Format="N0"
+                                   Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                                   Adornment="Adornment.Start"
+                                   AdornmentText="kr"
+                                   Min="0"
+                                   Class="mb-3" />
+                    
+                    <MudNumericField @bind-Value="_userCosts.MobileCosts" 
+                                   Label="Mobiltelefon" 
+                                   Variant="Variant.Outlined"
+                                   Format="N0"
+                                   Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                                   Adornment="Adornment.Start"
+                                   AdornmentText="kr"
+                                   Min="0"
+                                   Class="mb-3" />
+                    
+                    <MudNumericField @bind-Value="_userCosts.HygieneCosts" 
+                                   Label="Personlig hygien" 
+                                   Variant="Variant.Outlined"
+                                   Format="N0"
+                                   Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                                   Adornment="Adornment.Start"
+                                   AdornmentText="kr"
+                                   Min="0"
+                                   Class="mb-3" />
+                    
+                    <MudNumericField @bind-Value="_userCosts.InsuranceCosts" 
+                                   Label="Barn- och ungdomsförsäkring" 
+                                   Variant="Variant.Outlined"
+                                   Format="N0"
+                                   Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                                   Adornment="Adornment.Start"
+                                   AdornmentText="kr"
+                                   Min="0"
+                                   Class="mb-3" />
+                    
+                    <MudNumericField @bind-Value="_userCosts.ChildEquipmentCosts" 
+                                   Label="Övrig barnutrustning" 
+                                   Variant="Variant.Outlined"
+                                   Format="N0"
+                                   Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                                   Adornment="Adornment.Start"
+                                   AdornmentText="kr"
+                                   Min="0"
+                                   Class="mb-3" />
+                </MudExpansionPanel>
+                
+                <MudExpansionPanel Text="Hushållsgemensamma kostnader">
+                    <MudNumericField @bind-Value="_userCosts.ConsumablesCosts" 
+                                   Label="Förbrukningsvaror" 
+                                   Variant="Variant.Outlined"
+                                   Format="N0"
+                                   Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                                   Adornment="Adornment.Start"
+                                   AdornmentText="kr"
+                                   Min="0"
+                                   Class="mb-3" />
+                    
+                    <MudNumericField @bind-Value="_userCosts.HomeEquipmentCosts" 
+                                   Label="Hemutrustning" 
+                                   Variant="Variant.Outlined"
+                                   Format="N0"
+                                   Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                                   Adornment="Adornment.Start"
+                                   AdornmentText="kr"
+                                   Min="0"
+                                   Class="mb-3" />
+                    
+                    <MudNumericField @bind-Value="_userCosts.InternetMobileCosts" 
+                                   Label="Internet- och mobilabonnemang" 
+                                   Variant="Variant.Outlined"
+                                   Format="N0"
+                                   Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                                   Adornment="Adornment.Start"
+                                   AdornmentText="kr"
+                                   Min="0"
+                                   Class="mb-3" />
+                    
+                    <MudNumericField @bind-Value="_userCosts.OtherMediaCosts" 
+                                   Label="Övriga medietjänster" 
+                                   Variant="Variant.Outlined"
+                                   Format="N0"
+                                   Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                                   Adornment="Adornment.Start"
+                                   AdornmentText="kr"
+                                   Min="0"
+                                   Class="mb-3" />
+                    
+                    <MudNumericField @bind-Value="_userCosts.ElectricityCosts" 
+                                   Label="Hushållsel" 
+                                   Variant="Variant.Outlined"
+                                   Format="N0"
+                                   Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                                   Adornment="Adornment.Start"
+                                   AdornmentText="kr"
+                                   Min="0"
+                                   Class="mb-3" />
+                    
+                    <MudNumericField @bind-Value="_userCosts.WaterDrainageCosts" 
+                                   Label="Vatten och avlopp" 
+                                   Variant="Variant.Outlined"
+                                   Format="N0"
+                                   Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                                   Adornment="Adornment.Start"
+                                   AdornmentText="kr"
+                                   Min="0"
+                                   Class="mb-3" />
+                    
+                    <MudNumericField @bind-Value="_userCosts.HomeInsuranceCosts" 
+                                   Label="Hemförsäkring" 
+                                   Variant="Variant.Outlined"
+                                   Format="N0"
+                                   Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                                   Adornment="Adornment.Start"
+                                   AdornmentText="kr"
+                                   Min="0"
+                                   Class="mb-3" />
+                </MudExpansionPanel>
+            </MudExpansionPanels>
+            
+            <MudButton Variant="Variant.Filled" 
+                     Color="Color.Primary" 
+                     StartIcon="@Icons.Material.Filled.Calculate"
+                     OnClick="CalculateComparison"
+                     FullWidth="true"
+                     Class="mt-4">
+                Jämför med Konsumentverket
+            </MudButton>
+        </MudPaper>
+    </MudItem>
+    
+    <!-- Right column - Results -->
+    <MudItem xs="12" md="6">
+        @if (_comparisonResult != null && _householdMembers.Any())
+        {
+            <MudPaper Class="pa-4 mb-4">
+                <MudText Typo="Typo.h6" Class="mb-3">
+                    <MudIcon Icon="@Icons.Material.Filled.Assessment" Class="mr-2" />
+                    Jämförelseresultat
+                </MudText>
+                
+                <MudGrid Class="mb-4">
+                    <MudItem xs="12" sm="6">
+                        <MudCard Outlined="true">
+                            <MudCardContent>
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">Dina kostnader</MudText>
+                                <MudText Typo="Typo.h5" Color="Color.Primary">
+                                    @_userCosts.TotalCosts.ToString("N0") kr
+                                </MudText>
+                            </MudCardContent>
+                        </MudCard>
+                    </MudItem>
+                    <MudItem xs="12" sm="6">
+                        <MudCard Outlined="true">
+                            <MudCardContent>
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">Konsumentverkets riktlinjer</MudText>
+                                <MudText Typo="Typo.h5" Color="Color.Info">
+                                    @_comparisonResult.ReferenceTotalCosts.ToString("N0") kr
+                                </MudText>
+                            </MudCardContent>
+                        </MudCard>
+                    </MudItem>
+                    <MudItem xs="12">
+                        <MudCard Outlined="true">
+                            <MudCardContent>
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">Differens</MudText>
+                                @{
+                                    var totalDiff = _userCosts.TotalCosts - _comparisonResult.ReferenceTotalCosts;
+                                    var diffColor = totalDiff > 0 ? Color.Error : Color.Success;
+                                }
+                                <MudText Typo="Typo.h5" Color="@diffColor">
+                                    @totalDiff.ToString("+#,0;-#,0;0") kr 
+                                    (@((totalDiff / _comparisonResult.ReferenceTotalCosts * 100).ToString("+0.0;-0.0;0"))%)
+                                </MudText>
+                                @if (totalDiff > 0)
+                                {
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                        Du ligger över Konsumentverkets riktlinjer
+                                    </MudText>
+                                }
+                                else if (totalDiff < 0)
+                                {
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                        Du ligger under Konsumentverkets riktlinjer
+                                    </MudText>
+                                }
+                                else
+                                {
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                        Du ligger i linje med Konsumentverkets riktlinjer
+                                    </MudText>
+                                }
+                            </MudCardContent>
+                        </MudCard>
+                    </MudItem>
+                </MudGrid>
+                
+                <MudText Typo="Typo.h6" Class="mb-3">Kostnader per kategori</MudText>
+                
+                <MudTable Items="@_comparisonResult.CategoryComparisons.Values" Dense="true" Hover="true" Class="mb-4">
+                    <HeaderContent>
+                        <MudTh>Kategori</MudTh>
+                        <MudTh Style="text-align: right;">Dina</MudTh>
+                        <MudTh Style="text-align: right;">KO</MudTh>
+                        <MudTh Style="text-align: right;">Diff</MudTh>
+                        <MudTh Style="text-align: right;">%</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd>@context.CategoryName</MudTd>
+                        <MudTd Style="text-align: right;">@context.UserCost.ToString("N0")</MudTd>
+                        <MudTd Style="text-align: right;">@context.ReferenceCost.ToString("N0")</MudTd>
+                        <MudTd Style="text-align: right;">
+                            <MudText Color="@(context.Difference > 0 ? Color.Error : context.Difference < 0 ? Color.Success : Color.Default)">
+                                @context.Difference.ToString("+#,0;-#,0;0")
+                            </MudText>
+                        </MudTd>
+                        <MudTd Style="text-align: right;">
+                            <MudText Color="@(context.DifferencePercentage > 0 ? Color.Error : context.DifferencePercentage < 0 ? Color.Success : Color.Default)">
+                                @context.DifferencePercentage.ToString("+0.0;-0.0;0")%
+                            </MudText>
+                        </MudTd>
+                    </RowTemplate>
+                </MudTable>
+                
+                <MudText Typo="Typo.h6" Class="mb-3">Visuell jämförelse</MudText>
+                
+                <MudChart ChartType="ChartType.Bar" 
+                         ChartSeries="@_chartSeries" 
+                         XAxisLabels="@_chartLabels"
+                         Width="100%"
+                         Height="400px"
+                         ChartOptions="@_chartOptions" />
+            </MudPaper>
+            
+            <MudAlert Severity="Severity.Info" Class="mb-4">
+                <MudText Typo="Typo.body2">
+                    <strong>Om Konsumentverkets riktlinjer:</strong><br/>
+                    Konsumentverket publicerar årligen riktlinjer för vad olika hushållstyper förväntas ha för kostnader. 
+                    Dessa baseras på SCB:s Hushållens utgifter (HUT) och används ofta som underlag för 
+                    försörjningsstöd och andra ekonomiska bedömningar.
+                </MudText>
+                <MudText Typo="Typo.body2" Class="mt-2">
+                    <MudLink Href="https://www.konsumentverket.se/ekonomi/vilka-kostnader-har-ett-hushall" Target="_blank">
+                        Läs mer på Konsumentverkets hemsida
+                    </MudLink>
+                </MudText>
+            </MudAlert>
+        }
+        else if (!_householdMembers.Any())
+        {
+            <MudPaper Class="pa-6" Elevation="0" Style="text-align: center;">
+                <MudIcon Icon="@Icons.Material.Filled.Groups" Size="Size.Large" Color="Color.Secondary" Class="mb-4" Style="font-size: 4rem;" />
+                <MudText Typo="Typo.h6" Class="mb-2">Lägg till hushållsmedlemmar</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                    Börja med att lägga till hushållsmedlemmar för att se jämförelsen
+                </MudText>
+            </MudPaper>
+        }
+        else
+        {
+            <MudPaper Class="pa-6" Elevation="0" Style="text-align: center;">
+                <MudIcon Icon="@Icons.Material.Filled.Calculate" Size="Size.Large" Color="Color.Secondary" Class="mb-4" Style="font-size: 4rem;" />
+                <MudText Typo="Typo.h6" Class="mb-2">Klicka på "Jämför"</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                    Fyll i dina kostnader och klicka på knappen för att se jämförelsen
+                </MudText>
+            </MudPaper>
+        }
+    </MudItem>
+</MudGrid>
+
+@code {
+    private List<KonsumentverketHouseholdMember> _householdMembers = new();
+    private UserHouseholdCosts _userCosts = new();
+    private KonsumentverketComparisonResult? _comparisonResult;
+    
+    private List<ChartSeries> _chartSeries = new();
+    private string[] _chartLabels = Array.Empty<string>();
+    private ChartOptions _chartOptions = new()
+    {
+        YAxisTicks = 1000,
+        YAxisFormat = "N0",
+        ChartPalette = new[] { "#2196F3", "#4CAF50" }
+    };
+
+    protected override void OnInitialized()
+    {
+        // Add one adult by default to get started
+        _householdMembers.Add(new KonsumentverketHouseholdMember { Age = 35, HasLunchOutOnWeekdays = false });
+    }
+
+    private void AddMember()
+    {
+        _householdMembers.Add(new KonsumentverketHouseholdMember { Age = 30, HasLunchOutOnWeekdays = false });
+    }
+
+    private void RemoveMember(KonsumentverketHouseholdMember member)
+    {
+        _householdMembers.Remove(member);
+        if (_householdMembers.Any())
+        {
+            CalculateComparison();
+        }
+        else
+        {
+            _comparisonResult = null;
+        }
+    }
+
+    private void CalculateComparison()
+    {
+        if (!_householdMembers.Any())
+        {
+            Snackbar.Add("Lägg till minst en hushållsmedlem", Severity.Warning);
+            return;
+        }
+
+        _comparisonResult = ComparisonService.CompareWithReference(_householdMembers, _userCosts);
+        
+        // Prepare chart data - show top 6 categories with biggest differences
+        var topCategories = _comparisonResult.CategoryComparisons.Values
+            .Where(c => c.UserCost > 0 || c.ReferenceCost > 0)
+            .OrderByDescending(c => Math.Abs(c.Difference))
+            .Take(6)
+            .ToList();
+        
+        _chartLabels = topCategories.Select(c => c.CategoryName).ToArray();
+        
+        _chartSeries = new List<ChartSeries>
+        {
+            new ChartSeries
+            {
+                Name = "Dina kostnader",
+                Data = topCategories.Select(c => (double)c.UserCost).ToArray()
+            },
+            new ChartSeries
+            {
+                Name = "Konsumentverket",
+                Data = topCategories.Select(c => (double)c.ReferenceCost).ToArray()
+            }
+        };
+        
+        Snackbar.Add("Jämförelse uppdaterad!", Severity.Success);
+    }
+}
