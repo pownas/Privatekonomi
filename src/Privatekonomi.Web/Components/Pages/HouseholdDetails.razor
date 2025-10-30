@@ -14,7 +14,10 @@ else
 {
     <MudBreadcrumbs Items="breadcrumbs" Class="mb-4" />
     
-    <MudText Typo="Typo.h4" Class="mb-2">@household.Name</MudText>
+    <MudText Typo="Typo.h4" Class="mb-2">
+        <MudIcon Icon="@Icons.Material.Filled.Group" Color="Color.Primary" Class="mr-2" aria-hidden="true" />
+        @household.Name
+    </MudText>
     @if (!string.IsNullOrEmpty(household.Description))
     {
         <MudText Typo="Typo.body1" Color="Color.Secondary" Class="mb-4">@household.Description</MudText>

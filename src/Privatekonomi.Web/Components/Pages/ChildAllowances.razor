@@ -15,7 +15,10 @@ else
 {
     <MudBreadcrumbs Items="breadcrumbs" Class="mb-4" />
     
-    <MudText Typo="Typo.h4" Class="mb-2">Barnkonton & Veckopeng - @household.Name</MudText>
+    <MudText Typo="Typo.h4" Class="mb-2">
+        <MudIcon Icon="@Icons.Material.Filled.ChildCare" Color="Color.Primary" Class="mr-2" aria-hidden="true" />
+        Barnkonton & Veckopeng - @household.Name
+    </MudText>
     <MudText Typo="Typo.body1" Color="Color.Secondary" Class="mb-4">Hantera barnens veckopeng, uppdrag och belöningar</MudText>
 
     <MudTabs Elevation="2" Rounded="true" Color="Color.Primary" Class="mt-4">
