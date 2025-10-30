@@ -311,7 +311,7 @@ public class SavingsChallengesController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            return NotFound(ex.Message);
+            return NotFound(new { message = ex.Message, templateId = id });
         }
         catch (Exception ex)
         {
