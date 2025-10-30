@@ -39,8 +39,8 @@ Följande typer av notifikationer stöds:
 
 #### Investeringar
 - 💹 **Investeringsförändring** - Betydande förändring i portföljen
-- ⬆️ **Stor vinst** - Investeringen har ökat mer än 5%
-- ⬇️ **Stor förlust** - Investeringen har minskat mer än 5%
+- ⬆️ **Stor vinst** - Investeringen har ökat mer än 5% (konfigurerbart framöver)
+- ⬇️ **Stor förlust** - Investeringen har minskat mer än 5% (konfigurerbart framöver)
 
 #### Transaktioner
 - ⚠️ **Ovanlig transaktion** - Transaktion som avviker från normalt mönster
@@ -212,15 +212,25 @@ Notifikationsdata lagras i följande tabeller:
 
 ## Framtida Förbättringar
 
-- [ ] SignalR för realtidsnotifikationer
-- [ ] Faktisk implementation av email-service
-- [ ] Twilio-integration för SMS
-- [ ] PWA push notifications
-- [ ] Slack/Teams webhook-implementation
-- [ ] Schemaläggning av digest-notifikationer
-- [ ] Notifikationshistorik och statistik
-- [ ] Smart notifikationsgruppering baserat på användarens beteende
-- [ ] A/B-testning av notifikationstexter
+Följande funktioner har stub-implementationer och behöver integreras med faktiska tjänster:
+
+- [ ] **SignalR för realtidsnotifikationer** - In-app notifikationer uppdateras för närvarande var 30:e sekund
+- [ ] **Email-service** - Faktisk SMTP-integration (för närvarande endast loggning)
+- [ ] **Twilio-integration för SMS** - SMS-notifikationer (för närvarande endast loggning)
+- [ ] **PWA push notifications** - Web push API-integration
+- [ ] **Slack webhook-implementation** - Faktisk HTTP-integration med Slack API
+- [ ] **Teams webhook-implementation** - Faktisk HTTP-integration med Teams API
+- [ ] **Schemaläggning av digest-notifikationer** - Background service för periodisk digest
+- [ ] **Konfigurerbara tröskelvärden** - Gör % för investeringsförändringar och andra trösklar konfigurerbara per användare
+- [ ] **Notifikationshistorik och statistik** - Utökad analys av notifikationsmönster
+- [ ] **Smart notifikationsgruppering** - ML-baserad gruppering baserat på användarens beteende
+- [ ] **A/B-testning av notifikationstexter** - Optimera engagemang
+
+**Nuvarande status:**
+- ✅ Core-funktionalitet komplett (modeller, services, API, UI)
+- ✅ 26 unit tests
+- ⚠️ Channel-services har stub-implementationer som loggar istället för att faktiskt skicka
+- ⚠️ Tröskelinvärden (t.ex. 5% för investeringsförändringar) är hårdkodade
 
 ## Testing
 
