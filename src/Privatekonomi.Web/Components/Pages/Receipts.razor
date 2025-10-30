@@ -134,12 +134,13 @@
                                       Class="mb-2" />
                     </MudItem>
                     <MudItem xs="6" md="2">
-                        <MudNumericField @bind-Value="item.Quantity" 
+                        <MudNumericField Value="item.Quantity" 
                                          Label="Antal" 
                                          Variant="Variant.Outlined"
                                          Min="0"
                                          Format="N2"
-                                         Class="mb-2" />
+                                         Class="mb-2"
+                                         ValueChanged="@((decimal val) => { item.Quantity = val; CalculateLineItemTotal(item); })" />
                     </MudItem>
                     <MudItem xs="6" md="2">
                         <MudNumericField Value="item.UnitPrice" 
@@ -249,7 +250,7 @@ else
                 <MudTd DataLabel="Radposter">@context.ReceiptLineItems.Count st</MudTd>
                 <MudTd>
                     <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small" Color="Color.Info" 
-                                   OnClick="@(() => ViewReceipt(context))" Title="Visa" />
+                                   OnClick="@(() => ViewReceipt(context))" title="Visa" />
                     <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Primary" 
                                    OnClick="@(() => EditReceipt(context))" />
                     <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" 
@@ -420,14 +421,32 @@ else
 
     private async Task ViewReceipt(Receipt receipt)
     {
-        var svCulture = new System.Globalization.CultureInfo("sv-SE");
-        var lineItemsText = string.Join("\n", receipt.ReceiptLineItems.Select(li => 
-            $"{li.Quantity} x {li.Description} - {li.TotalPrice.ToString("C", svCulture)}"));
-        
-        await DialogService.ShowMessageBox(
-            $"Kvitto: {receipt.Merchant}",
-            $"Datum: {receipt.ReceiptDate:yyyy-MM-dd}\nTotalt: {receipt.TotalAmount.ToString("C", svCulture)}\n\nRadposter:\n{lineItemsText}",
-            cancelText: "Stäng");
+        var parameters = new DialogParameters<ReceiptViewDialog>
+        {
+            { x => x.Receipt, receipt },
+            { x => x.OnEdit, EventCallback.Factory.Create<Receipt>(this, EditReceiptFromDialog) },
+            { x => x.OnDelete, EventCallback.Factory.Create<Receipt>(this, DeleteReceiptFromDialog) }
+        };
+
+        var options = new DialogOptions 
+        { 
+            MaxWidth = MaxWidth.Large, 
+            FullWidth = true,
+            CloseButton = true,
+            CloseOnEscapeKey = true
+        };
+
+        await DialogService.ShowAsync<ReceiptViewDialog>("Kvittodetaljer", parameters, options);
+    }
+
+    private void EditReceiptFromDialog(Receipt receipt)
+    {
+        EditReceipt(receipt);
+    }
+
+    private async Task DeleteReceiptFromDialog(Receipt receipt)
+    {
+        await DeleteReceipt(receipt);
     }
 
     private async Task DeleteReceipt(Receipt receipt)
