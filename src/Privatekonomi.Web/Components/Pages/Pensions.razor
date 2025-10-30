@@ -378,6 +378,11 @@ else
     private int? _averageRetirementAge;
     private decimal _totalMonthlyContributions;
     private int _estimatedCurrentAge = 40; // Default estimate
+    
+    // Constants for pension calculations
+    private const decimal ANNUAL_RETURN_RATE = 0.07m; // 7% historical average for mixed portfolio
+    private const int DEFAULT_ESTIMATED_AGE = 40;
+    private const int ESTIMATED_YEARS_TO_RETIREMENT = 25; // Conservative estimate
 
     protected override async Task OnInitializedAsync()
     {
@@ -423,22 +428,21 @@ else
         if (_averageRetirementAge.HasValue)
         {
             // Assume user set retirement age realistically (typically 20-40 years in future)
-            _estimatedCurrentAge = _averageRetirementAge.Value - 25; // Conservative estimate
+            _estimatedCurrentAge = _averageRetirementAge.Value - ESTIMATED_YEARS_TO_RETIREMENT;
         }
     }
     
     /// <summary>
     /// Calculate projected pension value after a number of years
-    /// Assumes 7% annual return (historical average for mixed portfolio)
+    /// Assumes ANNUAL_RETURN_RATE (7% annual return - historical average for mixed portfolio)
     /// </summary>
     private decimal CalculateProjectedPensionValue(int years)
     {
-        const decimal annualReturn = 0.07m;
-        var monthlyReturn = annualReturn / 12;
+        var monthlyReturn = ANNUAL_RETURN_RATE / 12;
         var months = years * 12;
         
         // Future value of current balance
-        var futureValueOfCurrent = _totalValue * (decimal)Math.Pow((double)(1 + annualReturn), years);
+        var futureValueOfCurrent = _totalValue * (decimal)Math.Pow((double)(1 + ANNUAL_RETURN_RATE), years);
         
         // Future value of monthly contributions (annuity formula)
         var futureValueOfContributions = _totalMonthlyContributions > 0
@@ -453,12 +457,11 @@ else
     /// </summary>
     private decimal CalculateProjectedPensionValueWithExtra(int years, decimal extraMonthlyAmount)
     {
-        const decimal annualReturn = 0.07m;
-        var monthlyReturn = annualReturn / 12;
+        var monthlyReturn = ANNUAL_RETURN_RATE / 12;
         var months = years * 12;
         
         // Future value of current balance
-        var futureValueOfCurrent = _totalValue * (decimal)Math.Pow((double)(1 + annualReturn), years);
+        var futureValueOfCurrent = _totalValue * (decimal)Math.Pow((double)(1 + ANNUAL_RETURN_RATE), years);
         
         // Future value of monthly contributions including extra
         var totalMonthly = _totalMonthlyContributions + extraMonthlyAmount;
