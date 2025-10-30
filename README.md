@@ -8,6 +8,12 @@ En privatekonomi-applikation byggd med .NET 9, Blazor Server och MudBlazor för 
 - **Dashboard**: Översikt över totala inkomster, utgifter och nettoresultat
 - **Transaktionshantering**: Registrera, visa och ta bort transaktioner
 - **Budgethantering**: Skapa och följa upp budgetar med visualisering av planerat vs faktiskt utfall
+- **Konsumentverket Jämförelse**: ⭐ NYT!
+  - Jämför din hushållsbudget med Konsumentverkets officiella riktlinjer 2025
+  - Stöd för alla åldersgrupper och hushållsstorlekar (1-7 personer)
+  - Inkluderar livsmedel, individuella och hushållsgemensamma kostnader
+  - Visuell jämförelse med diagram och färgkodade differenser
+  - Se [Konsumentverket Jämförelse guide](docs/KONSUMENTVERKET_JAMFORELSE.md)
 - **Sparmål**: Sätt upp och följ sparmål med målbelopp, tidsgräns och prioritering
 - **Gemensamma Sparmål**:
   - Skapa sparmål tillsammans med andra användare
