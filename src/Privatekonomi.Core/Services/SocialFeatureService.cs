@@ -142,7 +142,6 @@ public class SocialFeatureService : ISocialFeatureService
             .Include(s => s.Goal)
             .Include(s => s.SharedGoal)
             .Include(s => s.User)
-            .AsNoTracking()
             .FirstOrDefaultAsync(s => s.ShareToken == token && s.IsActive);
 
         if (share != null && share.ExpiresAt.HasValue && share.ExpiresAt.Value < DateTime.UtcNow)
