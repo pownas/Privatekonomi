@@ -1,0 +1,218 @@
+@page "/health-score"
+@rendermode InteractiveServer
+@inject IReportService ReportService
+@inject ISnackbar Snackbar
+
+<PageTitle>Ekonomisk Hälsa - Privatekonomi</PageTitle>
+
+<div class="d-flex flex-column flex-md-row justify-space-between align-start align-md-center mb-4 gap-2">
+    <div>
+        <MudText Typo="Typo.h4">Ekonomisk Hälsa</MudText>
+        <MudText Typo="Typo.body2" Color="Color.Secondary">
+            Din ekonomiska hälsa baserad på nyckeltal och beteenden
+        </MudText>
+    </div>
+    <MudButton OnClick="@RefreshScore" 
+               Variant="Variant.Outlined" 
+               Color="Color.Primary" 
+               StartIcon="@Icons.Material.Filled.Refresh"
+               Size="Size.Small"
+               Disabled="@_loading">
+        Uppdatera Score
+    </MudButton>
+</div>
+
+@if (_loading)
+{
+    <div class="d-flex flex-column align-center pa-6">
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Large" />
+        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-4">Beräknar din ekonomiska hälsa...</MudText>
+    </div>
+}
+else if (_healthScore != null)
+{
+    <!-- Main Score Card -->
+    <MudCard Elevation="3" Class="mb-4">
+        <MudCardContent Class="pa-6">
+            <div class="d-flex flex-column align-center">
+                <MudText Typo="Typo.h3" Color="@GetHealthColor()" Class="mb-2">
+                    @GetHealthIcon() @_healthScore.TotalScore/100
+                </MudText>
+                <MudText Typo="Typo.h6" Color="@GetHealthColor()" Class="mb-4">
+                    @_healthScore.HealthLevel
+                </MudText>
+                
+                <!-- Progress bar -->
+                <MudProgressLinear Color="@GetHealthColor()" 
+                                   Value="@_healthScore.TotalScore" 
+                                   Max="100" 
+                                   Size="Size.Large" 
+                                   Class="mb-2"
+                                   Style="width: 100%; max-width: 600px;" />
+                
+                <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-2">
+                    Beräknad: @_healthScore.CalculatedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm")
+                </MudText>
+            </div>
+        </MudCardContent>
+    </MudCard>
+
+    <MudGrid>
+        <!-- Components Score Cards -->
+        <MudItem xs="12" lg="8">
+            <MudText Typo="Typo.h6" Class="mb-3">Detaljerad Poängfördelning</MudText>
+            <MudGrid>
+                @RenderScoreComponent(_healthScore.SavingsRate)
+                @RenderScoreComponent(_healthScore.DebtLevel)
+                @RenderScoreComponent(_healthScore.EmergencyFund)
+                @RenderScoreComponent(_healthScore.BudgetAdherence)
+                @RenderScoreComponent(_healthScore.InvestmentDiversification)
+                @RenderScoreComponent(_healthScore.IncomeStability)
+            </MudGrid>
+        </MudItem>
+
+        <!-- Strengths and Improvement Areas -->
+        <MudItem xs="12" lg="4">
+            <MudText Typo="Typo.h6" Class="mb-3">Analys</MudText>
+            
+            @if (_healthScore.Strengths.Any())
+            {
+                <MudCard Elevation="2" Class="mb-3">
+                    <MudCardContent>
+                        <MudText Typo="Typo.subtitle1" Color="Color.Success" Class="mb-2">
+                            <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Small" Class="mr-1" />
+                            Styrkor
+                        </MudText>
+                        @foreach (var strength in _healthScore.Strengths)
+                        {
+                            <MudText Typo="Typo.body2" Class="mb-1">✓ @strength</MudText>
+                        }
+                    </MudCardContent>
+                </MudCard>
+            }
+            
+            @if (_healthScore.ImprovementAreas.Any())
+            {
+                <MudCard Elevation="2">
+                    <MudCardContent>
+                        <MudText Typo="Typo.subtitle1" Color="Color.Warning" Class="mb-2">
+                            <MudIcon Icon="@Icons.Material.Filled.Warning" Size="Size.Small" Class="mr-1" />
+                            Förbättringsområden
+                        </MudText>
+                        @foreach (var area in _healthScore.ImprovementAreas)
+                        {
+                            <MudText Typo="Typo.body2" Class="mb-1">⚠️ @area</MudText>
+                        }
+                    </MudCardContent>
+                </MudCard>
+            }
+
+            @if (!_healthScore.Strengths.Any() && !_healthScore.ImprovementAreas.Any())
+            {
+                <MudCard Elevation="2">
+                    <MudCardContent>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">
+                            Registrera mer data för att få personliga rekommendationer.
+                        </MudText>
+                    </MudCardContent>
+                </MudCard>
+            }
+        </MudItem>
+    </MudGrid>
+}
+
+@code {
+    private HealthScoreReport? _healthScore;
+    private bool _loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadHealthScore();
+    }
+
+    private async Task LoadHealthScore()
+    {
+        try
+        {
+            _loading = true;
+            _healthScore = await ReportService.GetHealthScoreAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Kunde inte ladda hälsoscore: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task RefreshScore()
+    {
+        await LoadHealthScore();
+        Snackbar.Add("Ekonomisk hälsa uppdaterad!", Severity.Success);
+    }
+
+    private Color GetHealthColor()
+    {
+        if (_healthScore == null) return Color.Default;
+        
+        return _healthScore.TotalScore switch
+        {
+            >= 80 => Color.Success,
+            >= 60 => Color.Info,
+            >= 40 => Color.Warning,
+            _ => Color.Error
+        };
+    }
+
+    private string GetHealthIcon()
+    {
+        if (_healthScore == null) return "❓";
+        
+        return _healthScore.TotalScore switch
+        {
+            >= 80 => "💚",
+            >= 60 => "💙",
+            >= 40 => "💛",
+            _ => "🔴"
+        };
+    }
+
+    private RenderFragment RenderScoreComponent(HealthScoreComponent component)
+    {
+        var percentage = component.MaxScore > 0 ? (component.Score * 100.0 / component.MaxScore) : 0;
+        var color = percentage switch
+        {
+            >= 80 => Color.Success,
+            >= 60 => Color.Info,
+            >= 40 => Color.Warning,
+            _ => Color.Error
+        };
+
+        return @<MudItem xs="12" sm="6">
+            <MudCard Elevation="2" Class="mb-3">
+                <MudCardContent>
+                    <MudText Typo="Typo.subtitle1" Class="mb-2">@component.Name</MudText>
+                    <MudText Typo="Typo.h4" Color="@color" Class="mb-2">
+                        @component.Score/@component.MaxScore
+                        @if (component.Value.HasValue && !string.IsNullOrEmpty(component.Unit))
+                        {
+                            <MudText Typo="Typo.caption" Inline="true" Class="ml-2">
+                                (@component.Value.Value.ToString("F1")@component.Unit)
+                            </MudText>
+                        }
+                    </MudText>
+                    <MudProgressLinear Color="@color" Value="@percentage" Max="100" Class="mb-2" />
+                    <MudText Typo="Typo.body2" Color="@color">@component.Status</MudText>
+                    @if (!string.IsNullOrEmpty(component.Description))
+                    {
+                        <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-1">
+                            💡 @component.Description
+                        </MudText>
+                    }
+                </MudCardContent>
+            </MudCard>
+        </MudItem>;
+    }
+}
