@@ -290,7 +290,7 @@ else
     // Progress dialog
     private bool _showProgressDialog = false;
     private SavingsChallenge? _selectedChallenge;
-    private DateTime? _progressDate = DateTime.Now;
+    private DateTime? _progressDate;
     private bool _progressCompleted = true;
     private decimal _progressAmount = 0;
     private string? _progressNotes;
@@ -327,7 +327,7 @@ else
                 TargetAmount = 1000,
                 Type = ChallengeType.SaveDaily
             };
-            _formChallengeStartDate = DateTime.Now;
+            _formChallengeStartDate = DateTime.Today;
             _editingChallenge = null;
         }
     }
@@ -354,7 +354,7 @@ else
     {
         try
         {
-            _formChallenge.StartDate = _formChallengeStartDate ?? DateTime.Now;
+            _formChallenge.StartDate = _formChallengeStartDate ?? DateTime.Today;
 
             if (_editingChallenge != null)
             {
@@ -404,7 +404,7 @@ else
     private void RecordProgress(SavingsChallenge challenge)
     {
         _selectedChallenge = challenge;
-        _progressDate = DateTime.Now;
+        _progressDate = DateTime.Today;
         _progressCompleted = true;
         _progressAmount = 0;
         _progressNotes = null;
