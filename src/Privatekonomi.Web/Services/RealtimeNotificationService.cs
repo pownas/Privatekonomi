@@ -41,6 +41,11 @@ public class RealtimeNotificationService : INotificationService
             try
             {
                 await _broadcaster.BroadcastNotificationAsync(userId, notification);
+                
+                // Also update the unread count
+                var unreadCount = await _innerService.GetUnreadCountAsync(userId);
+                await _broadcaster.UpdateUnreadCountAsync(userId, unreadCount);
+                
                 _logger.LogInformation("Broadcasted notification {NotificationId} to user {UserId}", 
                     notification.NotificationId, userId);
             }

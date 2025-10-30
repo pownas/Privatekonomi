@@ -48,8 +48,6 @@
             {
                 await InvokeAsync(() =>
                 {
-                    _unreadCount++;
-                    
                     // Show toast notification
                     var severity = GetSeverity(notification.Priority);
                     Snackbar.Add(notification.Message, severity, config =>

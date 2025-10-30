@@ -65,7 +65,10 @@ Detta dokument beskriver implementeringen av ett komplett real-time notifikation
 
 Notifikationer skickas omedelbart till användaren via SignalR WebSocket-anslutning när:
 - En ny notifikation skapas via `SendNotificationAsync`
+
+Oläst-räknaren uppdateras automatiskt när:
 - Användaren markerar en notifikation som läst
+- Användaren markerar alla som lästa
 - Användaren tar bort en notifikation
 
 ### 2. Toast Meddelanden
@@ -140,7 +143,8 @@ SignalR-klienten återansluter automatiskt vid:
 ### Prenumerationspris ökat (SubscriptionPriceIncrease)
 **Prioritet:** Normal  
 **Färg:** Orange (Warning)  
-**Exempel:** "Netflix Premium ökar från 169 kr till 189 kr (+11,8%) fr.o.m. 2025-11-29"
+**Exempel:** "Netflix Premium ökar från 169 kr till 189 kr (+11,8%) fr.o.m. 2025-11-29"  
+**Beräkning:** `((189-169)/169)*100 = 11.83%`
 
 ## Användning
 
@@ -209,7 +213,10 @@ _hubConnection = new HubConnectionBuilder()
 // Lyssna på nya notifikationer
 _hubConnection.On<Notification>("ReceiveNotification", async (notification) =>
 {
-    _unreadCount++;
+    // Update UI for the new notification
+    notifications.Insert(0, notification);
+    
+    // Show toast
     Snackbar.Add(notification.Message, GetSeverity(notification.Priority));
     StateHasChanged();
 });
