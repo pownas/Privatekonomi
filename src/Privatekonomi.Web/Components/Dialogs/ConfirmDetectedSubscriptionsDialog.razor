@@ -1,0 +1,74 @@
+@using Privatekonomi.Core.Models
+@using MudBlazor
+@inject IDialogService DialogService
+
+<MudDialog>
+    <DialogContent>
+        <MudText Typo="Typo.body1" Class="mb-4">
+            Följande abonnemang upptäcktes från dina transaktioner. Välj vilka du vill lägga till:
+        </MudText>
+        
+        <MudTable Items="@Subscriptions" Hover="true" Dense="true" Class="mb-4">
+            <HeaderContent>
+                <MudTh>Välj</MudTh>
+                <MudTh>Namn</MudTh>
+                <MudTh>Pris</MudTh>
+                <MudTh>Frekvens</MudTh>
+                <MudTh>Startdatum</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd>
+                    <MudCheckBox @bind-Value="_selectedSubscriptions[context]" Color="Color.Primary" />
+                </MudTd>
+                <MudTd>@context.Name</MudTd>
+                <MudTd>@context.Price.ToString("C", new System.Globalization.CultureInfo("sv-SE"))</MudTd>
+                <MudTd>
+                    @(context.BillingFrequency switch
+                    {
+                        "Monthly" => "Månadsvis",
+                        "Yearly" => "Årligen",
+                        "Quarterly" => "Kvartalsvis",
+                        _ => context.BillingFrequency
+                    })
+                </MudTd>
+                <MudTd>@context.StartDate.ToString("yyyy-MM-dd")</MudTd>
+            </RowTemplate>
+        </MudTable>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Avbryt</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Confirm" Variant="Variant.Filled">
+            Lägg till valda (@_selectedSubscriptions.Count(x => x.Value))
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] 
+    public required IMudDialogInstance MudDialog { get; set; }
+
+    [Parameter]
+    public List<Subscription> Subscriptions { get; set; } = new();
+
+    private Dictionary<Subscription, bool> _selectedSubscriptions = new();
+
+    protected override void OnInitialized()
+    {
+        // Initialize all as selected by default
+        foreach (var sub in Subscriptions)
+        {
+            _selectedSubscriptions[sub] = true;
+        }
+    }
+
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+
+    private void Confirm()
+    {
+        var selected = _selectedSubscriptions.Where(x => x.Value).Select(x => x.Key).ToList();
+        MudDialog.Close(DialogResult.Ok(selected));
+    }
+}

@@ -1,6 +1,7 @@
 ﻿@page "/"
 @rendermode InteractiveServer
 @using Privatekonomi.Web.Components.Dialogs
+@using Privatekonomi.Web.Components.Widgets
 @using Privatekonomi.Web.Services
 @inject ITransactionService TransactionService
 @inject ICategoryService CategoryService
@@ -154,6 +155,14 @@ else
                 </MudCard>
             </MudItem>
         </MudGrid>
+    }
+
+    @* Period Comparison Widget *@
+    @if (_periodComparison != null && _preferences.ShowPeriodComparison)
+    {
+        <div class="mt-4">
+            <PeriodComparisonWidget ComparisonData="@_periodComparison" ShowSparkline="true" />
+        </div>
     }
 
     @if (_transactions.Any() && (_preferences.ShowExpensePieChart || _preferences.ShowIncomePieChart || _preferences.ShowCashFlowChart || _preferences.ShowCategoryBarChart))
@@ -550,6 +559,7 @@ else
     private Dictionary<int, Dictionary<int, decimal>> _budgetActualAmounts = new();
     private Dictionary<int, Dictionary<int, List<Transaction>>> _budgetTransactionsByCategory = new();
     private DashboardPreferences _preferences = new();
+    private PeriodComparisonReport? _periodComparison;
 
     // Chart data
     private double[] _expensePieData = Array.Empty<double>();
@@ -603,6 +613,16 @@ else
         {
             _budgetActualAmounts[budget.BudgetId] = await BudgetService.GetActualAmountsByCategoryAsync(budget.BudgetId);
             _budgetTransactionsByCategory[budget.BudgetId] = await BudgetService.GetTransactionsByCategoryForBudgetAsync(budget.BudgetId);
+        }
+        
+        // Load period comparison
+        try
+        {
+            _periodComparison = await ReportService.GetPeriodComparisonAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Kunde inte ladda periodjämförelse: {ex.Message}", Severity.Warning);
         }
         
         _totalIncome = _transactions.Where(t => t.IsIncome).Sum(t => t.Amount);

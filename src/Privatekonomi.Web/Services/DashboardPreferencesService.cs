@@ -45,6 +45,7 @@ public class DashboardPreferencesService
 public class DashboardPreferences
 {
     public bool ShowTotalCards { get; set; } = true;
+    public bool ShowPeriodComparison { get; set; } = true;
     public bool ShowCashFlowChart { get; set; } = true;
     public bool ShowExpensePieChart { get; set; } = true;
     public bool ShowIncomePieChart { get; set; } = true;
@@ -60,6 +61,7 @@ public class DashboardPreferences
         return new DashboardPreferences
         {
             ShowTotalCards = this.ShowTotalCards,
+            ShowPeriodComparison = this.ShowPeriodComparison,
             ShowCashFlowChart = this.ShowCashFlowChart,
             ShowExpensePieChart = this.ShowExpensePieChart,
             ShowIncomePieChart = this.ShowIncomePieChart,

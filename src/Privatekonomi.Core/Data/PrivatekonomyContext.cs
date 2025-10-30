@@ -71,6 +71,23 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
     public DbSet<Dividend> Dividends { get; set; }
     public DbSet<InvestmentTransaction> InvestmentTransactions { get; set; }
     public DbSet<PortfolioAllocation> PortfolioAllocations { get; set; }
+    
+    // Savings Challenges
+    public DbSet<SavingsChallenge> SavingsChallenges { get; set; }
+    public DbSet<SavingsChallengeProgress> SavingsChallengeProgress { get; set; }
+    
+    // Life Timeline Planning
+    public DbSet<LifeTimelineMilestone> LifeTimelineMilestones { get; set; }
+    public DbSet<LifeTimelineScenario> LifeTimelineScenarios { get; set; }
+    
+    // Social Features
+    public DbSet<GoalShare> GoalShares { get; set; }
+    public DbSet<SavingsGroup> SavingsGroups { get; set; }
+    public DbSet<SavingsGroupMember> SavingsGroupMembers { get; set; }
+    public DbSet<GroupComment> GroupComments { get; set; }
+    public DbSet<CommentLike> CommentLikes { get; set; }
+    public DbSet<GroupGoal> GroupGoals { get; set; }
+    public DbSet<UserPrivacySettings> UserPrivacySettings { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -1343,6 +1360,62 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
             
             entity.HasIndex(e => e.UserId);
             entity.HasIndex(e => e.IsActive);
+        });
+        
+        // LifeTimelineMilestone configuration
+        modelBuilder.Entity<LifeTimelineMilestone>(entity =>
+        {
+            entity.HasKey(e => e.LifeTimelineMilestoneId);
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(200);
+            entity.Property(e => e.Description).HasMaxLength(500);
+            entity.Property(e => e.MilestoneType).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.PlannedDate).IsRequired();
+            entity.Property(e => e.EstimatedCost).HasPrecision(18, 2);
+            entity.Property(e => e.RequiredMonthlySavings).HasPrecision(18, 2);
+            entity.Property(e => e.ProgressPercentage).HasPrecision(5, 2);
+            entity.Property(e => e.CurrentSavings).HasPrecision(18, 2);
+            entity.Property(e => e.Priority).IsRequired();
+            entity.Property(e => e.IsCompleted).IsRequired();
+            entity.Property(e => e.Notes).HasMaxLength(1000);
+            entity.Property(e => e.CreatedAt).IsRequired();
+            
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.HasIndex(e => e.UserId);
+            entity.HasIndex(e => e.PlannedDate);
+            entity.HasIndex(e => e.MilestoneType);
+            entity.HasIndex(e => new { e.UserId, e.PlannedDate });
+        });
+        
+        // LifeTimelineScenario configuration
+        modelBuilder.Entity<LifeTimelineScenario>(entity =>
+        {
+            entity.HasKey(e => e.LifeTimelineScenarioId);
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(200);
+            entity.Property(e => e.Description).HasMaxLength(500);
+            entity.Property(e => e.ExpectedReturnRate).HasPrecision(5, 2);
+            entity.Property(e => e.MonthlySavings).HasPrecision(18, 2);
+            entity.Property(e => e.RetirementAge).IsRequired();
+            entity.Property(e => e.ExpectedMonthlyPension).HasPrecision(18, 2);
+            entity.Property(e => e.ProjectedRetirementWealth).HasPrecision(18, 2);
+            entity.Property(e => e.InflationRate).HasPrecision(5, 2);
+            entity.Property(e => e.SalaryIncreaseRate).HasPrecision(5, 2);
+            entity.Property(e => e.IsActive).IsRequired();
+            entity.Property(e => e.IsBaseline).IsRequired();
+            entity.Property(e => e.Notes).HasMaxLength(1000);
+            entity.Property(e => e.CreatedAt).IsRequired();
+            
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.HasIndex(e => e.UserId);
+            entity.HasIndex(e => e.IsActive);
+            entity.HasIndex(e => new { e.UserId, e.IsActive });
         });
     }
 }

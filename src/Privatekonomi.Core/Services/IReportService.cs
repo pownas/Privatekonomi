@@ -33,6 +33,16 @@ public interface IReportService
     /// Create a snapshot of current net worth
     /// </summary>
     Task<NetWorthSnapshot> CreateNetWorthSnapshotAsync(bool isManual = false, string? notes = null);
+    
+    /// <summary>
+    /// Get period comparison for dashboard (current month vs previous month, year-over-year)
+    /// </summary>
+    Task<PeriodComparisonReport> GetPeriodComparisonAsync(DateTime? referenceDate = null, int? householdId = null);
+    
+    /// <summary>
+    /// Get economic health score (0-100) based on multiple financial factors
+    /// </summary>
+    Task<HealthScoreReport> GetHealthScoreAsync(int? householdId = null);
 }
 
 public class CashFlowReport
@@ -135,4 +145,63 @@ public class NetWorthHistoryPeriod
     public decimal? InvestmentValue { get; set; }
     public decimal? PhysicalAssetValue { get; set; }
     public decimal? LoanBalance { get; set; }
+}
+
+public class PeriodComparisonReport
+{
+    public PeriodComparison Income { get; set; } = new();
+    public PeriodComparison Expenses { get; set; } = new();
+    public PeriodComparison NetFlow { get; set; } = new();
+    public List<double> SparklineData { get; set; } = new(); // Last 6 months trend for expenses
+    public DateTime CurrentPeriodStart { get; set; }
+    public DateTime CurrentPeriodEnd { get; set; }
+    public DateTime PreviousPeriodStart { get; set; }
+    public DateTime PreviousPeriodEnd { get; set; }
+    public DateTime YearAgoPeriodStart { get; set; }
+    public DateTime YearAgoPeriodEnd { get; set; }
+}
+
+public class PeriodComparison
+{
+    public decimal CurrentPeriod { get; set; }
+    public decimal PreviousPeriod { get; set; }
+    public decimal YearAgoPeriod { get; set; }
+    public decimal ChangeFromPrevious { get; set; }
+    public decimal ChangeFromYearAgo { get; set; }
+    public decimal PercentageChangeFromPrevious { get; set; }
+    public decimal PercentageChangeFromYearAgo { get; set; }
+    public string TrendDirection { get; set; } = string.Empty; // "Improving", "Worsening", "Stable"
+}
+
+public class HealthScoreReport
+{
+    public int TotalScore { get; set; } // 0-100
+    public string HealthLevel { get; set; } = string.Empty; // "Excellent", "Good", "Fair", "Poor"
+    public HealthScoreComponent SavingsRate { get; set; } = new();
+    public HealthScoreComponent DebtLevel { get; set; } = new();
+    public HealthScoreComponent EmergencyFund { get; set; } = new();
+    public HealthScoreComponent BudgetAdherence { get; set; } = new();
+    public HealthScoreComponent InvestmentDiversification { get; set; } = new();
+    public HealthScoreComponent IncomeStability { get; set; } = new();
+    public List<string> Strengths { get; set; } = new();
+    public List<string> ImprovementAreas { get; set; } = new();
+    public List<HealthScoreHistoryPoint> History { get; set; } = new();
+    public DateTime CalculatedAt { get; set; }
+}
+
+public class HealthScoreComponent
+{
+    public string Name { get; set; } = string.Empty;
+    public int Score { get; set; } // Actual score achieved
+    public int MaxScore { get; set; } // Maximum possible score
+    public decimal? Value { get; set; } // The actual metric value (e.g., 15% savings rate)
+    public string Unit { get; set; } = string.Empty; // e.g., "%", "månader", "kr"
+    public string Status { get; set; } = string.Empty; // "Excellent", "Good", "Fair", "Poor"
+    public string Description { get; set; } = string.Empty;
+}
+
+public class HealthScoreHistoryPoint
+{
+    public DateTime Date { get; set; }
+    public int Score { get; set; }
 }
