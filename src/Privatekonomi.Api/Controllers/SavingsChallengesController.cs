@@ -257,6 +257,68 @@ public class SavingsChallengesController : ControllerBase
             return StatusCode(500, "Internal server error");
         }
     }
+
+    /// <summary>
+    /// Hämta alla tillgängliga utmanings-mallar
+    /// </summary>
+    [HttpGet("templates")]
+    public async Task<ActionResult<IEnumerable<ChallengeTemplate>>> GetTemplates()
+    {
+        try
+        {
+            var templates = await _challengeService.GetAllTemplatesAsync();
+            return Ok(templates);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving challenge templates");
+            return StatusCode(500, "Internal server error");
+        }
+    }
+
+    /// <summary>
+    /// Hämta specifik utmanings-mall
+    /// </summary>
+    [HttpGet("templates/{id}")]
+    public async Task<ActionResult<ChallengeTemplate>> GetTemplate(int id)
+    {
+        try
+        {
+            var template = await _challengeService.GetTemplateByIdAsync(id);
+            if (template == null)
+            {
+                return NotFound();
+            }
+            return Ok(template);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving challenge template {TemplateId}", id);
+            return StatusCode(500, "Internal server error");
+        }
+    }
+
+    /// <summary>
+    /// Skapa sparmåls-utmaning från mall
+    /// </summary>
+    [HttpPost("templates/{id}/start")]
+    public async Task<ActionResult<SavingsChallenge>> StartChallengeFromTemplate(int id)
+    {
+        try
+        {
+            var challenge = await _challengeService.CreateChallengeFromTemplateAsync(id);
+            return CreatedAtAction(nameof(GetChallenge), new { id = challenge.SavingsChallengeId }, challenge);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error creating challenge from template {TemplateId}", id);
+            return StatusCode(500, "Internal server error");
+        }
+    }
 }
 
 public class ProgressRequest
