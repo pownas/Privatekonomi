@@ -47,6 +47,12 @@ public class SocialFeatureService : ISocialFeatureService
         return settings;
     }
 
+    public async Task<UserPrivacySettings> GetPrivacySettingsAsync()
+    {
+        var userId = GetCurrentUserId();
+        return await GetPrivacySettingsAsync(userId);
+    }
+
     public async Task<UserPrivacySettings> UpdatePrivacySettingsAsync(UserPrivacySettings settings)
     {
         var userId = GetCurrentUserId();

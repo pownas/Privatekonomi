@@ -9,6 +9,7 @@ public interface ISocialFeatureService
 {
     // Privacy Settings
     Task<UserPrivacySettings> GetPrivacySettingsAsync(string userId);
+    Task<UserPrivacySettings> GetPrivacySettingsAsync(); // Current user
     Task<UserPrivacySettings> UpdatePrivacySettingsAsync(UserPrivacySettings settings);
     Task<bool> CanUseSocialFeaturesAsync(string userId);
     

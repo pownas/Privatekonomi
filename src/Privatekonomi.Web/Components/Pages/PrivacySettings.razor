@@ -1,0 +1,170 @@
+@page "/privacy-settings"
+@rendermode InteractiveServer
+@inject ISocialFeatureService SocialFeatureService
+@inject ISnackbar Snackbar
+@inject NavigationManager NavigationManager
+
+<PageTitle>Integritetsinställningar - Privatekonomi</PageTitle>
+
+<div class="d-flex justify-space-between align-center mb-4">
+    <MudText Typo="Typo.h4">Sociala Funktioner - Integritetsinställningar</MudText>
+</div>
+
+@if (_loading)
+{
+    <div class="d-flex flex-column align-center pa-6">
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Large" />
+        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-4">Laddar inställningar...</MudText>
+    </div>
+}
+else if (_settings != null)
+{
+    <MudPaper Class="pa-4">
+        <MudText Typo="Typo.h6" Class="mb-4">GDPR-kompatibel Integritet</MudText>
+        <MudText Typo="Typo.body2" Class="mb-4">
+            Alla sociala funktioner är opt-in och du har full kontroll över vad som delas.
+            Som standard är allt anonymiserat och inaktiverat.
+        </MudText>
+
+        <MudDivider Class="my-4" />
+
+        <MudSwitch @bind-Value="_settings.EnableSocialFeatures" Color="Color.Primary" Label="Aktivera Sociala Funktioner" Class="mb-3">
+            Huvudinställning för alla sociala funktioner
+        </MudSwitch>
+
+        <MudDivider Class="my-4" />
+
+        <MudText Typo="Typo.h6" Class="mb-3">Funktionsinställningar</MudText>
+
+        <MudSwitch @bind-Value="_settings.AllowGoalSharing" 
+                   Color="Color.Primary" 
+                   Label="Tillåt Delning av Sparmål" 
+                   Disabled="!_settings.EnableSocialFeatures"
+                   Class="mb-2">
+            Skapa delbara länkar till dina sparmål
+        </MudSwitch>
+
+        <MudSwitch @bind-Value="_settings.AllowSavingsGroups" 
+                   Color="Color.Primary" 
+                   Label="Tillåt Spargrupper" 
+                   Disabled="!_settings.EnableSocialFeatures"
+                   Class="mb-2">
+            Gå med i eller skapa spargrupper för ömsesidigt stöd
+        </MudSwitch>
+
+        <MudSwitch @bind-Value="_settings.AllowLeaderboards" 
+                   Color="Color.Primary" 
+                   Label="Tillåt Topplistor" 
+                   Disabled="!_settings.EnableSocialFeatures"
+                   Class="mb-2">
+            Visa dig i familje- och grupptopplistor
+        </MudSwitch>
+
+        <MudSwitch @bind-Value="_settings.AllowCommunityComparison" 
+                   Color="Color.Primary" 
+                   Label="Tillåt Community-jämförelse (Anonymiserad)" 
+                   Disabled="!_settings.EnableSocialFeatures"
+                   Class="mb-2">
+            Jämför dina framsteg anonymt med andra användare
+        </MudSwitch>
+
+        <MudDivider Class="my-4" />
+
+        <MudText Typo="Typo.h6" Class="mb-3">Anonymitetsinställningar</MudText>
+
+        <MudSwitch @bind-Value="_settings.AnonymousByDefault" 
+                   Color="Color.Primary" 
+                   Label="Anonymiserad som Standard" 
+                   Disabled="!_settings.EnableSocialFeatures"
+                   Class="mb-2">
+            Använd anonyma visningsnamn i grupper som standard
+        </MudSwitch>
+
+        <MudSwitch @bind-Value="_settings.ShowRealNameInGroups" 
+                   Color="Color.Primary" 
+                   Label="Visa Riktigt Namn i Grupper" 
+                   Disabled="!_settings.EnableSocialFeatures"
+                   Class="mb-2">
+            Använd ditt riktiga namn istället för anonymt visningsnamn
+        </MudSwitch>
+
+        <MudDivider Class="my-4" />
+
+        <div class="d-flex gap-2 mt-4">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveSettings">
+                Spara Inställningar
+            </MudButton>
+            <MudButton Variant="Variant.Outlined" OnClick="Cancel">
+                Avbryt
+            </MudButton>
+        </div>
+
+        @if (_settings.PrivacyTermsAcceptedAt.HasValue)
+        {
+            <MudText Typo="Typo.caption" Class="mt-4">
+                Integritetsinställningar senast uppdaterade: @_settings.PrivacyTermsAcceptedAt.Value.ToLocalTime().ToString("yyyy-MM-dd HH:mm")
+            </MudText>
+        }
+    </MudPaper>
+
+    <MudPaper Class="pa-4 mt-4">
+        <MudText Typo="Typo.h6" Class="mb-2">GDPR Information</MudText>
+        <MudText Typo="Typo.body2">
+            Enligt GDPR har du rätt att:
+            <ul>
+                <li>Återkalla ditt samtycke när som helst</li>
+                <li>Exportera alla dina data</li>
+                <li>Radera alla dina data</li>
+                <li>Veta exakt vilka data som delas</li>
+            </ul>
+        </MudText>
+        <MudText Typo="Typo.body2" Class="mt-2">
+            När du inaktiverar sociala funktioner kommer:
+            <ul>
+                <li>Alla dina delbara länkar att inaktiveras</li>
+                <li>Du att tas bort från alla grupper</li>
+                <li>Dina data att tas bort från community-statistik</li>
+            </ul>
+        </MudText>
+    </MudPaper>
+}
+
+@code {
+    private UserPrivacySettings? _settings;
+    private bool _loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _settings = await SocialFeatureService.GetPrivacySettingsAsync(); // Uses current user
+            _loading = false;
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Fel vid laddning av inställningar: {ex.Message}", Severity.Error);
+            _loading = false;
+        }
+    }
+
+    private async Task SaveSettings()
+    {
+        if (_settings == null) return;
+
+        try
+        {
+            _settings.PrivacyTermsAcceptedAt = DateTime.UtcNow;
+            await SocialFeatureService.UpdatePrivacySettingsAsync(_settings);
+            Snackbar.Add("Integritetsinställningar sparade", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Fel vid sparande: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void Cancel()
+    {
+        NavigationManager.NavigateTo("/");
+    }
+}
