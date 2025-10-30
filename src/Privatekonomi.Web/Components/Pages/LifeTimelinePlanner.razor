@@ -1,0 +1,536 @@
+@page "/lifetimeline"
+@rendermode InteractiveServer
+@inject ILifeTimelinePlannerService TimelinePlannerService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+<PageTitle>Livslinjeplanering - Privatekonomi</PageTitle>
+
+<div class="d-flex justify-space-between align-center mb-4">
+    <div>
+        <MudText Typo="Typo.h4">🗓️ Livslinjeplanering</MudText>
+        <MudText Typo="Typo.body2" Color="Color.Secondary">Långsiktig ekonomisk planering över hela livet</MudText>
+    </div>
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="ToggleMilestoneForm">
+        Ny Milstolpe
+    </MudButton>
+</div>
+
+@if (_loading)
+{
+    <div class="d-flex flex-column align-center pa-6">
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Large" />
+        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-4">Laddar livslinjeplanering...</MudText>
+    </div>
+}
+else
+{
+    <!-- Scenario Selection -->
+    <MudPaper Class="pa-4 mb-4">
+        <div class="d-flex justify-space-between align-center mb-3">
+            <MudText Typo="Typo.h6">Scenarioplanering</MudText>
+            <MudButton Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small" OnClick="ToggleScenarioForm">
+                Nytt Scenario
+            </MudButton>
+        </div>
+        
+        @if (_scenarios.Any())
+        {
+            <MudSelect @bind-Value="_selectedScenarioId" Label="Aktivt Scenario" Variant="Variant.Outlined" T="int?" @onchange="OnScenarioChanged">
+                @foreach (var scenario in _scenarios)
+                {
+                    <MudSelectItem Value="@((int?)scenario.LifeTimelineScenarioId)">
+                        @scenario.Name @(scenario.IsActive ? " (Aktiv)" : "")
+                    </MudSelectItem>
+                }
+            </MudSelect>
+            
+            @if (_activeScenario != null)
+            {
+                <MudGrid Class="mt-4">
+                    <MudItem xs="12" md="3">
+                        <MudCard Elevation="2" Class="pa-3">
+                            <MudCardContent>
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">Månadssparande</MudText>
+                                <MudText Typo="Typo.h6">@_activeScenario.MonthlySavings.ToString("N0") kr</MudText>
+                            </MudCardContent>
+                        </MudCard>
+                    </MudItem>
+                    <MudItem xs="12" md="3">
+                        <MudCard Elevation="2" Class="pa-3">
+                            <MudCardContent>
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">Förväntad avkastning</MudText>
+                                <MudText Typo="Typo.h6">@_activeScenario.ExpectedReturnRate.ToString("F1")%</MudText>
+                            </MudCardContent>
+                        </MudCard>
+                    </MudItem>
+                    <MudItem xs="12" md="3">
+                        <MudCard Elevation="2" Class="pa-3">
+                            <MudCardContent>
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">Pensionsålder</MudText>
+                                <MudText Typo="Typo.h6">@_activeScenario.RetirementAge år</MudText>
+                            </MudCardContent>
+                        </MudCard>
+                    </MudItem>
+                    <MudItem xs="12" md="3">
+                        <MudCard Elevation="2" Class="pa-3">
+                            <MudCardContent>
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">Prognos pension</MudText>
+                                <MudText Typo="Typo.h6" Color="Color.Success">@_projectedWealth.ToString("N0") kr</MudText>
+                            </MudCardContent>
+                        </MudCard>
+                    </MudItem>
+                </MudGrid>
+            }
+        }
+        else
+        {
+            <MudAlert Severity="Severity.Info">Skapa ett scenario för att börja din livslinjeplanering</MudAlert>
+        }
+    </MudPaper>
+
+    <!-- Milestone Creation Form -->
+    @if (_showMilestoneForm)
+    {
+        <MudPaper Class="pa-4 mb-4">
+            <MudText Typo="Typo.h6" Class="mb-3">@(_editingMilestone != null ? "Redigera Milstolpe" : "Lägg till Ny Milstolpe")</MudText>
+            
+            <MudTextField @bind-Value="_formMilestone.Name" 
+                          Label="Namn" 
+                          Variant="Variant.Outlined"
+                          Required="true"
+                          MaxLength="200"
+                          Class="mb-3" />
+            
+            <MudTextField @bind-Value="_formMilestone.Description" 
+                          Label="Beskrivning" 
+                          Variant="Variant.Outlined"
+                          Lines="2"
+                          MaxLength="500"
+                          Class="mb-3" />
+
+            <MudSelect @bind-Value="_formMilestone.MilestoneType" Label="Typ av milstolpe" Variant="Variant.Outlined" Class="mb-3">
+                <MudSelectItem Value="@("HousePurchase")">Köpa bostad</MudSelectItem>
+                <MudSelectItem Value="@("Child")">Barn</MudSelectItem>
+                <MudSelectItem Value="@("Retirement")">Pension</MudSelectItem>
+                <MudSelectItem Value="@("Education")">Utbildning</MudSelectItem>
+                <MudSelectItem Value="@("Career")">Karriärbyte</MudSelectItem>
+                <MudSelectItem Value="@("Other")">Annat</MudSelectItem>
+            </MudSelect>
+
+            <MudDatePicker @bind-Date="_formMilestonePlannedDate"
+                           Label="Planerat datum"
+                           Variant="Variant.Outlined"
+                           Class="mb-3" />
+
+            <MudNumericField @bind-Value="_formMilestone.EstimatedCost" 
+                             Label="Beräknad kostnad (kr)" 
+                             Variant="Variant.Outlined"
+                             Format="N0"
+                             Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                             Class="mb-3" />
+
+            <MudNumericField @bind-Value="_formMilestone.CurrentSavings" 
+                             Label="Redan sparat (kr)" 
+                             Variant="Variant.Outlined"
+                             Min="0"
+                             Format="N0"
+                             Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                             Class="mb-3" />
+
+            <MudSelect @bind-Value="_formMilestone.Priority" Label="Prioritet" Variant="Variant.Outlined" Class="mb-3">
+                <MudSelectItem Value="1">1 - Högst</MudSelectItem>
+                <MudSelectItem Value="2">2 - Hög</MudSelectItem>
+                <MudSelectItem Value="3">3 - Normal</MudSelectItem>
+                <MudSelectItem Value="4">4 - Låg</MudSelectItem>
+                <MudSelectItem Value="5">5 - Lägst</MudSelectItem>
+            </MudSelect>
+
+            <div class="d-flex gap-2">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveMilestone">
+                    @(_editingMilestone != null ? "Uppdatera" : "Lägg till")
+                </MudButton>
+                <MudButton Variant="Variant.Outlined" OnClick="CancelMilestoneForm">Avbryt</MudButton>
+            </div>
+        </MudPaper>
+    }
+
+    <!-- Scenario Creation Form -->
+    @if (_showScenarioForm)
+    {
+        <MudPaper Class="pa-4 mb-4">
+            <MudText Typo="Typo.h6" Class="mb-3">Skapa Nytt Scenario</MudText>
+            
+            <MudTextField @bind-Value="_formScenario.Name" 
+                          Label="Scenarionamn" 
+                          Variant="Variant.Outlined"
+                          Required="true"
+                          MaxLength="200"
+                          Class="mb-3" />
+            
+            <MudTextField @bind-Value="_formScenario.Description" 
+                          Label="Beskrivning" 
+                          Variant="Variant.Outlined"
+                          Lines="2"
+                          MaxLength="500"
+                          Class="mb-3" />
+
+            <MudNumericField @bind-Value="_formScenario.MonthlySavings" 
+                             Label="Månadssparande (kr)" 
+                             Variant="Variant.Outlined"
+                             Min="0"
+                             Format="N0"
+                             Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                             Class="mb-3" />
+
+            <MudNumericField @bind-Value="_formScenario.ExpectedReturnRate" 
+                             Label="Förväntad årsavkastning (%)" 
+                             Variant="Variant.Outlined"
+                             Min="0"
+                             Max="20"
+                             Format="F1"
+                             Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                             Class="mb-3" />
+
+            <MudNumericField @bind-Value="_formScenario.RetirementAge" 
+                             Label="Pensionsålder" 
+                             Variant="Variant.Outlined"
+                             Min="55"
+                             Max="75"
+                             Class="mb-3" />
+
+            <MudNumericField @bind-Value="_formScenario.InflationRate" 
+                             Label="Inflationstakt (%)" 
+                             Variant="Variant.Outlined"
+                             Min="0"
+                             Max="10"
+                             Format="F1"
+                             Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                             Class="mb-3" />
+
+            <div class="d-flex gap-2">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveScenario">
+                    Skapa Scenario
+                </MudButton>
+                <MudButton Variant="Variant.Outlined" OnClick="CancelScenarioForm">Avbryt</MudButton>
+            </div>
+        </MudPaper>
+    }
+
+    <!-- Timeline Visualization -->
+    @if (_milestones.Any())
+    {
+        <MudPaper Class="pa-4 mb-4">
+            <MudText Typo="Typo.h6" Class="mb-4">Tidslinjen</MudText>
+            
+            <div class="timeline-container">
+                @foreach (var milestone in _milestones.OrderBy(m => m.PlannedDate))
+                {
+                    var yearsAway = (milestone.PlannedDate - DateTime.Now).Days / 365.25;
+                    var progressPct = milestone.CurrentSavings > 0 && milestone.EstimatedCost > 0 
+                        ? (double)(milestone.CurrentSavings / milestone.EstimatedCost * 100) 
+                        : 0;
+
+                    <MudCard Class="mb-3" Elevation="2">
+                        <MudCardContent>
+                            <div class="d-flex justify-space-between align-center">
+                                <div class="flex-grow-1">
+                                    <div class="d-flex align-center gap-2">
+                                        <MudIcon Icon="@GetMilestoneIcon(milestone.MilestoneType)" Color="@GetMilestoneColor(milestone.MilestoneType)" />
+                                        <MudText Typo="Typo.h6">@milestone.Name</MudText>
+                                        <MudChip T="string" Size="Size.Small" Color="@GetPriorityColor(milestone.Priority)">
+                                            Prioritet @milestone.Priority
+                                        </MudChip>
+                                        @if (milestone.IsCompleted)
+                                        {
+                                            <MudChip T="string" Size="Size.Small" Color="Color.Success">Genomförd</MudChip>
+                                        }
+                                    </div>
+                                    
+                                    @if (!string.IsNullOrEmpty(milestone.Description))
+                                    {
+                                        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-1">@milestone.Description</MudText>
+                                    }
+                                    
+                                    <div class="d-flex gap-4 mt-2">
+                                        <div>
+                                            <MudText Typo="Typo.caption" Color="Color.Secondary">Datum</MudText>
+                                            <MudText Typo="Typo.body2">@milestone.PlannedDate.ToString("yyyy-MM-dd") (@yearsAway.ToString("F1") år)</MudText>
+                                        </div>
+                                        <div>
+                                            <MudText Typo="Typo.caption" Color="Color.Secondary">Kostnad</MudText>
+                                            <MudText Typo="Typo.body2">@milestone.EstimatedCost.ToString("N0") kr</MudText>
+                                        </div>
+                                        <div>
+                                            <MudText Typo="Typo.caption" Color="Color.Secondary">Sparat</MudText>
+                                            <MudText Typo="Typo.body2">@milestone.CurrentSavings.ToString("N0") kr</MudText>
+                                        </div>
+                                        @if (milestone.RequiredMonthlySavings.HasValue && milestone.RequiredMonthlySavings.Value > 0)
+                                        {
+                                            <div>
+                                                <MudText Typo="Typo.caption" Color="Color.Secondary">Kräver/månad</MudText>
+                                                <MudText Typo="Typo.body2">@milestone.RequiredMonthlySavings.Value.ToString("N0") kr</MudText>
+                                            </div>
+                                        }
+                                    </div>
+                                    
+                                    <div class="mt-2">
+                                        <MudProgressLinear Color="@GetProgressColor(progressPct)" 
+                                                           Rounded="true" 
+                                                           Size="Size.Medium" 
+                                                           Value="@progressPct" />
+                                        <MudText Typo="Typo.caption" Class="mt-1">Framsteg: @progressPct.ToString("F0")%</MudText>
+                                    </div>
+                                </div>
+                                
+                                <div class="d-flex flex-column gap-2">
+                                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" OnClick="@(() => EditMilestone(milestone))" Color="Color.Primary" />
+                                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" OnClick="@(() => DeleteMilestone(milestone.LifeTimelineMilestoneId))" Color="Color.Error" />
+                                </div>
+                            </div>
+                        </MudCardContent>
+                    </MudCard>
+                }
+            </div>
+        </MudPaper>
+    }
+    else
+    {
+        <MudPaper Class="pa-6 mt-4" Elevation="0" Style="text-align: center;">
+            <MudIcon Icon="@Icons.Material.Filled.Timeline" Size="Size.Large" Color="Color.Secondary" Class="mb-4" Style="font-size: 4rem;" />
+            <MudText Typo="Typo.h6" Class="mb-2">Inga milstolpar än</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">
+                Skapa milstolpar för att planera din ekonomiska framtid. Lägg till viktiga händelser som köp av bostad, barn, eller pension.
+            </MudText>
+        </MudPaper>
+    }
+}
+
+@code {
+    private IEnumerable<LifeTimelineMilestone> _milestones = new List<LifeTimelineMilestone>();
+    private IEnumerable<LifeTimelineScenario> _scenarios = new List<LifeTimelineScenario>();
+    private LifeTimelineScenario? _activeScenario;
+    private bool _loading = true;
+    private bool _showMilestoneForm = false;
+    private bool _showScenarioForm = false;
+    private LifeTimelineMilestone _formMilestone = new();
+    private DateTime? _formMilestonePlannedDate;
+    private LifeTimelineMilestone? _editingMilestone;
+    private LifeTimelineScenario _formScenario = new();
+    private decimal _projectedWealth;
+    private int? _selectedScenarioId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _loading = true;
+        await LoadMilestones();
+        await LoadScenarios();
+        _loading = false;
+    }
+
+    private async Task LoadMilestones()
+    {
+        _milestones = await TimelinePlannerService.GetAllMilestonesAsync();
+        
+        // Calculate required monthly savings for each milestone
+        foreach (var milestone in _milestones)
+        {
+            if (!milestone.IsCompleted && milestone.PlannedDate > DateTime.Now)
+            {
+                milestone.RequiredMonthlySavings = await TimelinePlannerService.CalculateRequiredMonthlySavingsAsync(milestone.LifeTimelineMilestoneId);
+            }
+        }
+    }
+
+    private async Task LoadScenarios()
+    {
+        _scenarios = await TimelinePlannerService.GetAllScenariosAsync();
+        _activeScenario = await TimelinePlannerService.GetActiveScenarioAsync();
+        
+        if (_activeScenario != null)
+        {
+            _selectedScenarioId = _activeScenario.LifeTimelineScenarioId;
+            _projectedWealth = await TimelinePlannerService.CalculateProjectedRetirementWealthAsync(_activeScenario.LifeTimelineScenarioId);
+        }
+    }
+
+    private void ToggleMilestoneForm()
+    {
+        _showMilestoneForm = !_showMilestoneForm;
+        if (_showMilestoneForm)
+        {
+            _formMilestone = new LifeTimelineMilestone 
+            { 
+                Priority = 3, 
+                CurrentSavings = 0,
+                MilestoneType = "Other"
+            };
+            _formMilestonePlannedDate = DateTime.Now.AddYears(1);
+            _editingMilestone = null;
+        }
+    }
+
+    private void ToggleScenarioForm()
+    {
+        _showScenarioForm = !_showScenarioForm;
+        if (_showScenarioForm)
+        {
+            _formScenario = new LifeTimelineScenario
+            {
+                RetirementAge = 65,
+                ExpectedReturnRate = 7.0m,
+                InflationRate = 2.0m,
+                SalaryIncreaseRate = 2.5m,
+                MonthlySavings = 4500m
+            };
+        }
+    }
+
+    private void EditMilestone(LifeTimelineMilestone milestone)
+    {
+        _editingMilestone = milestone;
+        _formMilestone = new LifeTimelineMilestone
+        {
+            LifeTimelineMilestoneId = milestone.LifeTimelineMilestoneId,
+            Name = milestone.Name,
+            Description = milestone.Description,
+            MilestoneType = milestone.MilestoneType,
+            EstimatedCost = milestone.EstimatedCost,
+            CurrentSavings = milestone.CurrentSavings,
+            Priority = milestone.Priority,
+            IsCompleted = milestone.IsCompleted,
+            Notes = milestone.Notes,
+            UserId = milestone.UserId
+        };
+        _formMilestonePlannedDate = milestone.PlannedDate;
+        _showMilestoneForm = true;
+    }
+
+    private async Task SaveMilestone()
+    {
+        try
+        {
+            if (_formMilestonePlannedDate.HasValue)
+            {
+                _formMilestone.PlannedDate = _formMilestonePlannedDate.Value;
+            }
+
+            if (_editingMilestone != null)
+            {
+                await TimelinePlannerService.UpdateMilestoneAsync(_formMilestone);
+                Snackbar.Add("Milstolpen har uppdaterats!", Severity.Success);
+            }
+            else
+            {
+                await TimelinePlannerService.CreateMilestoneAsync(_formMilestone);
+                Snackbar.Add("Milstolpen har lagts till!", Severity.Success);
+            }
+
+            await LoadMilestones();
+            CancelMilestoneForm();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Ett fel uppstod: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task SaveScenario()
+    {
+        try
+        {
+            // If no scenarios exist yet, make this the active one
+            if (!_scenarios.Any())
+            {
+                _formScenario.IsActive = true;
+            }
+
+            await TimelinePlannerService.CreateScenarioAsync(_formScenario);
+            Snackbar.Add("Scenariot har skapats!", Severity.Success);
+
+            await LoadScenarios();
+            CancelScenarioForm();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Ett fel uppstod: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void CancelMilestoneForm()
+    {
+        _showMilestoneForm = false;
+        _formMilestone = new();
+        _formMilestonePlannedDate = null;
+        _editingMilestone = null;
+    }
+
+    private void CancelScenarioForm()
+    {
+        _showScenarioForm = false;
+        _formScenario = new();
+    }
+
+    private async Task OnScenarioChanged()
+    {
+        if (_selectedScenarioId.HasValue)
+        {
+            await TimelinePlannerService.SetActiveScenarioAsync(_selectedScenarioId.Value);
+            await LoadScenarios();
+        }
+    }
+
+    private async Task DeleteMilestone(int milestoneId)
+    {
+        bool? result = await DialogService.ShowMessageBox(
+            "Bekräfta borttagning",
+            "Är du säker på att du vill ta bort denna milstolpe?",
+            yesText: "Ja", cancelText: "Avbryt");
+
+        if (result == true)
+        {
+            await TimelinePlannerService.DeleteMilestoneAsync(milestoneId);
+            Snackbar.Add("Milstolpen har tagits bort", Severity.Info);
+            await LoadMilestones();
+        }
+    }
+
+    private string GetMilestoneIcon(string type) => type switch
+    {
+        "HousePurchase" => Icons.Material.Filled.Home,
+        "Child" => Icons.Material.Filled.ChildCare,
+        "Retirement" => Icons.Material.Filled.Elderly,
+        "Education" => Icons.Material.Filled.School,
+        "Career" => Icons.Material.Filled.Work,
+        _ => Icons.Material.Filled.Flag
+    };
+
+    private Color GetMilestoneColor(string type) => type switch
+    {
+        "HousePurchase" => Color.Primary,
+        "Child" => Color.Secondary,
+        "Retirement" => Color.Success,
+        "Education" => Color.Info,
+        "Career" => Color.Warning,
+        _ => Color.Default
+    };
+
+    private Color GetPriorityColor(int priority) => priority switch
+    {
+        1 => Color.Error,
+        2 => Color.Warning,
+        3 => Color.Primary,
+        4 => Color.Info,
+        5 => Color.Default,
+        _ => Color.Default
+    };
+
+    private Color GetProgressColor(double progress)
+    {
+        if (progress >= 100) return Color.Success;
+        if (progress >= 75) return Color.Info;
+        if (progress >= 50) return Color.Primary;
+        if (progress >= 25) return Color.Warning;
+        return Color.Error;
+    }
+}

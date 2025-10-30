@@ -1,0 +1,72 @@
+@namespace Privatekonomi.Web.Components.Dialogs
+@using MudBlazor
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.Gesture" Class="mr-2" />
+            Touch-gester
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudText Typo="Typo.body2" Class="mb-4">
+            Använd dessa gester för att interagera med transaktioner på din mobila enhet:
+        </MudText>
+
+        <MudList T="string" Dense="true">
+            <MudListItem T="string">
+                <div class="d-flex align-center">
+                    <MudIcon Icon="@Icons.Material.Filled.SwipeLeft" Color="Color.Error" Class="mr-3" />
+                    <div>
+                        <MudText Typo="Typo.body1" Style="font-weight: 500;">Svep vänster</MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">Ta bort transaktion</MudText>
+                    </div>
+                </div>
+            </MudListItem>
+
+            <MudListItem T="string">
+                <div class="d-flex align-center">
+                    <MudIcon Icon="@Icons.Material.Filled.SwipeRight" Color="Color.Success" Class="mr-3" />
+                    <div>
+                        <MudText Typo="Typo.body1" Style="font-weight: 500;">Svep höger</MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">Redigera transaktion</MudText>
+                    </div>
+                </div>
+            </MudListItem>
+
+            <MudListItem T="string">
+                <div class="d-flex align-center">
+                    <MudIcon Icon="@Icons.Material.Filled.SwipeDown" Color="Color.Primary" Class="mr-3" />
+                    <div>
+                        <MudText Typo="Typo.body1" Style="font-weight: 500;">Dra ner</MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">Uppdatera transaktioner (från toppen av sidan)</MudText>
+                    </div>
+                </div>
+            </MudListItem>
+
+            <MudListItem T="string">
+                <div class="d-flex align-center">
+                    <MudIcon Icon="@Icons.Material.Filled.TouchApp" Color="Color.Info" Class="mr-3" />
+                    <div>
+                        <MudText Typo="Typo.body1" Style="font-weight: 500;">Tryck</MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">Visa/dölj transaktionsdetaljer</MudText>
+                    </div>
+                </div>
+            </MudListItem>
+        </MudList>
+
+        <MudAlert Severity="Severity.Info" Class="mt-4" Dense="true">
+            <strong>Tips:</strong> Alla gester har även knappar som alternativ för bättre tillgänglighet.
+        </MudAlert>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Close" Color="Color.Primary" Variant="Variant.Filled">Stäng</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    IMudDialogInstance? MudDialog { get; set; }
+
+    void Close() => MudDialog?.Close();
+}

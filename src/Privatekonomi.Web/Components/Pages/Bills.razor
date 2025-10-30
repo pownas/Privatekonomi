@@ -1,0 +1,534 @@
+@page "/bills"
+@rendermode InteractiveServer
+@using Privatekonomi.Core.Models
+@using Privatekonomi.Core.Services
+@inject IBillService BillService
+@inject ICategoryService CategoryService
+@inject IHouseholdService HouseholdService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<PageTitle>Räkningar - Privatekonomi</PageTitle>
+
+<div class="d-flex justify-space-between align-center mb-4">
+    <MudText Typo="Typo.h4">Räkningar</MudText>
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="ToggleCreateForm">
+        Ny Räkning
+    </MudButton>
+</div>
+
+@if (_showCreateForm)
+{
+    <MudPaper Class="pa-4 mb-4">
+        <MudText Typo="Typo.h6" Class="mb-3">@(_editingBill != null ? "Redigera Räkning" : "Lägg till Ny Räkning")</MudText>
+        
+        <MudGrid>
+            <MudItem xs="12" md="6">
+                <MudTextField @bind-Value="_formBill.Name" 
+                              Label="Namn" 
+                              Variant="Variant.Outlined"
+                              Required="true"
+                              MaxLength="200"
+                              Class="mb-3" />
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudNumericField @bind-Value="_formBill.Amount" 
+                                 Label="Belopp (kr)" 
+                                 Variant="Variant.Outlined"
+                                 Min="0"
+                                 Format="N2"
+                                 Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                                 Class="mb-3" />
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudDatePicker @bind-Date="_formIssueDate"
+                               Label="Utställningsdatum"
+                               Variant="Variant.Outlined"
+                               Class="mb-3" />
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudDatePicker @bind-Date="_formDueDate"
+                               Label="Förfallodatum"
+                               Variant="Variant.Outlined"
+                               Class="mb-3" />
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudSelect @bind-Value="_formBill.PaymentMethod" 
+                           Label="Betalningsmetod" 
+                           Variant="Variant.Outlined" 
+                           Class="mb-3"
+                           Clearable="true">
+                    <MudSelectItem Value="@("Autogiro")">Autogiro</MudSelectItem>
+                    <MudSelectItem Value="@("E-faktura")">E-faktura</MudSelectItem>
+                    <MudSelectItem Value="@("Manuell")">Manuell betalning</MudSelectItem>
+                    <MudSelectItem Value="@("Banköverföring")">Banköverföring</MudSelectItem>
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudSelect @bind-Value="_formBill.CategoryId" 
+                           Label="Kategori (valfritt)" 
+                           Variant="Variant.Outlined" 
+                           Class="mb-3"
+                           Clearable="true">
+                    @foreach (var category in _categories)
+                    {
+                        <MudSelectItem Value="@((int?)category.CategoryId)">@category.Name</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudTextField @bind-Value="_formBill.Payee" 
+                              Label="Betalningsmottagare" 
+                              Variant="Variant.Outlined"
+                              MaxLength="200"
+                              Class="mb-3" />
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudTextField @bind-Value="_formBill.InvoiceNumber" 
+                              Label="Fakturanummer" 
+                              Variant="Variant.Outlined"
+                              MaxLength="100"
+                              Class="mb-3" />
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <MudTextField @bind-Value="_formBill.OCR" 
+                              Label="OCR-nummer" 
+                              Variant="Variant.Outlined"
+                              MaxLength="50"
+                              Class="mb-3" />
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <MudTextField @bind-Value="_formBill.Bankgiro" 
+                              Label="Bankgiro" 
+                              Variant="Variant.Outlined"
+                              MaxLength="20"
+                              Class="mb-3" />
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <MudTextField @bind-Value="_formBill.Plusgiro" 
+                              Label="Plusgiro" 
+                              Variant="Variant.Outlined"
+                              MaxLength="20"
+                              Class="mb-3" />
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudSelect @bind-Value="_formBill.HouseholdId" 
+                           Label="Hushåll (valfritt)" 
+                           Variant="Variant.Outlined" 
+                           Class="mb-3"
+                           Clearable="true">
+                    @foreach (var household in _households)
+                    {
+                        <MudSelectItem Value="@((int?)household.HouseholdId)">@household.Name</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudSwitch @bind-Value="_formBill.IsRecurring" Label="Återkommande räkning" Color="Color.Primary" Class="mb-3" />
+            </MudItem>
+            @if (_formBill.IsRecurring)
+            {
+                <MudItem xs="12" md="6">
+                    <MudSelect @bind-Value="_formBill.RecurringFrequency" 
+                               Label="Återkommande frekvens" 
+                               Variant="Variant.Outlined" 
+                               Class="mb-3">
+                        <MudSelectItem Value="@("Monthly")">Månadsvis</MudSelectItem>
+                        <MudSelectItem Value="@("Quarterly")">Kvartalsvis</MudSelectItem>
+                        <MudSelectItem Value="@("Yearly")">Årligen</MudSelectItem>
+                    </MudSelect>
+                </MudItem>
+            }
+            <MudItem xs="12">
+                <MudTextField @bind-Value="_formBill.Description" 
+                              Label="Beskrivning" 
+                              Variant="Variant.Outlined"
+                              Lines="2"
+                              MaxLength="500"
+                              Class="mb-3" />
+            </MudItem>
+            <MudItem xs="12">
+                <MudTextField @bind-Value="_formBill.Notes" 
+                              Label="Anteckningar" 
+                              Variant="Variant.Outlined"
+                              Lines="2"
+                              MaxLength="500"
+                              Class="mb-3" />
+            </MudItem>
+        </MudGrid>
+
+        <div class="d-flex gap-2">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveBill">
+                @(_editingBill != null ? "Uppdatera" : "Lägg till")
+            </MudButton>
+            <MudButton Variant="Variant.Outlined" OnClick="CancelForm">Avbryt</MudButton>
+        </div>
+    </MudPaper>
+}
+
+@if (_loading)
+{
+    <div class="d-flex flex-column align-center pa-6">
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Large" />
+        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-4">Laddar räkningar...</MudText>
+    </div>
+}
+else
+{
+    <MudPaper Class="pa-4 mb-4">
+        <MudGrid>
+            <MudItem xs="12" md="4">
+                <MudCard Elevation="2" Class="pa-4">
+                    <MudCardContent>
+                        <MudText Typo="Typo.h6">Väntande</MudText>
+                        <MudText Typo="Typo.h4" Color="Color.Warning">@_pendingCount</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <MudCard Elevation="2" Class="pa-4">
+                    <MudCardContent>
+                        <MudText Typo="Typo.h6">Försenade</MudText>
+                        <MudText Typo="Typo.h4" Color="Color.Error">@_overdueCount</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <MudCard Elevation="2" Class="pa-4">
+                    <MudCardContent>
+                        <MudText Typo="Typo.h6">Betalda</MudText>
+                        <MudText Typo="Typo.h4" Color="Color.Success">@_paidCount</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+
+    <MudTabs Elevation="2" Rounded="true" Class="mb-4">
+        <MudTabPanel Text="Väntande" Icon="@Icons.Material.Filled.Schedule" BadgeData="@_pendingCount" BadgeColor="Color.Warning">
+            <MudPaper Class="pa-4">
+                @if (_pendingBills.Any())
+                {
+                    <MudTable Items="_pendingBills" Hover="true" Striped="true">
+                        <HeaderContent>
+                            <MudTh>Namn</MudTh>
+                            <MudTh>Belopp</MudTh>
+                            <MudTh>Förfallodatum</MudTh>
+                            <MudTh>Betalningsmetod</MudTh>
+                            <MudTh>Kategori</MudTh>
+                            <MudTh>Åtgärder</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd>
+                                @context.Name
+                                @if (context.IsRecurring)
+                                {
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Info">Återkommande</MudChip>
+                                }
+                            </MudTd>
+                            <MudTd>@context.Amount.ToString("C", new System.Globalization.CultureInfo("sv-SE"))</MudTd>
+                            <MudTd>
+                                <span style="@(context.DueDate < DateTime.Today ? "color: red; font-weight: bold;" : "")">
+                                    @context.DueDate.ToString("yyyy-MM-dd")
+                                </span>
+                            </MudTd>
+                            <MudTd>@context.PaymentMethod</MudTd>
+                            <MudTd>
+                                @if (context.Category != null)
+                                {
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Default" Style="@($"background-color: {context.Category.Color}; color: white;")">
+                                        @context.Category.Name
+                                    </MudChip>
+                                }
+                            </MudTd>
+                            <MudTd>
+                                <MudIconButton Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Small" Color="Color.Success" 
+                                               OnClick="@(() => MarkAsPaid(context))" Title="Markera som betald" />
+                                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Primary" 
+                                               OnClick="@(() => EditBill(context))" />
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" 
+                                               OnClick="@(() => DeleteBill(context))" />
+                            </MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                }
+                else
+                {
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">Inga väntande räkningar.</MudText>
+                }
+            </MudPaper>
+        </MudTabPanel>
+        <MudTabPanel Text="Betalda" Icon="@Icons.Material.Filled.CheckCircle">
+            <MudPaper Class="pa-4">
+                @if (_paidBills.Any())
+                {
+                    <MudTable Items="_paidBills" Hover="true" Striped="true">
+                        <HeaderContent>
+                            <MudTh>Namn</MudTh>
+                            <MudTh>Belopp</MudTh>
+                            <MudTh>Förfallodatum</MudTh>
+                            <MudTh>Betaldatum</MudTh>
+                            <MudTh>Kategori</MudTh>
+                            <MudTh>Åtgärder</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd>@context.Name</MudTd>
+                            <MudTd>@context.Amount.ToString("C", new System.Globalization.CultureInfo("sv-SE"))</MudTd>
+                            <MudTd>@context.DueDate.ToString("yyyy-MM-dd")</MudTd>
+                            <MudTd>@(context.PaidDate?.ToString("yyyy-MM-dd") ?? "-")</MudTd>
+                            <MudTd>
+                                @if (context.Category != null)
+                                {
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Default" Style="@($"background-color: {context.Category.Color}; color: white;")">
+                                        @context.Category.Name
+                                    </MudChip>
+                                }
+                            </MudTd>
+                            <MudTd>
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" 
+                                               OnClick="@(() => DeleteBill(context))" />
+                            </MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                }
+                else
+                {
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">Inga betalda räkningar.</MudText>
+                }
+            </MudPaper>
+        </MudTabPanel>
+        <MudTabPanel Text="Alla" Icon="@Icons.Material.Filled.List">
+            <MudPaper Class="pa-4">
+                @if (_bills.Any())
+                {
+                    <MudTable Items="_bills" Hover="true" Striped="true">
+                        <HeaderContent>
+                            <MudTh>Namn</MudTh>
+                            <MudTh>Belopp</MudTh>
+                            <MudTh>Förfallodatum</MudTh>
+                            <MudTh>Status</MudTh>
+                            <MudTh>Betalningsmetod</MudTh>
+                            <MudTh>Åtgärder</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd>@context.Name</MudTd>
+                            <MudTd>@context.Amount.ToString("C", new System.Globalization.CultureInfo("sv-SE"))</MudTd>
+                            <MudTd>@context.DueDate.ToString("yyyy-MM-dd")</MudTd>
+                            <MudTd>
+                                <MudChip T="string" Size="Size.Small" Color="@GetStatusColor(context.Status)">
+                                    @GetStatusLabel(context.Status)
+                                </MudChip>
+                            </MudTd>
+                            <MudTd>@context.PaymentMethod</MudTd>
+                            <MudTd>
+                                @if (context.Status == "Pending")
+                                {
+                                    <MudIconButton Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Small" Color="Color.Success" 
+                                                   OnClick="@(() => MarkAsPaid(context))" Title="Markera som betald" />
+                                }
+                                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Primary" 
+                                               OnClick="@(() => EditBill(context))" />
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" 
+                                               OnClick="@(() => DeleteBill(context))" />
+                            </MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                }
+                else
+                {
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">Inga räkningar.</MudText>
+                }
+            </MudPaper>
+        </MudTabPanel>
+    </MudTabs>
+}
+
+@code {
+    private bool _loading = true;
+    private bool _showCreateForm = false;
+    private List<Bill> _bills = new();
+    private List<Bill> _pendingBills = new();
+    private List<Bill> _paidBills = new();
+    private List<Category> _categories = new();
+    private List<Household> _households = new();
+    private Bill _formBill = new();
+    private Bill? _editingBill = null;
+    private DateTime? _formIssueDate;
+    private DateTime? _formDueDate;
+    private string _userId = string.Empty;
+    private int _pendingCount = 0;
+    private int _overdueCount = 0;
+    private int _paidCount = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        _userId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
+        
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        _loading = true;
+        _bills = await BillService.GetBillsAsync(_userId);
+        _pendingBills = _bills.Where(b => b.Status == "Pending").ToList();
+        _paidBills = _bills.Where(b => b.Status == "Paid").ToList();
+        _pendingCount = _pendingBills.Count;
+        _overdueCount = _pendingBills.Count(b => b.DueDate < DateTime.Today);
+        _paidCount = _paidBills.Count;
+        _categories = (await CategoryService.GetAllCategoriesAsync()).ToList();
+        _households = (await HouseholdService.GetAllHouseholdsAsync()).ToList();
+        _loading = false;
+    }
+
+    private void ToggleCreateForm()
+    {
+        _showCreateForm = !_showCreateForm;
+        if (_showCreateForm)
+        {
+            _formBill = new Bill 
+            { 
+                UserId = _userId,
+                Status = "Pending",
+                Currency = "SEK",
+                IsRecurring = false
+            };
+            _formIssueDate = DateTime.Today;
+            _formDueDate = DateTime.Today.AddDays(30);
+            _editingBill = null;
+        }
+    }
+
+    private void EditBill(Bill bill)
+    {
+        _editingBill = bill;
+        _formBill = new Bill
+        {
+            BillId = bill.BillId,
+            UserId = bill.UserId,
+            Name = bill.Name,
+            Description = bill.Description,
+            Amount = bill.Amount,
+            Currency = bill.Currency,
+            IssueDate = bill.IssueDate,
+            DueDate = bill.DueDate,
+            PaidDate = bill.PaidDate,
+            Status = bill.Status,
+            IsRecurring = bill.IsRecurring,
+            RecurringFrequency = bill.RecurringFrequency,
+            PaymentMethod = bill.PaymentMethod,
+            InvoiceNumber = bill.InvoiceNumber,
+            OCR = bill.OCR,
+            Bankgiro = bill.Bankgiro,
+            Plusgiro = bill.Plusgiro,
+            Payee = bill.Payee,
+            CategoryId = bill.CategoryId,
+            HouseholdId = bill.HouseholdId,
+            Notes = bill.Notes
+        };
+        _formIssueDate = bill.IssueDate;
+        _formDueDate = bill.DueDate;
+        _showCreateForm = true;
+    }
+
+    private async Task SaveBill()
+    {
+        if (string.IsNullOrWhiteSpace(_formBill.Name))
+        {
+            Snackbar.Add("Namn är obligatoriskt", Severity.Error);
+            return;
+        }
+
+        _formBill.IssueDate = _formIssueDate ?? DateTime.Today;
+        _formBill.DueDate = _formDueDate ?? DateTime.Today.AddDays(30);
+
+        try
+        {
+            if (_editingBill != null)
+            {
+                await BillService.UpdateBillAsync(_formBill);
+                Snackbar.Add("Räkning uppdaterad!", Severity.Success);
+            }
+            else
+            {
+                await BillService.CreateBillAsync(_formBill);
+                Snackbar.Add("Räkning skapad!", Severity.Success);
+            }
+
+            _showCreateForm = false;
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Fel: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void CancelForm()
+    {
+        _showCreateForm = false;
+        _editingBill = null;
+    }
+
+    private async Task MarkAsPaid(Bill bill)
+    {
+        try
+        {
+            await BillService.MarkBillAsPaidAsync(bill.BillId, DateTime.Today);
+            Snackbar.Add("Räkning markerad som betald", Severity.Success);
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Fel: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task DeleteBill(Bill bill)
+    {
+        bool? confirm = await DialogService.ShowMessageBox(
+            "Bekräfta borttagning",
+            $"Är du säker på att du vill ta bort räkningen '{bill.Name}'?",
+            yesText: "Ta bort", cancelText: "Avbryt");
+
+        if (confirm == true)
+        {
+            try
+            {
+                await BillService.DeleteBillAsync(bill.BillId, _userId);
+                Snackbar.Add("Räkning borttagen", Severity.Success);
+                await LoadData();
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Fel: {ex.Message}", Severity.Error);
+            }
+        }
+    }
+
+    private Color GetStatusColor(string status)
+    {
+        return status switch
+        {
+            "Pending" => Color.Warning,
+            "Paid" => Color.Success,
+            "Overdue" => Color.Error,
+            "Cancelled" => Color.Default,
+            _ => Color.Default
+        };
+    }
+
+    private string GetStatusLabel(string status)
+    {
+        return status switch
+        {
+            "Pending" => "Väntande",
+            "Paid" => "Betald",
+            "Overdue" => "Försenad",
+            "Cancelled" => "Avbruten",
+            _ => status
+        };
+    }
+}
