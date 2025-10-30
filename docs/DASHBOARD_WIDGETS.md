@@ -204,15 +204,15 @@ public interface IDashboardLayoutService
 
 ### "Investeringar" Layout
 - Nettoförmögenhet
-- Investeringar widget
+- Investeringar widget (ej implementerad ännu)
 - Kassaflöde
-- Dividender (framtida)
+- Dividender (ej implementerad ännu)
 
 ### "Budget" Layout
 - Budgetöversikt
-- Månadens utgifter
-- Kategorifördelning
-- Okategoriserade transaktioner
+- Månadens utgifter (ej implementerad ännu)
+- Kategorifördelning (ej implementerad ännu)
+- Okategoriserade transaktioner (ej implementerad ännu)
 
 ## Felsökning
 
