@@ -11,6 +11,11 @@ public class LifeTimelinePlannerService : ILifeTimelinePlannerService
 {
     private readonly PrivatekonomyContext _context;
     private readonly ICurrentUserService? _currentUserService;
+    
+    // Constants for life insurance calculations
+    private const decimal INCOME_TO_SAVINGS_MULTIPLIER = 3m;
+    private const int INCOME_REPLACEMENT_YEARS = 7;
+    private const decimal INSURANCE_ROUNDING_AMOUNT = 100000m;
 
     public LifeTimelinePlannerService(PrivatekonomyContext context, ICurrentUserService? currentUserService = null)
     {
@@ -275,8 +280,16 @@ public class LifeTimelinePlannerService : ILifeTimelinePlannerService
 
         // Calculate sustainable monthly withdrawal using present value of annuity formula
         // PMT = PV × (r × (1 + r)^n) / ((1 + r)^n - 1)
-        var denominator = (decimal)Math.Pow((double)(1 + monthlyRate), monthsInRetirement) - 1;
-        var monthlyPension = projectedWealth * (monthlyRate * (decimal)Math.Pow((double)(1 + monthlyRate), monthsInRetirement)) / denominator;
+        var powerTerm = (decimal)Math.Pow((double)(1 + monthlyRate), monthsInRetirement);
+        var denominator = powerTerm - 1;
+        
+        // Prevent division by zero for very small rates
+        if (denominator == 0)
+        {
+            return Math.Round(projectedWealth / monthsInRetirement, 2);
+        }
+        
+        var monthlyPension = projectedWealth * (monthlyRate * powerTerm) / denominator;
 
         return Math.Round(monthlyPension, 2);
     }
@@ -300,10 +313,12 @@ public class LifeTimelinePlannerService : ILifeTimelinePlannerService
             .SumAsync(m => m.EstimatedCost - m.CurrentSavings);
 
         // Add recommended coverage for income replacement
-        // Typically 5-10 years of income, we'll use 7 years as default
+        // Typically 5-10 years of income, we'll use the constant as default
         var activeScenario = await GetActiveScenarioAsync();
-        var estimatedAnnualIncome = activeScenario != null ? activeScenario.MonthlySavings * 12 * 3 : 500000m; // Estimate income as 3x savings
-        var incomeReplacement = estimatedAnnualIncome * 7;
+        var estimatedAnnualIncome = activeScenario != null 
+            ? activeScenario.MonthlySavings * 12 * INCOME_TO_SAVINGS_MULTIPLIER 
+            : 500000m; // Estimate income as multiple of savings
+        var incomeReplacement = estimatedAnnualIncome * INCOME_REPLACEMENT_YEARS;
 
         return futureCosts + incomeReplacement;
     }
@@ -314,8 +329,8 @@ public class LifeTimelinePlannerService : ILifeTimelinePlannerService
         // (Debt + Income + Mortgage + Education)
         var insuranceNeed = await CalculateLifeInsuranceNeedAsync();
         
-        // Round to nearest 100,000 for practical policy amounts
-        return Math.Ceiling(insuranceNeed / 100000) * 100000;
+        // Round to nearest INSURANCE_ROUNDING_AMOUNT for practical policy amounts
+        return Math.Ceiling(insuranceNeed / INSURANCE_ROUNDING_AMOUNT) * INSURANCE_ROUNDING_AMOUNT;
     }
 
     #endregion
