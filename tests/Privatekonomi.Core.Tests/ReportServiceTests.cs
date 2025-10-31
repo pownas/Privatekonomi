@@ -322,6 +322,7 @@ public class ReportServiceTests : IDisposable
         Assert.Equal(2, report.Assets.Count);
     }
     
+    [Fact]
     public async Task GetPeriodComparisonAsync_WithTransactions_ReturnsCorrectComparison()
     {
         // Arrange

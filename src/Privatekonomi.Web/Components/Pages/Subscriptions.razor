@@ -303,12 +303,12 @@ else
                                 @if (!string.IsNullOrEmpty(context.CancellationUrl))
                                 {
                                     <MudIconButton Icon="@Icons.Material.Filled.Cancel" Size="Size.Small" Color="Color.Error" 
-                                                   Href="@context.CancellationUrl" Target="_blank" Title="Säg upp" />
+                                                   Href="@context.CancellationUrl" Target="_blank" title="Säg upp" />
                                 }
                                 @if (!string.IsNullOrEmpty(context.ManagementUrl))
                                 {
                                     <MudIconButton Icon="@Icons.Material.Filled.Settings" Size="Size.Small" Color="Color.Info" 
-                                                   Href="@context.ManagementUrl" Target="_blank" Title="Hantera" />
+                                                   Href="@context.ManagementUrl" Target="_blank" title="Hantera" />
                                 }
                             </MudTd>
                             <MudTd>
@@ -544,7 +544,7 @@ else
                 var dialog = await DialogService.ShowAsync<ConfirmDetectedSubscriptionsDialog>("Upptäckta Abonnemang", parameters);
                 var result = await dialog.Result;
                 
-                if (!result.Canceled && result.Data is List<Subscription> confirmed)
+                if (!result!.Canceled && result.Data is List<Subscription> confirmed)
                 {
                     foreach (var sub in confirmed)
                     {
