@@ -161,6 +161,37 @@ public static class TestDataSeeder
             { 9, new[] { "Swish betalning", "Gåva", "Okategoriserad", "Diverse", "Kontantuttag" } } // Övrigt
         };
 
+        // Notes for transactions to add context
+        var transactionNotes = new Dictionary<int, string?[]>
+        {
+            { 1, new string?[] { "Veckans matinköp", "Snabbhandling efter jobbet", "Storkok för veckan", "Lunch med kollegor", "Fredagsmys", "Söndagsmiddag", null, null } },
+            { 2, new string?[] { "Månadskort", "Tankning för bilsemester", "Pendling till jobbet", "Resa till Göteborg", null, null } },
+            { 3, new string?[] { "Månadshyra december", "Elräkning för november", "Hemförsäkring årspremie", null } },
+            { 4, new string?[] { "Film med familjen", "Månadsprenumeration", "Träningspass", "Kväll på bio", "Konsert med vänner", null } },
+            { 5, new string?[] { "Nya kläder", "Julklapp till barn", "Ny dator till hemmakontor", "Hushållsprylar", null } },
+            { 6, new string?[] { "Tandläkarkontroll", "Medicin för förkylning", "Årlig hälsokontroll", null } },
+            { 7, new string?[] { "Månadslön", "Årsbonus", "Semesterpeng", null } },
+            { 8, new string?[] { "Automatiskt sparande", "Extra sparande denna månad", "Överföring till ISK", null } },
+            { 9, new string?[] { "Betalning till vän", "Julklapp", null } }
+        };
+
+        // Payees for different categories
+        var payees = new Dictionary<int, string?[]>
+        {
+            { 1, new string?[] { "ICA AB", "KF Coop", "Axfood AB", "Axfood AB", "Bella Italia AB", "Bella Italia AB", "Espresso House", "McDonald's Sverige", "Pizzeria Napoli", "Sushi Yama" } },
+            { 2, new string?[] { "SL AB", "Circle K", "Stockholm Parkering", "Preem AB", "Taxi Stockholm", "OK Biltvätt", "SJ AB", "Flygbussarna" } },
+            { 3, new string?[] { "Hyresvärden", "Vattenfall AB", "Telia Company AB", "Folksam", "Hantverkare AB" } },
+            { 4, new string?[] { "SF Bio", "Spotify AB", "Netflix International", "Fitness24Seven", "Dramaten", "Live Nation", "Bowlinghallen Stockholm", "Ticketmaster" } },
+            { 5, new string?[] { "H&M AB", "Elgiganten AB", "IKEA Sverige", "Clas Ohlson AB", "Stadium AB", "Apoteket AB", "Bokus AB", "Webhallen AB" } },
+            { 6, new string?[] { "Folktandvården", "Apoteket AB", "Naprapatkliniken", "Fitness24Seven", "Vitaminer.se", "Synoptik AB" } },
+            { 7, new string?[] { "Arbetsgivare AB", "Arbetsgivare AB", "Arbetsgivare AB" } },
+            { 8, new string?[] { null, null, null } },
+            { 9, new string?[] { null, null, null, null, null } }
+        };
+
+        // Payment methods for different categories
+        var paymentMethods = new[] { "Kort", "Swish", "Autogiro", "Banköverföring", "Kontant", "E-faktura" };
+
         // Bank source IDs to simulate transactions from different banks (1-6 as per seeded data)
         var bankSourceIds = new[] { 1, 2, 3, 4, 5, 6 };
 
@@ -192,6 +223,18 @@ public static class TestDataSeeder
             var descArray = descriptions[categoryId];
             var description = descArray[random.Next(descArray.Length)];
             
+            // Select notes, payee, and payment method
+            var notesArray = transactionNotes[categoryId];
+            var notes = notesArray[random.Next(notesArray.Length)];
+            
+            var payeeArray = payees[categoryId];
+            var payee = payeeArray[random.Next(payeeArray.Length)];
+            
+            var paymentMethod = paymentMethods[random.Next(paymentMethods.Length)];
+            
+            // For recurring transactions (like subscriptions in category 3, 4)
+            var isRecurring = (categoryId == 3 || categoryId == 4) && random.Next(0, 100) < 30; // 30% chance
+            
             // Generate amount within the range for this category
             var range = amountRanges[categoryId];
             var amount = Math.Round(range.min + (decimal)random.NextDouble() * (range.max - range.min), 2);
@@ -214,6 +257,10 @@ public static class TestDataSeeder
                 Currency = "SEK",
                 Imported = false,
                 Cleared = true,
+                Notes = notes,
+                Payee = payee,
+                PaymentMethod = paymentMethod,
+                IsRecurring = isRecurring,
                 CreatedAt = DateTime.UtcNow,
                 UserId = userId,
                 ValidFrom = DateTime.UtcNow,
@@ -239,6 +286,7 @@ public static class TestDataSeeder
 
         // Add 5 unmapped transactions (without categories) to demonstrate the feature
         var unmappedDescriptions = new[] { "Okänd transaktion", "Kontant betalning", "Swish från okänd", "Okategoriserad köp", "Diverse utgift" };
+        var unmappedNotes = new string?[] { "Behöver kategoriseras", "Glömt kvitto", "Privatköp", "Vet inte vad detta var", null };
         for (int i = 0; i < 5; i++)
         {
             var transaction = new Transaction
@@ -252,6 +300,8 @@ public static class TestDataSeeder
                 Currency = "SEK",
                 Imported = false,
                 Cleared = false,
+                Notes = unmappedNotes[i],
+                PaymentMethod = paymentMethods[random.Next(paymentMethods.Length)],
                 CreatedAt = DateTime.UtcNow,
                 UserId = userId,
                 ValidFrom = DateTime.UtcNow,
@@ -1592,8 +1642,11 @@ public static class TestDataSeeder
                 AccountEmail = "test@example.com",
                 LastUsedDate = DateTime.UtcNow.AddDays(-1),
                 SharedWith = "Partner, Barn",
+                Notes = "Familjeplan med 6 konton",
+                CancellationNoticeDays = 30,
                 UserId = userId,
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow.AddMonths(-6)
             },
             new Subscription
             {
@@ -1608,9 +1661,11 @@ public static class TestDataSeeder
                 IsActive = true,
                 CategoryId = 20, // Streaming
                 ManagementUrl = "https://www.netflix.com/YourAccount",
+                CancellationUrl = "https://www.netflix.com/cancelplan",
                 AccountEmail = "test@example.com",
                 LastUsedDate = DateTime.UtcNow.AddDays(-2),
                 SharedWith = "Partner",
+                Notes = "Standard HD-plan",
                 UserId = userId,
                 CreatedAt = DateTime.UtcNow
             },
@@ -1629,6 +1684,7 @@ public static class TestDataSeeder
                 ManagementUrl = "https://www.24-7.se/mina-sidor",
                 LastUsedDate = DateTime.UtcNow.AddDays(-3),
                 CancellationNoticeDays = 30,
+                Notes = "Medlemskap på hemmastudion",
                 UserId = userId,
                 CreatedAt = DateTime.UtcNow
             },
@@ -1646,6 +1702,7 @@ public static class TestDataSeeder
                 CategoryId = 20, // Streaming
                 AccountEmail = "test@example.com",
                 LastUsedDate = DateTime.UtcNow.AddDays(-7),
+                Notes = "För HBO-serier och dokumentärer",
                 UserId = userId,
                 CreatedAt = DateTime.UtcNow
             },
@@ -1663,6 +1720,7 @@ public static class TestDataSeeder
                 CategoryId = 25, // Elektronik
                 AccountEmail = "test@example.com",
                 LastUsedDate = DateTime.UtcNow.AddDays(-1),
+                Notes = "Behövs för jobbprojekt och hobby",
                 UserId = userId,
                 CreatedAt = DateTime.UtcNow
             },
@@ -1679,6 +1737,7 @@ public static class TestDataSeeder
                 IsActive = true,
                 CategoryId = 4, // Nöje
                 LastUsedDate = DateTime.UtcNow,
+                Notes = "Läser varje morgon",
                 UserId = userId,
                 CreatedAt = DateTime.UtcNow
             },
@@ -1695,6 +1754,7 @@ public static class TestDataSeeder
                 IsActive = true,
                 CategoryId = 5, // Shopping
                 LastUsedDate = DateTime.UtcNow,
+                Notes = "Backup för iPhone och iPad",
                 UserId = userId,
                 CreatedAt = DateTime.UtcNow
             }
@@ -1724,6 +1784,7 @@ public static class TestDataSeeder
                 InvoiceNumber = "EL-2025-001234",
                 Payee = "Vattenfall AB",
                 CategoryId = 17, // El
+                Notes = "Högre förbrukning än vanligt, vinter",
                 UserId = userId,
                 CreatedAt = DateTime.UtcNow
             },
@@ -1743,6 +1804,7 @@ public static class TestDataSeeder
                 InvoiceNumber = "IF-2025-004567",
                 Payee = "IF Skadeförsäkring",
                 CategoryId = 19, // Hemförsäkring
+                Notes = "Automatisk betalning",
                 UserId = userId,
                 CreatedAt = DateTime.UtcNow
             },
@@ -1762,6 +1824,7 @@ public static class TestDataSeeder
                 Bankgiro = "123-4567",
                 Payee = "Folktandvården Stockholm",
                 CategoryId = 26, // Tandvård
+                Notes = "Årlig kontroll plus lagning av en tand",
                 UserId = userId,
                 CreatedAt = DateTime.UtcNow
             },
@@ -1782,8 +1845,10 @@ public static class TestDataSeeder
                 InvoiceNumber = "TEL-2024-112233",
                 Payee = "Telia Sverige AB",
                 CategoryId = 18, // Bredband
+                Notes = "Betald i tid via e-faktura",
                 UserId = userId,
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow.AddDays(-3)
             },
             new Bill
             {
@@ -1802,8 +1867,10 @@ public static class TestDataSeeder
                 InvoiceNumber = "BF-2024-445566",
                 Payee = "Länsförsäkringar",
                 CategoryId = 2, // Transport
+                Notes = "Autogiro dras den 20:e varje månad",
                 UserId = userId,
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow.AddDays(-8)
             }
         };
 
