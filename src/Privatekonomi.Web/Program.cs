@@ -124,6 +124,7 @@ builder.Services.AddScoped<IKonsumentverketComparisonService, KonsumentverketCom
 builder.Services.AddScoped<IKalpService, KalpService>();
 builder.Services.AddScoped<ThemeService>();
 builder.Services.AddScoped<DashboardPreferencesService>();
+builder.Services.AddScoped<ViewDensityService>();
 
 // Swedish-specific services
 builder.Services.AddScoped<ISieExporter, SieExporter>();

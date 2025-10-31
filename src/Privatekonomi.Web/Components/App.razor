@@ -43,6 +43,22 @@
                 // Ignore localStorage errors
             }
         })();
+        
+        // Apply view density immediately to prevent layout shift
+        (function() {
+            try {
+                var viewDensity = localStorage.getItem('viewDensity');
+                // Apply compact or spacious class (default is spacious)
+                if (viewDensity === 'compact') {
+                    document.documentElement.classList.add('view-density-compact');
+                } else {
+                    document.documentElement.classList.add('view-density-spacious');
+                }
+            } catch (e) {
+                // Ignore localStorage errors, fallback to default (spacious)
+                document.documentElement.classList.add('view-density-spacious');
+            }
+        })();
     </script>
     <HeadOutlet @rendermode="InteractiveServer" />
 </head>
