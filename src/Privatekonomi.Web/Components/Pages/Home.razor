@@ -784,7 +784,7 @@ else
         var dialog = await DialogService.ShowAsync<DashboardCustomizeDialog>("Anpassa Dashboard", parameters);
         var result = await dialog.Result;
         
-        if (!result.Canceled && result.Data is DashboardPreferences newPreferences)
+        if (!result!.Canceled && result.Data is DashboardPreferences newPreferences)
         {
             _preferences = newPreferences;
             PreferencesService.UpdatePreferences(_preferences);

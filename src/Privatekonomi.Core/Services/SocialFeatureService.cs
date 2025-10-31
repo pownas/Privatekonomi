@@ -718,6 +718,10 @@ public class SocialFeatureService : ISocialFeatureService
 
         foreach (var member in members)
         {
+            // Skip members without user accounts
+            if (member.UserId == null)
+                continue;
+                
             // Check privacy settings
             var privacySettings = await GetPrivacySettingsAsync(member.UserId);
             if (!privacySettings.AllowLeaderboards)

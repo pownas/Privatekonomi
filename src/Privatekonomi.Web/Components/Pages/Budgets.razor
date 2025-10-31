@@ -154,7 +154,7 @@
                                 <MudSelect @bind-Value="@_categoryPeriods[category.CategoryId]" 
                                           Label="Period" 
                                           Variant="Variant.Outlined"
-                                          Dense="true">
+                                          dense="true">
                                     <MudSelectItem Value="@(1)">Månad</MudSelectItem>
                                     <MudSelectItem Value="@(2)">Varannan månad</MudSelectItem>
                                     <MudSelectItem Value="@(3)">Kvartal (3 mån)</MudSelectItem>
@@ -173,12 +173,12 @@
                                                 Min="0"
                                                 Step="100M"
                                                 HideSpinButtons="false"
-                                                Dense="true" />
+                                                dense="true" />
                             </MudItem>
                             @if (_categoryBudgets[category.CategoryId] > 0 && _categoryPeriods[category.CategoryId] > 1)
                             {
                                 <MudItem xs="12">
-                                    <MudAlert Severity="Severity.Success" Dense="true">
+                                    <MudAlert Severity="Severity.Success" dense="true">
                                         Månadskostnad: @((_categoryBudgets[category.CategoryId] / _categoryPeriods[category.CategoryId]).ToString("C", new System.Globalization.CultureInfo("sv-SE")))
                                     </MudAlert>
                                 </MudItem>
@@ -300,7 +300,7 @@
                                 <MudDivider Class="mb-3" />
                                 
                                 <MudText Typo="Typo.h6" Class="mb-3">Budgetposter per kategori</MudText>
-                                <MudTable Items="@budget.BudgetCategories" Dense="true" Hover="true" Striped="true">
+                                <MudTable Items="@budget.BudgetCategories" dense="true" Hover="true" Striped="true">
                                     <HeaderContent>
                                         <MudTh>Kategori</MudTh>
                                         <MudTh>Period</MudTh>
