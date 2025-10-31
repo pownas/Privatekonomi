@@ -7,6 +7,7 @@
 @using Privatekonomi.Core.Data
 @using Privatekonomi.Web.Components.Dialogs
 @inject ThemeService ThemeService
+@inject ViewDensityService ViewDensityService
 @inject IJSRuntime JSRuntime
 @inject NavigationManager NavigationManager
 @inject IOptions<StorageSettings> StorageSettings
@@ -51,6 +52,12 @@
                            OnClick="@ShowKeyboardShortcuts"
                            aria-label="Tangentbordsgenvägar" />
         </MudTooltip>
+        <MudTooltip Text="@(_isCompactView ? "Luftig vy" : "Kompakt vy")">
+            <MudIconButton Icon="@(_isCompactView ? Icons.Material.Filled.ViewComfy : Icons.Material.Filled.ViewCompact)" 
+                           Color="Color.Inherit" 
+                           OnClick="@ToggleViewDensity" 
+                           aria-label="@(_isCompactView ? "Luftig vy" : "Kompakt vy")" />
+        </MudTooltip>
         <MudIconButton Icon="@(_isDarkMode ? Icons.Material.Filled.LightMode : Icons.Material.Filled.DarkMode)" 
                        Color="Color.Inherit" 
                        OnClick="@ToggleTheme" 
@@ -73,6 +80,7 @@
 @code {
     private bool _drawerOpen = true;
     private bool _isDarkMode = false;
+    private bool _isCompactView = false;
     private bool _isSaving = false;
     private MudThemeProvider? _mudThemeProvider;
     private MudTheme _theme = new MudTheme()
@@ -195,6 +203,18 @@
                 
                 ThemeService.IsDarkMode = _isDarkMode;
                 
+                // Get the initial view density that was already applied in the head script
+                _isCompactView = await JSRuntime.InvokeAsync<bool>("viewDensityManager.getInitialViewDensity");
+                
+                // If no saved preference exists, save the default (spacious)
+                var hasViewDensityPreference = await JSRuntime.InvokeAsync<bool>("viewDensityManager.hasPreference");
+                if (!hasViewDensityPreference)
+                {
+                    await JSRuntime.InvokeVoidAsync("viewDensityManager.setViewDensity", _isCompactView);
+                }
+                
+                ViewDensityService.ViewDensity = _isCompactView ? ViewDensity.Compact : ViewDensity.Spacious;
+                
                 // Initialize keyboard shortcuts
                 var objRef = DotNetObjectReference.Create(this);
                 await JSRuntime.InvokeVoidAsync("keyboardShortcuts.init", objRef);
@@ -211,7 +231,9 @@
     protected override void OnInitialized()
     {
         _isDarkMode = ThemeService.IsDarkMode;
+        _isCompactView = ViewDensityService.IsCompact;
         ThemeService.OnThemeChanged += OnThemeChanged;
+        ViewDensityService.OnViewDensityChanged += OnViewDensityChanged;
     }
 
     private void ToggleDrawer()
@@ -240,6 +262,27 @@
         StateHasChanged();
     }
     
+    private async Task ToggleViewDensity()
+    {
+        _isCompactView = !_isCompactView;
+        ViewDensityService.ViewDensity = _isCompactView ? ViewDensity.Compact : ViewDensity.Spacious;
+        
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("viewDensityManager.setViewDensity", _isCompactView);
+        }
+        catch
+        {
+            // Ignore JS interop errors
+        }
+    }
+    
+    private void OnViewDensityChanged()
+    {
+        _isCompactView = ViewDensityService.IsCompact;
+        StateHasChanged();
+    }
+    
     private async Task ShowKeyboardShortcuts()
     {
         await DialogService.ShowAsync<KeyboardShortcutsDialog>("Tangentbordsgenvägar", 
@@ -255,5 +298,6 @@
     public void Dispose()
     {
         ThemeService.OnThemeChanged -= OnThemeChanged;
+        ViewDensityService.OnViewDensityChanged -= OnViewDensityChanged;
     }
 }
