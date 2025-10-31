@@ -142,7 +142,7 @@ public static class TestDataSeeder
     {
 
         var random = new Random(42); // Fixed seed for reproducible data
-        var startDate = DateTime.Now.AddMonths(-3); // Start from 3 months ago
+        var startDate = DateTime.UtcNow.AddMonths(-3); // Start from 3 months ago
 
         var transactions = new List<Transaction>();
         var transactionCategories = new List<TransactionCategory>();
@@ -281,8 +281,8 @@ public static class TestDataSeeder
                 Quantity = 100,
                 PurchasePrice = 245.50m,
                 CurrentPrice = 268.75m,
-                PurchaseDate = DateTime.Now.AddMonths(-6),
-                LastUpdated = DateTime.Now.AddDays(-1),
+                PurchaseDate = DateTime.UtcNow.AddMonths(-6),
+                LastUpdated = DateTime.UtcNow.AddDays(-1),
                 Market = "Stockholm",
                 CreatedAt = DateTime.UtcNow,
                 UserId = userId,
@@ -298,8 +298,8 @@ public static class TestDataSeeder
                 Quantity = 50,
                 PurchasePrice = 152.30m,
                 CurrentPrice = 165.20m,
-                PurchaseDate = DateTime.Now.AddMonths(-8),
-                LastUpdated = DateTime.Now.AddDays(-2),
+                PurchaseDate = DateTime.UtcNow.AddMonths(-8),
+                LastUpdated = DateTime.UtcNow.AddDays(-2),
                 Market = "Stockholm",
                 CreatedAt = DateTime.UtcNow,
                 UserId = userId,
@@ -315,8 +315,8 @@ public static class TestDataSeeder
                 Quantity = 75,
                 PurchasePrice = 289.00m,
                 CurrentPrice = 312.50m,
-                PurchaseDate = DateTime.Now.AddMonths(-4),
-                LastUpdated = DateTime.Now.AddDays(-1),
+                PurchaseDate = DateTime.UtcNow.AddMonths(-4),
+                LastUpdated = DateTime.UtcNow.AddDays(-1),
                 Market = "Stockholm",
                 CreatedAt = DateTime.UtcNow,
                 UserId = userId,
@@ -331,8 +331,8 @@ public static class TestDataSeeder
                 Quantity = 150,
                 PurchasePrice = 125.75m,
                 CurrentPrice = 138.40m,
-                PurchaseDate = DateTime.Now.AddMonths(-12),
-                LastUpdated = DateTime.Now.AddDays(-3),
+                PurchaseDate = DateTime.UtcNow.AddMonths(-12),
+                LastUpdated = DateTime.UtcNow.AddDays(-3),
                 CreatedAt = DateTime.UtcNow,
                 UserId = userId,
                 ValidFrom = DateTime.UtcNow,
@@ -346,8 +346,8 @@ public static class TestDataSeeder
                 Quantity = 200,
                 PurchasePrice = 98.50m,
                 CurrentPrice = 104.80m,
-                PurchaseDate = DateTime.Now.AddMonths(-10),
-                LastUpdated = DateTime.Now.AddDays(-1),
+                PurchaseDate = DateTime.UtcNow.AddMonths(-10),
+                LastUpdated = DateTime.UtcNow.AddDays(-1),
                 CreatedAt = DateTime.UtcNow,
                 UserId = userId,
                 ValidFrom = DateTime.UtcNow,
@@ -361,8 +361,8 @@ public static class TestDataSeeder
                 Quantity = 120,
                 PurchasePrice = 215.30m,
                 CurrentPrice = 232.90m,
-                PurchaseDate = DateTime.Now.AddMonths(-9),
-                LastUpdated = DateTime.Now.AddDays(-2),
+                PurchaseDate = DateTime.UtcNow.AddMonths(-9),
+                LastUpdated = DateTime.UtcNow.AddDays(-2),
                 CreatedAt = DateTime.UtcNow,
                 UserId = userId,
                 ValidFrom = DateTime.UtcNow,
@@ -377,8 +377,8 @@ public static class TestDataSeeder
                 Quantity = 250,
                 PurchasePrice = 58.20m,
                 CurrentPrice = 62.15m,
-                PurchaseDate = DateTime.Now.AddMonths(-5),
-                LastUpdated = DateTime.Now,
+                PurchaseDate = DateTime.UtcNow.AddMonths(-5),
+                LastUpdated = DateTime.UtcNow,
                 Market = "Stockholm",
                 CreatedAt = DateTime.UtcNow,
                 UserId = userId,
@@ -394,8 +394,8 @@ public static class TestDataSeeder
                 Quantity = 80,
                 PurchasePrice = 125.40m,
                 CurrentPrice = 118.90m,
-                PurchaseDate = DateTime.Now.AddMonths(-3),
-                LastUpdated = DateTime.Now.AddDays(-1),
+                PurchaseDate = DateTime.UtcNow.AddMonths(-3),
+                LastUpdated = DateTime.UtcNow.AddDays(-1),
                 Market = "Stockholm",
                 CreatedAt = DateTime.UtcNow,
                 UserId = userId,
@@ -411,7 +411,7 @@ public static class TestDataSeeder
     private static void SeedBudgets(PrivatekonomyContext context, string userId)
     {
         // Create a budget for the current month
-        var now = DateTime.Now;
+        var now = DateTime.UtcNow;
         var startOfMonth = new DateTime(now.Year, now.Month, 1);
         var endOfMonth = startOfMonth.AddMonths(1).AddDays(-1);
 
@@ -478,7 +478,7 @@ public static class TestDataSeeder
             HouseholdId = 1,
             Name = "Familjen Andersson",
             Description = "Hushåll med delad lägenhet i Stockholm",
-            CreatedDate = DateTime.Now.AddMonths(-6)
+            CreatedDate = DateTime.UtcNow.AddMonths(-6)
         };
 
         var members = new List<HouseholdMember>
@@ -490,7 +490,7 @@ public static class TestDataSeeder
                 Name = "Anna Andersson",
                 Email = "anna@example.com",
                 IsActive = true,
-                JoinedDate = DateTime.Now.AddMonths(-6)
+                JoinedDate = DateTime.UtcNow.AddMonths(-6)
             },
             new HouseholdMember
             {
@@ -499,7 +499,7 @@ public static class TestDataSeeder
                 Name = "Erik Andersson",
                 Email = "erik@example.com",
                 IsActive = true,
-                JoinedDate = DateTime.Now.AddMonths(-6)
+                JoinedDate = DateTime.UtcNow.AddMonths(-6)
             },
             new HouseholdMember
             {
@@ -508,7 +508,7 @@ public static class TestDataSeeder
                 Name = "Sara Johansson",
                 Email = "sara@example.com",
                 IsActive = true,
-                JoinedDate = DateTime.Now.AddMonths(-3)
+                JoinedDate = DateTime.UtcNow.AddMonths(-3)
             }
         };
 
@@ -523,8 +523,8 @@ public static class TestDataSeeder
                 Description = "Månadshyra för 3-rummare",
                 TotalAmount = 15000m,
                 Type = ExpenseType.Rent,
-                ExpenseDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1),
-                CreatedDate = DateTime.Now.AddDays(-5),
+                ExpenseDate = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1),
+                CreatedDate = DateTime.UtcNow.AddDays(-5),
                 SplitMethod = SplitMethod.Equal
             },
             new SharedExpense
@@ -535,8 +535,8 @@ public static class TestDataSeeder
                 Description = "Elräkning för månaden",
                 TotalAmount = 1200m,
                 Type = ExpenseType.Electricity,
-                ExpenseDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 15),
-                CreatedDate = DateTime.Now.AddDays(-2),
+                ExpenseDate = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 15),
+                CreatedDate = DateTime.UtcNow.AddDays(-2),
                 SplitMethod = SplitMethod.Equal
             },
             new SharedExpense
@@ -547,8 +547,8 @@ public static class TestDataSeeder
                 Description = "Telia bredband 500 Mbit/s",
                 TotalAmount = 399m,
                 Type = ExpenseType.Internet,
-                ExpenseDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1),
-                CreatedDate = DateTime.Now.AddDays(-10),
+                ExpenseDate = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1),
+                CreatedDate = DateTime.UtcNow.AddDays(-10),
                 SplitMethod = SplitMethod.Equal
             }
         };
@@ -589,7 +589,7 @@ public static class TestDataSeeder
                 Description = "Spara till en två veckors resa till Japan",
                 TargetAmount = 50000m,
                 CurrentAmount = 15000m,
-                TargetDate = DateTime.Now.AddMonths(12),
+                TargetDate = DateTime.UtcNow.AddMonths(12),
                 Priority = 1,
                 FundedFromBankSourceId = 1,
                 CreatedAt = DateTime.UtcNow,
@@ -604,7 +604,7 @@ public static class TestDataSeeder
                 Description = "MacBook Pro för arbete och studier",
                 TargetAmount = 25000m,
                 CurrentAmount = 8500m,
-                TargetDate = DateTime.Now.AddMonths(6),
+                TargetDate = DateTime.UtcNow.AddMonths(6),
                 Priority = 2,
                 FundedFromBankSourceId = 1,
                 CreatedAt = DateTime.UtcNow,
@@ -619,7 +619,7 @@ public static class TestDataSeeder
                 Description = "Buffert för oförutsedda utgifter - 3 månadslöner",
                 TargetAmount = 90000m,
                 CurrentAmount = 45000m,
-                TargetDate = DateTime.Now.AddMonths(18),
+                TargetDate = DateTime.UtcNow.AddMonths(18),
                 Priority = 1,
                 FundedFromBankSourceId = 2,
                 CreatedAt = DateTime.UtcNow,
@@ -634,7 +634,7 @@ public static class TestDataSeeder
                 Description = "Spara till 15% kontantinsats för lägenhet",
                 TargetAmount = 300000m,
                 CurrentAmount = 120000m,
-                TargetDate = DateTime.Now.AddMonths(24),
+                TargetDate = DateTime.UtcNow.AddMonths(24),
                 Priority = 1,
                 CreatedAt = DateTime.UtcNow,
                 UserId = userId,
@@ -648,7 +648,7 @@ public static class TestDataSeeder
                 Description = "Elcykel för pendling",
                 TargetAmount = 15000m,
                 CurrentAmount = 12000m,
-                TargetDate = DateTime.Now.AddMonths(3),
+                TargetDate = DateTime.UtcNow.AddMonths(3),
                 Priority = 3,
                 FundedFromBankSourceId = 1,
                 CreatedAt = DateTime.UtcNow,
@@ -674,7 +674,7 @@ public static class TestDataSeeder
                 Description = "2:a på Södermalm, Stockholm",
                 PurchaseValue = 2800000m,
                 CurrentValue = 3200000m,
-                PurchaseDate = DateTime.Now.AddYears(-5),
+                PurchaseDate = DateTime.UtcNow.AddYears(-5),
                 Location = "Stockholm, Södermalm",
                 Currency = "SEK",
                 CreatedAt = DateTime.UtcNow,
@@ -690,7 +690,7 @@ public static class TestDataSeeder
                 Description = "2020 års modell, diesel",
                 PurchaseValue = 285000m,
                 CurrentValue = 240000m,
-                PurchaseDate = DateTime.Now.AddYears(-3),
+                PurchaseDate = DateTime.UtcNow.AddYears(-3),
                 Location = "Stockholm",
                 Currency = "SEK",
                 CreatedAt = DateTime.UtcNow,
@@ -706,7 +706,7 @@ public static class TestDataSeeder
                 Description = "MacBook Pro 16\" M3 Pro",
                 PurchaseValue = 32000m,
                 CurrentValue = 28000m,
-                PurchaseDate = DateTime.Now.AddMonths(-6),
+                PurchaseDate = DateTime.UtcNow.AddMonths(-6),
                 Location = "Hemkontor",
                 Currency = "SEK",
                 CreatedAt = DateTime.UtcNow,
@@ -722,7 +722,7 @@ public static class TestDataSeeder
                 Description = "Soffa, matbord, och bokhyllor",
                 PurchaseValue = 45000m,
                 CurrentValue = 25000m,
-                PurchaseDate = DateTime.Now.AddYears(-2),
+                PurchaseDate = DateTime.UtcNow.AddYears(-2),
                 Location = "Lägenheten",
                 Currency = "SEK",
                 CreatedAt = DateTime.UtcNow,
@@ -738,7 +738,7 @@ public static class TestDataSeeder
                 Description = "55\" 4K QLED TV",
                 PurchaseValue = 15000m,
                 CurrentValue = 10000m,
-                PurchaseDate = DateTime.Now.AddYears(-1),
+                PurchaseDate = DateTime.UtcNow.AddYears(-1),
                 Location = "Vardagsrum",
                 Currency = "SEK",
                 CreatedAt = DateTime.UtcNow,
@@ -754,7 +754,7 @@ public static class TestDataSeeder
                 Description = "Vintage Submariner",
                 PurchaseValue = 85000m,
                 CurrentValue = 120000m,
-                PurchaseDate = DateTime.Now.AddYears(-10),
+                PurchaseDate = DateTime.UtcNow.AddYears(-10),
                 Location = "Bankfack",
                 Currency = "SEK",
                 CreatedAt = DateTime.UtcNow,
@@ -781,8 +781,8 @@ public static class TestDataSeeder
                 InterestRate = 4.5m,
                 Amortization = 5000m,
                 Currency = "SEK",
-                StartDate = DateTime.Now.AddYears(-5),
-                MaturityDate = DateTime.Now.AddYears(25),
+                StartDate = DateTime.UtcNow.AddYears(-5),
+                MaturityDate = DateTime.UtcNow.AddYears(25),
                 CreatedAt = DateTime.UtcNow,
                 UserId = userId,
                 ValidFrom = DateTime.UtcNow,
@@ -797,8 +797,8 @@ public static class TestDataSeeder
                 InterestRate = 5.9m,
                 Amortization = 3500m,
                 Currency = "SEK",
-                StartDate = DateTime.Now.AddYears(-3),
-                MaturityDate = DateTime.Now.AddYears(2),
+                StartDate = DateTime.UtcNow.AddYears(-3),
+                MaturityDate = DateTime.UtcNow.AddYears(2),
                 CreatedAt = DateTime.UtcNow,
                 UserId = userId,
                 ValidFrom = DateTime.UtcNow,
@@ -813,8 +813,8 @@ public static class TestDataSeeder
                 InterestRate = 1.5m,
                 Amortization = 1200m,
                 Currency = "SEK",
-                StartDate = DateTime.Now.AddYears(-8),
-                MaturityDate = DateTime.Now.AddYears(17),
+                StartDate = DateTime.UtcNow.AddYears(-8),
+                MaturityDate = DateTime.UtcNow.AddYears(17),
                 CreatedAt = DateTime.UtcNow,
                 UserId = userId,
                 ValidFrom = DateTime.UtcNow,
@@ -1584,13 +1584,13 @@ public static class TestDataSeeder
                 Price = 179m,
                 Currency = "SEK",
                 BillingFrequency = "Monthly",
-                NextBillingDate = DateTime.Now.AddDays(15),
-                StartDate = DateTime.Now.AddYears(-2),
+                NextBillingDate = DateTime.UtcNow.AddDays(15),
+                StartDate = DateTime.UtcNow.AddYears(-2),
                 IsActive = true,
                 CategoryId = 20, // Streaming
                 ManagementUrl = "https://www.spotify.com/account",
                 AccountEmail = "test@example.com",
-                LastUsedDate = DateTime.Now.AddDays(-1),
+                LastUsedDate = DateTime.UtcNow.AddDays(-1),
                 SharedWith = "Partner, Barn",
                 UserId = userId,
                 CreatedAt = DateTime.UtcNow
@@ -1603,13 +1603,13 @@ public static class TestDataSeeder
                 Price = 139m,
                 Currency = "SEK",
                 BillingFrequency = "Monthly",
-                NextBillingDate = DateTime.Now.AddDays(5),
-                StartDate = DateTime.Now.AddYears(-3),
+                NextBillingDate = DateTime.UtcNow.AddDays(5),
+                StartDate = DateTime.UtcNow.AddYears(-3),
                 IsActive = true,
                 CategoryId = 20, // Streaming
                 ManagementUrl = "https://www.netflix.com/YourAccount",
                 AccountEmail = "test@example.com",
-                LastUsedDate = DateTime.Now.AddDays(-2),
+                LastUsedDate = DateTime.UtcNow.AddDays(-2),
                 SharedWith = "Partner",
                 UserId = userId,
                 CreatedAt = DateTime.UtcNow
@@ -1622,12 +1622,12 @@ public static class TestDataSeeder
                 Price = 299m,
                 Currency = "SEK",
                 BillingFrequency = "Monthly",
-                NextBillingDate = DateTime.Now.AddDays(20),
-                StartDate = DateTime.Now.AddMonths(-6),
+                NextBillingDate = DateTime.UtcNow.AddDays(20),
+                StartDate = DateTime.UtcNow.AddMonths(-6),
                 IsActive = true,
                 CategoryId = 21, // Gym
                 ManagementUrl = "https://www.24-7.se/mina-sidor",
-                LastUsedDate = DateTime.Now.AddDays(-3),
+                LastUsedDate = DateTime.UtcNow.AddDays(-3),
                 CancellationNoticeDays = 30,
                 UserId = userId,
                 CreatedAt = DateTime.UtcNow
@@ -1640,12 +1640,12 @@ public static class TestDataSeeder
                 Price = 109m,
                 Currency = "SEK",
                 BillingFrequency = "Monthly",
-                NextBillingDate = DateTime.Now.AddDays(10),
-                StartDate = DateTime.Now.AddMonths(-8),
+                NextBillingDate = DateTime.UtcNow.AddDays(10),
+                StartDate = DateTime.UtcNow.AddMonths(-8),
                 IsActive = true,
                 CategoryId = 20, // Streaming
                 AccountEmail = "test@example.com",
-                LastUsedDate = DateTime.Now.AddDays(-7),
+                LastUsedDate = DateTime.UtcNow.AddDays(-7),
                 UserId = userId,
                 CreatedAt = DateTime.UtcNow
             },
@@ -1657,12 +1657,12 @@ public static class TestDataSeeder
                 Price = 659m,
                 Currency = "SEK",
                 BillingFrequency = "Monthly",
-                NextBillingDate = DateTime.Now.AddDays(8),
-                StartDate = DateTime.Now.AddYears(-1),
+                NextBillingDate = DateTime.UtcNow.AddDays(8),
+                StartDate = DateTime.UtcNow.AddYears(-1),
                 IsActive = true,
                 CategoryId = 25, // Elektronik
                 AccountEmail = "test@example.com",
-                LastUsedDate = DateTime.Now.AddDays(-1),
+                LastUsedDate = DateTime.UtcNow.AddDays(-1),
                 UserId = userId,
                 CreatedAt = DateTime.UtcNow
             },
@@ -1674,11 +1674,11 @@ public static class TestDataSeeder
                 Price = 49m,
                 Currency = "SEK",
                 BillingFrequency = "Monthly",
-                NextBillingDate = DateTime.Now.AddDays(12),
-                StartDate = DateTime.Now.AddMonths(-4),
+                NextBillingDate = DateTime.UtcNow.AddDays(12),
+                StartDate = DateTime.UtcNow.AddMonths(-4),
                 IsActive = true,
                 CategoryId = 4, // Nöje
-                LastUsedDate = DateTime.Now,
+                LastUsedDate = DateTime.UtcNow,
                 UserId = userId,
                 CreatedAt = DateTime.UtcNow
             },
@@ -1690,11 +1690,11 @@ public static class TestDataSeeder
                 Price = 29m,
                 Currency = "SEK",
                 BillingFrequency = "Monthly",
-                NextBillingDate = DateTime.Now.AddDays(7),
-                StartDate = DateTime.Now.AddYears(-2),
+                NextBillingDate = DateTime.UtcNow.AddDays(7),
+                StartDate = DateTime.UtcNow.AddYears(-2),
                 IsActive = true,
                 CategoryId = 5, // Shopping
-                LastUsedDate = DateTime.Now,
+                LastUsedDate = DateTime.UtcNow,
                 UserId = userId,
                 CreatedAt = DateTime.UtcNow
             }
@@ -1715,8 +1715,8 @@ public static class TestDataSeeder
                 Description = "Månatlig elförbrukning",
                 Amount = 1450m,
                 Currency = "SEK",
-                IssueDate = DateTime.Now.AddDays(-20),
-                DueDate = DateTime.Now.AddDays(10),
+                IssueDate = DateTime.UtcNow.AddDays(-20),
+                DueDate = DateTime.UtcNow.AddDays(10),
                 Status = "Pending",
                 IsRecurring = true,
                 RecurringFrequency = "Monthly",
@@ -1734,8 +1734,8 @@ public static class TestDataSeeder
                 Description = "Försäkring för lägenhet och lösöre",
                 Amount = 349m,
                 Currency = "SEK",
-                IssueDate = DateTime.Now.AddDays(-25),
-                DueDate = DateTime.Now.AddDays(5),
+                IssueDate = DateTime.UtcNow.AddDays(-25),
+                DueDate = DateTime.UtcNow.AddDays(5),
                 Status = "Pending",
                 IsRecurring = true,
                 RecurringFrequency = "Monthly",
@@ -1753,8 +1753,8 @@ public static class TestDataSeeder
                 Description = "Tandläkarkontroll och lagning",
                 Amount = 2800m,
                 Currency = "SEK",
-                IssueDate = DateTime.Now.AddDays(-5),
-                DueDate = DateTime.Now.AddDays(25),
+                IssueDate = DateTime.UtcNow.AddDays(-5),
+                DueDate = DateTime.UtcNow.AddDays(25),
                 Status = "Pending",
                 IsRecurring = false,
                 InvoiceNumber = "TV-2025-00789",
@@ -1772,9 +1772,9 @@ public static class TestDataSeeder
                 Description = "Telia Mobil 50 GB",
                 Amount = 349m,
                 Currency = "SEK",
-                IssueDate = DateTime.Now.AddDays(-15),
-                DueDate = DateTime.Now.AddDays(-5),
-                PaidDate = DateTime.Now.AddDays(-3),
+                IssueDate = DateTime.UtcNow.AddDays(-15),
+                DueDate = DateTime.UtcNow.AddDays(-5),
+                PaidDate = DateTime.UtcNow.AddDays(-3),
                 Status = "Paid",
                 IsRecurring = true,
                 RecurringFrequency = "Monthly",
@@ -1792,9 +1792,9 @@ public static class TestDataSeeder
                 Description = "Helförsäkring Volvo V60",
                 Amount = 580m,
                 Currency = "SEK",
-                IssueDate = DateTime.Now.AddDays(-30),
-                DueDate = DateTime.Now.AddDays(-10),
-                PaidDate = DateTime.Now.AddDays(-8),
+                IssueDate = DateTime.UtcNow.AddDays(-30),
+                DueDate = DateTime.UtcNow.AddDays(-10),
+                PaidDate = DateTime.UtcNow.AddDays(-8),
                 Status = "Paid",
                 IsRecurring = true,
                 RecurringFrequency = "Monthly",
@@ -1826,8 +1826,8 @@ public static class TestDataSeeder
                 MonthlyContribution = 3500m,
                 ExpectedMonthlyPension = 12500m,
                 RetirementAge = 65,
-                StartDate = DateTime.Now.AddYears(-10),
-                LastUpdated = DateTime.Now.AddDays(-7),
+                StartDate = DateTime.UtcNow.AddYears(-10),
+                LastUpdated = DateTime.UtcNow.AddDays(-7),
                 AccountNumber = "ITP-123456",
                 Notes = "Premiebestämd tjänstepension via arbetsgivare",
                 UserId = userId,
@@ -1844,8 +1844,8 @@ public static class TestDataSeeder
                 MonthlyContribution = 2000m,
                 ExpectedMonthlyPension = 5800m,
                 RetirementAge = 65,
-                StartDate = DateTime.Now.AddYears(-7),
-                LastUpdated = DateTime.Now.AddDays(-2),
+                StartDate = DateTime.UtcNow.AddYears(-7),
+                LastUpdated = DateTime.UtcNow.AddDays(-2),
                 AccountNumber = "PP-789012",
                 Notes = "Eget pensionssparande med fondförsäkring",
                 UserId = userId,
@@ -1861,8 +1861,8 @@ public static class TestDataSeeder
                 TotalContributions = 110000m,
                 ExpectedMonthlyPension = 8500m,
                 RetirementAge = 65,
-                StartDate = DateTime.Now.AddYears(-12),
-                LastUpdated = DateTime.Now.AddMonths(-1),
+                StartDate = DateTime.UtcNow.AddYears(-12),
+                LastUpdated = DateTime.UtcNow.AddMonths(-1),
                 Notes = "Premiepension via AP7 - statlig allmän pension",
                 UserId = userId,
                 CreatedAt = DateTime.UtcNow
@@ -1882,8 +1882,8 @@ public static class TestDataSeeder
             {
                 DividendId = 1,
                 InvestmentId = 1,
-                PaymentDate = DateTime.Now.AddMonths(-2),
-                ExDividendDate = DateTime.Now.AddMonths(-2).AddDays(-5),
+                PaymentDate = DateTime.UtcNow.AddMonths(-2),
+                ExDividendDate = DateTime.UtcNow.AddMonths(-2).AddDays(-5),
                 AmountPerShare = 5.50m,
                 TotalAmount = 550m, // 100 shares * 5.50
                 SharesHeld = 100,
@@ -1899,8 +1899,8 @@ public static class TestDataSeeder
             {
                 DividendId = 2,
                 InvestmentId = 2,
-                PaymentDate = DateTime.Now.AddMonths(-3),
-                ExDividendDate = DateTime.Now.AddMonths(-3).AddDays(-7),
+                PaymentDate = DateTime.UtcNow.AddMonths(-3),
+                ExDividendDate = DateTime.UtcNow.AddMonths(-3).AddDays(-7),
                 AmountPerShare = 7.25m,
                 TotalAmount = 362.50m, // 50 shares * 7.25
                 SharesHeld = 50,
@@ -1916,8 +1916,8 @@ public static class TestDataSeeder
             {
                 DividendId = 3,
                 InvestmentId = 3,
-                PaymentDate = DateTime.Now.AddMonths(-1),
-                ExDividendDate = DateTime.Now.AddMonths(-1).AddDays(-10),
+                PaymentDate = DateTime.UtcNow.AddMonths(-1),
+                ExDividendDate = DateTime.UtcNow.AddMonths(-1).AddDays(-10),
                 AmountPerShare = 12.50m,
                 TotalAmount = 937.50m, // 75 shares * 12.50
                 SharesHeld = 75,
@@ -1933,8 +1933,8 @@ public static class TestDataSeeder
             {
                 DividendId = 4,
                 InvestmentId = 7,
-                PaymentDate = DateTime.Now.AddDays(-15),
-                ExDividendDate = DateTime.Now.AddDays(-20),
+                PaymentDate = DateTime.UtcNow.AddDays(-15),
+                ExDividendDate = DateTime.UtcNow.AddDays(-20),
                 AmountPerShare = 2.80m,
                 TotalAmount = 700m, // 250 shares * 2.80
                 SharesHeld = 250,
@@ -1966,7 +1966,7 @@ public static class TestDataSeeder
                 TotalAmount = 24550m,
                 Fees = 99m,
                 Currency = "SEK",
-                TransactionDate = DateTime.Now.AddMonths(-6),
+                TransactionDate = DateTime.UtcNow.AddMonths(-6),
                 Notes = "Initial köp av Volvo B aktier",
                 UserId = userId,
                 CreatedAt = DateTime.UtcNow
@@ -1982,7 +1982,7 @@ public static class TestDataSeeder
                 TotalAmount = 7615m,
                 Fees = 99m,
                 Currency = "SEK",
-                TransactionDate = DateTime.Now.AddMonths(-8),
+                TransactionDate = DateTime.UtcNow.AddMonths(-8),
                 Notes = "Köp av SEB A aktier",
                 UserId = userId,
                 CreatedAt = DateTime.UtcNow
@@ -1998,7 +1998,7 @@ public static class TestDataSeeder
                 TotalAmount = 21675m,
                 Fees = 99m,
                 Currency = "SEK",
-                TransactionDate = DateTime.Now.AddMonths(-4),
+                TransactionDate = DateTime.UtcNow.AddMonths(-4),
                 Notes = "Köp av Investor B",
                 UserId = userId,
                 CreatedAt = DateTime.UtcNow
@@ -2014,7 +2014,7 @@ public static class TestDataSeeder
                 TotalAmount = 8730m,
                 Fees = 99m,
                 Currency = "SEK",
-                TransactionDate = DateTime.Now.AddMonths(-5),
+                TransactionDate = DateTime.UtcNow.AddMonths(-5),
                 Notes = "Första köpet av Ericsson B",
                 UserId = userId,
                 CreatedAt = DateTime.UtcNow
@@ -2029,7 +2029,7 @@ public static class TestDataSeeder
                 TotalAmount = 5820m,
                 Fees = 99m,
                 Currency = "SEK",
-                TransactionDate = DateTime.Now.AddMonths(-3),
+                TransactionDate = DateTime.UtcNow.AddMonths(-3),
                 Notes = "Påköp av Ericsson B",
                 UserId = userId,
                 CreatedAt = DateTime.UtcNow
@@ -2045,7 +2045,7 @@ public static class TestDataSeeder
                 TotalAmount = 2378m,
                 Fees = 99m,
                 Currency = "SEK",
-                TransactionDate = DateTime.Now.AddDays(-10),
+                TransactionDate = DateTime.UtcNow.AddDays(-10),
                 Notes = "Sålde 20 aktier med förlust",
                 UserId = userId,
                 CreatedAt = DateTime.UtcNow
@@ -2069,8 +2069,8 @@ public static class TestDataSeeder
                 TargetAmount = 3000m,
                 CurrentAmount = 2450m,
                 DurationDays = 31,
-                StartDate = DateTime.Now.AddDays(-25),
-                EndDate = DateTime.Now.AddDays(6),
+                StartDate = DateTime.UtcNow.AddDays(-25),
+                EndDate = DateTime.UtcNow.AddDays(6),
                 Status = ChallengeStatus.Active,
                 CurrentStreak = 25,
                 BestStreak = 25,
@@ -2091,8 +2091,8 @@ public static class TestDataSeeder
                 TargetAmount = 3000m,
                 CurrentAmount = 1800m,
                 DurationDays = 30,
-                StartDate = DateTime.Now.AddDays(-18),
-                EndDate = DateTime.Now.AddDays(12),
+                StartDate = DateTime.UtcNow.AddDays(-18),
+                EndDate = DateTime.UtcNow.AddDays(12),
                 Status = ChallengeStatus.Active,
                 CurrentStreak = 18,
                 BestStreak = 18,
@@ -2113,8 +2113,8 @@ public static class TestDataSeeder
                 TargetAmount = 1400m,
                 CurrentAmount = 1400m,
                 DurationDays = 14,
-                StartDate = DateTime.Now.AddDays(-14),
-                EndDate = DateTime.Now,
+                StartDate = DateTime.UtcNow.AddDays(-14),
+                EndDate = DateTime.UtcNow,
                 Status = ChallengeStatus.Completed,
                 CurrentStreak = 14,
                 BestStreak = 14,
@@ -2135,10 +2135,11 @@ public static class TestDataSeeder
                 TargetAmount = 2500m,
                 CurrentAmount = 0m,
                 DurationDays = 28,
-                StartDate = DateTime.Now.AddDays(5), // Starts in 5 days
+                StartDate = DateTime.UtcNow.AddDays(-5), // Started 5 days ago
+                EndDate = DateTime.UtcNow.AddDays(23), // 23 days remaining
                 Status = ChallengeStatus.Active,
-                CurrentStreak = 0,
-                BestStreak = 0,
+                CurrentStreak = 5,
+                BestStreak = 5,
                 Icon = "🍷",
                 Difficulty = DifficultyLevel.Hard,
                 Category = ChallengeCategory.Health,
@@ -2156,7 +2157,7 @@ public static class TestDataSeeder
             {
                 SavingsChallengeProgressId = 1,
                 SavingsChallengeId = 1,
-                Date = DateTime.Now.AddDays(-25),
+                Date = DateTime.UtcNow.AddDays(-25),
                 Completed = true,
                 AmountSaved = 100m,
                 Notes = "Första dagen lyckad!",
@@ -2166,7 +2167,7 @@ public static class TestDataSeeder
             {
                 SavingsChallengeProgressId = 2,
                 SavingsChallengeId = 1,
-                Date = DateTime.Now.AddDays(-16),
+                Date = DateTime.UtcNow.AddDays(-16),
                 Completed = true,
                 AmountSaved = 95m,
                 Notes = "10 dagar klarat",
@@ -2176,7 +2177,7 @@ public static class TestDataSeeder
             {
                 SavingsChallengeProgressId = 3,
                 SavingsChallengeId = 1,
-                Date = DateTime.Now.AddDays(-6),
+                Date = DateTime.UtcNow.AddDays(-6),
                 Completed = true,
                 AmountSaved = 110m,
                 Notes = "20 dagar - går bra!",
@@ -2187,7 +2188,7 @@ public static class TestDataSeeder
             {
                 SavingsChallengeProgressId = 4,
                 SavingsChallengeId = 2,
-                Date = DateTime.Now.AddDays(-18),
+                Date = DateTime.UtcNow.AddDays(-18),
                 Completed = true,
                 AmountSaved = 100m,
                 CreatedAt = DateTime.UtcNow
@@ -2196,7 +2197,7 @@ public static class TestDataSeeder
             {
                 SavingsChallengeProgressId = 5,
                 SavingsChallengeId = 2,
-                Date = DateTime.Now.AddDays(-12),
+                Date = DateTime.UtcNow.AddDays(-12),
                 Completed = true,
                 AmountSaved = 100m,
                 Notes = "En vecka klar",
@@ -2262,7 +2263,7 @@ public static class TestDataSeeder
                 Name = "Köpa första bostaden",
                 Description = "Spara ihop till kontantinsats för en bostadsrätt i Stockholm",
                 MilestoneType = "Housing",
-                PlannedDate = DateTime.Now.AddYears(2),
+                PlannedDate = DateTime.UtcNow.AddYears(2),
                 EstimatedCost = 300000m, // 15% av 2 miljoner
                 RequiredMonthlySavings = 12500m,
                 ProgressPercentage = 40m,
@@ -2279,7 +2280,7 @@ public static class TestDataSeeder
                 Name = "Studera vidare - Masterutbildning",
                 Description = "Spara för masterutbildning utomlands",
                 MilestoneType = "Education",
-                PlannedDate = DateTime.Now.AddYears(1),
+                PlannedDate = DateTime.UtcNow.AddYears(1),
                 EstimatedCost = 150000m,
                 RequiredMonthlySavings = 12500m,
                 ProgressPercentage = 20m,
@@ -2296,7 +2297,7 @@ public static class TestDataSeeder
                 Name = "Pension vid 65",
                 Description = "Spara för en bekväm pension",
                 MilestoneType = "Retirement",
-                PlannedDate = DateTime.Now.AddYears(30),
+                PlannedDate = DateTime.UtcNow.AddYears(30),
                 EstimatedCost = 5000000m,
                 RequiredMonthlySavings = 5500m,
                 ProgressPercentage = 17m,
@@ -2313,7 +2314,7 @@ public static class TestDataSeeder
                 Name = "Stor utlandsresa - Japan & Thailand",
                 Description = "Sparar till en drömresa i Asien i 4 veckor",
                 MilestoneType = "Travel",
-                PlannedDate = DateTime.Now.AddMonths(18),
+                PlannedDate = DateTime.UtcNow.AddMonths(18),
                 EstimatedCost = 75000m,
                 RequiredMonthlySavings = 4200m,
                 ProgressPercentage = 56m,
@@ -2330,7 +2331,7 @@ public static class TestDataSeeder
                 Name = "Ny bil - Elbil",
                 Description = "Spara till en elbil när nuvarande bil blir för gammal",
                 MilestoneType = "Vehicle",
-                PlannedDate = DateTime.Now.AddYears(3),
+                PlannedDate = DateTime.UtcNow.AddYears(3),
                 EstimatedCost = 450000m,
                 RequiredMonthlySavings = 12500m,
                 ProgressPercentage = 28m,
