@@ -1,0 +1,60 @@
+@using Privatekonomi.Core.Models
+@using Privatekonomi.Web.Components.Widgets
+
+@* Dynamic widget renderer - renders the appropriate widget component based on type *@
+
+@switch (Configuration.Type)
+{
+    case WidgetType.NetWorth:
+        <NetWorthWidget Configuration="@Configuration" />
+        break;
+    
+    case WidgetType.CashFlow:
+        <CashFlowWidget Configuration="@Configuration" />
+        break;
+    
+    case WidgetType.Goals:
+        <GoalsWidget Configuration="@Configuration" />
+        break;
+    
+    case WidgetType.BudgetOverview:
+        <BudgetOverviewWidget Configuration="@Configuration" />
+        break;
+    
+    case WidgetType.RecentTransactions:
+        <RecentTransactionsWidget Configuration="@Configuration" />
+        break;
+    
+    case WidgetType.QuickActions:
+        <QuickActionsWidget Configuration="@Configuration" />
+        break;
+    
+    case WidgetType.PeriodComparison:
+        <PeriodComparisonWidget ComparisonData="@_periodComparison" ShowSparkline="true" />
+        break;
+    
+    default:
+        <WidgetBase Title="@Configuration.Type.ToString()" Configuration="@Configuration">
+            <ChildContent>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                    Widget av typ '@Configuration.Type' är inte implementerad ännu.
+                </MudText>
+            </ChildContent>
+        </WidgetBase>
+        break;
+}
+
+@code {
+    [Parameter, EditorRequired]
+    public WidgetConfiguration Configuration { get; set; } = null!;
+
+    [Parameter]
+    public PeriodComparisonReport? PeriodComparisonData { get; set; }
+
+    private PeriodComparisonReport? _periodComparison;
+
+    protected override void OnParametersSet()
+    {
+        _periodComparison = PeriodComparisonData;
+    }
+}

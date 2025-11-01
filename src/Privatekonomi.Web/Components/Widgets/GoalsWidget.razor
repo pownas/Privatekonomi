@@ -1,0 +1,119 @@
+@using Privatekonomi.Core.Services
+@using Privatekonomi.Core.Models
+@inject IGoalService GoalService
+@inject ISnackbar Snackbar
+@inject NavigationManager Navigation
+
+<WidgetBase Title="Sparmål" Configuration="@Configuration" ShowHeader="true">
+    <HeaderActions>
+        <MudIconButton Icon="@Icons.Material.Filled.Add" 
+                       Size="Size.Small" 
+                       Color="Color.Primary"
+                       OnClick="@(() => Navigation.NavigateTo("/goals"))" />
+    </HeaderActions>
+    <ChildContent>
+        @if (_loading)
+        {
+            <div class="d-flex justify-center align-center" style="min-height: 150px;">
+                <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+            </div>
+        }
+        else if (_activeGoals.Any())
+        {
+            <MudList T="string" Dense="true">
+                @foreach (var goal in _activeGoals.Take(5))
+                {
+                    var progress = goal.TargetAmount > 0 ? (double)(goal.CurrentAmount / goal.TargetAmount) * 100 : 0;
+                    var progressColor = progress >= 75 ? Color.Success : progress >= 50 ? Color.Info : Color.Warning;
+                    
+                    <MudListItem T="string">
+                        <div class="goal-item">
+                            <div class="goal-header">
+                                <MudText Typo="Typo.body2">@goal.Name</MudText>
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                    @goal.CurrentAmount.ToString("C0", new System.Globalization.CultureInfo("sv-SE")) / @goal.TargetAmount.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))
+                                </MudText>
+                            </div>
+                            <MudProgressLinear Color="@progressColor" 
+                                             Value="@progress" 
+                                             Size="Size.Small"
+                                             Class="my-1" />
+                            @if (goal.TargetDate.HasValue)
+                            {
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                    Mål: @goal.TargetDate.Value.ToString("yyyy-MM-dd")
+                                </MudText>
+                            }
+                        </div>
+                    </MudListItem>
+                }
+            </MudList>
+            @if (_activeGoals.Count() > 5)
+            {
+                <MudButton Variant="Variant.Text" 
+                           Color="Color.Primary" 
+                           FullWidth="true"
+                           OnClick="@(() => Navigation.NavigateTo("/goals"))">
+                    Visa alla (@_activeGoals.Count())
+                </MudButton>
+            }
+        }
+        else
+        {
+            <div class="d-flex flex-column align-center justify-center" style="min-height: 150px;">
+                <MudIcon Icon="@Icons.Material.Filled.Flag" Size="Size.Large" Color="Color.Secondary" />
+                <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-2">
+                    Inga aktiva sparmål
+                </MudText>
+                <MudButton Variant="Variant.Text" 
+                           Color="Color.Primary" 
+                           OnClick="@(() => Navigation.NavigateTo("/goals"))"
+                           Class="mt-2">
+                    Skapa sparmål
+                </MudButton>
+            </div>
+        }
+    </ChildContent>
+</WidgetBase>
+
+@code {
+    [Parameter]
+    public WidgetConfiguration? Configuration { get; set; }
+
+    private bool _loading = true;
+    private IEnumerable<Goal> _activeGoals = new List<Goal>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        _loading = true;
+        try
+        {
+            _activeGoals = await GoalService.GetActiveGoalsAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Kunde inte ladda sparmål: {ex.Message}", Severity.Warning);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}
+
+<style>
+    .goal-item {
+        width: 100%;
+    }
+    
+    .goal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+</style>

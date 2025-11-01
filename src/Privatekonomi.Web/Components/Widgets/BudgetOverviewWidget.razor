@@ -1,0 +1,125 @@
+@using Privatekonomi.Core.Services
+@using Privatekonomi.Core.Models
+@inject IBudgetService BudgetService
+@inject ISnackbar Snackbar
+@inject NavigationManager Navigation
+
+<WidgetBase Title="Budgetöversikt" Configuration="@Configuration" ShowHeader="true">
+    <HeaderActions>
+        <MudIconButton Icon="@Icons.Material.Filled.Add" 
+                       Size="Size.Small" 
+                       Color="Color.Primary"
+                       OnClick="@(() => Navigation.NavigateTo("/budgets"))" />
+    </HeaderActions>
+    <ChildContent>
+        @if (_loading)
+        {
+            <div class="d-flex justify-center align-center" style="min-height: 150px;">
+                <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+            </div>
+        }
+        else if (_activeBudgets.Any())
+        {
+            @foreach (var budget in _activeBudgets.Take(3))
+            {
+                <MudCard Outlined="true" Class="mb-3">
+                    <MudCardContent>
+                        <MudText Typo="Typo.subtitle2">@budget.Name</MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-2">
+                            @budget.StartDate.ToString("yyyy-MM-dd") - @budget.EndDate.ToString("yyyy-MM-dd")
+                        </MudText>
+                        
+                        @if (_budgetActualAmounts.ContainsKey(budget.BudgetId))
+                        {
+                            var actualAmounts = _budgetActualAmounts[budget.BudgetId];
+                            var totalPlanned = budget.BudgetCategories.Sum(bc => bc.PlannedAmount);
+                            var totalActual = actualAmounts.Values.Sum();
+                            var percentage = totalPlanned > 0 ? (double)(totalActual / totalPlanned) * 100 : 0;
+                            var progressColor = percentage <= 75 ? Color.Success : percentage <= 100 ? Color.Warning : Color.Error;
+                            
+                            <MudGrid Spacing="1">
+                                <MudItem xs="6">
+                                    <MudText Typo="Typo.caption">Planerat:</MudText>
+                                    <MudText Typo="Typo.body2">@totalPlanned.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))</MudText>
+                                </MudItem>
+                                <MudItem xs="6">
+                                    <MudText Typo="Typo.caption">Använt:</MudText>
+                                    <MudText Typo="Typo.body2">@totalActual.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))</MudText>
+                                </MudItem>
+                            </MudGrid>
+                            
+                            <MudProgressLinear Color="@progressColor" 
+                                             Size="Size.Medium"
+                                             Value="@percentage" 
+                                             Class="my-2">
+                                <MudText Typo="Typo.body2">
+                                    @percentage.ToString("F0")%
+                                </MudText>
+                            </MudProgressLinear>
+                        }
+                    </MudCardContent>
+                </MudCard>
+            }
+            @if (_activeBudgets.Count() > 3)
+            {
+                <MudButton Variant="Variant.Text" 
+                           Color="Color.Primary" 
+                           FullWidth="true"
+                           OnClick="@(() => Navigation.NavigateTo("/budgets"))">
+                    Visa alla (@_activeBudgets.Count())
+                </MudButton>
+            }
+        }
+        else
+        {
+            <div class="d-flex flex-column align-center justify-center" style="min-height: 150px;">
+                <MudIcon Icon="@Icons.Material.Filled.PieChart" Size="Size.Large" Color="Color.Secondary" />
+                <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-2">
+                    Inga aktiva budgetar
+                </MudText>
+                <MudButton Variant="Variant.Text" 
+                           Color="Color.Primary" 
+                           OnClick="@(() => Navigation.NavigateTo("/budgets"))"
+                           Class="mt-2">
+                    Skapa budget
+                </MudButton>
+            </div>
+        }
+    </ChildContent>
+</WidgetBase>
+
+@code {
+    [Parameter]
+    public WidgetConfiguration? Configuration { get; set; }
+
+    private bool _loading = true;
+    private IEnumerable<Budget> _activeBudgets = new List<Budget>();
+    private Dictionary<int, Dictionary<int, decimal>> _budgetActualAmounts = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        _loading = true;
+        try
+        {
+            _activeBudgets = await BudgetService.GetActiveBudgetsAsync();
+            
+            foreach (var budget in _activeBudgets)
+            {
+                _budgetActualAmounts[budget.BudgetId] = await BudgetService.GetActualAmountsByCategoryAsync(budget.BudgetId);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Kunde inte ladda budgetar: {ex.Message}", Severity.Warning);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}

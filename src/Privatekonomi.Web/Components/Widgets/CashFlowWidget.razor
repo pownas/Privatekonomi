@@ -1,0 +1,110 @@
+@using Privatekonomi.Core.Services
+@using Privatekonomi.Core.Models
+@inject IReportService ReportService
+@inject ISnackbar Snackbar
+
+<WidgetBase Title="Kassaflöde" Configuration="@Configuration" ShowHeader="true">
+    <ChildContent>
+        @if (_loading)
+        {
+            <div class="d-flex justify-center align-center" style="min-height: 200px;">
+                <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+            </div>
+        }
+        else if (_cashFlowSeries.Any())
+        {
+            <MudChart ChartType="ChartType.Line" 
+                      ChartSeries="@_cashFlowSeries" 
+                      XAxisLabels="@_cashFlowLabels"
+                      Width="100%" 
+                      Height="300px"
+                      ChartOptions="@_chartOptions" />
+        }
+        else
+        {
+            <div class="d-flex flex-column align-center justify-center" style="min-height: 200px;">
+                <MudIcon Icon="@Icons.Material.Filled.ShowChart" Size="Size.Large" Color="Color.Secondary" />
+                <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-2">
+                    Inga kassaflödesdata att visa
+                </MudText>
+            </div>
+        }
+    </ChildContent>
+</WidgetBase>
+
+@code {
+    [Parameter]
+    public WidgetConfiguration? Configuration { get; set; }
+
+    private bool _loading = true;
+    private List<ChartSeries> _cashFlowSeries = new();
+    private string[] _cashFlowLabels = Array.Empty<string>();
+    private ChartOptions _chartOptions = new ChartOptions
+    {
+        YAxisTicks = 1000,
+        YAxisFormat = "C0"
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        _loading = true;
+        try
+        {
+            var cutoffDate = DateTime.Now.AddMonths(-12);
+            var cashFlowReport = await ReportService.GetCashFlowReportAsync(cutoffDate, DateTime.Now);
+            
+            if (cashFlowReport.Periods.Count >= 4)
+            {
+                var cashFlowDates = cashFlowReport.Periods.Select(p => {
+                    var parts = p.Period.Split('-');
+                    return new DateTime(int.Parse(parts[0]), int.Parse(parts[1]), 1);
+                }).ToList();
+                
+                _cashFlowLabels = GenerateChartLabels(cashFlowDates);
+                
+                _cashFlowSeries = new List<ChartSeries>
+                {
+                    new ChartSeries
+                    {
+                        Name = "Inkomster",
+                        Data = cashFlowReport.Periods.Select(p => (double)p.Income).ToArray()
+                    },
+                    new ChartSeries
+                    {
+                        Name = "Utgifter",
+                        Data = cashFlowReport.Periods.Select(p => (double)p.Expenses).ToArray()
+                    },
+                    new ChartSeries
+                    {
+                        Name = "Netto",
+                        Data = cashFlowReport.Periods.Select(p => (double)p.NetFlow).ToArray()
+                    }
+                };
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Kunde inte ladda kassaflöde: {ex.Message}", Severity.Warning);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private string[] GenerateChartLabels(List<DateTime> months)
+    {
+        if (months.Count == 0)
+            return Array.Empty<string>();
+            
+        var culture = new System.Globalization.CultureInfo("sv-SE");
+        return months.Select((m, index) => 
+            index % 3 == 0 ? m.ToString("MMM yyyy", culture) : ""
+        ).ToArray();
+    }
+}
