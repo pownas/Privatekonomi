@@ -324,9 +324,10 @@ Hantering av utgifts- och inkomstkategorier med färgkodning för enkel överbli
 
 - **Frontend**: Blazor Server med MudBlazor
 - **Backend**: ASP.NET Core Web API
-- **Databas**: Entity Framework Core InMemory (kan migreras till SQL Server)
+- **Databas**: Entity Framework Core med flera providers (InMemory, SQLite, SQL Server, JsonFile)
 - **UI-komponenter**: MudBlazor
 - **Språk**: C# (.NET 9)
+- **Orchestration**: .NET Aspire
 
 ## 📁 Projektstruktur
 
