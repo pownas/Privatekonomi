@@ -298,27 +298,27 @@ Dokumentationen innehåller screenshots av:
 ### Dashboard
 Översikt över totala inkomster, utgifter, nettoresultat och antal transaktioner. Visar även visualisering av kategorier med cirkeldiagram och stapeldiagram för utgifter per kategori och månad.
 
-![Dashboard](https://github.com/user-attachments/assets/43a0efb5-c9bd-4a14-be1d-3f8fc0f6bc16)
+![Dashboard](https://github.com/user-attachments/assets/c189bdfc-981c-447e-a46d-16425d865389)
 
 ### Transaktioner
 Lista över alla transaktioner med datum, beskrivning, bank, kategori och belopp. Inkluderar sökfunktion och möjlighet att ta bort transaktioner.
 
-![Transaktioner](https://github.com/user-attachments/assets/8af8bab6-5b9a-4daf-8dec-8ce18c480621)
+![Transaktioner](https://github.com/user-attachments/assets/7532e67c-73ea-4327-8798-fec454b1b22f)
 
 ### Budgethantering
 Översikt över aktiva och avslutade budgetar med möjlighet att skapa nya budgetar och följa upp faktiskt utfall mot planerat.
 
-![Budget](https://github.com/user-attachments/assets/dbd0d556-e37a-43df-99fb-a99f09ffdd40)
+![Budget](https://github.com/user-attachments/assets/cd89a07a-ef13-4444-8caf-168b7213eeb6)
 
 ### Importera Transaktioner
 Import av transaktioner från CSV-filer från ICA-banken och Swedbank med dubbletthantering och förhandsvisning.
 
-![Importera](https://github.com/user-attachments/assets/e352caaf-230e-4032-baf0-b850667760f0)
+![Importera](https://github.com/user-attachments/assets/18c51318-823f-476e-a571-f5fc0969dade)
 
 ### Kategorier
 Hantering av utgifts- och inkomstkategorier med färgkodning för enkel överblick.
 
-![Kategorier](https://github.com/user-attachments/assets/fde2ebab-21a6-4a16-8145-08b585abdcc1)
+![Kategorier](https://github.com/user-attachments/assets/642cd585-7954-43da-8a85-e1c4a97f19fa)
 
 ## 🎨 Teknisk stack
 
