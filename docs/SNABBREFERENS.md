@@ -254,9 +254,9 @@ Med implementationen av Fas 1-4 skulle Privatekonomi:
 
 - **[FUNKTIONSANALYS.md](FUNKTIONSANALYS.md)** - Fullständig kartläggning av alla funktioner (30,000+ ord)
 - **[ATGARDSPLAN.md](ATGARDSPLAN.md)** - Detaljerade issue-beskrivningar och roadmap (25,000+ ord)
-- **[README.md](README.md)** - Projektöversikt och komma igång-guide
-- **[docs/MISSING_CORE_FEATURES.md](docs/MISSING_CORE_FEATURES.md)** - Tidigare analys av saknade funktioner
-- **[docs/IMPROVEMENT_SUGGESTIONS.md](docs/IMPROVEMENT_SUGGESTIONS.md)** - Förbättringsförslag
+- **[README.md](../README.md)** - Projektöversikt och komma igång-guide
+- **[MISSING_CORE_FEATURES.md](MISSING_CORE_FEATURES.md)** - Tidigare analys av saknade funktioner
+- **[IMPROVEMENT_SUGGESTIONS.md](IMPROVEMENT_SUGGESTIONS.md)** - Förbättringsförslag
 
 ---
 

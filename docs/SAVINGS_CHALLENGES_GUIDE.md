@@ -467,7 +467,7 @@ Har du frågor eller problem?
 
 - Öppna ett GitHub Issue på [pownas/Privatekonomi](https://github.com/pownas/Privatekonomi/issues)
 - Se [README.md](../README.md) för mer information
-- Kolla [ISSUE_EXAMPLES.md](../ISSUE_EXAMPLES.md) för vanliga frågor
+- Kolla [ISSUE_EXAMPLES.md](ISSUE_EXAMPLES.md) för vanliga frågor
 
 ---
 
