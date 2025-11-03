@@ -20,7 +20,7 @@ test.describe('Transactions Page', () => {
 
   test('should display transaction details correctly', async ({ page }) => {
     // Navigate to the transactions page
-  await page.goto('/economy/transactions');
+    await page.goto('/economy/transactions');
 
     // Wait for the table to load
     await page.waitForSelector('table', { timeout: 10000 });
@@ -42,7 +42,7 @@ test.describe('Transactions Page', () => {
 
   test('should display transaction with date, description, category and amount', async ({ page }) => {
     // Navigate to the transactions page
-  await page.goto('/economy/transactions');
+    await page.goto('/economy/transactions');
 
     // Wait for the table to load
     await page.waitForSelector('table', { timeout: 10000 });
@@ -79,7 +79,7 @@ test.describe('Transactions Page', () => {
 
   test('should be able to search/filter transactions', async ({ page }) => {
     // Navigate to the transactions page
-  await page.goto('/economy/transactions');
+    await page.goto('/economy/transactions');
 
     // Wait for the table to load
     await page.waitForSelector('table', { timeout: 10000 });
@@ -120,7 +120,7 @@ test.describe('Transactions Page', () => {
 
   test('should display different categories with colored chips', async ({ page }) => {
     // Navigate to the transactions page
-  await page.goto('/economy/transactions');
+    await page.goto('/economy/transactions');
 
     // Wait for the table to load
     await page.waitForSelector('table', { timeout: 10000 });
@@ -141,7 +141,7 @@ test.describe('Transactions Page', () => {
 
   test('should display both income and expense transactions', async ({ page }) => {
     // Navigate to the transactions page
-  await page.goto('/economy/transactions');
+    await page.goto('/economy/transactions');
 
     // Wait for the table to load
     await page.waitForSelector('table', { timeout: 10000 });
@@ -158,7 +158,7 @@ test.describe('Transactions Page', () => {
 
   test('should have delete button for each transaction', async ({ page }) => {
     // Navigate to the transactions page
-  await page.goto('/economy/transactions');
+    await page.goto('/economy/transactions');
 
     // Wait for the table to load
     await page.waitForSelector('table', { timeout: 10000 });
