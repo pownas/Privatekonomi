@@ -1,3 +1,5 @@
+@page "/settings/import"
+@page "/admin/import"
 @page "/import"
 @rendermode InteractiveServer
 @inject ISnackbar Snackbar
@@ -361,7 +363,7 @@ else if (_currentStep == ImportStep.Complete)
 
     private void GoToTransactions()
     {
-        Navigation.NavigateTo("/transactions");
+        Navigation.NavigateTo("/economy/transactions");
     }
 
     private string FormatFileSize(long bytes)

@@ -1,3 +1,4 @@
+@page "/family/households/{HouseholdId:int}"
 @page "/households/{HouseholdId:int}"
 @using Privatekonomi.Core.Models
 @using Privatekonomi.Core.Services
@@ -23,7 +24,7 @@ else
         <MudText Typo="Typo.body1" Color="Color.Secondary" Class="mb-4">@household.Description</MudText>
     }
 
-    <MudButton Variant="Variant.Filled" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.ChildCare" OnClick="@(() => NavigationManager.NavigateTo($"/households/{HouseholdId}/allowances"))" Class="mb-4">
+    <MudButton Variant="Variant.Filled" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.ChildCare" OnClick="@(() => NavigationManager.NavigateTo($"/family/households/{HouseholdId}/allowances"))" Class="mb-4">
         Barnkonton & Veckopeng
     </MudButton>
 
@@ -237,7 +238,7 @@ else
         
         breadcrumbs = new List<BreadcrumbItem>
         {
-            new BreadcrumbItem("Hushåll", "/households"),
+            new BreadcrumbItem("Hushåll", "/family/households"),
             new BreadcrumbItem(household?.Name ?? "Detaljer", null, disabled: true)
         };
     }

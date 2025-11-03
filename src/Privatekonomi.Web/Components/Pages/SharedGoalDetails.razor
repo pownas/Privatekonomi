@@ -1,3 +1,4 @@
+@page "/savings/shared-goals/{SharedGoalId:int}"
 @page "/sharedgoals/{SharedGoalId:int}"
 @rendermode InteractiveServer
 @inject ISharedGoalService SharedGoalService
@@ -284,7 +285,7 @@ else
                 
                 _breadcrumbs = new List<BreadcrumbItem>
                 {
-                    new BreadcrumbItem("Gemensamma Sparmål", href: "/sharedgoals", icon: Icons.Material.Filled.Groups),
+                    new BreadcrumbItem("Gemensamma Sparmål", href: "/savings/shared-goals", icon: Icons.Material.Filled.Groups),
                     new BreadcrumbItem(_sharedGoal.Name, href: null, disabled: true)
                 };
             }
@@ -367,7 +368,7 @@ else
             {
                 await SharedGoalService.LeaveSharedGoalAsync(SharedGoalId);
                 Snackbar.Add("Du har lämnat sparmålet", Severity.Info);
-                NavigationManager.NavigateTo("/sharedgoals");
+                NavigationManager.NavigateTo("/savings/shared-goals");
             }
             catch (Exception ex)
             {

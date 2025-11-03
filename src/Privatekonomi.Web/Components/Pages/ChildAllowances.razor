@@ -1,3 +1,4 @@
+@page "/family/households/{HouseholdId:int}/allowances"
 @page "/households/{HouseholdId:int}/allowances"
 @using Privatekonomi.Core.Models
 @using Privatekonomi.Core.Services
@@ -269,8 +270,8 @@ else
         
         breadcrumbs = new List<BreadcrumbItem>
         {
-            new BreadcrumbItem("Hushåll", "/households"),
-            new BreadcrumbItem(household?.Name ?? "Detaljer", $"/households/{HouseholdId}"),
+            new BreadcrumbItem("Hushåll", "/family/households"),
+            new BreadcrumbItem(household?.Name ?? "Detaljer", $"/family/households/{HouseholdId}"),
             new BreadcrumbItem("Barnkonton", null, disabled: true)
         };
     }
