@@ -10,13 +10,14 @@
 # What this script does:
 # 1. Check prerequisites are installed
 # 2. Navigate to AppHost directory
-# 3. Start Aspire Dashboard with all services
+# 3. Start Aspire Dashboard with all services (hot reload via dotnet watch by default)
 #
 # Created: October 23, 2025
 # ============================================================================
 
 param(
-    [switch]$Help
+    [switch]$Help,
+    [switch]$NoWatch
 )
 
 $ErrorActionPreference = "Stop"
@@ -51,6 +52,35 @@ function Write-LogSection {
     Write-Host ""
 }
 
+function Get-StorageProvider {
+    $scriptRoot = $PSScriptRoot
+    if (-not $scriptRoot) {
+        $scriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
+    }
+
+    $configPaths = @(
+        (Join-Path $scriptRoot "src\Privatekonomi.Web\appsettings.local.json"),
+        (Join-Path $scriptRoot "src\Privatekonomi.Web\appsettings.Development.json"),
+        (Join-Path $scriptRoot "src\Privatekonomi.Web\appsettings.json")
+    )
+
+    foreach ($path in $configPaths) {
+        if (Test-Path $path) {
+            try {
+                $config = Get-Content $path -Raw | ConvertFrom-Json
+                if ($config.Storage -and $config.Storage.Provider) {
+                    return [string]$config.Storage.Provider
+                }
+            }
+            catch {
+                Write-LogWarning "Could not read storage provider from '$path': $($_.Exception.Message)"
+            }
+        }
+    }
+
+    return $null
+}
+
 # Check prerequisites
 function Test-Prerequisites {
     Write-LogSection "Checking Prerequisites"
@@ -74,15 +104,6 @@ function Test-Prerequisites {
         throw "Missing .NET 9 SDK"
     }
     Write-LogInfo "✅ .NET 9 SDK is available"
-    
-    # Check if Aspire workload is installed
-    $workloadList = dotnet workload list | Out-String
-    if (-not ($workloadList -match "aspire")) {
-        Write-LogError "Aspire workload is not installed"
-        Write-LogWarning "Please run '.\local-app-install.ps1' first to install Aspire workload"
-        throw "Missing Aspire workload"
-    }
-    Write-LogInfo "✅ Aspire workload is installed"
     
     # Check if solution exists
     if (-not (Test-Path "Privatekonomi.sln")) {
@@ -135,6 +156,10 @@ function Test-QuickBuild {
 
 # Start application
 function Start-Application {
+    param(
+        [bool]$UseWatch
+    )
+
     Write-LogSection "Starting Privatekonomi Application"
     
     Write-LogInfo "Navigating to AppHost directory..."
@@ -174,9 +199,37 @@ function Start-Application {
         Write-Host ""
         Write-Host "Press Ctrl+C to stop all services" -ForegroundColor Red
         Write-Host ""
-        
-        # Run the AppHost
-        dotnet run
+
+        $env:ASPNETCORE_ENVIRONMENT = "Development"
+        $env:DOTNET_ENVIRONMENT = "Development"
+        $env:PRIVATEKONOMI_ENVIRONMENT = "Local"
+
+        $storageProvider = Get-StorageProvider
+        if (-not $storageProvider) {
+            $storageProvider = "Unknown"
+        }
+
+        $env:PRIVATEKONOMI_STORAGE_PROVIDER = $storageProvider
+
+        Write-LogInfo "ASPNETCORE_ENVIRONMENT set to $env:ASPNETCORE_ENVIRONMENT"
+        Write-LogInfo "DOTNET_ENVIRONMENT set to $env:DOTNET_ENVIRONMENT"
+        Write-LogInfo "PRIVATEKONOMI_ENVIRONMENT set to $env:PRIVATEKONOMI_ENVIRONMENT"
+        Write-LogInfo "Storage provider: $storageProvider"
+
+        if ($UseWatch) {
+            Write-LogInfo "Starting AppHost with dotnet watch (hot reload enabled)"
+            try {
+                dotnet watch run
+            }
+            catch {
+                Write-LogWarning "dotnet watch failed: $($_.Exception.Message). Falling back to dotnet run."
+                dotnet run
+            }
+        }
+        else {
+            Write-LogInfo "Starting AppHost with dotnet run"
+            dotnet run
+        }
     }
     finally {
         Set-Location $originalLocation
@@ -188,8 +241,9 @@ function Show-Help {
     Write-Host "Privatekonomi Application Startup Script" -ForegroundColor Blue
     Write-Host ""
     Write-Host "Usage:" -ForegroundColor Yellow
-    Write-Host "  .\local-app-start.ps1              Start the application"
-    Write-Host "  .\local-app-start.ps1 -Help        Show this help message"
+    Write-Host "  .\local-app-start.ps1                     Start the application with hot reload"
+    Write-Host "  .\local-app-start.ps1 -NoWatch            Start without dotnet watch"
+    Write-Host "  .\local-app-start.ps1 -Help               Show this help message"
     Write-Host ""
     Write-Host "Prerequisites:" -ForegroundColor Yellow
     Write-Host "  Run " -NoNewline
@@ -197,9 +251,11 @@ function Show-Help {
     Write-Host " first to set up the development environment"
     Write-Host ""
     Write-Host "What this script does:" -ForegroundColor Yellow
-    Write-Host "  1. Checks that prerequisites are installed (.NET 9, Aspire workload)"
+    Write-Host "  1. Checks that prerequisites are installed (.NET 9)"
     Write-Host "  2. Verifies the project builds successfully"
     Write-Host "  3. Starts the Aspire Dashboard with all services"
+    Write-Host "     - Default: dotnet watch run (hot reload)"
+    Write-Host "     - Use -NoWatch to disable hot reload"
     Write-Host ""
     Write-Host "Troubleshooting:" -ForegroundColor Yellow
     Write-Host "  • If you get 'command not found' errors, run " -NoNewline
@@ -213,7 +269,8 @@ function Show-Help {
 # Main execution
 function Main {
     param(
-        [switch]$Help
+        [switch]$Help,
+        [switch]$NoWatch
     )
     
     # Check for help flag
@@ -225,9 +282,9 @@ function Main {
     Write-LogSection "Privatekonomi Application Startup"
     
     try {
-        Test-Prerequisites
-        Test-QuickBuild
-        Start-Application
+    Test-Prerequisites
+    Test-QuickBuild
+    Start-Application -UseWatch:(-not $NoWatch)
     }
     catch {
         Write-LogError "Startup failed: $($_.Exception.Message)"
@@ -235,7 +292,7 @@ function Main {
         Write-Host "Common solutions:" -ForegroundColor Yellow
         Write-Host "  • Run '.\local-app-install.ps1' first"
         Write-Host "  • Check that you're in the project root directory"
-        Write-Host "  • Ensure .NET 9 and Aspire workload are installed"
+    Write-Host "  • Ensure .NET 9 is installed"
         Write-Host "  • Try running PowerShell as Administrator"
         Write-Host "  • Check for any build errors in the output above"
         exit 1
@@ -243,4 +300,4 @@ function Main {
 }
 
 # Run main function
-Main -Help:$Help
+Main -Help:$Help -NoWatch:$NoWatch

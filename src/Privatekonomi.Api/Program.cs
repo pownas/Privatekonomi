@@ -6,6 +6,12 @@ using Privatekonomi.Core.Configuration;
 
 var builder = WebApplication.CreateBuilder(args);
 
+if (builder.Environment.IsDevelopment() || string.Equals(builder.Environment.EnvironmentName, "Local", StringComparison.OrdinalIgnoreCase))
+{
+    builder.Configuration.AddJsonFile("appsettings.local.json", optional: true, reloadOnChange: true);
+    builder.Configuration.AddUserSecrets(typeof(Program).Assembly, optional: true);
+}
+
 // Add Aspire service defaults
 builder.AddServiceDefaults();
 
