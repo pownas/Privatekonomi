@@ -350,7 +350,7 @@ html {
     padding-left: var(--view-density-section-padding) !important;
     padding-right: var(--view-density-section-padding) !important;
     padding-bottom: var(--view-density-section-padding) !important;
-    /* padding-top is preserved at 80px from .mud-main-content rule above */
+    padding-top: 80px !important; /* Must maintain for AppBar offset */
 }
 
 /* Apply view density to content gaps and item spacing */
