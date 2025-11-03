@@ -142,7 +142,7 @@ public static class TestDataSeeder
     {
 
         var random = new Random(42); // Fixed seed for reproducible data
-        var startDate = DateTime.UtcNow.AddMonths(-3); // Start from 3 months ago
+        var startDate = DateTime.UtcNow.AddDays(-550); // Start from approximately 18 months ago
 
         var transactions = new List<Transaction>();
         var transactionCategories = new List<TransactionCategory>();
@@ -212,8 +212,8 @@ public static class TestDataSeeder
         int transactionId = 1;
         int transactionCategoryId = 1;
 
-        // Generate 50 transactions
-        for (int i = 0; i < 50; i++)
+        // Generate 300 transactions (approximately 6x more than before to cover 18 months vs 3 months)
+        for (int i = 0; i < 300; i++)
         {
             // Randomly select a category (weighted towards common categories)
             var categoryWeights = new[] { 1, 1, 1, 2, 2, 3, 3, 4, 5, 6, 7, 8, 9, 1, 2 };
@@ -239,8 +239,8 @@ public static class TestDataSeeder
             var range = amountRanges[categoryId];
             var amount = Math.Round(range.min + (decimal)random.NextDouble() * (range.max - range.min), 2);
             
-            // Generate random date within the last 3 months
-            var daysBack = random.Next(0, 90);
+            // Generate random date within the last 18 months (approximately 550 days)
+            var daysBack = random.Next(0, 550);
             var date = startDate.AddDays(daysBack);
             
             // Determine if it's income (category 7 = Lön is always income)
@@ -294,7 +294,7 @@ public static class TestDataSeeder
                 TransactionId = transactionId,
                 Amount = Math.Round(100m + (decimal)random.NextDouble() * 500m, 2),
                 Description = unmappedDescriptions[i],
-                Date = startDate.AddDays(random.Next(0, 90)),
+                Date = startDate.AddDays(random.Next(0, 550)),
                 IsIncome = false,
                 BankSourceId = bankSourceIds[random.Next(bankSourceIds.Length)],
                 Currency = "SEK",
