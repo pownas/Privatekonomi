@@ -13,6 +13,12 @@ using Privatekonomi.Core.Configuration;
 
 var builder = WebApplication.CreateBuilder(args);
 
+if (builder.Environment.IsDevelopment() || string.Equals(builder.Environment.EnvironmentName, "Local", StringComparison.OrdinalIgnoreCase))
+{
+    builder.Configuration.AddJsonFile("appsettings.local.json", optional: true, reloadOnChange: true);
+    builder.Configuration.AddUserSecrets(typeof(Program).Assembly, optional: true);
+}
+
 // Configure Swedish culture as default
 var swedishCulture = new CultureInfo("sv-SE");
 CultureInfo.DefaultThreadCurrentCulture = swedishCulture;

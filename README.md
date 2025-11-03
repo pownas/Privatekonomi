@@ -153,30 +153,27 @@ cd Privatekonomi
 .\app-start.ps1
 ```
 
-Skriptet installerar automatiskt Aspire workload om det behövs och startar Aspire Dashboard som visar alla tjänster, logs, traces och metrics.
+Skriptet säkerställer att .NET 9 finns installerat och startar Aspire Dashboard som visar alla tjänster, logs, traces och metrics.
 
 #### Alternativ 1: Kör med .NET Aspire Orchestrator (Manuellt)
 
 .NET Aspire förenklar hanteringen av alla tjänster och ger inbyggd observerbarhet.
 
-1. Installera Aspire workload:
-```bash
-dotnet workload install aspire
-```
-
-2. Klona repositoriet:
+1. Klona repositoriet:
 ```bash
 git clone https://github.com/pownas/Privatekonomi.git
 cd Privatekonomi
 ```
 
-3. Kör applikationen med Aspire:
+2. Kör applikationen med Aspire:
 ```bash
 cd src/Privatekonomi.AppHost
 dotnet run
 ```
 
-4. Aspire Dashboard öppnas automatiskt och visar alla tjänster, logs, traces och metrics.
+3. Aspire Dashboard öppnas automatiskt och visar alla tjänster, logs, traces och metrics.
+
+> Aspire-funktionaliteten levereras via projektets NuGet-paket – ingen separat workload-installation krävs längre.
 
 Se [ASPIRE_GUIDE.md](docs/ASPIRE_GUIDE.md) för detaljerad information om Aspire-funktionalitet.
 
@@ -218,6 +215,56 @@ dotnet run
 ```
 
 API Swagger-dokumentation finns på: `http://localhost:5000/swagger`
+
+#### Lokal konfiguration (appsettings.local.json & User Secrets)
+
+För lokal utveckling rekommenderas att du lägger dina maskinspecifika inställningar i `appsettings.local.json` och känsliga värden i **User Secrets**. Dessa filer laddas automatiskt när miljön heter `Local` (vilket `local-app-start.ps1` sätter åt dig).
+
+1. **Skapa lokala konfigurationsfiler** (lagras utanför Git):
+  - `src/Privatekonomi.Web/appsettings.local.json`
+  - `src/Privatekonomi.Api/appsettings.local.json` (valfritt om du behöver andra värden i API:t)
+
+  Exempel på innehåll utan hemligheter:
+  ```json
+  {
+    "Storage": {
+     "Provider": "Sqlite",
+     "ConnectionString": "Data Source=C:/Data/privatekonomi-web.db",
+     "SeedTestData": false
+    }
+  }
+  ```
+
+2. **Lägg till hemliga värden via User Secrets** (lagras i `%APPDATA%/Microsoft/UserSecrets/` på Windows):
+  ```powershell
+  # Web-projektet
+  cd src/Privatekonomi.Web
+  dotnet user-secrets init          # Endast första gången – redan satt i repo men skadar inte
+  dotnet user-secrets set "Storage:ConnectionString" "Data Source=C:/Data/privatekonomi-web.db"
+
+  # API-projektet
+  cd ../Privatekonomi.Api
+  dotnet user-secrets init
+  dotnet user-secrets set "Storage:ConnectionString" "Data Source=C:/Data/privatekonomi-api.db"
+  dotnet user-secrets set "Swedbank:ClientId" "din-client-id"
+  dotnet user-secrets set "Swedbank:ClientSecret" "ditt-client-secret"
+  ```
+
+  Använd de nycklar som dokumenteras i respektive guide (t.ex. `docs/BANK_API_CREDENTIALS_GUIDE.md`) för andra hemligheter.
+
+3. **Starta applikationen**:
+  ```powershell
+  cd ../../
+  .\local-app-start.ps1
+  ```
+
+  Skriptet sätter `ASPNETCORE_ENVIRONMENT=Development` och `PRIVATEKONOMI_ENVIRONMENT=Local`, vilket gör att både standardinställningar och dina lokala overrides (appsettings + User Secrets) läses in samtidigt. All annan utveckling (t.ex. i GitHub Codespaces) använder fortsatt miljön `Development`.
+
+  Som standard startar skriptet AppHost med `dotnet watch run` för hot reload. Lägg till flaggan `-NoWatch` om du vill köra utan watch-läget.
+
+  I Aspire Dashboard syns tydligt vilken miljö (`Local/Development/Production`) och vilken lagringsprovider som används via miljövariablerna som exponeras för varje tjänst.
+
+> `appsettings.local.json` finns i `.gitignore`, så du kan tryggt ha lokala inställningar utan risk att lägga dem i en commit.
 
 ### Testdata och Testanvändare
 
