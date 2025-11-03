@@ -47,13 +47,13 @@
                 <MudButton Href="/Account/Login" Color="Color.Inherit" StartIcon="@Icons.Material.Filled.Login">Logga in</MudButton>
             </NotAuthorized>
         </AuthorizeView>
-        <MudTooltip Text="Tangentbordsgenvägar (Ctrl + /)">
+        <MudTooltip Text="Tangentbordsgenvägar (Ctrl + /)" Class="mainlayout-hide-mobile">
             <MudIconButton Icon="@Icons.Material.Filled.Keyboard" 
                            Color="Color.Inherit" 
                            OnClick="@ShowKeyboardShortcuts"
                            aria-label="Tangentbordsgenvägar" />
         </MudTooltip>
-        <MudTooltip Text="@(_isCompactView ? "Luftig vy" : "Kompakt vy")">
+        <MudTooltip Text="@(_isCompactView ? "Luftig vy" : "Kompakt vy")" Class="mainlayout-hide-mobile">
             <MudIconButton Icon="@(_isCompactView ? Icons.Material.Filled.ViewComfy : Icons.Material.Filled.ViewCompact)" 
                            Color="Color.Inherit" 
                            OnClick="@ToggleViewDensity" 
@@ -207,9 +207,20 @@
                 // Get the initial view density that was already applied in the head script
                 _isCompactView = await JSRuntime.InvokeAsync<bool>("viewDensityManager.getInitialViewDensity");
                 
-                // If no saved preference exists, save the default (spacious)
+                // Persist preference unless we force spacious view on small screens
                 var hasViewDensityPreference = await JSRuntime.InvokeAsync<bool>("viewDensityManager.hasPreference");
-                if (!hasViewDensityPreference)
+                var isSmallScreen = await JSRuntime.InvokeAsync<bool>("viewDensityManager.isSmallScreen");
+
+                if (isSmallScreen)
+                {
+                    if (_isCompactView)
+                    {
+                        _isCompactView = false;
+                    }
+
+                    await JSRuntime.InvokeVoidAsync("viewDensityManager.setViewDensity", false);
+                }
+                else if (!hasViewDensityPreference)
                 {
                     await JSRuntime.InvokeVoidAsync("viewDensityManager.setViewDensity", _isCompactView);
                 }
@@ -265,6 +276,19 @@
     
     private async Task ToggleViewDensity()
     {
+        var isSmallScreen = await JSRuntime.InvokeAsync<bool>("viewDensityManager.isSmallScreen");
+        if (isSmallScreen)
+        {
+            if (_isCompactView)
+            {
+                _isCompactView = false;
+                ViewDensityService.ViewDensity = ViewDensity.Spacious;
+                await JSRuntime.InvokeVoidAsync("viewDensityManager.setViewDensity", false);
+            }
+
+            return;
+        }
+
         _isCompactView = !_isCompactView;
         ViewDensityService.ViewDensity = _isCompactView ? ViewDensity.Compact : ViewDensity.Spacious;
         
