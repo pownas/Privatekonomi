@@ -1,0 +1,284 @@
+@page "/notification-test"
+@using Privatekonomi.Core.Services
+@using Privatekonomi.Web.Services
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+@inject INotificationService NotificationService
+@inject ICurrentUserService CurrentUserService
+@inject ISnackbar Snackbar
+
+<PageTitle>Testa Notifikationer</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+    <MudText Typo="Typo.h4" GutterBottom="true">
+        <MudIcon Icon="@Icons.Material.Filled.NotificationAdd" Class="mr-2" />
+        Testa Notifikationssystem
+    </MudText>
+
+    <MudText Typo="Typo.body1" Class="mb-4">
+        Testa olika typer av notifikationer för att se hur de visas i real-time.
+    </MudText>
+
+    <MudPaper Class="pa-4 mb-4">
+        <MudText Typo="Typo.h6" GutterBottom="true">Budget & Ekonomi</MudText>
+        <MudGrid>
+            <MudItem xs="12" sm="6" md="4">
+                <MudButton Variant="Variant.Filled" 
+                           Color="Color.Error" 
+                           FullWidth="true"
+                           OnClick="@(() => TestBudgetExceeded())"
+                           StartIcon="@Icons.Material.Filled.MoneyOff">
+                    Budgetöverdrag
+                </MudButton>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="4">
+                <MudButton Variant="Variant.Filled" 
+                           Color="Color.Warning" 
+                           FullWidth="true"
+                           OnClick="@(() => TestBudgetWarning())"
+                           StartIcon="@Icons.Material.Filled.Warning">
+                    Budgetvarning
+                </MudButton>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="4">
+                <MudButton Variant="Variant.Filled" 
+                           Color="Color.Error" 
+                           FullWidth="true"
+                           OnClick="@(() => TestLowBalance())"
+                           StartIcon="@Icons.Material.Filled.AccountBalance">
+                    Låg balans
+                </MudButton>
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+
+    <MudPaper Class="pa-4 mb-4">
+        <MudText Typo="Typo.h6" GutterBottom="true">Sparmål & Framsteg</MudText>
+        <MudGrid>
+            <MudItem xs="12" sm="6" md="4">
+                <MudButton Variant="Variant.Filled" 
+                           Color="Color.Success" 
+                           FullWidth="true"
+                           OnClick="@(() => TestGoalAchieved())"
+                           StartIcon="@Icons.Material.Filled.EmojiEvents">
+                    Sparmål uppnått
+                </MudButton>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="4">
+                <MudButton Variant="Variant.Filled" 
+                           Color="Color.Info" 
+                           FullWidth="true"
+                           OnClick="@(() => TestGoalMilestone())"
+                           StartIcon="@Icons.Material.Filled.TrendingUp">
+                    Sparmål milstolpe
+                </MudButton>
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+
+    <MudPaper Class="pa-4 mb-4">
+        <MudText Typo="Typo.h6" GutterBottom="true">Bank & Transaktioner</MudText>
+        <MudGrid>
+            <MudItem xs="12" sm="6" md="4">
+                <MudButton Variant="Variant.Filled" 
+                           Color="Color.Error" 
+                           FullWidth="true"
+                           OnClick="@(() => TestBankSyncError())"
+                           StartIcon="@Icons.Material.Filled.SyncProblem">
+                    Synkfel
+                </MudButton>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="4">
+                <MudButton Variant="Variant.Filled" 
+                           Color="Color.Success" 
+                           FullWidth="true"
+                           OnClick="@(() => TestBankSyncSuccess())"
+                           StartIcon="@Icons.Material.Filled.Sync">
+                    Synk lyckades
+                </MudButton>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="4">
+                <MudButton Variant="Variant.Filled" 
+                           Color="Color.Warning" 
+                           FullWidth="true"
+                           OnClick="@(() => TestLargeTransaction())"
+                           StartIcon="@Icons.Material.Filled.Receipt">
+                    Stor transaktion
+                </MudButton>
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+
+    <MudPaper Class="pa-4 mb-4">
+        <MudText Typo="Typo.h6" GutterBottom="true">Räkningar & Prenumerationer</MudText>
+        <MudGrid>
+            <MudItem xs="12" sm="6" md="4">
+                <MudButton Variant="Variant.Filled" 
+                           Color="Color.Info" 
+                           FullWidth="true"
+                           OnClick="@(() => TestUpcomingBill())"
+                           StartIcon="@Icons.Material.Filled.Event">
+                    Kommande räkning
+                </MudButton>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="4">
+                <MudButton Variant="Variant.Filled" 
+                           Color="Color.Warning" 
+                           FullWidth="true"
+                           OnClick="@(() => TestSubscriptionPriceIncrease())"
+                           StartIcon="@Icons.Material.Filled.TrendingUp">
+                    Prenumerationspris ökat
+                </MudButton>
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+
+    <MudAlert Severity="Severity.Info" Class="mt-4">
+        <MudText Typo="Typo.body2">
+            <strong>Tips:</strong> Notifikationer visas som toast-meddelanden i nedre högra hörnet 
+            och räknaren i klockan uppdateras automatiskt i real-time.
+        </MudText>
+    </MudAlert>
+</MudContainer>
+
+@code {
+    private async Task TestBudgetExceeded()
+    {
+        var userId = CurrentUserService.UserId;
+        if (userId != null)
+        {
+            await NotificationService.NotifyBudgetExceededAsync(
+                userId,
+                "Mat & Dryck",
+                5000,
+                6500);
+            Snackbar.Add("Notifikation skickad!", Severity.Success);
+        }
+    }
+
+    private async Task TestBudgetWarning()
+    {
+        var userId = CurrentUserService.UserId;
+        if (userId != null)
+        {
+            await NotificationService.NotifyBudgetWarningAsync(
+                userId,
+                "Shopping",
+                2000,
+                1750,
+                87.5m);
+            Snackbar.Add("Notifikation skickad!", Severity.Success);
+        }
+    }
+
+    private async Task TestLowBalance()
+    {
+        var userId = CurrentUserService.UserId;
+        if (userId != null)
+        {
+            await NotificationService.NotifyLowBalanceAsync(
+                userId,
+                "Swedbank",
+                450,
+                1000);
+            Snackbar.Add("Notifikation skickad!", Severity.Success);
+        }
+    }
+
+    private async Task TestGoalAchieved()
+    {
+        var userId = CurrentUserService.UserId;
+        if (userId != null)
+        {
+            await NotificationService.NotifyGoalAchievedAsync(
+                userId,
+                "Semesterresa till Thailand",
+                15000);
+            Snackbar.Add("Notifikation skickad!", Severity.Success);
+        }
+    }
+
+    private async Task TestGoalMilestone()
+    {
+        var userId = CurrentUserService.UserId;
+        if (userId != null)
+        {
+            await NotificationService.NotifyGoalMilestoneAsync(
+                userId,
+                "Ny bil",
+                50000,
+                100000,
+                50);
+            Snackbar.Add("Notifikation skickad!", Severity.Success);
+        }
+    }
+
+    private async Task TestBankSyncError()
+    {
+        var userId = CurrentUserService.UserId;
+        if (userId != null)
+        {
+            await NotificationService.NotifyBankSyncErrorAsync(
+                userId,
+                "Nordea",
+                "Ogiltig token. Vänligen logga in igen.");
+            Snackbar.Add("Notifikation skickad!", Severity.Success);
+        }
+    }
+
+    private async Task TestBankSyncSuccess()
+    {
+        var userId = CurrentUserService.UserId;
+        if (userId != null)
+        {
+            await NotificationService.NotifyBankSyncSuccessAsync(
+                userId,
+                "SEB",
+                24);
+            Snackbar.Add("Notifikation skickad!", Severity.Success);
+        }
+    }
+
+    private async Task TestLargeTransaction()
+    {
+        var userId = CurrentUserService.UserId;
+        if (userId != null)
+        {
+            await NotificationService.NotifyLargeTransactionAsync(
+                userId,
+                12500,
+                "IKEA Stockholm",
+                DateTime.Today);
+            Snackbar.Add("Notifikation skickad!", Severity.Success);
+        }
+    }
+
+    private async Task TestUpcomingBill()
+    {
+        var userId = CurrentUserService.UserId;
+        if (userId != null)
+        {
+            await NotificationService.NotifyUpcomingBillAsync(
+                userId,
+                "Hyra",
+                8500,
+                DateTime.Today.AddDays(5));
+            Snackbar.Add("Notifikation skickad!", Severity.Success);
+        }
+    }
+
+    private async Task TestSubscriptionPriceIncrease()
+    {
+        var userId = CurrentUserService.UserId;
+        if (userId != null)
+        {
+            await NotificationService.NotifySubscriptionPriceIncreaseAsync(
+                userId,
+                "Netflix Premium",
+                169,
+                189,
+                DateTime.Today.AddDays(30));
+            Snackbar.Add("Notifikation skickad!", Severity.Success);
+        }
+    }
+}

@@ -31,6 +31,9 @@ builder.AddServiceDefaults();
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
+// Add SignalR for real-time notifications
+builder.Services.AddSignalR();
+
 // Configure Blazor Server options for better error handling
 builder.Services.Configure<Microsoft.AspNetCore.Components.Server.CircuitOptions>(options =>
 {
@@ -122,7 +125,22 @@ builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
 builder.Services.AddScoped<IBillService, BillService>();
 builder.Services.AddScoped<IPensionService, PensionService>();
 builder.Services.AddScoped<IDividendService, DividendService>();
-builder.Services.AddScoped<INotificationService, NotificationService>();
+
+// Register base notification service
+builder.Services.AddScoped<NotificationService>();
+
+// Register broadcaster as singleton (shared across all requests)
+builder.Services.AddSingleton<INotificationBroadcaster, NotificationBroadcaster>();
+
+// Register the realtime wrapper as the INotificationService implementation
+builder.Services.AddScoped<INotificationService>(sp =>
+{
+    var innerService = sp.GetRequiredService<NotificationService>();
+    var broadcaster = sp.GetRequiredService<INotificationBroadcaster>();
+    var logger = sp.GetRequiredService<ILogger<RealtimeNotificationService>>();
+    return new RealtimeNotificationService(innerService, broadcaster, logger);
+});
+
 builder.Services.AddScoped<INotificationPreferenceService, NotificationPreferenceService>();
 builder.Services.AddScoped<ILifeTimelinePlannerService, LifeTimelinePlannerService>();
 builder.Services.AddScoped<ISavingsChallengeService, SavingsChallengeService>();
@@ -249,6 +267,9 @@ app.UseAuthorization();
 app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
+
+// Add SignalR hub for real-time notifications
+app.MapHub<Privatekonomi.Web.Hubs.NotificationHub>("/notificationHub");
 
 // Add Identity endpoints
 app.MapGroup("/Account").MapIdentityApi<ApplicationUser>();
