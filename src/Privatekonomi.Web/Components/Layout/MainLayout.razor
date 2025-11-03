@@ -5,6 +5,7 @@
 @using Privatekonomi.Core.Configuration
 @using Privatekonomi.Core.Services.Persistence
 @using Privatekonomi.Core.Data
+@using Privatekonomi.Web.Services
 @using Privatekonomi.Web.Components.Dialogs
 @inject ThemeService ThemeService
 @inject ViewDensityService ViewDensityService
@@ -72,7 +73,7 @@
         <NavMenu />
     </MudDrawer>
     
-    <MudMainContent Class="pa-3 pa-md-6">
+    <MudMainContent Class="px-2 px-md-6">
         @Body
     </MudMainContent>
 </MudLayout>
