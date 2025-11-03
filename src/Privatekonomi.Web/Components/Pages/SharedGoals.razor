@@ -1,3 +1,4 @@
+@page "/savings/shared-goals"
 @page "/sharedgoals"
 @rendermode InteractiveServer
 @inject ISharedGoalService SharedGoalService
@@ -20,7 +21,7 @@
 @if (_unreadNotificationCount > 0)
 {
     <MudAlert Severity="Severity.Info" Class="mb-4">
-        Du har @_unreadNotificationCount olästa notifieringar. <MudLink Href="/sharedgoals/notifications">Visa alla notifieringar</MudLink>
+        Du har @_unreadNotificationCount olästa notifieringar. <MudLink Href="/savings/shared-goals/notifications">Visa alla notifieringar</MudLink>
     </MudAlert>
 }
 
@@ -276,7 +277,7 @@ else
 
     private void NavigateToDetails(int sharedGoalId)
     {
-        NavigationManager.NavigateTo($"/sharedgoals/{sharedGoalId}");
+    NavigationManager.NavigateTo($"/savings/shared-goals/{sharedGoalId}");
     }
 
     private double GetProgress(SharedGoal goal)

@@ -1,3 +1,4 @@
+@page "/family/households"
 @page "/households"
 @using Privatekonomi.Core.Models
 @using Privatekonomi.Core.Services
@@ -127,7 +128,7 @@
 
     private void ViewHousehold(int householdId)
     {
-        NavigationManager.NavigateTo($"/households/{householdId}");
+    NavigationManager.NavigateTo($"/family/households/{householdId}");
     }
 
     private async Task DeleteHousehold(int householdId)

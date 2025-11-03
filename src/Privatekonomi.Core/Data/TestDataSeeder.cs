@@ -2429,7 +2429,7 @@ public static class TestDataSeeder
                 IsRead = false,
                 Channel = NotificationChannel.InApp,
                 Priority = NotificationPriority.High,
-                ActionUrl = "/bills",
+                ActionUrl = "/economy/bills",
                 SentAt = DateTime.UtcNow.AddDays(-1),
                 CreatedAt = DateTime.UtcNow.AddDays(-1)
             },
@@ -2443,7 +2443,7 @@ public static class TestDataSeeder
                 IsRead = false,
                 Channel = NotificationChannel.InApp,
                 Priority = NotificationPriority.Normal,
-                ActionUrl = "/goals",
+                ActionUrl = "/savings/goals",
                 SentAt = DateTime.UtcNow.AddHours(-5),
                 CreatedAt = DateTime.UtcNow.AddHours(-5)
             },
@@ -2457,7 +2457,7 @@ public static class TestDataSeeder
                 IsRead = true,
                 Channel = NotificationChannel.InApp,
                 Priority = NotificationPriority.Low,
-                ActionUrl = "/subscriptions",
+                ActionUrl = "/economy/subscriptions",
                 ReadAt = DateTime.UtcNow.AddDays(-2),
                 SentAt = DateTime.UtcNow.AddDays(-3),
                 CreatedAt = DateTime.UtcNow.AddDays(-3)
@@ -2472,7 +2472,7 @@ public static class TestDataSeeder
                 IsRead = true,
                 Channel = NotificationChannel.InApp,
                 Priority = NotificationPriority.Normal,
-                ActionUrl = "/investments",
+                ActionUrl = "/investments/overview",
                 ReadAt = DateTime.UtcNow.AddDays(-6),
                 SentAt = DateTime.UtcNow.AddDays(-7),
                 CreatedAt = DateTime.UtcNow.AddDays(-7)
@@ -2487,7 +2487,7 @@ public static class TestDataSeeder
                 IsRead = false,
                 Channel = NotificationChannel.InApp,
                 Priority = NotificationPriority.High,
-                ActionUrl = "/budgets",
+                ActionUrl = "/economy/budgets",
                 SentAt = DateTime.UtcNow.AddHours(-12),
                 CreatedAt = DateTime.UtcNow.AddHours(-12)
             },
@@ -2501,7 +2501,7 @@ public static class TestDataSeeder
                 IsRead = true,
                 Channel = NotificationChannel.InApp,
                 Priority = NotificationPriority.Low,
-                ActionUrl = "/challenges",
+                ActionUrl = "/savings/challenges",
                 ReadAt = DateTime.UtcNow.AddDays(-1),
                 SentAt = DateTime.UtcNow.AddDays(-2),
                 CreatedAt = DateTime.UtcNow.AddDays(-2)

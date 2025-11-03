@@ -78,6 +78,13 @@ window.viewDensityManager = {
         } else {
             return false; // false = spacious (default)
         }
+    },
+    isSmallScreen: function() {
+        if (window.matchMedia) {
+            return window.matchMedia('(max-width: 640px)').matches;
+        }
+
+        return window.innerWidth <= 640;
     }
 };
 

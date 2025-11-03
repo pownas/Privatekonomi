@@ -1,3 +1,4 @@
+@page "/categories/summary"
 @page "/categories-summary"
 @rendermode InteractiveServer
 @inject ICategoryService CategoryService
@@ -290,7 +291,7 @@ else
 
     private void NavigateToCategory(int categoryId)
     {
-        NavigationManager.NavigateTo($"/category-overview?categoryId={categoryId}&months={_selectedMonths}");
+        NavigationManager.NavigateTo($"/categories/overview?categoryId={categoryId}&months={_selectedMonths}");
     }
 
     private class MonthlyTotalData

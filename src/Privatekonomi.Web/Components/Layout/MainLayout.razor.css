@@ -36,6 +36,11 @@ main {
         text-overflow: ellipsis;
     }
 
+    .mainlayout-hide-mobile {
+        display: inline-flex;
+        align-items: center;
+    }
+
 @media (max-width: 640.98px) {
     .top-row {
         justify-content: space-between;
@@ -44,6 +49,10 @@ main {
     .top-row ::deep a, .top-row ::deep .btn-link {
         margin-left: 0;
     }
+
+        .mainlayout-hide-mobile {
+            display: none !important;
+        }
 }
 
 @media (min-width: 641px) {
