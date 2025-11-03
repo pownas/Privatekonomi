@@ -344,10 +344,13 @@ html {
     padding: var(--view-density-card-padding) !important;
 }
 
-/* Apply view density to main content sections */
+/* Apply view density to main content sections - preserve padding-top for AppBar offset */
 .mud-main-content.pa-3,
 .mud-main-content.pa-md-6 {
-    padding: var(--view-density-section-padding) !important;
+    padding-left: var(--view-density-section-padding) !important;
+    padding-right: var(--view-density-section-padding) !important;
+    padding-bottom: var(--view-density-section-padding) !important;
+    /* padding-top is preserved at 80px from .mud-main-content rule above */
 }
 
 /* Apply view density to content gaps and item spacing */
