@@ -4,7 +4,7 @@
 <MudNavMenu Class="nav-menu">
     <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Dashboard">Dashboard</MudNavLink>
     
-    <MudNavGroup Title="Ekonomi" Icon="@Icons.Material.Filled.AccountBalance" Expanded="true">
+    <MudNavGroup Title="Ekonomi" Icon="@Icons.Material.Filled.AccountBalance" Expanded="@IsGroupExpanded(EconomyKey)" ExpandedChanged="@(expanded => OnGroupExpandedChanged(EconomyKey, expanded))">
         <MudNavLink Href="/transactions" Icon="@Icons.Material.Filled.List">Transaktioner</MudNavLink>
         <MudNavLink Href="/transactions/calendar" Icon="@Icons.Material.Filled.CalendarMonth">Kalendervy</MudNavLink>
         <MudNavLink Href="/transactions/new" Icon="@Icons.Material.Filled.Add">Ny Transaktion</MudNavLink>
@@ -20,7 +20,7 @@
         <MudNavLink Href="/health-score" Icon="@Icons.Material.Filled.MonitorHeart">Ekonomisk Hälsa</MudNavLink>
     </MudNavGroup>
 
-    <MudNavGroup Title="Sparande" Icon="@Icons.Material.Filled.Savings" Expanded="false">
+    <MudNavGroup Title="Sparande" Icon="@Icons.Material.Filled.Savings" Expanded="@IsGroupExpanded(SavingsKey)" ExpandedChanged="@(expanded => OnGroupExpandedChanged(SavingsKey, expanded))">
         <MudNavLink Href="/goals" Icon="@Icons.Material.Filled.EmojiEvents">Sparmål</MudNavLink>
         <MudNavLink Href="/savingschallenges" Icon="@Icons.Material.Filled.Flag">Sparmåls-utmaningar</MudNavLink>
         <MudNavLink Href="/sharedgoals" Icon="@Icons.Material.Filled.Groups">Gemensamma Sparmål</MudNavLink>
@@ -28,11 +28,11 @@
         <MudNavLink Href="/lifetimeline" Icon="@Icons.Material.Filled.Timeline">Livslinjeplanering</MudNavLink>
     </MudNavGroup>
 
-    <MudNavGroup Title="Socialt" Icon="@Icons.Material.Filled.Share" Expanded="false">
+    <MudNavGroup Title="Socialt" Icon="@Icons.Material.Filled.Share" Expanded="@IsGroupExpanded(SocialKey)" ExpandedChanged="@(expanded => OnGroupExpandedChanged(SocialKey, expanded))">
         <MudNavLink Href="/privacy-settings" Icon="@Icons.Material.Filled.Security">Integritetsinställningar</MudNavLink>
     </MudNavGroup>
 
-    <MudNavGroup Title="Investeringar & Tillgångar" Icon="@Icons.Material.Filled.TrendingUp" Expanded="false">
+    <MudNavGroup Title="Investeringar & Tillgångar" Icon="@Icons.Material.Filled.TrendingUp" Expanded="@IsGroupExpanded(InvestmentsKey)" ExpandedChanged="@(expanded => OnGroupExpandedChanged(InvestmentsKey, expanded))">
         <MudNavLink Href="/investments" Icon="@Icons.Material.Filled.ShowChart">Aktier & Fonder</MudNavLink>
         <MudNavLink Href="/pensions" Icon="@Icons.Material.Filled.Elderly">Pension</MudNavLink>
         <MudNavLink Href="/assets" Icon="@Icons.Material.Filled.BusinessCenter">Tillgångar</MudNavLink>
@@ -40,7 +40,7 @@
         <MudNavLink Href="/loans" Icon="@Icons.Material.Filled.CreditCard">Lån & Krediter</MudNavLink>
     </MudNavGroup>
 
-    <MudNavGroup Title="Kategorier" Icon="@Icons.Material.Filled.Category" Expanded="false">
+    <MudNavGroup Title="Kategorier" Icon="@Icons.Material.Filled.Category" Expanded="@IsGroupExpanded(CategoriesKey)" ExpandedChanged="@(expanded => OnGroupExpandedChanged(CategoriesKey, expanded))">
         <MudNavLink Href="/categories" Icon="@Icons.Material.Filled.Label">Hantera Kategorier</MudNavLink>
         <MudNavLink Href="/tags" Icon="@Icons.Material.Filled.LocalOffer">Taggar</MudNavLink>
         <MudNavLink Href="/category-overview" Icon="@Icons.Material.Filled.InsertChart">Kategoriöversikt</MudNavLink>
@@ -48,18 +48,18 @@
         <MudNavLink Href="/category-rules" Icon="@Icons.Material.Filled.AutoAwesome">Kategoriseringsregler</MudNavLink>
     </MudNavGroup>
 
-    <MudNavGroup Title="Familj & Hushåll" Icon="@Icons.Material.Filled.Home" Expanded="false">
+    <MudNavGroup Title="Familj & Hushåll" Icon="@Icons.Material.Filled.Home" Expanded="@IsGroupExpanded(FamilyKey)" ExpandedChanged="@(expanded => OnGroupExpandedChanged(FamilyKey, expanded))">
         <MudNavLink Href="/households" Icon="@Icons.Material.Filled.Group">Hushåll</MudNavLink>
         <MudNavLink Href="/salary-history" Icon="@Icons.Material.Filled.WorkHistory">Löneutveckling</MudNavLink>
     </MudNavGroup>
     
-    <MudNavGroup Title="Skattedeklaration" Icon="@Icons.Material.Filled.Description" Expanded="false">
+    <MudNavGroup Title="Skattedeklaration" Icon="@Icons.Material.Filled.Description" Expanded="@IsGroupExpanded(TaxKey)" ExpandedChanged="@(expanded => OnGroupExpandedChanged(TaxKey, expanded))">
         <MudNavLink Href="/tax-deductions" Icon="@Icons.Material.Filled.HomeRepairService">ROT/RUT-avdrag</MudNavLink>
         <MudNavLink Href="/k4-report" Icon="@Icons.Material.Filled.Assessment">K4 Kapitalvinster</MudNavLink>
         <MudNavLink Href="/sie-export" Icon="@Icons.Material.Filled.Download">SIE-export</MudNavLink>
     </MudNavGroup>
 
-    <MudNavGroup Title="Administration" Icon="@Icons.Material.Filled.Settings" Expanded="false">
+    <MudNavGroup Title="Administration" Icon="@Icons.Material.Filled.Settings" Expanded="@IsGroupExpanded(AdministrationKey)" ExpandedChanged="@(expanded => OnGroupExpandedChanged(AdministrationKey, expanded))">
         <MudNavLink Href="/notifications" Icon="@Icons.Material.Filled.Notifications">Notifikationer</MudNavLink>
         <MudNavLink Href="/bank-connections" Icon="@Icons.Material.Filled.CloudSync">Bankkopplingar</MudNavLink>
         <MudNavLink Href="/import" Icon="@Icons.Material.Filled.Upload">Importera CSV</MudNavLink>
@@ -68,14 +68,241 @@
 </MudNavMenu>
 
 @code {
+    private const string EconomyKey = "economy";
+    private const string SavingsKey = "savings";
+    private const string SocialKey = "social";
+    private const string InvestmentsKey = "investments";
+    private const string CategoriesKey = "categories";
+    private const string FamilyKey = "family";
+    private const string TaxKey = "tax";
+    private const string AdministrationKey = "administration";
+
+    private string? activeGroupKey = EconomyKey;
+
+    private static readonly string[] EconomyRoutes = new[]
+    {
+        "transactions",
+        "transactions/calendar",
+        "transactions/new",
+        "budgets",
+        "budgets/konsumentverket-comparison",
+        "budgets/kalp-comparison",
+        "receipts",
+        "bills",
+        "subscriptions",
+        "cashflow/sankey",
+        "balancesheet",
+        "networth-chart",
+        "health-score",
+    };
+
+    private static readonly string[] SavingsRoutes = new[]
+    {
+        "goals",
+        "savingschallenges",
+        "sharedgoals",
+        "pockets",
+        "lifetimeline",
+    };
+
+    private static readonly string[] SocialRoutes = new[]
+    {
+        "privacy-settings",
+    };
+
+    private static readonly string[] InvestmentsRoutes = new[]
+    {
+        "investments",
+        "pensions",
+        "assets",
+        "currencies",
+        "loans",
+    };
+
+    private static readonly string[] CategoriesRoutes = new[]
+    {
+        "categories",
+        "tags",
+        "category-overview",
+        "categories-summary",
+        "category-rules",
+    };
+
+    private static readonly string[] FamilyRoutes = new[]
+    {
+        "households",
+        "salary-history",
+    };
+
+    private static readonly string[] TaxRoutes = new[]
+    {
+        "tax-deductions",
+        "k4-report",
+        "sie-export",
+    };
+
+    private static readonly string[] AdministrationRoutes = new[]
+    {
+        "notifications",
+        "bank-connections",
+        "import",
+        "data-management",
+    };
+
+    private string currentPath = string.Empty;
+
     protected override void OnInitialized()
     {
+        UpdateCurrentPath(NavigationManager.Uri);
+        EnsureGroupForCurrentRoute();
         NavigationManager.LocationChanged += OnLocationChanged;
     }
 
     private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
     {
+        UpdateCurrentPath(e.Location);
+        EnsureGroupForCurrentRoute();
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    private void UpdateCurrentPath(string uri)
+    {
+        var relative = NavigationManager.ToBaseRelativePath(uri) ?? string.Empty;
+
+        var queryIndex = relative.IndexOf('?', System.StringComparison.Ordinal);
+        if (queryIndex >= 0)
+        {
+            relative = relative[..queryIndex];
+        }
+
+        var fragmentIndex = relative.IndexOf('#', System.StringComparison.Ordinal);
+        if (fragmentIndex >= 0)
+        {
+            relative = relative[..fragmentIndex];
+        }
+
+        currentPath = relative.Trim('/');
+    }
+
+    private void EnsureGroupForCurrentRoute()
+    {
+        var groupKey = GetGroupKeyForCurrentPath();
+        if (groupKey is null)
+        {
+            return;
+        }
+
+        activeGroupKey = groupKey;
+    }
+
+    private string? GetGroupKeyForCurrentPath()
+    {
+        if (MatchesRoutes(EconomyRoutes))
+        {
+            return EconomyKey;
+        }
+
+        if (MatchesRoutes(SavingsRoutes))
+        {
+            return SavingsKey;
+        }
+
+        if (MatchesRoutes(SocialRoutes))
+        {
+            return SocialKey;
+        }
+
+        if (MatchesRoutes(InvestmentsRoutes))
+        {
+            return InvestmentsKey;
+        }
+
+        if (MatchesRoutes(CategoriesRoutes))
+        {
+            return CategoriesKey;
+        }
+
+        if (MatchesRoutes(FamilyRoutes))
+        {
+            return FamilyKey;
+        }
+
+        if (MatchesRoutes(TaxRoutes))
+        {
+            return TaxKey;
+        }
+
+        if (MatchesRoutes(AdministrationRoutes))
+        {
+            return AdministrationKey;
+        }
+
+        return null;
+    }
+
+    private bool MatchesRoutes(string[]? routes)
+    {
+        if (routes is null || routes.Length == 0)
+        {
+            return false;
+        }
+
+        foreach (var route in routes)
+        {
+            if (RouteMatches(route))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private bool RouteMatches(string? route)
+    {
+        if (string.IsNullOrWhiteSpace(route))
+        {
+            return string.IsNullOrEmpty(currentPath);
+        }
+
+        var normalizedRoute = route.Trim('/');
+        if (string.IsNullOrEmpty(normalizedRoute))
+        {
+            return string.IsNullOrEmpty(currentPath);
+        }
+
+        if (string.IsNullOrEmpty(currentPath))
+        {
+            return false;
+        }
+
+        if (currentPath.Equals(normalizedRoute, System.StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        return currentPath.StartsWith(normalizedRoute + "/", System.StringComparison.OrdinalIgnoreCase);
+    }
+
+    private void OnGroupExpandedChanged(string key, bool expanded)
+    {
+        if (!expanded)
+        {
+            if (string.Equals(activeGroupKey, key, System.StringComparison.OrdinalIgnoreCase))
+            {
+                activeGroupKey = null;
+            }
+            StateHasChanged();
+            return;
+        }
+
+        activeGroupKey = key;
         StateHasChanged();
+    }
+
+    private bool IsGroupExpanded(string key)
+    {
+        return !string.IsNullOrEmpty(activeGroupKey) && string.Equals(activeGroupKey, key, System.StringComparison.OrdinalIgnoreCase);
     }
 
     public void Dispose()
