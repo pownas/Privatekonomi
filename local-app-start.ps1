@@ -15,6 +15,10 @@
 # Created: October 23, 2025
 # ============================================================================
 
+param(
+    [switch]$Help
+)
+
 $ErrorActionPreference = "Stop"
 
 # Logging functions with colors
@@ -237,11 +241,6 @@ function Main {
         exit 1
     }
 }
-
-# Handle parameters
-param(
-    [switch]$Help
-)
 
 # Run main function
 Main -Help:$Help
