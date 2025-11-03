@@ -137,7 +137,8 @@ a:hover, .btn-link:hover {
 
 /* Fix for main content to prevent overlap with MudAppBar */
 .mud-main-content {
-    padding-top: 80px !important;
+    padding-top: 16px !important;
+    margin-top: 64px !important;
 }
 
 h1:focus {
