@@ -55,6 +55,32 @@ window.themeManager = {
     }
 };
 
+// View density management functions
+window.viewDensityManager = {
+    getViewDensity: function() {
+        return localStorage.getItem('viewDensity') === 'compact' ? 'compact' : 'spacious';
+    },
+    setViewDensity: function(isCompact) {
+        const density = isCompact ? 'compact' : 'spacious';
+        localStorage.setItem('viewDensity', density);
+        // Apply the view density class immediately
+        document.documentElement.classList.remove('view-density-compact', 'view-density-spacious');
+        document.documentElement.classList.add('view-density-' + density);
+    },
+    hasPreference: function() {
+        return localStorage.getItem('viewDensity') !== null;
+    },
+    // Get the initial view density state (what was pre-applied in the head script)
+    getInitialViewDensity: function() {
+        var viewDensity = localStorage.getItem('viewDensity');
+        if (viewDensity === 'compact') {
+            return true; // true = compact
+        } else {
+            return false; // false = spacious (default)
+        }
+    }
+};
+
 // Keyboard shortcuts manager
 window.keyboardShortcuts = {
     init: function(dotNetHelper) {
