@@ -9,6 +9,12 @@ namespace Privatekonomi.Core.Tests;
 
 public class TestDataSeederTests : IDisposable
 {
+    private const int ExpectedCategorizedTransactions = 300;
+    private const int ExpectedUnmappedTransactions = 5;
+    private const int ExpectedTotalTransactions = ExpectedCategorizedTransactions + ExpectedUnmappedTransactions;
+    private const int ExpectedDateRangeDays = 550; // Approximately 18 months
+    private const int MinimumExpectedDateRangeDays = 500; // Allow some margin for randomness
+    
     private readonly PrivatekonomyContext _context;
     private readonly Mock<UserManager<ApplicationUser>> _mockUserManager;
 
@@ -49,7 +55,7 @@ public class TestDataSeederTests : IDisposable
     {
         // Arrange
         var today = DateTime.UtcNow;
-        var expectedMinDate = today.AddDays(-550); // Approximately 18 months ago
+        var expectedMinDate = today.AddDays(-ExpectedDateRangeDays);
         
         // Act
         await TestDataSeeder.SeedTestDataAsync(_context, _mockUserManager.Object);
@@ -57,9 +63,9 @@ public class TestDataSeederTests : IDisposable
         // Assert
         var transactions = await _context.Transactions.ToListAsync();
         
-        // Should have generated more than 50 transactions (original was 50 for 3 months)
-        Assert.True(transactions.Count >= 300, 
-            $"Expected at least 300 transactions, but got {transactions.Count}");
+        // Should have generated the expected number of transactions
+        Assert.True(transactions.Count >= ExpectedCategorizedTransactions, 
+            $"Expected at least {ExpectedCategorizedTransactions} transactions, but got {transactions.Count}");
         
         // Verify all transaction dates are within the expected range
         foreach (var transaction in transactions)
@@ -75,9 +81,9 @@ public class TestDataSeederTests : IDisposable
         var newestTransaction = transactions.Max(t => t.Date);
         var dateRangeDays = (newestTransaction - oldestTransaction).TotalDays;
         
-        // We expect the range to be close to 550 days (with some margin for randomness)
-        Assert.True(dateRangeDays >= 500, 
-            $"Date range should be at least 500 days, but was {dateRangeDays:F0} days");
+        // We expect the range to be close to ExpectedDateRangeDays (with some margin for randomness)
+        Assert.True(dateRangeDays >= MinimumExpectedDateRangeDays, 
+            $"Date range should be at least {MinimumExpectedDateRangeDays} days, but was {dateRangeDays:F0} days");
     }
 
     [Fact]
@@ -89,8 +95,8 @@ public class TestDataSeederTests : IDisposable
         // Assert
         var transactions = await _context.Transactions.ToListAsync();
         
-        // Should have 300 categorized transactions + 5 unmapped = 305 total
-        Assert.Equal(305, transactions.Count);
+        // Should have the expected total (categorized + unmapped transactions)
+        Assert.Equal(ExpectedTotalTransactions, transactions.Count);
     }
 
     [Fact]
@@ -107,7 +113,7 @@ public class TestDataSeederTests : IDisposable
         var testEndTime = DateTime.UtcNow;
         
         // All transactions should have dates between approximately 18 months ago and now
-        var expectedMinDate = testStartTime.AddDays(-550);
+        var expectedMinDate = testStartTime.AddDays(-ExpectedDateRangeDays);
         var expectedMaxDate = testEndTime;
         
         foreach (var transaction in transactions)
