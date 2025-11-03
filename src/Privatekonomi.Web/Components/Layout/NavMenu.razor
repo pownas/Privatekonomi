@@ -78,6 +78,7 @@
     private const string SettingsKey = "settings";
 
     private string? activeGroupKey = EconomyKey;
+    private string? currentRouteGroupKey;
 
     private static readonly string[] EconomyRoutes = new[]
     {
@@ -237,6 +238,8 @@
     private void EnsureGroupForCurrentRoute()
     {
         var groupKey = GetGroupKeyForCurrentPath();
+        currentRouteGroupKey = groupKey;
+
         if (groupKey is null)
         {
             return;
@@ -357,9 +360,14 @@
 
     private string GetGroupClass(string key)
     {
-        return IsGroupExpanded(key)
+        return IsGroupActive(key)
             ? "nav-group-active"
             : string.Empty;
+    }
+
+    private bool IsGroupActive(string key)
+    {
+        return !string.IsNullOrEmpty(currentRouteGroupKey) && string.Equals(currentRouteGroupKey, key, System.StringComparison.OrdinalIgnoreCase);
     }
 
     public void Dispose()
