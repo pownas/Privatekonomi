@@ -110,7 +110,7 @@
 else
 {
     <!-- Summary Cards -->
-    <MudPaper Class="pa-4 mb-4">
+    <MudPaper Class="pa-4 my-4">
         <MudGrid>
             <MudItem xs="12" md="4">
                 <MudCard Elevation="2" Class="pa-4">
@@ -141,51 +141,10 @@ else
         </MudGrid>
     </MudPaper>
 
-    <!-- Information and External Links Section -->
-    <MudPaper Class="pa-4 mb-4">
-        <MudText Typo="Typo.h6" Class="mb-3">
-            <MudIcon Icon="@Icons.Material.Filled.Info" Class="mr-2" />
-            Information och externa resurser
-        </MudText>
-        <MudGrid>
-            <MudItem xs="12" md="6">
-                <MudAlert Severity="Severity.Info" Class="mb-2">
-                    <MudText Typo="Typo.body2" Class="mb-2">
-                        <strong>Min Pension</strong>
-                    </MudText>
-                    <MudText Typo="Typo.body2">
-                        Få en samlad översikt över hela din pension från olika myndigheter och bolag. 
-                        Här kan du se prognoser och planera för din pension.
-                    </MudText>
-                    <MudButton Href="https://www.minpension.se" Target="_blank" 
-                              Variant="Variant.Text" Color="Color.Primary" 
-                              StartIcon="@Icons.Material.Filled.OpenInNew" Class="mt-2">
-                        Besök minpension.se
-                    </MudButton>
-                </MudAlert>
-            </MudItem>
-            <MudItem xs="12" md="6">
-                <MudAlert Severity="Severity.Info" Class="mb-2">
-                    <MudText Typo="Typo.body2" Class="mb-2">
-                        <strong>Pensionsmyndigheten</strong>
-                    </MudText>
-                    <MudText Typo="Typo.body2">
-                        Lär dig mer om pensionssystemet, hur pensionen räknas ut och hur du kan påverka din pension. 
-                        Hitta information om allmän pension och premiepension.
-                    </MudText>
-                    <MudButton Href="https://www.pensionsmyndigheten.se" Target="_blank" 
-                              Variant="Variant.Text" Color="Color.Primary" 
-                              StartIcon="@Icons.Material.Filled.OpenInNew" Class="mt-2">
-                        Besök pensionsmyndigheten.se
-                    </MudButton>
-                </MudAlert>
-            </MudItem>
-        </MudGrid>
-    </MudPaper>
-
+    <!-- Pension data -->
     @if (!_pensions.Any())
     {
-        <MudPaper Class="pa-8 text-center">
+        <MudPaper Class="pa-4 my-4 text-center">
             <MudIcon Icon="@Icons.Material.Filled.Savings" Size="Size.Large" Color="Color.Default" Class="mb-2" />
             <MudText Typo="Typo.h6" Color="Color.Default" Class="mb-2">Inga pensioner registrerade</MudText>
             <MudText Typo="Typo.body2" Color="Color.Secondary">Lägg till din första pension genom att klicka på "Ny Pension"-knappen.</MudText>
@@ -193,7 +152,7 @@ else
     }
     else
     {
-        <MudTable Items="_pensions" Hover="true" Breakpoint="Breakpoint.Sm" Class="mt-4">
+        <MudTable Items="_pensions" Hover="true" Breakpoint="Breakpoint.Sm" Class="pa-4 my-4">
             <HeaderContent>
                 <MudTh>Namn</MudTh>
                 <MudTh>Typ</MudTh>
@@ -241,11 +200,53 @@ else
             </RowTemplate>
         </MudTable>
     }
+
+    <!-- Information and External Links Section -->
+    <MudPaper Class="pa-4 my-4">
+        <MudText Typo="Typo.h6" Class="mb-3">
+            <MudIcon Icon="@Icons.Material.Filled.Info" Class="mr-2" />
+            Information och externa resurser
+        </MudText>
+        <MudGrid>
+            <MudItem xs="12" md="6">
+                <MudAlert Severity="Severity.Info" Class="mb-2">
+                    <MudText Typo="Typo.body2" Class="mb-2">
+                        <strong>Min Pension</strong>
+                    </MudText>
+                    <MudText Typo="Typo.body2">
+                        Få en samlad översikt över hela din pension från olika myndigheter och bolag. 
+                        Här kan du se prognoser och planera för din pension.
+                    </MudText>
+                    <MudButton Href="https://www.minpension.se" Target="_blank" 
+                              Variant="Variant.Text" Color="Color.Primary" 
+                              StartIcon="@Icons.Material.Filled.OpenInNew" Class="mt-2">
+                        Besök minpension.se
+                    </MudButton>
+                </MudAlert>
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudAlert Severity="Severity.Info" Class="mb-2">
+                    <MudText Typo="Typo.body2" Class="mb-2">
+                        <strong>Pensionsmyndigheten</strong>
+                    </MudText>
+                    <MudText Typo="Typo.body2">
+                        Lär dig mer om pensionssystemet, hur pensionen räknas ut och hur du kan påverka din pension. 
+                        Hitta information om allmän pension och premiepension.
+                    </MudText>
+                    <MudButton Href="https://www.pensionsmyndigheten.se" Target="_blank" 
+                              Variant="Variant.Text" Color="Color.Primary" 
+                              StartIcon="@Icons.Material.Filled.OpenInNew" Class="mt-2">
+                        Besök pensionsmyndigheten.se
+                    </MudButton>
+                </MudAlert>
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
     
     <!-- Recommendations Section -->
     @if (_pensions.Any())
     {
-        <MudPaper Class="pa-4 mb-4 mt-4">
+        <MudPaper Class="pa-4 my-4">
             <MudText Typo="Typo.h6" Class="mb-3">
                 <MudIcon Icon="@Icons.Material.Filled.Lightbulb" Class="mr-2" />
                 Rekommendationer och tips
