@@ -1,6 +1,7 @@
 @page "/economy/transactions/calendar"
 @page "/transactions/calendar"
 @rendermode InteractiveServer
+@using Privatekonomi.Web.Components.Shared
 @inject ITransactionService TransactionService
 @inject ICategoryService CategoryService
 @inject NavigationManager NavigationManager
@@ -113,37 +114,11 @@ else
             }
             else
             {
-                <MudTable Items="@selectedTransactions" Dense="true" Hover="true" Striped="true">
-                    <HeaderContent>
-                        <MudTh>Tid</MudTh>
-                        <MudTh>Beskrivning</MudTh>
-                        <MudTh>Kategori</MudTh>
-                        <MudTh Style="text-align: right">Belopp</MudTh>
-                    </HeaderContent>
-                    <RowTemplate>
-                        <MudTd DataLabel="Tid">@context.Date.ToString("HH:mm")</MudTd>
-                        <MudTd DataLabel="Beskrivning">@context.Description</MudTd>
-                        <MudTd DataLabel="Kategori">
-                            @if (context.TransactionCategories.Any())
-                            {
-                                @foreach (var tc in context.TransactionCategories)
-                                {
-                                    <MudChip T="string" 
-                                            Style="@($"background-color: {tc.Category.Color}; color: white;")" 
-                                            Size="Size.Small"
-                                            Class="mr-1">
-                                        @tc.Category.Name
-                                    </MudChip>
-                                }
-                            }
-                        </MudTd>
-                        <MudTd DataLabel="Belopp" Style="text-align: right">
-                            <MudText Color="@(context.IsIncome ? Color.Success : Color.Error)">
-                                @(context.IsIncome ? "+" : "-")@context.Amount.ToString("C", new System.Globalization.CultureInfo("sv-SE"))
-                            </MudText>
-                        </MudTd>
-                    </RowTemplate>
-                </MudTable>
+                <TransactionListComponent Transactions="@selectedTransactions" 
+                                        Dense="true" 
+                                        ShowDate="false"
+                                        ShowTime="true"
+                                        OnTransactionUpdated="@LoadTransactions" />
                 
                 <div class="d-flex justify-space-between mt-3">
                     <div>

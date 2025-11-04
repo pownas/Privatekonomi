@@ -2,6 +2,7 @@
 @rendermode InteractiveServer
 @using Privatekonomi.Web.Components.Dialogs
 @using Privatekonomi.Web.Components.Widgets
+@using Privatekonomi.Web.Components.Shared
 @using Privatekonomi.Web.Services
 @inject ITransactionService TransactionService
 @inject ICategoryService CategoryService
@@ -432,20 +433,10 @@ else
                                             <ChildContent>
                                                 @if (categoryTransactions.Any())
                                                 {
-                                                    <MudTable Items="@categoryTransactions" Dense="true" Hover="true">
-                                                        <HeaderContent>
-                                                            <MudTh>Datum</MudTh>
-                                                            <MudTh>Beskrivning</MudTh>
-                                                            <MudTh Style="text-align: right">Belopp</MudTh>
-                                                        </HeaderContent>
-                                                        <RowTemplate>
-                                                            <MudTd DataLabel="Datum">@context.Date.ToString("yyyy-MM-dd")</MudTd>
-                                                            <MudTd DataLabel="Beskrivning">@context.Description</MudTd>
-                                                            <MudTd DataLabel="Belopp" Style="text-align: right">
-                                                                @context.Amount.ToString("C", new System.Globalization.CultureInfo("sv-SE"))
-                                                            </MudTd>
-                                                        </RowTemplate>
-                                                    </MudTable>
+                                                    <TransactionListComponent Transactions="@categoryTransactions" 
+                                                                            Dense="true" 
+                                                                            ShowCategory="false"
+                                                                            OnTransactionUpdated="@LoadData" />
                                                 }
                                                 else
                                                 {
@@ -471,32 +462,19 @@ else
                 Det finns @_unmappedTransactions.Count() transaktioner utan kategori. Kategorisera dem för att inkludera i budgetanalys.
             </MudAlert>
             <MudText Typo="Typo.h6" Class="mb-4">Transaktioner utan Kategori</MudText>
-            <MudTable Items="@_unmappedTransactions" Hover="true" Striped="true">
-                <HeaderContent>
-                    <MudTh>Datum</MudTh>
-                    <MudTh>Beskrivning</MudTh>
-                    <MudTh>Belopp</MudTh>
-                    <MudTh>Åtgärd</MudTh>
-                </HeaderContent>
-                <RowTemplate>
-                    <MudTd DataLabel="Datum">@context.Date.ToString("yyyy-MM-dd")</MudTd>
-                    <MudTd DataLabel="Beskrivning">@context.Description</MudTd>
-                    <MudTd DataLabel="Belopp">
-                        <MudText Color="@(context.IsIncome ? Color.Success : Color.Error)">
-                            @(context.IsIncome ? "+" : "-")@context.Amount.ToString("C", new System.Globalization.CultureInfo("sv-SE"))
-                        </MudText>
-                    </MudTd>
-                    <MudTd DataLabel="Åtgärd">
-                        <MudButton Variant="Variant.Text" 
-                                 Color="Color.Primary" 
-                                 Size="Size.Small"
-                                 StartIcon="@Icons.Material.Filled.Category"
-                                 Href="@($"/economy/transactions")">
-                            Kategorisera
-                        </MudButton>
-                    </MudTd>
-                </RowTemplate>
-            </MudTable>
+            <TransactionListComponent Transactions="@_unmappedTransactions" 
+                                    ShowActions="true"
+                                    OnTransactionUpdated="@LoadData">
+                <CustomActions>
+                    <MudButton Variant="Variant.Text" 
+                             Color="Color.Primary" 
+                             Size="Size.Small"
+                             StartIcon="@Icons.Material.Filled.Category"
+                             Href="@($"/economy/transactions")">
+                        Kategorisera
+                    </MudButton>
+                </CustomActions>
+            </TransactionListComponent>
         </MudPaper>
     }
 
@@ -510,41 +488,8 @@ else
         }
         else
         {
-            <MudTable Items="@_transactions.Take(_preferences.RecentTransactionsCount)" Hover="true" Striped="true">
-                <HeaderContent>
-                    <MudTh>Datum</MudTh>
-                    <MudTh>Beskrivning</MudTh>
-                    <MudTh>Kategori</MudTh>
-                    <MudTh Style="text-align: right">Belopp</MudTh>
-                </HeaderContent>
-                <RowTemplate>
-                    <MudTd DataLabel="Datum">@context.Date.ToString("yyyy-MM-dd")</MudTd>
-                    <MudTd DataLabel="Beskrivning">@context.Description</MudTd>
-                    <MudTd DataLabel="Kategori">
-                        @if (context.TransactionCategories.Any())
-                        {
-                            @foreach (var tc in context.TransactionCategories)
-                            {
-                                <MudChip T="string" 
-                                        Style="@($"background-color: {tc.Category.Color}; color: white;")" 
-                                        Size="Size.Small"
-                                        Class="mr-1">
-                                    @tc.Category.Name
-                                </MudChip>
-                            }
-                        }
-                        else
-                        {
-                            <MudChip T="string" Color="Color.Default" Size="Size.Small">Ingen kategori</MudChip>
-                        }
-                    </MudTd>
-                    <MudTd DataLabel="Belopp" Style="text-align: right">
-                        <MudText Color="@(context.IsIncome ? Color.Success : Color.Error)">
-                            @(context.IsIncome ? "+" : "-")@context.Amount.ToString("C", new System.Globalization.CultureInfo("sv-SE"))
-                        </MudText>
-                    </MudTd>
-                </RowTemplate>
-            </MudTable>
+            <TransactionListComponent Transactions="@_transactions.Take(_preferences.RecentTransactionsCount)" 
+                                    OnTransactionUpdated="@LoadData" />
         }
     </MudPaper>
     }
