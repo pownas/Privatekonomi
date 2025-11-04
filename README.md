@@ -109,6 +109,14 @@ En privatekonomi-applikation byggd med .NET 9, Blazor Server och MudBlazor för 
   - Digest-läge för grupperade notifikationer
   - Prioritetsnivåer (Low, Normal, High, Critical)
   - 20+ notifikationstyper (budget, räkningar, sparmål, investeringar, etc.)
+  - **Påminnelser med Snooze-funktionalitet**: ⭐ NYT!
+    - Snooze påminnelser (1 timme, 1 dag, 1 vecka)
+    - Markera som betald direkt från notifikation
+    - Automatisk uppföljning av ohanterade påminnelser
+    - Eskalering för kritiska påminnelser (3, 7 dagar)
+    - Detektion av återkommande snooze-mönster (3+ snooze)
+    - Quick actions: "Markera som betald", "Skapa transaktion"
+    - Se [Påminnelse-hantering guide](docs/REMINDER_SNOOZE_GUIDE.md)
   - Se [Notifikationssystem guide](docs/NOTIFICATION_SYSTEM.md)
 
 ## 🏗️ Arkitektur
