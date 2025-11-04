@@ -2,6 +2,7 @@
 @page "/goals"
 @rendermode InteractiveServer
 @inject IGoalService GoalService
+@inject IGoalMilestoneService GoalMilestoneService
 @inject IBankSourceService BankSourceService
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
@@ -131,6 +132,7 @@ else
             <MudTh>Målbelopp</MudTh>
             <MudTh>Sparat</MudTh>
             <MudTh>Framsteg</MudTh>
+            <MudTh>Milestones</MudTh>
             <MudTh>Målsättningsdatum</MudTh>
             <MudTh>Prioritet</MudTh>
             <MudTh>Sparkonto</MudTh>
@@ -150,6 +152,16 @@ else
                                        Class="flex-grow-1" />
                     <MudText Typo="Typo.body2">@GetProgress(context).ToString("F0")%</MudText>
                 </div>
+            </MudTd>
+            <MudTd DataLabel="Milestones">
+                @if (_goalMilestones.ContainsKey(context.GoalId))
+                {
+                    var milestones = _goalMilestones[context.GoalId];
+                    var reached = milestones.Count(m => m.IsReached);
+                    <MudChip T="string" Size="Size.Small" Color="Color.Success">
+                        @reached/@milestones.Count()
+                    </MudChip>
+                }
             </MudTd>
             <MudTd DataLabel="Målsättningsdatum">
                 @if (context.TargetDate.HasValue)
@@ -183,6 +195,54 @@ else
                 <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" OnClick="@(() => DeleteGoal(context.GoalId))" Color="Color.Error" />
             </MudTd>
         </RowTemplate>
+        <ChildRowContent>
+            @if (_goalMilestones.ContainsKey(context.GoalId))
+            {
+                <MudTr>
+                    <td colspan="10">
+                        <MudCard Elevation="0" Outlined="true" Class="ma-2">
+                            <MudCardHeader>
+                                <MudText Typo="Typo.h6">Målstolpar för @context.Name</MudText>
+                            </MudCardHeader>
+                            <MudCardContent>
+                                <div class="d-flex flex-column gap-3">
+                                    @foreach (var milestone in _goalMilestones[context.GoalId].OrderBy(m => m.Percentage))
+                                    {
+                                        <div class="d-flex align-center gap-3">
+                                            <MudIcon Icon="@(milestone.IsReached ? Icons.Material.Filled.CheckCircle : Icons.Material.Outlined.RadioButtonUnchecked)" 
+                                                     Color="@(milestone.IsReached ? Color.Success : Color.Default)" 
+                                                     Size="Size.Medium" />
+                                            <div class="flex-grow-1">
+                                                <MudText Typo="Typo.body1">
+                                                    <strong>@milestone.Percentage%</strong> (@milestone.TargetAmount.ToString("C", new System.Globalization.CultureInfo("sv-SE")))
+                                                </MudText>
+                                                @if (!string.IsNullOrEmpty(milestone.Description))
+                                                {
+                                                    <MudText Typo="Typo.body2" Color="Color.Secondary">@milestone.Description</MudText>
+                                                }
+                                                @if (milestone.IsReached && milestone.ReachedAt.HasValue)
+                                                {
+                                                    <MudText Typo="Typo.caption" Color="Color.Success">
+                                                        Uppnådd: @milestone.ReachedAt.Value.ToString("yyyy-MM-dd HH:mm")
+                                                    </MudText>
+                                                }
+                                                else if (!milestone.IsReached)
+                                                {
+                                                    var remaining = milestone.TargetAmount - context.CurrentAmount;
+                                                    <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                                        Återstår: @remaining.ToString("C", new System.Globalization.CultureInfo("sv-SE"))
+                                                    </MudText>
+                                                }
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            </MudCardContent>
+                        </MudCard>
+                    </td>
+                </MudTr>
+            }
+        </ChildRowContent>
     </MudTable>
 
     @if (!_goals.Any())
@@ -200,6 +260,7 @@ else
 @code {
     private IEnumerable<Goal> _goals = new List<Goal>();
     private IEnumerable<BankSource> _bankSources = new List<BankSource>();
+    private Dictionary<int, IEnumerable<GoalMilestone>> _goalMilestones = new();
     private bool _loading = true;
     private bool _showCreateForm = false;
     private Goal _formGoal = new();
@@ -215,6 +276,7 @@ else
         _loading = true;
         await LoadGoals();
         await LoadBankSources();
+        await LoadMilestones();
         _loading = false;
     }
 
@@ -230,6 +292,16 @@ else
     private async Task LoadBankSources()
     {
         _bankSources = await BankSourceService.GetAllBankSourcesAsync();
+    }
+    
+    private async Task LoadMilestones()
+    {
+        _goalMilestones.Clear();
+        foreach (var goal in _goals)
+        {
+            var milestones = await GoalMilestoneService.GetMilestonesByGoalIdAsync(goal.GoalId);
+            _goalMilestones[goal.GoalId] = milestones;
+        }
     }
 
     private void ToggleCreateForm()
@@ -278,6 +350,7 @@ else
             }
 
             await LoadGoals();
+            await LoadMilestones();
             CancelForm();
         }
         catch (Exception ex)
