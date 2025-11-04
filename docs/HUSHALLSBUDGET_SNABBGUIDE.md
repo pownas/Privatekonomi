@@ -124,7 +124,7 @@ För kostnader som kommer årsvis, dela upp dem månadsvis:
 ❌ **Att glömma årskostnader** → Plötsligt dyker en faktura på 2 400 kr upp
 ✅ **Lösning:** Använd periodväljaren för att dela upp årskostnader månadsvis
 
-❌ **Att ha för många restaurangbesök** → Matkostnaden explodera
+❌ **Att ha för många restaurangbesök** → Matkostnaden exploderar
 ✅ **Lösning:** Separera mat (butik) från restaurang för att se skillnaden
 
 ❌ **Att inte ha någon buffert** → Varje liten överraskning blir en kris

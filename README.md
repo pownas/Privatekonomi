@@ -8,7 +8,16 @@ En privatekonomi-applikation byggd med .NET 9, Blazor Server och MudBlazor för 
 - **Dashboard**: Översikt över totala inkomster, utgifter och nettoresultat
 - **Transaktionshantering**: Registrera, visa och ta bort transaktioner
 - **Budgethantering**: Skapa och följa upp budgetar med visualisering av planerat vs faktiskt utfall
-- **Konsumentverket Jämförelse**: ⭐ NYT!
+  - **Svenska budgetmallar**: ⭐ NYT!
+    - Förbyggda budgetmallar baserade på Länsförsäkringar's riktlinjer
+    - Svenska Familjehushåll (15% sparkvot)
+    - Svenska Singelhushåll (20% sparkvot) 
+    - 50/30/20-regeln, Zero-based budgeting, Kuvertbudget
+    - Stöd för årskostnader uppdelat månadsvis (t.ex. gymkort 1800 kr/år = 150 kr/månad)
+    - Guidning för att behandla sparande som månadskostnad
+    - Separering av mat i butik vs restaurang
+    - Se [Budget guide](docs/BUDGET_GUIDE.md) och [Snabbguide för hushållsbudget](docs/HUSHALLSBUDGET_SNABBGUIDE.md)
+- **Konsumentverket Jämförelse**:
   - Jämför din hushållsbudget med Konsumentverkets officiella riktlinjer 2025
   - Stöd för alla åldersgrupper och hushållsstorlekar (1-7 personer)
   - Inkluderar livsmedel, individuella och hushållsgemensamma kostnader

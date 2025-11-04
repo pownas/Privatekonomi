@@ -48,7 +48,7 @@ public class BudgetTemplateServiceTests
     }
 
     [Fact]
-    public void ApplyTemplate_SwedishFamily_TreatsSpareAsMonthyCost()
+    public void ApplyTemplate_SwedishFamily_TreatsSavingsAsMonthlyCost()
     {
         // Arrange - Verify that savings is treated as a significant monthly cost
         decimal totalIncome = 30000m;
