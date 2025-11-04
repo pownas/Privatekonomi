@@ -215,9 +215,9 @@ public class HeatmapAnalysisService : IHeatmapAnalysisService
             });
         }
 
-        // Detect impulse purchases (20:00-00:00)
+        // Detect impulse purchases (20:00-23:59)
         var impulsePurchases = transactions
-            .Where(t => t.Date.Hour >= 20 || t.Date.Hour < 0) // 20:00-23:59
+            .Where(t => t.Date.Hour >= 20) // 20:00-23:59
             .ToList();
 
         if (impulsePurchases.Any())
