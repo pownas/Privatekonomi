@@ -53,6 +53,12 @@
         <MudTd DataLabel="Beskrivning" Style="cursor: pointer;" @onclick="@(() => ViewTransactionDetails(context))">
             <div>
                 @context.Description
+                @if (context.Receipts != null && context.Receipts.Any())
+                {
+                    <MudChip T="string" Size="Size.Small" Color="Color.Success" Icon="@Icons.Material.Filled.Receipt" Variant="Variant.Text" Class="ml-1">
+                        @context.Receipts.Count
+                    </MudChip>
+                }
                 @if (!string.IsNullOrWhiteSpace(context.Notes) && ShowNotePreview)
                 {
                     <div class="mt-1">

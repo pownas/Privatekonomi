@@ -1,0 +1,124 @@
+@using Privatekonomi.Core.Models
+@inject IDialogService DialogService
+
+<MudDialog>
+    <DialogContent>
+        <MudText Typo="Typo.body1" Class="mb-4">Välj en transaktion att länka kvittot till:</MudText>
+        
+        <MudTextField @bind-Value="_searchString" 
+                      Placeholder="Sök transaktion..." 
+                      Adornment="Adornment.Start" 
+                      AdornmentIcon="@Icons.Material.Filled.Search" 
+                      IconSize="Size.Medium" 
+                      Class="mb-3" />
+        
+        <MudPaper Style="max-height: 400px; overflow-y: auto;" Elevation="0">
+            <MudList T="string">
+                @foreach (var transaction in FilteredTransactions)
+                {
+                    var isNearDate = Math.Abs((transaction.Date - ReceiptDate).TotalDays) <= 7;
+                    var isNearAmount = Math.Abs(transaction.Amount - ReceiptAmount) < 1;
+                    var isSuggested = isNearDate && isNearAmount;
+                    
+                    <MudListItem @onclick="@(() => SelectTransaction(transaction))" Class="@(isSuggested ? "suggested-item" : "")">
+                        <MudGrid>
+                            <MudItem xs="12" sm="6">
+                                <MudText Typo="Typo.body1">
+                                    @transaction.Description
+                                    @if (isSuggested)
+                                    {
+                                        <MudChip T="string" Size="Size.Small" Color="Color.Success" Variant="Variant.Text">
+                                            Föreslagen
+                                        </MudChip>
+                                    }
+                                </MudText>
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                    @transaction.Date.ToString("yyyy-MM-dd")
+                                </MudText>
+                            </MudItem>
+                            <MudItem xs="12" sm="3">
+                                @if (transaction.BankSource != null)
+                                {
+                                    <MudChip T="string" Size="Size.Small" Style="@($"background-color: {transaction.BankSource.Color}; color: white;")">
+                                        @transaction.BankSource.Name
+                                    </MudChip>
+                                }
+                            </MudItem>
+                            <MudItem xs="12" sm="3">
+                                <MudText Typo="Typo.body1" Align="Align.Right" Style="@($"color: {(transaction.IsIncome ? "#2e7d32" : "#d32f2f")};")">
+                                    @(transaction.IsIncome ? "+" : "")@transaction.Amount.ToString("N2", _svCulture) kr
+                                </MudText>
+                            </MudItem>
+                        </MudGrid>
+                    </MudListItem>
+                    <MudDivider />
+                }
+            </MudList>
+            @if (!FilteredTransactions.Any())
+            {
+                <MudAlert Severity="Severity.Info" Class="ma-2">Inga transaktioner hittades</MudAlert>
+            }
+        </MudPaper>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel" Variant="Variant.Text">Avbryt</MudButton>
+    </DialogActions>
+</MudDialog>
+
+<style>
+    .suggested-item {
+        background-color: rgba(76, 175, 80, 0.08);
+    }
+</style>
+
+@code {
+    [CascadingParameter]
+    public required IMudDialogInstance MudDialog { get; set; }
+
+    [Parameter]
+    public List<Transaction> Transactions { get; set; } = new();
+
+    [Parameter]
+    public DateTime ReceiptDate { get; set; }
+
+    [Parameter]
+    public decimal ReceiptAmount { get; set; }
+
+    private readonly System.Globalization.CultureInfo _svCulture = new("sv-SE");
+    private string _searchString = string.Empty;
+
+    private IEnumerable<Transaction> FilteredTransactions
+    {
+        get
+        {
+            var filtered = Transactions.AsEnumerable();
+            
+            if (!string.IsNullOrWhiteSpace(_searchString))
+            {
+                filtered = filtered.Where(t => 
+                    t.Description.Contains(_searchString, StringComparison.OrdinalIgnoreCase) ||
+                    (t.Payee?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                    (t.BankSource?.Name.Contains(_searchString, StringComparison.OrdinalIgnoreCase) ?? false));
+            }
+            
+            // Sort: suggested first, then by date descending
+            return filtered.OrderByDescending(t => 
+            {
+                var isNearDate = Math.Abs((t.Date - ReceiptDate).TotalDays) <= 7;
+                var isNearAmount = Math.Abs(t.Amount - ReceiptAmount) < 1;
+                return (isNearDate && isNearAmount) ? 1 : 0;
+            })
+            .ThenByDescending(t => t.Date);
+        }
+    }
+
+    private void SelectTransaction(Transaction transaction)
+    {
+        MudDialog.Close(DialogResult.Ok(transaction));
+    }
+
+    private void Cancel()
+    {
+        MudDialog.Close(DialogResult.Cancel());
+    }
+}
