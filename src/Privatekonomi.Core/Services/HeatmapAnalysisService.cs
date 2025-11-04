@@ -24,9 +24,9 @@ public class HeatmapAnalysisService : IHeatmapAnalysisService
         int? categoryId = null,
         int? householdId = null)
     {
-        // Get transactions for the period
+        // Get ALL transactions for the period (both income and expenses)
         var query = _context.Transactions
-            .Where(t => !t.IsIncome && t.Date >= startDate && t.Date <= endDate);
+            .Where(t => t.Date >= startDate && t.Date <= endDate);
 
         if (householdId.HasValue)
         {
@@ -50,7 +50,7 @@ public class HeatmapAnalysisService : IHeatmapAnalysisService
             EndDate = endDate,
             CategoryId = categoryId,
             TransactionCount = transactions.Count,
-            TotalExpenses = transactions.Sum(t => t.Amount)
+            TotalExpenses = transactions.Where(t => !t.IsIncome).Sum(t => t.Amount)
         };
 
         // Get category name if filtering
@@ -71,14 +71,15 @@ public class HeatmapAnalysisService : IHeatmapAnalysisService
             {
                 g.Key.Weekday,
                 g.Key.Hour,
-                Amount = g.Sum(t => t.Amount),
+                ExpenseAmount = g.Where(t => !t.IsIncome).Sum(t => t.Amount),
+                IncomeAmount = g.Where(t => t.IsIncome).Sum(t => t.Amount),
                 Count = g.Count(),
                 Transactions = g.ToList()
             })
             .ToList();
 
         // Create heatmap cells
-        decimal maxAmount = 0;
+        decimal maxNetAmount = 0;
         
         foreach (var group in grouped)
         {
@@ -87,24 +88,28 @@ public class HeatmapAnalysisService : IHeatmapAnalysisService
                 heatmapData.HeatmapCells[group.Weekday] = new Dictionary<int, HeatmapCell>();
             }
 
+            var netAmount = group.IncomeAmount - group.ExpenseAmount;
+            
             var cell = new HeatmapCell
             {
                 Weekday = group.Weekday,
                 Hour = group.Hour,
-                Amount = group.Amount,
+                Amount = group.ExpenseAmount,
+                IncomeAmount = group.IncomeAmount,
+                NetAmount = netAmount,
                 TransactionCount = group.Count,
-                AverageAmount = group.Count > 0 ? group.Amount / group.Count : 0
+                AverageAmount = group.Count > 0 ? (group.ExpenseAmount + group.IncomeAmount) / group.Count : 0
             };
 
             heatmapData.HeatmapCells[group.Weekday][group.Hour] = cell;
             
-            if (group.Amount > maxAmount)
+            if (Math.Abs(netAmount) > maxNetAmount)
             {
-                maxAmount = group.Amount;
+                maxNetAmount = Math.Abs(netAmount);
             }
         }
 
-        heatmapData.MaxCellAmount = maxAmount;
+        heatmapData.MaxCellAmount = maxNetAmount;
 
         // Calculate intensity levels for color coding
         CalculateIntensityLevels(heatmapData);
@@ -347,21 +352,47 @@ public class HeatmapAnalysisService : IHeatmapAnalysisService
         if (heatmapData.MaxCellAmount == 0)
             return;
 
-        // Define thresholds for intensity levels
-        // 0-25% = Low (0), 25-50% = Medium (1), 50-75% = High (2), 75-100% = Very High (3)
+        // Define thresholds for diverging intensity levels
+        // -3 = Very High Expense (Dark Red)
+        // -2 = High Expense (Red)
+        // -1 = Medium Expense (Light Red)
+        // 0 = Neutral (Blue)
+        // +1 = Medium Income (Light Green)
+        // +2 = High Income (Green)
+        // +3 = Very High Income (Dark Green)
         foreach (var weekdayDict in heatmapData.HeatmapCells.Values)
         {
             foreach (var cell in weekdayDict.Values)
             {
-                var percentage = (cell.Amount / heatmapData.MaxCellAmount) * 100;
+                // Calculate as percentage of max absolute net amount
+                var percentage = heatmapData.MaxCellAmount > 0 
+                    ? (cell.NetAmount / heatmapData.MaxCellAmount) * 100 
+                    : 0;
                 
-                cell.IntensityLevel = percentage switch
+                // Assign intensity level based on net amount (positive = income, negative = expense)
+                if (cell.NetAmount >= 0)
                 {
-                    >= 75 => 3, // Very High
-                    >= 50 => 2, // High
-                    >= 25 => 1, // Medium
-                    _ => 0      // Low
-                };
+                    // Positive = Income (Green scale)
+                    cell.IntensityLevel = percentage switch
+                    {
+                        >= 75 => 3,  // Very High Income (Dark Green)
+                        >= 50 => 2,  // High Income (Green)
+                        >= 25 => 1,  // Medium Income (Light Green)
+                        _ => 0       // Neutral (Blue)
+                    };
+                }
+                else
+                {
+                    // Negative = Expense (Red scale)
+                    var absPercentage = Math.Abs(percentage);
+                    cell.IntensityLevel = absPercentage switch
+                    {
+                        >= 75 => -3, // Very High Expense (Dark Red)
+                        >= 50 => -2, // High Expense (Red)
+                        >= 25 => -1, // Medium Expense (Light Red)
+                        _ => 0       // Neutral (Blue)
+                    };
+                }
             }
         }
     }

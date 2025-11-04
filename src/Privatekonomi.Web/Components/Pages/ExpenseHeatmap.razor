@@ -105,10 +105,10 @@ else
                             <div class="heatmap-cell @intensityClass" 
                                  title="@tooltip"
                                  @onclick="@(() => SelectCell(weekday, timeSlot))">
-                                @if (cellData.Amount > 0)
+                                @if (cellData.TransactionCount > 0)
                                 {
                                     <MudText Typo="Typo.caption" Class="cell-amount">
-                                        @cellData.Amount.ToString("N0")
+                                        @Math.Abs(cellData.NetAmount).ToString("N0")
                                     </MudText>
                                     <MudText Typo="Typo.caption" Class="cell-count">
                                         @cellData.TransactionCount st
@@ -121,10 +121,13 @@ else
                 
                 <!-- Legend -->
                 <div class="heatmap-legend mt-3">
-                    <MudChip T="string" Size="Size.Small" Class="intensity-low">🟦 Låg</MudChip>
-                    <MudChip T="string" Size="Size.Small" Class="intensity-medium">🟨 Medel</MudChip>
-                    <MudChip T="string" Size="Size.Small" Class="intensity-high">🟧 Hög</MudChip>
-                    <MudChip T="string" Size="Size.Small" Class="intensity-very-high">🟥 Mycket hög</MudChip>
+                    <MudChip T="string" Size="Size.Small" Class="intensity-income-very-high">🟩 Mycket hög intäkt</MudChip>
+                    <MudChip T="string" Size="Size.Small" Class="intensity-income-high">🟩 Hög intäkt</MudChip>
+                    <MudChip T="string" Size="Size.Small" Class="intensity-income-medium">🟩 Medel intäkt</MudChip>
+                    <MudChip T="string" Size="Size.Small" Class="intensity-neutral">🟦 Neutralt</MudChip>
+                    <MudChip T="string" Size="Size.Small" Class="intensity-expense-medium">🟥 Medel utgift</MudChip>
+                    <MudChip T="string" Size="Size.Small" Class="intensity-expense-high">🟥 Hög utgift</MudChip>
+                    <MudChip T="string" Size="Size.Small" Class="intensity-expense-very-high">🟥 Mycket hög utgift</MudChip>
                 </div>
             </div>
             
@@ -325,21 +328,37 @@ else
         opacity: 0.8;
     }
     
-    /* Intensity levels - using color gradients */
-    .intensity-low {
-        background-color: rgba(33, 150, 243, 0.2); /* Blue - Low */
+    /* Diverging intensity levels - Green (Income) to Blue (Neutral) to Red (Expense) */
+    .intensity-income-very-high {
+        background-color: rgba(27, 94, 32, 0.8); /* Dark Green */
+        color: white;
     }
     
-    .intensity-medium {
-        background-color: rgba(255, 193, 7, 0.4); /* Amber - Medium */
+    .intensity-income-high {
+        background-color: rgba(46, 125, 50, 0.7); /* Green */
+        color: white;
     }
     
-    .intensity-high {
-        background-color: rgba(255, 152, 0, 0.6); /* Orange - High */
+    .intensity-income-medium {
+        background-color: rgba(102, 187, 106, 0.6); /* Light Green */
     }
     
-    .intensity-very-high {
-        background-color: rgba(244, 67, 54, 0.7); /* Red - Very High */
+    .intensity-neutral {
+        background-color: rgba(33, 150, 243, 0.3); /* Blue - Neutral */
+    }
+    
+    .intensity-expense-medium {
+        background-color: rgba(239, 83, 80, 0.5); /* Light Red */
+    }
+    
+    .intensity-expense-high {
+        background-color: rgba(229, 57, 53, 0.7); /* Red */
+        color: white;
+    }
+    
+    .intensity-expense-very-high {
+        background-color: rgba(183, 28, 28, 0.8); /* Dark Red */
+        color: white;
     }
     
     .heatmap-legend {
@@ -392,51 +411,69 @@ else
         }
     }
 
-    private (decimal Amount, int TransactionCount, int IntensityLevel) GetTimeSlotData(int weekday, int timeSlot)
+    private (decimal NetAmount, decimal ExpenseAmount, decimal IncomeAmount, int TransactionCount, int IntensityLevel) GetTimeSlotData(int weekday, int timeSlot)
     {
         if (_heatmapData == null || !_heatmapData.HeatmapCells.ContainsKey(weekday))
-            return (0, 0, 0);
+            return (0, 0, 0, 0, 0);
 
         // Aggregate all hours in this time slot (4-hour period)
         var startHour = timeSlot * 4;
         var endHour = startHour + 3;
         
-        decimal totalAmount = 0;
+        decimal totalExpenseAmount = 0;
+        decimal totalIncomeAmount = 0;
         int totalCount = 0;
-        int maxIntensity = 0;
+        int intensityWithMaxMagnitude = 0;
         
         for (int hour = startHour; hour <= endHour; hour++)
         {
             if (_heatmapData.HeatmapCells[weekday].TryGetValue(hour, out var cell))
             {
-                totalAmount += cell.Amount;
+                totalExpenseAmount += cell.Amount;
+                totalIncomeAmount += cell.IncomeAmount;
                 totalCount += cell.TransactionCount;
-                if (cell.IntensityLevel > maxIntensity)
-                    maxIntensity = cell.IntensityLevel;
+                
+                // Use the intensity level with the maximum absolute value
+                if (Math.Abs(cell.IntensityLevel) > Math.Abs(intensityWithMaxMagnitude))
+                    intensityWithMaxMagnitude = cell.IntensityLevel;
             }
         }
         
-        return (totalAmount, totalCount, maxIntensity);
+        var netAmount = totalIncomeAmount - totalExpenseAmount;
+        return (netAmount, totalExpenseAmount, totalIncomeAmount, totalCount, intensityWithMaxMagnitude);
     }
 
     private string GetIntensityClass(int intensityLevel)
     {
         return intensityLevel switch
         {
-            3 => "intensity-very-high",
-            2 => "intensity-high",
-            1 => "intensity-medium",
-            _ => "intensity-low"
+            3 => "intensity-income-very-high",    // Dark Green
+            2 => "intensity-income-high",          // Green
+            1 => "intensity-income-medium",        // Light Green
+            0 => "intensity-neutral",              // Blue
+            -1 => "intensity-expense-medium",      // Light Red
+            -2 => "intensity-expense-high",        // Red
+            -3 => "intensity-expense-very-high",   // Dark Red
+            _ => "intensity-neutral"
         };
     }
 
-    private string GetCellTooltip((decimal Amount, int TransactionCount, int IntensityLevel) cellData)
+    private string GetCellTooltip((decimal NetAmount, decimal ExpenseAmount, decimal IncomeAmount, int TransactionCount, int IntensityLevel) cellData)
     {
-        if (cellData.Amount == 0)
-            return "Inga utgifter";
+        if (cellData.TransactionCount == 0)
+            return "Inga transaktioner";
             
         var culture = new System.Globalization.CultureInfo("sv-SE");
-        return $"{cellData.Amount.ToString("C", culture)} ({cellData.TransactionCount} transaktioner)";
+        var parts = new List<string>();
+        
+        if (cellData.ExpenseAmount > 0)
+            parts.Add($"Utgifter: {cellData.ExpenseAmount.ToString("C", culture)}");
+        if (cellData.IncomeAmount > 0)
+            parts.Add($"Intäkter: {cellData.IncomeAmount.ToString("C", culture)}");
+        parts.Add($"Netto: {cellData.NetAmount.ToString("C", culture)}");
+        parts.Add($"({cellData.TransactionCount} transaktioner)");
+        
+        return string.Join(", ", parts);
     }
 
     private void SelectCell(int weekday, int timeSlot)

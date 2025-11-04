@@ -74,6 +74,17 @@ public class HeatmapCell
     public decimal Amount { get; set; }
     
     /// <summary>
+    /// Total income amount for this weekday/hour combination
+    /// </summary>
+    public decimal IncomeAmount { get; set; }
+    
+    /// <summary>
+    /// Net amount (Income - Expenses)
+    /// Positive = net income, Negative = net expense
+    /// </summary>
+    public decimal NetAmount { get; set; }
+    
+    /// <summary>
     /// Number of transactions in this cell
     /// </summary>
     public int TransactionCount { get; set; }
@@ -84,8 +95,14 @@ public class HeatmapCell
     public decimal AverageAmount { get; set; }
     
     /// <summary>
-    /// Intensity level for color coding (0-3)
-    /// 0 = Low, 1 = Medium, 2 = High, 3 = Very High
+    /// Intensity level for color coding (-3 to +3)
+    /// -3 = Very High Expense (Dark Red)
+    /// -2 = High Expense (Red)
+    /// -1 = Medium Expense (Light Red)
+    /// 0 = Neutral (Blue)
+    /// +1 = Medium Income (Light Green)
+    /// +2 = High Income (Green)
+    /// +3 = Very High Income (Dark Green)
     /// </summary>
     public int IntensityLevel { get; set; }
 }
