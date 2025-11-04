@@ -23,6 +23,7 @@
 
     <MudNavGroup Title="Sparande" Icon="@Icons.Material.Filled.Savings" Class="@GetGroupClass(SavingsKey)" Expanded="@IsGroupExpanded(SavingsKey)" ExpandedChanged="@(expanded => OnGroupExpandedChanged(SavingsKey, expanded))">
         <MudNavLink Href="/savings/goals" Icon="@Icons.Material.Filled.EmojiEvents">Sparmål</MudNavLink>
+        <MudNavLink Href="/savings/roundup" Icon="@Icons.Material.Filled.AccountBalanceWallet">Round-up Sparande</MudNavLink>
         <MudNavLink Href="/savings/challenges" Icon="@Icons.Material.Filled.Flag">Sparmåls-utmaningar</MudNavLink>
         <MudNavLink Href="/savings/shared-goals" Icon="@Icons.Material.Filled.Groups">Gemensamma Sparmål</MudNavLink>
         <MudNavLink Href="/savings/pockets" Icon="@Icons.Material.Filled.Wallet">Sparfickor</MudNavLink>
@@ -118,12 +119,14 @@
     {
         "savings",
         "savings/goals",
+        "savings/roundup",
         "savings/challenges",
         "savings/shared-goals",
         "savings/shared-goals/notifications",
         "savings/pockets",
         "savings/life-timeline",
         "goals",
+        "roundup",
         "savingschallenges",
         "sharedgoals",
         "pockets",

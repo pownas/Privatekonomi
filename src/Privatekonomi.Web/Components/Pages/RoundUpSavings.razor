@@ -1,0 +1,303 @@
+@page "/savings/roundup"
+@page "/roundup"
+@rendermode InteractiveServer
+@inject IRoundUpService RoundUpService
+@inject IGoalService GoalService
+@inject ISnackbar Snackbar
+
+<PageTitle>Round-up Sparande - Privatekonomi</PageTitle>
+
+<div class="d-flex justify-space-between align-center mb-4">
+    <MudText Typo="Typo.h4">
+        <MudIcon Icon="@Icons.Material.Filled.Savings" Color="Color.Primary" Class="mr-2" aria-hidden="true" />
+        Round-up Sparande
+    </MudText>
+</div>
+
+@if (_loading)
+{
+    <div class="d-flex flex-column align-center pa-6">
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Large" />
+        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-4">Laddar inställningar...</MudText>
+    </div>
+}
+else
+{
+    <MudGrid>
+        <MudItem xs="12" md="8">
+            <MudPaper Class="pa-4 mb-4">
+                <MudText Typo="Typo.h6" Class="mb-4">Inställningar</MudText>
+                
+                <MudSwitch @bind-Value="_settings.IsEnabled" 
+                          Color="Color.Primary" 
+                          Label="Aktivera Round-up Sparande"
+                          Class="mb-4" />
+
+                @if (_settings.IsEnabled)
+                {
+                    <MudSelect @bind-Value="_settings.TargetGoalId" 
+                              Label="Välj Sparmål" 
+                              Variant="Variant.Outlined" 
+                              Class="mb-4"
+                              Required="true">
+                        @foreach (var goal in _goals)
+                        {
+                            <MudSelectItem Value="@((int?)goal.GoalId)">
+                                @goal.Name (@goal.CurrentAmount.ToString("N0") kr / @goal.TargetAmount.ToString("N0") kr)
+                            </MudSelectItem>
+                        }
+                    </MudSelect>
+
+                    <MudNumericField @bind-Value="_settings.RoundUpAmount" 
+                                    Label="Avrunda till närmaste (kr)" 
+                                    Variant="Variant.Outlined"
+                                    Min="1"
+                                    Format="N0"
+                                    Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                                    Class="mb-4"
+                                    HelperText="Standard: 10 kr" />
+
+                    <MudSwitch @bind-Value="_settings.OnlyExpenses" 
+                              Color="Color.Primary" 
+                              Label="Endast utgifter (ej inkomster)"
+                              Class="mb-4" />
+
+                    <MudDivider Class="my-4" />
+
+                    <MudText Typo="Typo.h6" Class="mb-3">Arbetsgivarmatchning</MudText>
+                    
+                    <MudSwitch @bind-Value="_settings.EnableEmployerMatching" 
+                              Color="Color.Primary" 
+                              Label='Aktivera "Matcha min arbetsgivare" (dubbla ditt sparande)'
+                              Class="mb-3" />
+
+                    @if (_settings.EnableEmployerMatching)
+                    {
+                        <MudNumericField @bind-Value="_settings.EmployerMatchingPercentage" 
+                                        Label="Matchningsprocent (%)" 
+                                        Variant="Variant.Outlined"
+                                        Min="0"
+                                        Max="200"
+                                        Format="N0"
+                                        Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                                        Class="mb-3"
+                                        HelperText="100% = dubbelt sparande, 50% = halv matching" />
+
+                        <MudNumericField @bind-Value="_settings.EmployerMatchingMonthlyLimit" 
+                                        Label="Månadstak för matchning (kr, valfritt)" 
+                                        Variant="Variant.Outlined"
+                                        Min="0"
+                                        Format="N0"
+                                        Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                                        Class="mb-4"
+                                        Clearable="true" />
+                    }
+
+                    <MudDivider Class="my-4" />
+
+                    <MudText Typo="Typo.h6" Class="mb-3">Lön-regel</MudText>
+                    
+                    <MudSwitch @bind-Value="_settings.EnableSalaryAutoSave" 
+                              Color="Color.Primary" 
+                              Label="Spara automatiskt en del av varje inkomst"
+                              Class="mb-3" />
+
+                    @if (_settings.EnableSalaryAutoSave)
+                    {
+                        <MudNumericField @bind-Value="_settings.SalaryAutoSavePercentage" 
+                                        Label="Procent av inkomst att spara (%)" 
+                                        Variant="Variant.Outlined"
+                                        Min="0"
+                                        Max="50"
+                                        Format="N0"
+                                        Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                                        Class="mb-4"
+                                        HelperText="Rekommenderat: 10%" />
+                    }
+
+                    <MudDivider Class="my-4" />
+
+                    <MudText Typo="Typo.h6" Class="mb-3">Avancerade Inställningar</MudText>
+
+                    <MudNumericField @bind-Value="_settings.MinimumTransactionAmount" 
+                                    Label="Minimum transaktionsbelopp (kr, valfritt)" 
+                                    Variant="Variant.Outlined"
+                                    Min="0"
+                                    Format="N0"
+                                    Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                                    Class="mb-3"
+                                    Clearable="true"
+                                    HelperText="Ignorera transaktioner under detta belopp" />
+
+                    <MudNumericField @bind-Value="_settings.MaximumTransactionAmount" 
+                                    Label="Maximum transaktionsbelopp (kr, valfritt)" 
+                                    Variant="Variant.Outlined"
+                                    Min="0"
+                                    Format="N0"
+                                    Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                                    Class="mb-4"
+                                    Clearable="true"
+                                    HelperText="Ignorera transaktioner över detta belopp" />
+                }
+
+                <MudButton Variant="Variant.Filled" 
+                          Color="Color.Primary" 
+                          OnClick="SaveSettings"
+                          Disabled="_saving">
+                    @if (_saving)
+                    {
+                        <MudProgressCircular Class="mr-2" Size="Size.Small" Indeterminate="true" />
+                    }
+                    Spara Inställningar
+                </MudButton>
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="12" md="4">
+            <MudPaper Class="pa-4 mb-4">
+                <MudText Typo="Typo.h6" Class="mb-3">
+                    <MudIcon Icon="@Icons.Material.Filled.TrendingUp" Class="mr-2" />
+                    Denna Månad
+                </MudText>
+                <MudText Typo="Typo.h3" Color="Color.Success" Class="mb-2">
+                    @_monthlyTotal.ToString("N0") kr
+                </MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                    Sparat från round-ups 🎉
+                </MudText>
+            </MudPaper>
+
+            @if (_recentTransactions.Any())
+            {
+                <MudPaper Class="pa-4">
+                    <MudText Typo="Typo.h6" Class="mb-3">Senaste Round-ups</MudText>
+                    <MudList T="string" Dense="true">
+                        @foreach (var roundUp in _recentTransactions.Take(5))
+                        {
+                            <MudListItem T="string">
+                                <div class="d-flex justify-space-between align-center">
+                                    <div>
+                                        <MudText Typo="Typo.body2">
+                                            @(roundUp.Transaction?.Description ?? "Transaktion")
+                                        </MudText>
+                                        <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                            @roundUp.OriginalAmount.ToString("N0") kr → @roundUp.RoundedAmount.ToString("N0") kr
+                                        </MudText>
+                                    </div>
+                                    <MudChip T="string" Color="Color.Success" Size="Size.Small">
+                                        +@roundUp.TotalSaved.ToString("N0") kr
+                                    </MudChip>
+                                </div>
+                            </MudListItem>
+                        }
+                    </MudList>
+                </MudPaper>
+            }
+        </MudItem>
+
+        @if (_statistics != null && _settings.IsEnabled)
+        {
+            <MudItem xs="12">
+                <MudPaper Class="pa-4">
+                    <MudText Typo="Typo.h6" Class="mb-4">Statistik - Denna Månad</MudText>
+                    <MudGrid>
+                        <MudItem xs="6" md="3">
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">Total Round-up</MudText>
+                            <MudText Typo="Typo.h5">@_statistics.TotalRoundUp.ToString("N0") kr</MudText>
+                        </MudItem>
+                        <MudItem xs="6" md="3">
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">Arbetsgivarmatchning</MudText>
+                            <MudText Typo="Typo.h5">@_statistics.TotalEmployerMatching.ToString("N0") kr</MudText>
+                        </MudItem>
+                        <MudItem xs="6" md="3">
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">Lön-sparande</MudText>
+                            <MudText Typo="Typo.h5">@_statistics.TotalSalaryAutoSave.ToString("N0") kr</MudText>
+                        </MudItem>
+                        <MudItem xs="6" md="3">
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">Antal transaktioner</MudText>
+                            <MudText Typo="Typo.h5">@_statistics.TransactionCount</MudText>
+                        </MudItem>
+                    </MudGrid>
+                </MudPaper>
+            </MudItem>
+        }
+    </MudGrid>
+}
+
+@code {
+    private RoundUpSettings _settings = new();
+    private List<Goal> _goals = new();
+    private List<RoundUpTransaction> _recentTransactions = new();
+    private RoundUpStatistics? _statistics;
+    private decimal _monthlyTotal = 0;
+    private bool _loading = true;
+    private bool _saving = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDataAsync();
+    }
+
+    private async Task LoadDataAsync()
+    {
+        try
+        {
+            _loading = true;
+            
+            // Load settings
+            _settings = await RoundUpService.GetOrCreateSettingsAsync();
+            
+            // Load goals
+            var allGoals = await GoalService.GetAllGoalsAsync();
+            _goals = allGoals.ToList();
+            
+            // Load monthly total
+            _monthlyTotal = await RoundUpService.GetMonthlyTotalAsync();
+            
+            // Load recent transactions
+            var monthStart = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1);
+            var transactions = await RoundUpService.GetRoundUpTransactionsAsync(monthStart);
+            _recentTransactions = transactions.ToList();
+            
+            // Load statistics
+            var monthEnd = monthStart.AddMonths(1);
+            _statistics = await RoundUpService.GetStatisticsAsync(monthStart, monthEnd);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Fel vid laddning: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task SaveSettings()
+    {
+        try
+        {
+            _saving = true;
+            
+            if (_settings.IsEnabled && !_settings.TargetGoalId.HasValue)
+            {
+                Snackbar.Add("Du måste välja ett sparmål", Severity.Warning);
+                return;
+            }
+            
+            await RoundUpService.UpdateSettingsAsync(_settings);
+            Snackbar.Add("Inställningar sparade!", Severity.Success);
+            
+            // Reload data to reflect changes
+            await LoadDataAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Fel vid sparning: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+}
