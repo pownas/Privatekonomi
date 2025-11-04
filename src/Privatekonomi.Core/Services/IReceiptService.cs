@@ -11,4 +11,7 @@ public interface IReceiptService
     Task DeleteReceiptAsync(int receiptId, string userId);
     Task<List<Receipt>> GetReceiptsByDateRangeAsync(string userId, DateTime startDate, DateTime endDate);
     Task<List<Receipt>> GetReceiptsByMerchantAsync(string userId, string merchant);
+    Task<List<Receipt>> GetReceiptsByTransactionIdAsync(int transactionId, string userId);
+    Task LinkReceiptToTransactionAsync(int receiptId, int transactionId, string userId);
+    Task UnlinkReceiptFromTransactionAsync(int receiptId, string userId);
 }

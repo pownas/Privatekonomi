@@ -1114,13 +1114,14 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
             entity.Property(e => e.PaymentMethod).HasMaxLength(50);
             entity.Property(e => e.Notes).HasMaxLength(500);
             entity.HasOne(e => e.Transaction)
-                .WithMany()
+                .WithMany(t => t.Receipts)
                 .HasForeignKey(e => e.TransactionId)
                 .OnDelete(DeleteBehavior.SetNull);
             
             entity.HasIndex(e => e.UserId);
             entity.HasIndex(e => e.ReceiptDate);
             entity.HasIndex(e => e.Merchant);
+            entity.HasIndex(e => e.TransactionId);
         });
         
         // ReceiptLineItem configuration

@@ -74,6 +74,17 @@
                                     <MudText Typo="Typo.body1" Class="font-weight-medium">@Receipt.Notes</MudText>
                                 </MudItem>
                             }
+                            
+                            @if (Receipt.Transaction != null)
+                            {
+                                <MudItem xs="12">
+                                    <MudDivider Class="my-2" />
+                                    <MudText Typo="Typo.body2" Color="Color.Secondary">Kopplad till transaktion</MudText>
+                                    <MudChip T="string" Size="Size.Medium" Color="Color.Primary" Variant="Variant.Filled" Icon="@Icons.Material.Filled.Link">
+                                        @Receipt.Transaction.Description - @Receipt.Transaction.Amount.ToString("C", _svCulture)
+                                    </MudChip>
+                                </MudItem>
+                            }
                         </MudGrid>
                     </MudPaper>
                     
