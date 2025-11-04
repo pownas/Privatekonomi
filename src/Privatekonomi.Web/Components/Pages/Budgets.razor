@@ -94,6 +94,8 @@
                 <MudSelect @bind-Value="_selectedTemplate" Label="Välj budgetmall" Variant="Variant.Outlined" 
                            T="BudgetTemplateType" Class="mb-3">
                     <MudSelectItem Value="@BudgetTemplateType.Custom">Anpassad (tom mall)</MudSelectItem>
+                    <MudSelectItem Value="@BudgetTemplateType.SwedishFamily">Svenska Familjehushåll (Rekommenderad)</MudSelectItem>
+                    <MudSelectItem Value="@BudgetTemplateType.SwedishSingle">Svenska Singelhushåll (Rekommenderad)</MudSelectItem>
                     <MudSelectItem Value="@BudgetTemplateType.FiftyThirtyTwenty">50/30/20-regeln</MudSelectItem>
                     <MudSelectItem Value="@BudgetTemplateType.ZeroBased">Zero-based budgeting</MudSelectItem>
                     <MudSelectItem Value="@BudgetTemplateType.Envelope">Kuvertbudget</MudSelectItem>
@@ -132,6 +134,14 @@
         <MudDivider Class="my-4" />
 
         <MudText Typo="Typo.h6" Class="mb-3">Budgetposter per kategori</MudText>
+        <MudAlert Severity="Severity.Success" Class="mb-3" Icon="@Icons.Material.Filled.Lightbulb">
+            <MudText Typo="Typo.body2" Class="mb-2"><strong>Tips för en lyckad hushållsbudget:</strong></MudText>
+            <ul style="margin: 0; padding-left: 20px;">
+                <li><strong>Se sparande som en månadskostnad</strong> - Sparandet ska alltid dras i början av månaden så att det inte bortprioriteras.</li>
+                <li><strong>Dela upp matkostnader</strong> - Separera mat du handlar i butik från mat du handlar på restaurang för bättre kontroll.</li>
+                <li><strong>Gör varje månad kostnadsneutral</strong> - För årskostnader (t.ex. fritidsaktiviteter 2400 kr/år = 200 kr/månad), använd periodväljaren nedan.</li>
+            </ul>
+        </MudAlert>
         <MudAlert Severity="Severity.Info" Class="mb-3">
             För varje kategori kan du ange en periodkostnad (månadsvis, varannan månad, kvartal, halvår eller helår). 
             Systemet beräknar automatiskt månadskostnaden som läggs till i budgeten.
