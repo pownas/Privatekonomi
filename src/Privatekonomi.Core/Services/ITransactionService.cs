@@ -43,4 +43,11 @@ public interface ITransactionService
     Task UpdateTransactionCategoriesAsync(int transactionId, List<TransactionCategory> categories);
     Task<IEnumerable<Transaction>> GetTransactionsByHouseholdAsync(int householdId);
     Task<IEnumerable<Transaction>> GetTransactionsByHouseholdAndDateRangeAsync(int householdId, DateTime from, DateTime to);
+    
+    // Bulk operations
+    Task<BulkOperationResult> BulkDeleteTransactionsAsync(List<int> transactionIds);
+    Task<BulkOperationResult> BulkCategorizeTransactionsAsync(List<int> transactionIds, List<(int CategoryId, decimal? Amount)> categories);
+    Task<BulkOperationResult> BulkLinkToHouseholdAsync(List<int> transactionIds, int? householdId);
+    Task<BulkOperationSnapshot> CreateOperationSnapshotAsync(List<int> transactionIds, BulkOperationType operationType);
+    Task<BulkOperationResult> UndoBulkOperationAsync(BulkOperationSnapshot snapshot);
 }
