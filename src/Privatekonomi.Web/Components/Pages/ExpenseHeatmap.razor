@@ -1,0 +1,447 @@
+@page "/economy/reports/expense-heatmap"
+@page "/reports/expense-heatmap"
+@rendermode InteractiveServer
+@inject IHeatmapAnalysisService HeatmapService
+@inject ICategoryService CategoryService
+@inject NavigationManager NavigationManager
+
+<PageTitle>Utgifts-heatmap - Privatekonomi</PageTitle>
+
+<div class="d-flex flex-column flex-md-row justify-space-between align-start align-md-center mb-4 gap-2">
+    <div>
+        <MudText Typo="Typo.h4">
+            <MudIcon Icon="@Icons.Material.Filled.LocalFireDepartment" Color="Color.Primary" Class="mr-2" aria-hidden="true" />
+            Utgifts-heatmap och Mönsteranalys
+        </MudText>
+        <MudText Typo="Typo.body2" Color="Color.Secondary">
+            Visualisera utgiftsmönster över tid med heatmap-analys
+        </MudText>
+    </div>
+</div>
+
+@if (_loading)
+{
+    <div class="d-flex flex-column align-center pa-6">
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Large" />
+        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-4">Analyserar utgiftsmönster...</MudText>
+    </div>
+}
+else
+{
+    <!-- Filter Controls -->
+    <MudPaper Class="pa-4 mb-4" Elevation="2">
+        <div class="d-flex flex-column flex-md-row gap-3 align-end">
+            <MudDatePicker Label="Startdatum" 
+                          @bind-Date="_startDate"
+                          DateFormat="yyyy-MM-dd"
+                          Color="Color.Primary" />
+            
+            <MudDatePicker Label="Slutdatum" 
+                          @bind-Date="_endDate"
+                          DateFormat="yyyy-MM-dd"
+                          Color="Color.Primary" />
+            
+            <MudSelect T="int?" 
+                      Label="Kategori" 
+                      @bind-Value="_selectedCategoryId"
+                      Clearable="true"
+                      Placeholder="Alla kategorier">
+                @foreach (var category in _categories)
+                {
+                    <MudSelectItem T="int?" Value="@category.CategoryId">@category.Name</MudSelectItem>
+                }
+            </MudSelect>
+            
+            <MudButton Variant="Variant.Filled" 
+                      Color="Color.Primary" 
+                      OnClick="LoadHeatmapData"
+                      StartIcon="@Icons.Material.Filled.Refresh">
+                Uppdatera
+            </MudButton>
+        </div>
+        
+        @if (_heatmapData != null && !string.IsNullOrEmpty(_heatmapData.CategoryName))
+        {
+            <MudChip T="string" Color="Color.Info" Size="Size.Small" Class="mt-2">
+                Filtrerad på: @_heatmapData.CategoryName
+            </MudChip>
+        }
+    </MudPaper>
+
+    @if (_heatmapData != null)
+    {
+        <!-- Heatmap Grid -->
+        <MudPaper Class="pa-4 mb-4" Elevation="2">
+            <MudText Typo="Typo.h6" Class="mb-3">
+                🔥 Utgifts-heatmap - @_startDate?.ToString("MMMM yyyy", new System.Globalization.CultureInfo("sv-SE"))
+            </MudText>
+            
+            <div class="heatmap-container">
+                <!-- Header Row -->
+                <div class="heatmap-grid">
+                    <div class="heatmap-header-cell"></div>
+                    @foreach (var day in new[] { "Mån", "Tis", "Ons", "Tor", "Fre", "Lör", "Sön" })
+                    {
+                        <div class="heatmap-header-cell">
+                            <MudText Typo="Typo.caption" Align="Align.Center">@day</MudText>
+                        </div>
+                    }
+                    
+                    <!-- Time slots (grouped by 4-hour periods) -->
+                    @for (int timeSlot = 0; timeSlot < 6; timeSlot++)
+                    {
+                        var startHour = timeSlot * 4;
+                        var endHour = startHour + 3;
+                        <div class="heatmap-time-label">
+                            <MudText Typo="Typo.caption">@($"{startHour:D2}-{endHour + 1:D2}")</MudText>
+                        </div>
+                        
+                        @for (int weekday = 0; weekday < 7; weekday++)
+                        {
+                            var cellData = GetTimeSlotData(weekday, timeSlot);
+                            var intensityClass = GetIntensityClass(cellData.IntensityLevel);
+                            var tooltip = GetCellTooltip(cellData);
+                            
+                            <div class="heatmap-cell @intensityClass" 
+                                 title="@tooltip"
+                                 @onclick="@(() => SelectCell(weekday, timeSlot))">
+                                @if (cellData.Amount > 0)
+                                {
+                                    <MudText Typo="Typo.caption" Class="cell-amount">
+                                        @cellData.Amount.ToString("N0")
+                                    </MudText>
+                                    <MudText Typo="Typo.caption" Class="cell-count">
+                                        @cellData.TransactionCount st
+                                    </MudText>
+                                }
+                            </div>
+                        }
+                    }
+                </div>
+                
+                <!-- Legend -->
+                <div class="heatmap-legend mt-3">
+                    <MudChip T="string" Size="Size.Small" Class="intensity-low">🟦 Låg</MudChip>
+                    <MudChip T="string" Size="Size.Small" Class="intensity-medium">🟨 Medel</MudChip>
+                    <MudChip T="string" Size="Size.Small" Class="intensity-high">🟧 Hög</MudChip>
+                    <MudChip T="string" Size="Size.Small" Class="intensity-very-high">🟥 Mycket hög</MudChip>
+                </div>
+            </div>
+            
+            <!-- Summary Stats -->
+            <MudDivider Class="my-4" />
+            <div class="d-flex flex-row gap-4 flex-wrap">
+                <div>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">Totala utgifter</MudText>
+                    <MudText Typo="Typo.h6">@_heatmapData.TotalExpenses.ToString("C", new System.Globalization.CultureInfo("sv-SE"))</MudText>
+                </div>
+                <div>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">Antal transaktioner</MudText>
+                    <MudText Typo="Typo.h6">@_heatmapData.TransactionCount st</MudText>
+                </div>
+                <div>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">Period</MudText>
+                    <MudText Typo="Typo.body2">
+                        @_heatmapData.StartDate.ToString("d MMM", new System.Globalization.CultureInfo("sv-SE")) - 
+                        @_heatmapData.EndDate.ToString("d MMM yyyy", new System.Globalization.CultureInfo("sv-SE"))
+                    </MudText>
+                </div>
+            </div>
+        </MudPaper>
+
+        <!-- Pattern Insights -->
+        @if (_heatmapData.Insights != null)
+        {
+            <MudPaper Class="pa-4" Elevation="2">
+                <MudText Typo="Typo.h6" Class="mb-3">
+                    💡 Insikter
+                </MudText>
+                
+                <MudGrid>
+                    <!-- Most Expensive Day -->
+                    @if (_heatmapData.Insights.MostExpensiveDay != null && _heatmapData.Insights.MostExpensiveDay.Amount > 0)
+                    {
+                        <MudItem xs="12" md="6">
+                            <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
+                                <MudText Typo="Typo.body2">
+                                    <strong>Dyraste dagen:</strong> @_heatmapData.Insights.MostExpensiveDay.DayName
+                                </MudText>
+                                <MudText Typo="Typo.caption">
+                                    Totalt: @_heatmapData.Insights.MostExpensiveDay.Amount.ToString("C", new System.Globalization.CultureInfo("sv-SE"))
+                                    (@_heatmapData.Insights.MostExpensiveDay.TransactionCount transaktioner)
+                                </MudText>
+                                @if (!string.IsNullOrEmpty(_heatmapData.Insights.MostExpensiveDay.TopCategory))
+                                {
+                                    <MudText Typo="Typo.caption">
+                                        Vanligaste kategorin: @_heatmapData.Insights.MostExpensiveDay.TopCategory
+                                    </MudText>
+                                }
+                            </MudAlert>
+                        </MudItem>
+                    }
+                    
+                    <!-- Least Expensive Day -->
+                    @if (_heatmapData.Insights.LeastExpensiveDay != null && _heatmapData.Insights.LeastExpensiveDay.Amount > 0)
+                    {
+                        <MudItem xs="12" md="6">
+                            <MudAlert Severity="Severity.Success" Variant="Variant.Outlined">
+                                <MudText Typo="Typo.body2">
+                                    <strong>Billigaste dagen:</strong> @_heatmapData.Insights.LeastExpensiveDay.DayName
+                                </MudText>
+                                <MudText Typo="Typo.caption">
+                                    Totalt: @_heatmapData.Insights.LeastExpensiveDay.Amount.ToString("C", new System.Globalization.CultureInfo("sv-SE"))
+                                </MudText>
+                            </MudAlert>
+                        </MudItem>
+                    }
+                    
+                    <!-- Impulse Purchases -->
+                    @if (_heatmapData.Insights.ImpulsePurchases != null && _heatmapData.Insights.ImpulsePurchases.IsDetected)
+                    {
+                        <MudItem xs="12">
+                            <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined">
+                                <MudText Typo="Typo.body2">
+                                    <strong>⚠️ Impulsköp upptäckta</strong> (20:00-00:00)
+                                </MudText>
+                                <MudText Typo="Typo.caption">
+                                    Totalt: @_heatmapData.Insights.ImpulsePurchases.TotalAmount.ToString("C", new System.Globalization.CultureInfo("sv-SE"))
+                                    (@_heatmapData.Insights.ImpulsePurchases.PercentageOfTotal.ToString("F1")% av totala utgifter)
+                                </MudText>
+                                @if (!string.IsNullOrEmpty(_heatmapData.Insights.ImpulsePurchases.MostCommonDay))
+                                {
+                                    <MudText Typo="Typo.caption">
+                                        Vanligaste dagen: @_heatmapData.Insights.ImpulsePurchases.MostCommonDay
+                                    </MudText>
+                                }
+                                @if (!string.IsNullOrEmpty(_heatmapData.Insights.ImpulsePurchases.TopCategory))
+                                {
+                                    <MudText Typo="Typo.caption">
+                                        Vanligaste kategorin: @_heatmapData.Insights.ImpulsePurchases.TopCategory
+                                    </MudText>
+                                }
+                            </MudAlert>
+                        </MudItem>
+                    }
+                    
+                    <!-- Expense Peaks -->
+                    @if (_heatmapData.Insights.ExpensePeaks != null && _heatmapData.Insights.ExpensePeaks.Any())
+                    {
+                        <MudItem xs="12">
+                            <MudText Typo="Typo.subtitle2" Class="mb-2">Utgiftstoppar:</MudText>
+                            <div class="d-flex flex-column gap-2">
+                                @foreach (var peak in _heatmapData.Insights.ExpensePeaks.Take(3))
+                                {
+                                    <MudChip T="string" Color="Color.Secondary" Size="Size.Small">
+                                        ✓ @peak.DayName kl @peak.TimeRange: 
+                                        @peak.Amount.ToString("C", new System.Globalization.CultureInfo("sv-SE"))
+                                        @if (!string.IsNullOrEmpty(peak.TopCategory))
+                                        {
+                                            <text> (@peak.TopCategory)</text>
+                                        }
+                                    </MudChip>
+                                }
+                            </div>
+                        </MudItem>
+                    }
+                    
+                    <!-- Common Pattern -->
+                    @if (!string.IsNullOrEmpty(_heatmapData.Insights.CommonPattern))
+                    {
+                        <MudItem xs="12">
+                            <MudText Typo="Typo.body2" Color="Color.Info">
+                                <MudIcon Icon="@Icons.Material.Filled.TrendingUp" Size="Size.Small" Class="mr-1" />
+                                Mönster: @_heatmapData.Insights.CommonPattern
+                            </MudText>
+                        </MudItem>
+                    }
+                </MudGrid>
+            </MudPaper>
+        }
+    }
+    else
+    {
+        <MudPaper Class="pa-4" Elevation="2">
+            <MudText Color="Color.Secondary">Ingen data tillgänglig för vald period</MudText>
+        </MudPaper>
+    }
+}
+
+<style>
+    .heatmap-container {
+        overflow-x: auto;
+    }
+    
+    .heatmap-grid {
+        display: grid;
+        grid-template-columns: 60px repeat(7, 1fr);
+        gap: 2px;
+        min-width: 600px;
+    }
+    
+    .heatmap-header-cell {
+        padding: 8px;
+        font-weight: 600;
+        text-align: center;
+        background-color: var(--mud-palette-background-gray);
+        border: 1px solid var(--mud-palette-divider);
+    }
+    
+    .heatmap-time-label {
+        padding: 8px 4px;
+        font-weight: 500;
+        text-align: right;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        background-color: var(--mud-palette-background-gray);
+        border: 1px solid var(--mud-palette-divider);
+    }
+    
+    .heatmap-cell {
+        min-height: 60px;
+        padding: 4px;
+        border: 1px solid var(--mud-palette-divider);
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+    
+    .heatmap-cell:hover {
+        transform: scale(1.05);
+        z-index: 1;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+    
+    .cell-amount {
+        font-weight: 600;
+        line-height: 1.2;
+    }
+    
+    .cell-count {
+        font-size: 0.7rem;
+        opacity: 0.8;
+    }
+    
+    /* Intensity levels - using color gradients */
+    .intensity-low {
+        background-color: rgba(33, 150, 243, 0.2); /* Blue - Low */
+    }
+    
+    .intensity-medium {
+        background-color: rgba(255, 193, 7, 0.4); /* Amber - Medium */
+    }
+    
+    .intensity-high {
+        background-color: rgba(255, 152, 0, 0.6); /* Orange - High */
+    }
+    
+    .intensity-very-high {
+        background-color: rgba(244, 67, 54, 0.7); /* Red - Very High */
+    }
+    
+    .heatmap-legend {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+</style>
+
+@code {
+    private bool _loading = true;
+    private DateTime? _startDate;
+    private DateTime? _endDate;
+    private int? _selectedCategoryId;
+    private ExpenseHeatmapData? _heatmapData;
+    private IEnumerable<Category> _categories = new List<Category>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Default to current month
+        _startDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+        _endDate = _startDate.Value.AddMonths(1).AddDays(-1);
+        
+        // Load categories for filter
+        _categories = await CategoryService.GetAllCategoriesAsync();
+        
+        await LoadHeatmapData();
+    }
+
+    private async Task LoadHeatmapData()
+    {
+        if (!_startDate.HasValue || !_endDate.HasValue)
+            return;
+            
+        _loading = true;
+        
+        try
+        {
+            _heatmapData = await HeatmapService.GenerateHeatmapAsync(
+                _startDate.Value,
+                _endDate.Value,
+                _selectedCategoryId,
+                null // householdId
+            );
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private (decimal Amount, int TransactionCount, int IntensityLevel) GetTimeSlotData(int weekday, int timeSlot)
+    {
+        if (_heatmapData == null || !_heatmapData.HeatmapCells.ContainsKey(weekday))
+            return (0, 0, 0);
+
+        // Aggregate all hours in this time slot (4-hour period)
+        var startHour = timeSlot * 4;
+        var endHour = startHour + 3;
+        
+        decimal totalAmount = 0;
+        int totalCount = 0;
+        int maxIntensity = 0;
+        
+        for (int hour = startHour; hour <= endHour; hour++)
+        {
+            if (_heatmapData.HeatmapCells[weekday].TryGetValue(hour, out var cell))
+            {
+                totalAmount += cell.Amount;
+                totalCount += cell.TransactionCount;
+                if (cell.IntensityLevel > maxIntensity)
+                    maxIntensity = cell.IntensityLevel;
+            }
+        }
+        
+        return (totalAmount, totalCount, maxIntensity);
+    }
+
+    private string GetIntensityClass(int intensityLevel)
+    {
+        return intensityLevel switch
+        {
+            3 => "intensity-very-high",
+            2 => "intensity-high",
+            1 => "intensity-medium",
+            _ => "intensity-low"
+        };
+    }
+
+    private string GetCellTooltip((decimal Amount, int TransactionCount, int IntensityLevel) cellData)
+    {
+        if (cellData.Amount == 0)
+            return "Inga utgifter";
+            
+        var culture = new System.Globalization.CultureInfo("sv-SE");
+        return $"{cellData.Amount.ToString("C", culture)} ({cellData.TransactionCount} transaktioner)";
+    }
+
+    private void SelectCell(int weekday, int timeSlot)
+    {
+        // Future: Could show detailed transaction list for this cell
+        // For now, just visual feedback via hover
+    }
+}
