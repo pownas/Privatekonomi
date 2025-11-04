@@ -1,0 +1,72 @@
+@inject IBudgetAlertService BudgetAlertService
+@inject ISnackbar Snackbar
+@implements IDisposable
+
+@if (_activeAlerts.Any())
+{
+    <MudBadge Content="@_activeAlerts.Count()" Color="Color.Error" Overlap="true" Class="mx-2">
+        <MudIconButton Icon="@Icons.Material.Filled.NotificationsActive" 
+                       Color="Color.Error" 
+                       OnClick="@(() => ShowAlerts())"
+                       aria-label="Budget varningar" />
+    </MudBadge>
+}
+else
+{
+    <MudIconButton Icon="@Icons.Material.Filled.Notifications" 
+                   Color="Color.Default" 
+                   OnClick="@(() => ShowAlerts())"
+                   aria-label="Inga budget varningar"
+                   Class="mx-2" />
+}
+
+@code {
+    private IEnumerable<BudgetAlert> _activeAlerts = Enumerable.Empty<BudgetAlert>();
+    private System.Threading.Timer? _refreshTimer;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAlertsAsync();
+        
+        // Refresh alerts every 5 minutes
+        _refreshTimer = new System.Threading.Timer(async _ => 
+        {
+            await InvokeAsync(async () =>
+            {
+                await LoadAlertsAsync();
+                StateHasChanged();
+            });
+        }, null, TimeSpan.Zero, TimeSpan.FromMinutes(5));
+    }
+
+    private async Task LoadAlertsAsync()
+    {
+        try
+        {
+            _activeAlerts = await BudgetAlertService.GetActiveAlertsAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Kunde inte ladda budgetvarningar: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void ShowAlerts()
+    {
+        // This will navigate to budget alerts page or show a dialog
+        // For now, just show a simple message
+        if (_activeAlerts.Any())
+        {
+            Snackbar.Add($"Du har {_activeAlerts.Count()} aktiva budgetvarningar", Severity.Warning);
+        }
+        else
+        {
+            Snackbar.Add("Inga aktiva budgetvarningar", Severity.Info);
+        }
+    }
+
+    public void Dispose()
+    {
+        _refreshTimer?.Dispose();
+    }
+}
