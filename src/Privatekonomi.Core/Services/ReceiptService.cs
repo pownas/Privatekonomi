@@ -92,4 +92,60 @@ public class ReceiptService : IReceiptService
             .OrderByDescending(r => r.ReceiptDate)
             .ToListAsync();
     }
+
+    public async Task<List<Receipt>> GetReceiptsByTransactionIdAsync(int transactionId, string userId)
+    {
+        return await _context.Receipts
+            .Where(r => r.UserId == userId && r.TransactionId == transactionId)
+            .Include(r => r.ReceiptLineItems)
+            .ThenInclude(li => li.Category)
+            .Include(r => r.Transaction)
+            .OrderByDescending(r => r.ReceiptDate)
+            .ToListAsync();
+    }
+
+    public async Task LinkReceiptToTransactionAsync(int receiptId, int transactionId, string userId)
+    {
+        var receipt = await _context.Receipts
+            .FirstOrDefaultAsync(r => r.ReceiptId == receiptId && r.UserId == userId);
+        
+        if (receipt == null)
+        {
+            throw new InvalidOperationException("Kvittot hittades inte eller tillhör inte användaren.");
+        }
+
+        var transaction = await _context.Transactions
+            .FirstOrDefaultAsync(t => t.TransactionId == transactionId && t.UserId == userId);
+        
+        if (transaction == null)
+        {
+            throw new InvalidOperationException("Transaktionen hittades inte eller tillhör inte användaren.");
+        }
+
+        receipt.TransactionId = transactionId;
+        receipt.UpdatedAt = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+        
+        await _auditLogService.LogAsync("Link", "Receipt", receiptId, 
+            $"Länkade kvitto till transaktion {transactionId}", userId);
+    }
+
+    public async Task UnlinkReceiptFromTransactionAsync(int receiptId, string userId)
+    {
+        var receipt = await _context.Receipts
+            .FirstOrDefaultAsync(r => r.ReceiptId == receiptId && r.UserId == userId);
+        
+        if (receipt == null)
+        {
+            throw new InvalidOperationException("Kvittot hittades inte eller tillhör inte användaren.");
+        }
+
+        var previousTransactionId = receipt.TransactionId;
+        receipt.TransactionId = null;
+        receipt.UpdatedAt = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+        
+        await _auditLogService.LogAsync("Unlink", "Receipt", receiptId, 
+            $"Avlänkade kvitto från transaktion {previousTransactionId}", userId);
+    }
 }

@@ -34,6 +34,7 @@ public class TransactionService : ITransactionService
             .Include(t => t.TransactionCategories)
             .ThenInclude(tc => tc.Category)
             .Include(t => t.Household)
+            .Include(t => t.Receipts)
             .AsQueryable();
 
         // Filter by current user if authenticated
@@ -52,6 +53,7 @@ public class TransactionService : ITransactionService
             .Include(t => t.TransactionCategories)
             .ThenInclude(tc => tc.Category)
             .Include(t => t.Household)
+            .Include(t => t.Receipts)
             .AsQueryable();
 
         // Filter by current user if authenticated
