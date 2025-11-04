@@ -7,6 +7,7 @@
 @using Privatekonomi.Core.Data
 @using Privatekonomi.Web.Services
 @using Privatekonomi.Web.Components.Dialogs
+@using Privatekonomi.Web.Components.PWA
 @inject ThemeService ThemeService
 @inject ViewDensityService ViewDensityService
 @inject IJSRuntime JSRuntime
@@ -77,6 +78,11 @@
         @Body
     </MudMainContent>
 </MudLayout>
+
+<!-- PWA Components -->
+<OfflineIndicator />
+<InstallPwaPrompt />
+<UpdateNotification />
 
 @code {
     private bool _drawerOpen = true;

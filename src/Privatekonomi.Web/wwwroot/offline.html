@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Offline - Privatekonomi</title>
+    <style>
+        body {
+            font-family: 'Inter', 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #1a1a1f 0%, #2a2a3f 100%);
+            color: #ffffff;
+        }
+        
+        .offline-container {
+            text-align: center;
+            padding: 2rem;
+            max-width: 500px;
+        }
+        
+        .offline-icon {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 2rem;
+            background: #594AE2;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 60px;
+        }
+        
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: #ffffff;
+        }
+        
+        p {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            color: #cccccc;
+            margin-bottom: 2rem;
+        }
+        
+        .retry-button {
+            background: #594AE2;
+            color: white;
+            border: none;
+            padding: 12px 32px;
+            font-size: 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .retry-button:hover {
+            background: #4839c2;
+        }
+        
+        .features-list {
+            text-align: left;
+            margin: 2rem auto;
+            max-width: 400px;
+        }
+        
+        .feature-item {
+            display: flex;
+            align-items: center;
+            margin: 1rem 0;
+            color: #aaaaaa;
+        }
+        
+        .feature-icon {
+            width: 24px;
+            height: 24px;
+            margin-right: 12px;
+            color: #594AE2;
+        }
+    </style>
+</head>
+<body>
+    <div class="offline-container">
+        <div class="offline-icon">📡</div>
+        <h1>Du är offline</h1>
+        <p>
+            Du kan fortfarande visa dina tidigare transaktioner och data som har sparats i cachen.
+            När du är online igen kommer alla ändringar att synkroniseras automatiskt.
+        </p>
+        
+        <div class="features-list">
+            <div class="feature-item">
+                <span class="feature-icon">✓</span>
+                <span>Visa sparade transaktioner</span>
+            </div>
+            <div class="feature-item">
+                <span class="feature-icon">✓</span>
+                <span>Granska budgetar och mål</span>
+            </div>
+            <div class="feature-item">
+                <span class="feature-icon">✓</span>
+                <span>Nya transaktioner sparas i kö</span>
+            </div>
+            <div class="feature-item">
+                <span class="feature-icon">✓</span>
+                <span>Automatisk synkronisering vid återanslutning</span>
+            </div>
+        </div>
+        
+        <button class="retry-button" onclick="window.location.reload()">
+            Försök igen
+        </button>
+    </div>
+</body>
+</html>
