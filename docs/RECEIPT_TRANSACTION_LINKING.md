@@ -4,6 +4,8 @@
 
 Denna funktion gör det möjligt att koppla kvitton till transaktioner som bilagor. Användare kan nu länka ett eller flera kvitton till varje transaktion för bättre spårbarhet och dokumentation av utgifter.
 
+> **📸 Visuell Guide**: Se [RECEIPT_TRANSACTION_LINKING_SCREENSHOTS.md](RECEIPT_TRANSACTION_LINKING_SCREENSHOTS.md) för detaljerade beskrivningar av alla UI-komponenter och användarflöden.
+
 ## Funktioner
 
 ### 1. Länka Kvitton till Transaktioner
