@@ -29,6 +29,12 @@ public class BudgetTemplateService
             case BudgetTemplateType.Envelope:
                 return ApplyEnvelopeTemplate(totalIncome, categories);
             
+            case BudgetTemplateType.SwedishFamily:
+                return ApplySwedishFamilyTemplate(totalIncome, categories);
+            
+            case BudgetTemplateType.SwedishSingle:
+                return ApplySwedishSingleTemplate(totalIncome, categories);
+            
             default:
                 // Custom - all zeros, user fills in manually
                 foreach (var category in categories)
@@ -194,6 +200,124 @@ public class BudgetTemplateService
     }
 
     /// <summary>
+    /// Swedish Family Household Budget Template (Länsförsäkringar style):
+    /// Based on typical Swedish household spending patterns for families.
+    /// Emphasizes: 
+    /// - Fixed costs (boende, försäkringar, el)
+    /// - Variable costs split by type (mat butik vs restaurang)
+    /// - Savings treated as a fixed monthly cost (10-15%)
+    /// - Annual costs divided into monthly amounts
+    /// </summary>
+    private static Dictionary<int, decimal> ApplySwedishFamilyTemplate(
+        decimal totalIncome,
+        IEnumerable<Category> categories)
+    {
+        var result = new Dictionary<int, decimal>();
+
+        foreach (var category in categories)
+        {
+            var categoryName = category.Name.ToLower();
+            
+            // Fasta månadskostnader (Fixed monthly costs)
+            if (categoryName.Contains("boende"))
+                result[category.CategoryId] = totalIncome * 0.30m; // 30% housing (rent/mortgage)
+            else if (categoryName.Contains("försäkring"))
+                result[category.CategoryId] = totalIncome * 0.03m; // 3% insurance
+            else if (categoryName.Contains("el") || categoryName.Contains("elräkning"))
+                result[category.CategoryId] = totalIncome * 0.02m; // 2% electricity
+            
+            // Sparande som månadskostnad (Savings as a monthly cost - top priority!)
+            else if (categoryName.Contains("sparande") || categoryName.Contains("investering"))
+                result[category.CategoryId] = totalIncome * 0.15m; // 15% savings (pay yourself first!)
+            
+            // Rörliga månadskostnader (Variable monthly costs)
+            else if (categoryName.Contains("mat") && !categoryName.Contains("restaurang"))
+                result[category.CategoryId] = totalIncome * 0.15m; // 15% groceries
+            else if (categoryName.Contains("restaurang") || categoryName.Contains("utemat"))
+                result[category.CategoryId] = totalIncome * 0.05m; // 5% restaurants/takeout
+            else if (categoryName.Contains("transport") || categoryName.Contains("bensin"))
+                result[category.CategoryId] = totalIncome * 0.08m; // 8% transport
+            
+            // Barn och familj (Children and family)
+            else if (categoryName.Contains("barn") || categoryName.Contains("fritidsaktivitet"))
+                result[category.CategoryId] = totalIncome * 0.05m; // 5% children activities
+            
+            // Underhållning och fritid (Entertainment and leisure)
+            else if (categoryName.Contains("nöje") || categoryName.Contains("streaming"))
+                result[category.CategoryId] = totalIncome * 0.04m; // 4% entertainment
+            else if (categoryName.Contains("shopping") || categoryName.Contains("kläder"))
+                result[category.CategoryId] = totalIncome * 0.04m; // 4% shopping
+            
+            // Hälsa och välmående (Health and wellness)
+            else if (categoryName.Contains("hälsa") || categoryName.Contains("träning") || categoryName.Contains("gym"))
+                result[category.CategoryId] = totalIncome * 0.03m; // 3% health/gym
+            
+            // Buffert/Övrigt (Buffer/Other)
+            else if (categoryName.Contains("buffert") || categoryName.Contains("övrigt"))
+                result[category.CategoryId] = totalIncome * 0.06m; // 6% buffer for unexpected costs
+            else
+                result[category.CategoryId] = 0m;
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Swedish Single Household Budget Template (Länsförsäkringar style):
+    /// Based on typical Swedish household spending patterns for single person households.
+    /// Generally lower fixed costs and more flexibility for personal choices.
+    /// </summary>
+    private static Dictionary<int, decimal> ApplySwedishSingleTemplate(
+        decimal totalIncome,
+        IEnumerable<Category> categories)
+    {
+        var result = new Dictionary<int, decimal>();
+
+        foreach (var category in categories)
+        {
+            var categoryName = category.Name.ToLower();
+            
+            // Fasta månadskostnader (Fixed monthly costs)
+            if (categoryName.Contains("boende"))
+                result[category.CategoryId] = totalIncome * 0.28m; // 28% housing (slightly lower for singles)
+            else if (categoryName.Contains("försäkring"))
+                result[category.CategoryId] = totalIncome * 0.02m; // 2% insurance
+            else if (categoryName.Contains("el") || categoryName.Contains("elräkning"))
+                result[category.CategoryId] = totalIncome * 0.015m; // 1.5% electricity
+            
+            // Sparande som månadskostnad (Savings as a monthly cost - top priority!)
+            else if (categoryName.Contains("sparande") || categoryName.Contains("investering"))
+                result[category.CategoryId] = totalIncome * 0.20m; // 20% savings (higher for singles)
+            
+            // Rörliga månadskostnader (Variable monthly costs)
+            else if (categoryName.Contains("mat") && !categoryName.Contains("restaurang"))
+                result[category.CategoryId] = totalIncome * 0.12m; // 12% groceries (lower for one person)
+            else if (categoryName.Contains("restaurang") || categoryName.Contains("utemat"))
+                result[category.CategoryId] = totalIncome * 0.06m; // 6% restaurants/takeout
+            else if (categoryName.Contains("transport") || categoryName.Contains("bensin"))
+                result[category.CategoryId] = totalIncome * 0.07m; // 7% transport
+            
+            // Underhållning och fritid (Entertainment and leisure)
+            else if (categoryName.Contains("nöje") || categoryName.Contains("streaming"))
+                result[category.CategoryId] = totalIncome * 0.05m; // 5% entertainment
+            else if (categoryName.Contains("shopping") || categoryName.Contains("kläder"))
+                result[category.CategoryId] = totalIncome * 0.06m; // 6% shopping
+            
+            // Hälsa och välmående (Health and wellness)
+            else if (categoryName.Contains("hälsa") || categoryName.Contains("träning") || categoryName.Contains("gym"))
+                result[category.CategoryId] = totalIncome * 0.04m; // 4% health/gym
+            
+            // Buffert/Övrigt (Buffer/Other)
+            else if (categoryName.Contains("buffert") || categoryName.Contains("övrigt"))
+                result[category.CategoryId] = totalIncome * 0.095m; // 9.5% buffer for unexpected costs
+            else
+                result[category.CategoryId] = 0m;
+        }
+
+        return result;
+    }
+
+    /// <summary>
     /// Get template description and recommendations
     /// </summary>
     public static string GetTemplateDescription(BudgetTemplateType templateType)
@@ -208,6 +332,12 @@ public class BudgetTemplateService
             
             BudgetTemplateType.Envelope => 
                 "Kuvertbudget: Varje kategori får ett fast belopp. När pengarna är slut, inget mer spenderande i den kategorin.",
+            
+            BudgetTemplateType.SwedishFamily => 
+                "Svenska Familjehushåll: Baserad på Länsförsäkringar's mall för familjer. Inkluderar fasta kostnader, sparande som månadskostnad, och uppdelning av mat (butik vs restaurang). 15% sparande prioriteras.",
+            
+            BudgetTemplateType.SwedishSingle => 
+                "Svenska Singelhushåll: Baserad på Länsförsäkringar's mall för singelhushåll. Lägre fasta kostnader, högre sparkvot (20%). Fokus på flexibilitet och ekonomisk självständighet.",
             
             _ => "Anpassad budget: Du väljer själv hur mycket som ska budgeteras per kategori"
         };
