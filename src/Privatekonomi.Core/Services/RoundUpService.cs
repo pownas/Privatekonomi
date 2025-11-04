@@ -156,7 +156,7 @@ public class RoundUpService : IRoundUpService
                 var currentMonthMatching = await _context.RoundUpTransactions
                     .Where(r => r.UserId == userId && 
                                r.CreatedAt >= monthStart && 
-                               r.Type == RoundUpType.EmployerMatching)
+                               r.Type == RoundUpType.StandardRoundUp)
                     .SumAsync(r => r.EmployerMatchingAmount);
 
                 var remainingLimit = settings.EmployerMatchingMonthlyLimit.Value - currentMonthMatching;

@@ -69,14 +69,9 @@ public class RoundUpTransaction
 public enum RoundUpType
 {
     /// <summary>
-    /// Standard round-up from a transaction
+    /// Standard round-up from a transaction (includes employer matching if enabled)
     /// </summary>
     StandardRoundUp,
-    
-    /// <summary>
-    /// Employer matching contribution
-    /// </summary>
-    EmployerMatching,
     
     /// <summary>
     /// Salary-based automatic savings

@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Privatekonomi.Core.Data;
 using Privatekonomi.Core.Models;
 using Privatekonomi.Core.ML;
@@ -13,6 +14,7 @@ public class TransactionService : ITransactionService
     private readonly IAuditLogService _auditLogService;
     private readonly ITransactionMLService? _mlService;
     private readonly IRoundUpService? _roundUpService;
+    private readonly ILogger<TransactionService>? _logger;
 
     public TransactionService(
         PrivatekonomyContext context, 
@@ -20,7 +22,8 @@ public class TransactionService : ITransactionService
         IAuditLogService auditLogService,
         ICurrentUserService? currentUserService = null,
         ITransactionMLService? mlService = null,
-        IRoundUpService? roundUpService = null)
+        IRoundUpService? roundUpService = null,
+        ILogger<TransactionService>? logger = null)
     {
         _context = context;
         _currentUserService = currentUserService;
@@ -28,6 +31,7 @@ public class TransactionService : ITransactionService
         _auditLogService = auditLogService;
         _mlService = mlService;
         _roundUpService = roundUpService;
+        _logger = logger;
     }
 
     public async Task<IEnumerable<Transaction>> GetAllTransactionsAsync()
@@ -144,9 +148,10 @@ public class TransactionService : ITransactionService
                     await _roundUpService.ProcessRoundUpForTransactionAsync(transaction.TransactionId);
                 }
             }
-            catch
+            catch (Exception ex)
             {
-                // Silently ignore round-up errors - don't fail transaction creation
+                // Log error but don't fail transaction creation
+                _logger?.LogWarning(ex, "Failed to process round-up for transaction {TransactionId}", transaction.TransactionId);
             }
         }
         
