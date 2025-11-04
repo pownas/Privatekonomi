@@ -12,19 +12,22 @@ public class TransactionService : ITransactionService
     private readonly ICategoryRuleService _categoryRuleService;
     private readonly IAuditLogService _auditLogService;
     private readonly ITransactionMLService? _mlService;
+    private readonly IRoundUpService? _roundUpService;
 
     public TransactionService(
         PrivatekonomyContext context, 
         ICategoryRuleService categoryRuleService, 
         IAuditLogService auditLogService,
         ICurrentUserService? currentUserService = null,
-        ITransactionMLService? mlService = null)
+        ITransactionMLService? mlService = null,
+        IRoundUpService? roundUpService = null)
     {
         _context = context;
         _currentUserService = currentUserService;
         _categoryRuleService = categoryRuleService;
         _auditLogService = auditLogService;
         _mlService = mlService;
+        _roundUpService = roundUpService;
     }
 
     public async Task<IEnumerable<Transaction>> GetAllTransactionsAsync()
@@ -124,6 +127,29 @@ public class TransactionService : ITransactionService
 
         _context.Transactions.Add(transaction);
         await _context.SaveChangesAsync();
+        
+        // Process round-up if service is available
+        if (_roundUpService != null)
+        {
+            try
+            {
+                if (transaction.IsIncome)
+                {
+                    // Process salary auto-save for income transactions
+                    await _roundUpService.ProcessSalaryAutoSaveAsync(transaction.TransactionId);
+                }
+                else
+                {
+                    // Process round-up for expense transactions
+                    await _roundUpService.ProcessRoundUpForTransactionAsync(transaction.TransactionId);
+                }
+            }
+            catch
+            {
+                // Silently ignore round-up errors - don't fail transaction creation
+            }
+        }
+        
         return transaction;
     }
 
