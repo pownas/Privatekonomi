@@ -6,6 +6,9 @@
 @inject INotificationService NotificationService
 @inject ICurrentUserService CurrentUserService
 @inject NavigationManager NavigationManager
+@inject HttpClient HttpClient
+@inject ILogger<Notifications> Logger
+@inject ISnackbar Snackbar
 
 <PageTitle>Notifikationer</PageTitle>
 
@@ -102,7 +105,8 @@
                                 }
                                 @if (notification.SnoozeCount > 0)
                                 {
-                                    <text> (@notification.SnoozeCount snooz)</text>
+                                    var snoozeText = notification.SnoozeCount == 1 ? "snooze" : "snooze";
+                                    <text> (@notification.SnoozeCount @snoozeText)</text>
                                 }
                             </MudText>
                             
@@ -319,8 +323,7 @@
             try
             {
                 // Call API to snooze
-                using var httpClient = new HttpClient { BaseAddress = new Uri(NavigationManager.BaseUri) };
-                var response = await httpClient.PostAsJsonAsync($"api/notifications/{notification.NotificationId}/snooze", 
+                var response = await HttpClient.PostAsJsonAsync($"api/notifications/{notification.NotificationId}/snooze", 
                     new { Duration = duration });
                 
                 if (response.IsSuccessStatusCode)
@@ -337,11 +340,17 @@
                     notification.SnoozeUntil = snoozeUntil;
                     notification.SnoozeCount++;
                     StateHasChanged();
+                    Snackbar.Add("Påminnelse snoozad", Severity.Success);
+                }
+                else
+                {
+                    Snackbar.Add("Kunde inte snooze påminnelsen", Severity.Error);
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error snoozing notification: {ex.Message}");
+                Logger.LogError(ex, "Error snoozing notification {NotificationId}", notification.NotificationId);
+                Snackbar.Add("Ett fel uppstod vid snoozing av påminnelsen", Severity.Error);
             }
         }
     }
@@ -354,8 +363,7 @@
             try
             {
                 // Call API to complete reminder
-                using var httpClient = new HttpClient { BaseAddress = new Uri(NavigationManager.BaseUri) };
-                var response = await httpClient.PostAsync($"api/notifications/{notification.NotificationId}/complete", null);
+                var response = await HttpClient.PostAsync($"api/notifications/{notification.NotificationId}/complete", null);
                 
                 if (response.IsSuccessStatusCode)
                 {
@@ -363,11 +371,17 @@
                     notification.ReadAt = DateTime.UtcNow;
                     _unreadCount--;
                     StateHasChanged();
+                    Snackbar.Add("Påminnelse markerad som betald", Severity.Success);
+                }
+                else
+                {
+                    Snackbar.Add("Kunde inte markera påminnelsen som betald", Severity.Error);
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error completing reminder: {ex.Message}");
+                Logger.LogError(ex, "Error completing reminder {NotificationId}", notification.NotificationId);
+                Snackbar.Add("Ett fel uppstod vid markering av påminnelsen", Severity.Error);
             }
         }
     }
