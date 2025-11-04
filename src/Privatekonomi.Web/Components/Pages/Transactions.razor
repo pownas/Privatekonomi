@@ -704,9 +704,10 @@
             return;
         }
 
+        var transactionText = _selectedTransactions.Count == 1 ? "transaktion" : "transaktioner";
         var result = await DialogService.ShowMessageBox(
             "Bekräfta borttagning",
-            new MarkupString($"Är du säker på att du vill ta bort <strong>{_selectedTransactions.Count}</strong> @(_selectedTransactions.Count == 1 ? \"transaktion\" : \"transaktioner\")?<br/><br/><em>OBS: Denna åtgärd kan inte ångras!</em>"),
+            new MarkupString($"Är du säker på att du vill ta bort <strong>{_selectedTransactions.Count}</strong> {transactionText}?<br/><br/><em>OBS: Denna åtgärd kan inte ångras!</em>"),
             yesText: "Ja, ta bort", cancelText: "Avbryt");
 
         if (result == true)

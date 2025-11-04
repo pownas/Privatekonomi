@@ -8,7 +8,7 @@ public class BulkOperationSnapshot
     /// <summary>
     /// Unique identifier for this snapshot
     /// </summary>
-    public string OperationId { get; set; } = Guid.NewGuid().ToString();
+    public string OperationId { get; set; } = string.Empty;
     
     /// <summary>
     /// Type of operation performed
@@ -34,6 +34,11 @@ public class BulkOperationSnapshot
     /// Transaction IDs affected by the operation
     /// </summary>
     public List<int> AffectedTransactionIds { get; set; } = new();
+
+    public BulkOperationSnapshot()
+    {
+        OperationId = Guid.NewGuid().ToString();
+    }
 }
 
 /// <summary>
