@@ -205,6 +205,10 @@ public class BudgetAlertService : IBudgetAlertService
         if (budget == null) return 0;
 
         var now = DateTime.Now;
+        
+        // If budget hasn't started yet, return 0
+        if (budget.StartDate > now) return 0;
+        
         var daysElapsed = (now - budget.StartDate).Days + 1; // +1 to include today
         
         if (daysElapsed <= 0) return 0;
@@ -375,7 +379,13 @@ public class BudgetAlertService : IBudgetAlertService
 
         if (categoryId.HasValue)
         {
-            query = query.Where(f => f.BudgetCategoryId == categoryId.Value);
+            // Check for both budget-wide freeze (null category) and category-specific freeze
+            query = query.Where(f => f.BudgetCategoryId == null || f.BudgetCategoryId == categoryId.Value);
+        }
+        else
+        {
+            // Only check for budget-wide freeze
+            query = query.Where(f => f.BudgetCategoryId == null);
         }
 
         // Filter by user if authenticated

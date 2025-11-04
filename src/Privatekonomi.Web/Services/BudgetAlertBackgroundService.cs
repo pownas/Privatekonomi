@@ -53,7 +53,7 @@ public class BudgetAlertBackgroundService : BackgroundService
 
         try
         {
-            _logger.LogInformation("Starting budget check at {Time}", DateTime.Now);
+            _logger.LogInformation("Starting budget check at {Time}", DateTime.UtcNow);
 
             // Get all active budgets
             var activeBudgets = await budgetService.GetActiveBudgetsAsync();
@@ -97,7 +97,7 @@ public class BudgetAlertBackgroundService : BackgroundService
                 }
             }
 
-            _logger.LogInformation("Completed budget check at {Time}", DateTime.Now);
+            _logger.LogInformation("Completed budget check at {Time}", DateTime.UtcNow);
         }
         catch (Exception ex)
         {
