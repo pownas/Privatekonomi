@@ -43,7 +43,7 @@
                          Variant="Variant.Outlined"
                          Min="0"
                          Format="N2"
-                         Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                         Culture="@(SwedishCulture)"
                          Class="mb-3" />
 
         <MudNumericField @bind-Value="_formGoal.CurrentAmount" 
@@ -51,7 +51,7 @@
                          Variant="Variant.Outlined"
                          Min="0"
                          Format="N2"
-                         Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                         Culture="@(SwedishCulture)"
                          Class="mb-3" />
 
         <MudDatePicker @bind-Date="_formGoalTargetDate"
@@ -102,7 +102,7 @@ else
                 <MudCard Elevation="2" Class="pa-4">
                     <MudCardContent>
                         <MudText Typo="Typo.h6">Totalt Sparmål</MudText>
-                        <MudText Typo="Typo.h4" Color="Color.Primary">@_totalTargetAmount.ToString("C", new System.Globalization.CultureInfo("sv-SE"))</MudText>
+                        <MudText Typo="Typo.h4" Color="Color.Primary">@_totalTargetAmount.ToString("C", SwedishCulture)</MudText>
                     </MudCardContent>
                 </MudCard>
             </MudItem>
@@ -110,7 +110,7 @@ else
                 <MudCard Elevation="2" Class="pa-4">
                     <MudCardContent>
                         <MudText Typo="Typo.h6">Totalt Sparat</MudText>
-                        <MudText Typo="Typo.h4" Color="Color.Success">@_totalCurrentAmount.ToString("C", new System.Globalization.CultureInfo("sv-SE"))</MudText>
+                        <MudText Typo="Typo.h4" Color="Color.Success">@_totalCurrentAmount.ToString("C", SwedishCulture)</MudText>
                     </MudCardContent>
                 </MudCard>
             </MudItem>
@@ -141,8 +141,8 @@ else
         <RowTemplate>
             <MudTd DataLabel="Namn">@context.Name</MudTd>
             <MudTd DataLabel="Beskrivning">@context.Description</MudTd>
-            <MudTd DataLabel="Målbelopp">@context.TargetAmount.ToString("C", new System.Globalization.CultureInfo("sv-SE"))</MudTd>
-            <MudTd DataLabel="Sparat">@context.CurrentAmount.ToString("C", new System.Globalization.CultureInfo("sv-SE"))</MudTd>
+            <MudTd DataLabel="Målbelopp">@context.TargetAmount.ToString("C", SwedishCulture)</MudTd>
+            <MudTd DataLabel="Sparat">@context.CurrentAmount.ToString("C", SwedishCulture)</MudTd>
             <MudTd DataLabel="Framsteg">
                 <div class="d-flex align-center gap-2">
                     <MudProgressLinear Color="@GetProgressColor(context)" 
@@ -214,7 +214,7 @@ else
                                                      Size="Size.Medium" />
                                             <div class="flex-grow-1">
                                                 <MudText Typo="Typo.body1">
-                                                    <strong>@milestone.Percentage%</strong> (@milestone.TargetAmount.ToString("C", new System.Globalization.CultureInfo("sv-SE")))
+                                                    <strong>@milestone.Percentage%</strong> (@milestone.TargetAmount.ToString("C", SwedishCulture))
                                                 </MudText>
                                                 @if (!string.IsNullOrEmpty(milestone.Description))
                                                 {
@@ -230,7 +230,7 @@ else
                                                 {
                                                     var remaining = milestone.TargetAmount - context.CurrentAmount;
                                                     <MudText Typo="Typo.caption" Color="Color.Secondary">
-                                                        Återstår: @remaining.ToString("C", new System.Globalization.CultureInfo("sv-SE"))
+                                                        Återstår: @remaining.ToString("C", SwedishCulture)
                                                     </MudText>
                                                 }
                                             </div>
@@ -258,6 +258,8 @@ else
 }
 
 @code {
+    private static readonly System.Globalization.CultureInfo SwedishCulture = new System.Globalization.CultureInfo("sv-SE");
+    
     private IEnumerable<Goal> _goals = new List<Goal>();
     private IEnumerable<BankSource> _bankSources = new List<BankSource>();
     private Dictionary<int, IEnumerable<GoalMilestone>> _goalMilestones = new();
