@@ -32,6 +32,7 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
     public DbSet<AllowanceTransaction> AllowanceTransactions { get; set; }
     public DbSet<AllowanceTask> AllowanceTasks { get; set; }
     public DbSet<Goal> Goals { get; set; }
+    public DbSet<GoalMilestone> GoalMilestones { get; set; }
     public DbSet<SalaryHistory> SalaryHistories { get; set; }
     
     // Pockets for savings accounts
@@ -497,6 +498,27 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
             entity.HasIndex(e => e.ValidFrom);
             entity.HasIndex(e => e.ValidTo);
             entity.HasIndex(e => new { e.ValidFrom, e.ValidTo });
+        });
+        
+        // GoalMilestone configuration
+        modelBuilder.Entity<GoalMilestone>(entity =>
+        {
+            entity.HasKey(e => e.GoalMilestoneId);
+            entity.Property(e => e.TargetAmount).HasPrecision(18, 2);
+            entity.Property(e => e.Percentage).IsRequired();
+            entity.Property(e => e.Description).HasMaxLength(500);
+            entity.Property(e => e.IsReached).IsRequired();
+            entity.Property(e => e.IsAutomatic).IsRequired();
+            entity.Property(e => e.CreatedAt).IsRequired();
+            
+            entity.HasOne(e => e.Goal)
+                .WithMany()
+                .HasForeignKey(e => e.GoalId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.HasIndex(e => e.GoalId);
+            entity.HasIndex(e => e.IsReached);
+            entity.HasIndex(e => new { e.GoalId, e.Percentage });
         });
         
         // SalaryHistory configuration

@@ -8,11 +8,16 @@ public class GoalService : IGoalService
 {
     private readonly PrivatekonomyContext _context;
     private readonly ICurrentUserService? _currentUserService;
+    private readonly IGoalMilestoneService? _milestoneService;
 
-    public GoalService(PrivatekonomyContext context, ICurrentUserService? currentUserService = null)
+    public GoalService(
+        PrivatekonomyContext context, 
+        ICurrentUserService? currentUserService = null,
+        IGoalMilestoneService? milestoneService = null)
     {
         _context = context;
         _currentUserService = currentUserService;
+        _milestoneService = milestoneService;
     }
 
     public async Task<IEnumerable<Goal>> GetAllGoalsAsync()
@@ -57,6 +62,13 @@ public class GoalService : IGoalService
         
         _context.Goals.Add(goal);
         await _context.SaveChangesAsync();
+        
+        // Create automatic milestones for the new goal
+        if (_milestoneService != null)
+        {
+            await _milestoneService.CreateAutomaticMilestonesAsync(goal.GoalId);
+        }
+        
         return goal;
     }
 
@@ -113,6 +125,12 @@ public class GoalService : IGoalService
             goal.CurrentAmount = currentAmount;
             goal.UpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
+            
+            // Check and update milestones
+            if (_milestoneService != null)
+            {
+                await _milestoneService.CheckAndUpdateMilestonesAsync(id, currentAmount);
+            }
         }
         return goal!;
     }
