@@ -24,6 +24,10 @@ En privatekonomi-applikation byggd med .NET 9, Blazor Server och MudBlazor för 
   - Visuell jämförelse med diagram och färgkodade differenser
   - Se [Konsumentverket Jämförelse guide](docs/KONSUMENTVERKET_JAMFORELSE.md)
 - **Sparmål**: Sätt upp och följ sparmål med målbelopp, tidsgräns och prioritering
+  - **Målstolpar**: Automatiska delmål (25%, 50%, 75%, 100%) för att fira framsteg
+  - Notifikationer när milestones uppnås
+  - Historik över uppnådda milestones
+  - Se [Målstolpar dokumentation](docs/GOAL_MILESTONES.md)
 - **Gemensamma Sparmål**:
   - Skapa sparmål tillsammans med andra användare
   - Inbjudningssystem med accept/reject
