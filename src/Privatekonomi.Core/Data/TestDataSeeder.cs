@@ -31,6 +31,7 @@ public static class TestDataSeeder
         SeedChallengeTemplates(context);
         SeedSubscriptions(context, testUserId);
         SeedBills(context, testUserId);
+        SeedBillReminders(context, testUserId);
         SeedPensions(context, testUserId);
         SeedDividends(context, testUserId);
         SeedInvestmentTransactions(context, testUserId);
@@ -1871,10 +1872,262 @@ public static class TestDataSeeder
                 UserId = userId,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow.AddDays(-8)
+            },
+            // New bills for reminder testing
+            new Bill
+            {
+                BillId = 6,
+                Name = "Hyra",
+                Description = "Månadshyra lägenhet",
+                Amount = 8500m,
+                Currency = "SEK",
+                IssueDate = DateTime.UtcNow.AddDays(-25),
+                DueDate = DateTime.UtcNow.AddDays(2),
+                Status = "Pending",
+                IsRecurring = true,
+                RecurringFrequency = "Monthly",
+                PaymentMethod = "Bankgiro",
+                InvoiceNumber = "HYRA-2025-11",
+                Bankgiro = "555-8888",
+                Payee = "AB Bostäder Stockholm",
+                CategoryId = 3, // Boende
+                Notes = "Hyra förfaller den 1:a varje månad",
+                UserId = userId,
+                CreatedAt = DateTime.UtcNow
+            },
+            new Bill
+            {
+                BillId = 7,
+                Name = "Netflix Premium",
+                Description = "Streaming-tjänst",
+                Amount = 139m,
+                Currency = "SEK",
+                IssueDate = DateTime.UtcNow.AddDays(-5),
+                DueDate = DateTime.UtcNow.AddDays(10),
+                Status = "Pending",
+                IsRecurring = true,
+                RecurringFrequency = "Monthly",
+                PaymentMethod = "Credit Card",
+                InvoiceNumber = "NFLX-2025-11-001",
+                Payee = "Netflix AB",
+                CategoryId = 15, // Nöje
+                Notes = "Automatisk kortbetalning",
+                UserId = userId,
+                CreatedAt = DateTime.UtcNow
+            },
+            new Bill
+            {
+                BillId = 8,
+                Name = "Interneträkning",
+                Description = "Bredband 1000/1000 Mbit",
+                Amount = 399m,
+                Currency = "SEK",
+                IssueDate = DateTime.UtcNow.AddDays(-12),
+                DueDate = DateTime.UtcNow.AddDays(-8),
+                Status = "Overdue",
+                IsRecurring = true,
+                RecurringFrequency = "Monthly",
+                PaymentMethod = "E-invoice",
+                InvoiceNumber = "INET-2025-10-789",
+                OCR = "987654321098765",
+                Payee = "Bahnhof AB",
+                CategoryId = 18, // Bredband
+                Notes = "FÖRSENAD! Betala omedelbart för att undvika avbrott",
+                UserId = userId,
+                CreatedAt = DateTime.UtcNow
+            },
+            new Bill
+            {
+                BillId = 9,
+                Name = "Spotify Family",
+                Description = "Musikstreaming familjeplan",
+                Amount = 179m,
+                Currency = "SEK",
+                IssueDate = DateTime.UtcNow.AddDays(-3),
+                DueDate = DateTime.UtcNow.AddDays(12),
+                Status = "Pending",
+                IsRecurring = true,
+                RecurringFrequency = "Monthly",
+                PaymentMethod = "Credit Card",
+                InvoiceNumber = "SPOT-2025-11-456",
+                Payee = "Spotify AB",
+                CategoryId = 15, // Nöje
+                Notes = "Familjeplan för 6 användare",
+                UserId = userId,
+                CreatedAt = DateTime.UtcNow
             }
         };
 
         context.Bills.AddRange(bills);
+        context.SaveChanges();
+    }
+
+    private static void SeedBillReminders(PrivatekonomyContext context, string userId)
+    {
+        var billReminders = new List<BillReminder>
+        {
+            // Reminder 1: Normal reminder for electricity bill (Bill 1)
+            new BillReminder
+            {
+                BillReminderId = 1,
+                BillId = 1,
+                ReminderDate = DateTime.UtcNow.AddDays(-3),
+                IsSent = true,
+                SentDate = DateTime.UtcNow.AddDays(-3),
+                ReminderMethod = "Notification",
+                Message = "Elräkning på 1,450 kr förfaller om 13 dagar",
+                SnoozeUntil = null,
+                SnoozeCount = 0,
+                IsCompleted = false,
+                EscalationLevel = 0,
+                CreatedAt = DateTime.UtcNow.AddDays(-3)
+            },
+            
+            // Reminder 2: Snoozed once - Rent bill (Bill 6)
+            new BillReminder
+            {
+                BillReminderId = 2,
+                BillId = 6,
+                ReminderDate = DateTime.UtcNow.AddDays(-5),
+                IsSent = true,
+                SentDate = DateTime.UtcNow.AddDays(-5),
+                ReminderMethod = "Notification",
+                Message = "Hyra på 8,500 kr förfaller om 7 dagar",
+                SnoozeUntil = DateTime.UtcNow.AddDays(1),
+                SnoozeCount = 1,
+                IsCompleted = false,
+                EscalationLevel = 0,
+                LastFollowUpDate = null,
+                CreatedAt = DateTime.UtcNow.AddDays(-5)
+            },
+            
+            // Reminder 3: Snoozed multiple times (2 times) - Netflix (Bill 7)
+            new BillReminder
+            {
+                BillReminderId = 3,
+                BillId = 7,
+                ReminderDate = DateTime.UtcNow.AddDays(-10),
+                IsSent = true,
+                SentDate = DateTime.UtcNow.AddDays(-10),
+                ReminderMethod = "Notification",
+                Message = "Netflix Premium på 139 kr förfaller snart",
+                SnoozeUntil = DateTime.UtcNow.AddHours(6),
+                SnoozeCount = 2,
+                IsCompleted = false,
+                EscalationLevel = 0,
+                LastFollowUpDate = null,
+                CreatedAt = DateTime.UtcNow.AddDays(-10)
+            },
+            
+            // Reminder 4: Critical - Overdue internet bill with escalation level 3 (Bill 8)
+            new BillReminder
+            {
+                BillReminderId = 4,
+                BillId = 8,
+                ReminderDate = DateTime.UtcNow.AddDays(-15),
+                IsSent = true,
+                SentDate = DateTime.UtcNow.AddDays(-15),
+                ReminderMethod = "Notification",
+                Message = "⚠️ BRÅDSKANDE: Interneträkning på 399 kr förföll för 8 dagar sedan. Åtgärd krävs omedelbart!",
+                SnoozeUntil = null,
+                SnoozeCount = 2,
+                IsCompleted = false,
+                EscalationLevel = 3,
+                LastFollowUpDate = DateTime.UtcNow.AddHours(-12),
+                CreatedAt = DateTime.UtcNow.AddDays(-15)
+            },
+            
+            // Reminder 5: Escalation level 1 - 1 day overdue (Bill 1 - second reminder)
+            new BillReminder
+            {
+                BillReminderId = 5,
+                BillId = 1,
+                ReminderDate = DateTime.UtcNow.AddDays(-1),
+                IsSent = true,
+                SentDate = DateTime.UtcNow.AddDays(-1),
+                ReminderMethod = "Notification",
+                Message = "Påminnelse: Elräkning på 1,450 kr förfaller om 11 dagar",
+                SnoozeUntil = null,
+                SnoozeCount = 0,
+                IsCompleted = false,
+                EscalationLevel = 1,
+                LastFollowUpDate = DateTime.UtcNow.AddDays(-1),
+                CreatedAt = DateTime.UtcNow.AddDays(-1)
+            },
+            
+            // Reminder 6: Escalation level 2 - 3 days, high priority (Bill 6 - second reminder)
+            new BillReminder
+            {
+                BillReminderId = 6,
+                BillId = 6,
+                ReminderDate = DateTime.UtcNow.AddDays(-3),
+                IsSent = true,
+                SentDate = DateTime.UtcNow.AddDays(-3),
+                ReminderMethod = "Notification",
+                Message = "⚠️ BRÅDSKANDE: Hyra på 8,500 kr förfaller om 5 dagar",
+                SnoozeUntil = null,
+                SnoozeCount = 0,
+                IsCompleted = false,
+                EscalationLevel = 2,
+                LastFollowUpDate = DateTime.UtcNow.AddDays(-3),
+                CreatedAt = DateTime.UtcNow.AddDays(-3)
+            },
+            
+            // Reminder 7: Completed reminder (Bill 4 - paid mobile bill)
+            new BillReminder
+            {
+                BillReminderId = 7,
+                BillId = 4,
+                ReminderDate = DateTime.UtcNow.AddDays(-8),
+                IsSent = true,
+                SentDate = DateTime.UtcNow.AddDays(-8),
+                ReminderMethod = "Notification",
+                Message = "Mobilabonnemang på 349 kr förfaller snart",
+                SnoozeUntil = null,
+                SnoozeCount = 0,
+                IsCompleted = true,
+                CompletedDate = DateTime.UtcNow.AddDays(-3),
+                EscalationLevel = 0,
+                CreatedAt = DateTime.UtcNow.AddDays(-8)
+            },
+            
+            // Reminder 8: Snoozed 3+ times - should trigger warning (Bill 9 - Spotify)
+            new BillReminder
+            {
+                BillReminderId = 8,
+                BillId = 9,
+                ReminderDate = DateTime.UtcNow.AddDays(-12),
+                IsSent = true,
+                SentDate = DateTime.UtcNow.AddDays(-12),
+                ReminderMethod = "Notification",
+                Message = "Spotify Family på 179 kr förfaller snart (Snoozad 3 gånger)",
+                SnoozeUntil = DateTime.UtcNow.AddDays(2),
+                SnoozeCount = 3,
+                IsCompleted = false,
+                EscalationLevel = 1,
+                LastFollowUpDate = DateTime.UtcNow.AddDays(-2),
+                CreatedAt = DateTime.UtcNow.AddDays(-12)
+            },
+            
+            // Reminder 9: Recently sent, not yet actioned (Bill 2 - Home insurance)
+            new BillReminder
+            {
+                BillReminderId = 9,
+                BillId = 2,
+                ReminderDate = DateTime.UtcNow.AddHours(-6),
+                IsSent = true,
+                SentDate = DateTime.UtcNow.AddHours(-6),
+                ReminderMethod = "Notification",
+                Message = "Hemförsäkring på 349 kr förfaller om 5 dagar",
+                SnoozeUntil = null,
+                SnoozeCount = 0,
+                IsCompleted = false,
+                EscalationLevel = 0,
+                CreatedAt = DateTime.UtcNow.AddHours(-6)
+            }
+        };
+
+        context.BillReminders.AddRange(billReminders);
         context.SaveChanges();
     }
 
@@ -2419,23 +2672,154 @@ public static class TestDataSeeder
     {
         var notifications = new List<Notification>
         {
+            // Notification 1: Normal reminder - Electricity bill (BillReminder 1)
             new Notification
             {
                 NotificationId = 1,
                 UserId = userId,
                 Type = SystemNotificationType.BillDue,
-                Title = "Räkning förfaller snart",
-                Message = "Din elräkning på 1 450 kr förfaller om 3 dagar",
+                Title = "Påminnelse: Betala Elräkning",
+                Message = "Räkning på 1,450 kr förfaller om 13 dagar",
                 IsRead = false,
                 Channel = NotificationChannel.InApp,
-                Priority = NotificationPriority.High,
-                ActionUrl = "/economy/bills",
-                SentAt = DateTime.UtcNow.AddDays(-1),
-                CreatedAt = DateTime.UtcNow.AddDays(-1)
+                Priority = NotificationPriority.Normal,
+                ActionUrl = "/economy/bills/1",
+                BillReminderId = 1,
+                SentAt = DateTime.UtcNow.AddDays(-3),
+                CreatedAt = DateTime.UtcNow.AddDays(-3)
             },
+            
+            // Notification 2: Snoozed - Rent bill (BillReminder 2)
             new Notification
             {
                 NotificationId = 2,
+                UserId = userId,
+                Type = SystemNotificationType.BillDue,
+                Title = "Påminnelse: Hyra",
+                Message = "Räkning på 8,500 kr förfaller om 2 dagar",
+                IsRead = false,
+                Channel = NotificationChannel.InApp,
+                Priority = NotificationPriority.High,
+                ActionUrl = "/economy/bills/6",
+                BillReminderId = 2,
+                SnoozeUntil = DateTime.UtcNow.AddDays(1),
+                SnoozeCount = 1,
+                SentAt = DateTime.UtcNow.AddDays(-5),
+                CreatedAt = DateTime.UtcNow.AddDays(-5)
+            },
+            
+            // Notification 3: Snoozed 2 times - Netflix (BillReminder 3)
+            new Notification
+            {
+                NotificationId = 3,
+                UserId = userId,
+                Type = SystemNotificationType.BillDue,
+                Title = "Påminnelse: Netflix Premium",
+                Message = "Räkning på 139 kr förfaller 2025-11-10",
+                IsRead = false,
+                Channel = NotificationChannel.InApp,
+                Priority = NotificationPriority.Normal,
+                ActionUrl = "/economy/bills/7",
+                BillReminderId = 3,
+                SnoozeUntil = DateTime.UtcNow.AddHours(6),
+                SnoozeCount = 2,
+                SentAt = DateTime.UtcNow.AddDays(-10),
+                CreatedAt = DateTime.UtcNow.AddDays(-10)
+            },
+            
+            // Notification 4: Critical overdue - Internet bill (BillReminder 4)
+            new Notification
+            {
+                NotificationId = 4,
+                UserId = userId,
+                Type = SystemNotificationType.BillOverdue,
+                Title = "⚠️ BRÅDSKANDE: Betala Interneträkning",
+                Message = "Räkningen på 399 kr förföll för 8 dagar sedan. Åtgärd krävs omedelbart! (Snoozad 2 gånger)",
+                IsRead = false,
+                Channel = NotificationChannel.InApp,
+                Priority = NotificationPriority.Critical,
+                ActionUrl = "/economy/bills/8",
+                BillReminderId = 4,
+                SnoozeCount = 2,
+                SentAt = DateTime.UtcNow.AddHours(-12),
+                CreatedAt = DateTime.UtcNow.AddDays(-15)
+            },
+            
+            // Notification 5: Escalation level 2 - Rent (BillReminder 6)
+            new Notification
+            {
+                NotificationId = 5,
+                UserId = userId,
+                Type = SystemNotificationType.BillDue,
+                Title = "⚠️ BRÅDSKANDE: Hyra",
+                Message = "Räkning på 8,500 kr förfaller om 5 dagar",
+                IsRead = false,
+                Channel = NotificationChannel.InApp,
+                Priority = NotificationPriority.High,
+                ActionUrl = "/economy/bills/6",
+                BillReminderId = 6,
+                SentAt = DateTime.UtcNow.AddDays(-3),
+                CreatedAt = DateTime.UtcNow.AddDays(-3)
+            },
+            
+            // Notification 6: Completed/Read - Mobile bill (BillReminder 7)
+            new Notification
+            {
+                NotificationId = 6,
+                UserId = userId,
+                Type = SystemNotificationType.BillDue,
+                Title = "Påminnelse: Mobilabonnemang",
+                Message = "Räkning på 349 kr förfaller snart",
+                IsRead = true,
+                Channel = NotificationChannel.InApp,
+                Priority = NotificationPriority.Normal,
+                ActionUrl = "/economy/bills/4",
+                BillReminderId = 7,
+                ReadAt = DateTime.UtcNow.AddDays(-3),
+                SentAt = DateTime.UtcNow.AddDays(-8),
+                CreatedAt = DateTime.UtcNow.AddDays(-8)
+            },
+            
+            // Notification 7: Warning - Snoozed 3 times - Spotify (BillReminder 8)
+            new Notification
+            {
+                NotificationId = 7,
+                UserId = userId,
+                Type = SystemNotificationType.BillDue,
+                Title = "Påminnelse: Spotify Family",
+                Message = "Räkning på 179 kr förfaller 2025-11-17 (Snoozad 3 gånger)",
+                IsRead = false,
+                Channel = NotificationChannel.InApp,
+                Priority = NotificationPriority.High,
+                ActionUrl = "/economy/bills/9",
+                BillReminderId = 8,
+                SnoozeUntil = DateTime.UtcNow.AddDays(2),
+                SnoozeCount = 3,
+                SentAt = DateTime.UtcNow.AddDays(-2),
+                CreatedAt = DateTime.UtcNow.AddDays(-12)
+            },
+            
+            // Notification 8: Recent - Home insurance (BillReminder 9)
+            new Notification
+            {
+                NotificationId = 8,
+                UserId = userId,
+                Type = SystemNotificationType.BillDue,
+                Title = "Påminnelse: Hemförsäkring",
+                Message = "Räkning på 349 kr förfaller om 5 dagar",
+                IsRead = false,
+                Channel = NotificationChannel.InApp,
+                Priority = NotificationPriority.Normal,
+                ActionUrl = "/economy/bills/2",
+                BillReminderId = 9,
+                SentAt = DateTime.UtcNow.AddHours(-6),
+                CreatedAt = DateTime.UtcNow.AddHours(-6)
+            },
+            
+            // Notification 9: Goal achieved (not bill related)
+            new Notification
+            {
+                NotificationId = 9,
                 UserId = userId,
                 Type = SystemNotificationType.GoalAchieved,
                 Title = "Grattis! Sparmål uppnått",
@@ -2447,9 +2831,11 @@ public static class TestDataSeeder
                 SentAt = DateTime.UtcNow.AddHours(-5),
                 CreatedAt = DateTime.UtcNow.AddHours(-5)
             },
+            
+            // Notification 10: Subscription renewal (not bill related)
             new Notification
             {
-                NotificationId = 3,
+                NotificationId = 10,
                 UserId = userId,
                 Type = SystemNotificationType.SubscriptionRenewal,
                 Title = "Prenumeration förnyas snart",
@@ -2462,24 +2848,11 @@ public static class TestDataSeeder
                 SentAt = DateTime.UtcNow.AddDays(-3),
                 CreatedAt = DateTime.UtcNow.AddDays(-3)
             },
+            
+            // Notification 11: Budget warning (not bill related)
             new Notification
             {
-                NotificationId = 4,
-                UserId = userId,
-                Type = SystemNotificationType.SignificantGain,
-                Title = "Utdelning mottagen",
-                Message = "Du har fått utdelning från Volvo B: 550 kr (före skatt)",
-                IsRead = true,
-                Channel = NotificationChannel.InApp,
-                Priority = NotificationPriority.Normal,
-                ActionUrl = "/investments/overview",
-                ReadAt = DateTime.UtcNow.AddDays(-6),
-                SentAt = DateTime.UtcNow.AddDays(-7),
-                CreatedAt = DateTime.UtcNow.AddDays(-7)
-            },
-            new Notification
-            {
-                NotificationId = 5,
+                NotificationId = 11,
                 UserId = userId,
                 Type = SystemNotificationType.BudgetWarning,
                 Title = "Budgetvarning",
@@ -2490,21 +2863,6 @@ public static class TestDataSeeder
                 ActionUrl = "/economy/budgets",
                 SentAt = DateTime.UtcNow.AddHours(-12),
                 CreatedAt = DateTime.UtcNow.AddHours(-12)
-            },
-            new Notification
-            {
-                NotificationId = 6,
-                UserId = userId,
-                Type = SystemNotificationType.GoalMilestone,
-                Title = "Utmaning framgång!",
-                Message = "Du är halvvägs i din 'Spara 100 kr per dag' utmaning. Fortsätt så!",
-                IsRead = true,
-                Channel = NotificationChannel.InApp,
-                Priority = NotificationPriority.Low,
-                ActionUrl = "/savings/challenges",
-                ReadAt = DateTime.UtcNow.AddDays(-1),
-                SentAt = DateTime.UtcNow.AddDays(-2),
-                CreatedAt = DateTime.UtcNow.AddDays(-2)
             }
         };
 
