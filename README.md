@@ -118,7 +118,7 @@ En privatekonomi-applikation byggd med .NET 9, Blazor Server och MudBlazor för 
   - Push-notifikationer (Android/Windows/Linux - ⚠️ begränsat på iOS)
   - Service Worker med smart cache-strategi (network-first, fallback cache)
   - Lighthouse PWA score > 90
-  - Se [PWA Guide](docs/PWA_GUIDE.md) för installation och [iOS-begränsningar](docs/PWA_IOS_LIMITATIONS.md)
+  - Se [PWA Guide](docs/PWA_GUIDE.md) för installation, [iOS-begränsningar](docs/PWA_IOS_LIMITATIONS.md) och [Nästa steg för deployment](docs/PWA_NEXT_STEPS.md)
 - **Löneutveckling**:
   - Spåra och följa din lön över tid (hela karriären, 50+ år)
   - Visualisera löneutveckling med interaktiv graf

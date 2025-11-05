@@ -349,7 +349,7 @@ The PWA implementation is **complete and production-ready**. All core functional
 
 **Estimated Lighthouse Score:** 90-95/100
 
-**Next Action:** Deploy to test environment and validate with Lighthouse
+**Next Action:** Follow the comprehensive testing and deployment guide in [PWA_NEXT_STEPS.md](PWA_NEXT_STEPS.md)
 
 ---
 
