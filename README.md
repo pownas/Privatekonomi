@@ -8,7 +8,7 @@ En privatekonomi-applikation byggd med .NET 9, Blazor Server och MudBlazor för 
 - **Dashboard**: Översikt över totala inkomster, utgifter och nettoresultat
 - **Transaktionshantering**: Registrera, visa och ta bort transaktioner
 - **Budgethantering**: Skapa och följa upp budgetar med visualisering av planerat vs faktiskt utfall
-  - **Svenska budgetmallar**: ⭐ NYT!
+  - **Svenska budgetmallar**: ⭐ NYTT!
     - Förbyggda budgetmallar baserade på Länsförsäkringar's riktlinjer
     - Svenska Familjehushåll (15% sparkvot)
     - Svenska Singelhushåll (20% sparkvot) 
@@ -36,7 +36,7 @@ En privatekonomi-applikation byggd med .NET 9, Blazor Server och MudBlazor för 
   - Aggregering per kontotyp och investeringstyp
   - Import från Avanza Bank
   - CSV-export för analys
-- **Pensionshantering**: ⭐ NYT!
+- **Pensionshantering**: ⭐ NYTT!
   - Spåra pensioner från flera leverantörer (AMF, Alecta, SEB, etc.)
   - Tjänstepension, privat pension och allmän pension
   - Avkastningsberäkning och månatliga inbetalningar
@@ -88,7 +88,7 @@ En privatekonomi-applikation byggd med .NET 9, Blazor Server och MudBlazor för 
   - WCAG 2.1 Nivå AA compliance
   - Tangentbordsnavigation och fokusindikatorer
   - Optimerade färgkontraster för ljust och mörkt läge
-- **Mobil-optimerad UI med Gester**: ⭐ NYT!
+- **Mobil-optimerad UI med Gester**: ⭐ NYTT!
   - Touch-optimerade gester för mobil användning
   - Swipe vänster/höger för ta bort/redigera transaktioner
   - Pull-to-refresh för uppdatering av data
@@ -96,7 +96,7 @@ En privatekonomi-applikation byggd med .NET 9, Blazor Server och MudBlazor för 
   - Thumbzone-optimerad layout för enkel navigering
   - Bottom sheets för mobilmenyer
   - Se [Mobile Gestures Guide](docs/MOBILE_GESTURES_GUIDE.md)
-- **Progressive Web App (PWA)**: ⭐ NYT!
+- **Progressive Web App (PWA)**: ⭐ NYTT!
   - Installationsbar på mobil och desktop (Android, iOS, Windows, Mac, Linux)
   - Offline-funktionalitet för läsning av transaktioner och budgetar
   - Automatisk synkronisering när du kommer online igen (⚠️ iOS kräver att appen är öppen)
@@ -112,7 +112,7 @@ En privatekonomi-applikation byggd med .NET 9, Blazor Server och MudBlazor för 
   - Beräkna genomsnittslön och lönetillväxt
   - Dokumentera jobbbyten och löneförhöjningar
   - Hantera befattning, arbetsgivare och anställningstyp
-- **Smart Notifikationssystem**: ⭐ NYT!
+- **Smart Notifikationssystem**: ⭐ NYTT!
   - Multi-kanal notifikationer (In-app, Email, SMS, Push, Slack, Teams)
   - Konfigurerbart per notifikationstyp
   - Do Not Disturb-scheman
@@ -497,16 +497,16 @@ Se [STORAGE_GUIDE.md](docs/STORAGE_GUIDE.md) för detaljerad information om:
 - **[PSD2_API_GUIDE.md](docs/PSD2_API_GUIDE.md)**: Guide för automatisk bankimport via PSD2-API (Swedbank, Avanza, ICA Banken)
 - **[AVANZA_IMPORT_GUIDE.md](docs/AVANZA_IMPORT_GUIDE.md)**: Guide för import av investeringar från Avanza Bank
 - **[STOCK_PRICE_API_GUIDE.md](docs/STOCK_PRICE_API_GUIDE.md)**: Guide för automatisk uppdatering av aktiekurser via API
-- **[INVESTMENT_PENSION_GUIDE.md](docs/INVESTMENT_PENSION_GUIDE.md)**: ⭐ NYT! Guide för investeringar och pensionshantering
+- **[INVESTMENT_PENSION_GUIDE.md](docs/INVESTMENT_PENSION_GUIDE.md)**: ⭐ NYTT! Guide för investeringar och pensionshantering
 - **[BUDGET_GUIDE.md](docs/BUDGET_GUIDE.md)**: Guide för budgethantering
-- **[MOBILE_GESTURES_GUIDE.md](docs/MOBILE_GESTURES_GUIDE.md)**: ⭐ NYT! Guide för mobil-optimerad UI med touch-gester
+- **[MOBILE_GESTURES_GUIDE.md](docs/MOBILE_GESTURES_GUIDE.md)**: ⭐ NYTT! Guide för mobil-optimerad UI med touch-gester
 - **[AUTOMATIC_CATEGORIZATION.md](docs/AUTOMATIC_CATEGORIZATION.md)**: Guide för automatisk kategorisering av transaktioner
 - **[FAMILY_COLLABORATION_GUIDE.md](docs/FAMILY_COLLABORATION_GUIDE.md)**: Guide för familjesamarbete, barnkonton och veckopeng
 - **[DARK_MODE_IMPLEMENTATION.md](docs/DARK_MODE_IMPLEMENTATION.md)**: Guide för MudBlazor Dark Mode och WCAG-compliance
 - **[DARK_MODE_TESTING.md](docs/DARK_MODE_TESTING.md)**: Testguide för dark mode och tillgänglighet
 - **[SALARY_HISTORY_GUIDE.md](docs/SALARY_HISTORY_GUIDE.md)**: Guide för löneutveckling och lönehistorik
 
-### Sverige-specifika integrationer (NYT!)
+### Sverige-specifika integrationer (NYTT!)
 
 - **[SWEDISH_INTEGRATIONS_SUMMARY.md](docs/SWEDISH_INTEGRATIONS_SUMMARY.md)**: Sammanfattning av Sverige-specifika funktioner
 - **[SWEDISH_INTEGRATIONS_EVALUATION.md](docs/SWEDISH_INTEGRATIONS_EVALUATION.md)**: Utvärdering av genomförbarhet
