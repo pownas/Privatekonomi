@@ -412,4 +412,400 @@ public class TransactionService : ITransactionService
 
         return await query.OrderByDescending(t => t.Date).ToListAsync();
     }
+
+    public async Task<BulkOperationResult> BulkDeleteTransactionsAsync(List<int> transactionIds)
+    {
+        var result = new BulkOperationResult
+        {
+            TotalCount = transactionIds.Count,
+            OperationType = "Delete",
+            OperationId = Guid.NewGuid().ToString()
+        };
+
+        foreach (var id in transactionIds)
+        {
+            try
+            {
+                var transaction = await _context.Transactions.FindAsync(id);
+                if (transaction == null)
+                {
+                    result.FailureCount++;
+                    result.FailedIds.Add(id);
+                    result.Errors.Add($"Transaction {id} not found");
+                    continue;
+                }
+
+                // Check if transaction is locked
+                if (transaction.IsLocked)
+                {
+                    result.FailureCount++;
+                    result.FailedIds.Add(id);
+                    result.Errors.Add($"Transaction {id} is locked and cannot be deleted");
+                    continue;
+                }
+
+                // Check user ownership if authenticated
+                if (_currentUserService?.IsAuthenticated == true && 
+                    _currentUserService.UserId != null && 
+                    transaction.UserId != _currentUserService.UserId)
+                {
+                    result.FailureCount++;
+                    result.FailedIds.Add(id);
+                    result.Errors.Add($"Transaction {id} does not belong to current user");
+                    continue;
+                }
+
+                _context.Transactions.Remove(transaction);
+                result.SuccessCount++;
+                result.SuccessfulIds.Add(id);
+            }
+            catch (Exception ex)
+            {
+                result.FailureCount++;
+                result.FailedIds.Add(id);
+                result.Errors.Add($"Error deleting transaction {id}: {ex.Message}");
+            }
+        }
+
+        if (result.SuccessCount > 0)
+        {
+            await _context.SaveChangesAsync();
+        }
+
+        return result;
+    }
+
+    public async Task<BulkOperationResult> BulkCategorizeTransactionsAsync(
+        List<int> transactionIds, 
+        List<(int CategoryId, decimal? Amount)> categories)
+    {
+        var result = new BulkOperationResult
+        {
+            TotalCount = transactionIds.Count,
+            OperationType = "Categorize",
+            OperationId = Guid.NewGuid().ToString()
+        };
+
+        // Validate categories exist
+        var categoryIds = categories.Select(c => c.CategoryId).Distinct().ToList();
+        var existingCategories = await _context.Categories
+            .Where(c => categoryIds.Contains(c.CategoryId))
+            .Select(c => c.CategoryId)
+            .ToListAsync();
+
+        var invalidCategoryIds = categoryIds.Except(existingCategories).ToList();
+        if (invalidCategoryIds.Any())
+        {
+            result.Errors.Add($"Invalid category IDs: {string.Join(", ", invalidCategoryIds)}");
+            return result;
+        }
+
+        foreach (var id in transactionIds)
+        {
+            try
+            {
+                var transaction = await _context.Transactions
+                    .Include(t => t.TransactionCategories)
+                    .FirstOrDefaultAsync(t => t.TransactionId == id);
+
+                if (transaction == null)
+                {
+                    result.FailureCount++;
+                    result.FailedIds.Add(id);
+                    result.Errors.Add($"Transaction {id} not found");
+                    continue;
+                }
+
+                // Check if transaction is locked
+                if (transaction.IsLocked)
+                {
+                    result.FailureCount++;
+                    result.FailedIds.Add(id);
+                    result.Errors.Add($"Transaction {id} is locked and cannot be edited");
+                    continue;
+                }
+
+                // Check user ownership if authenticated
+                if (_currentUserService?.IsAuthenticated == true && 
+                    _currentUserService.UserId != null && 
+                    transaction.UserId != _currentUserService.UserId)
+                {
+                    result.FailureCount++;
+                    result.FailedIds.Add(id);
+                    result.Errors.Add($"Transaction {id} does not belong to current user");
+                    continue;
+                }
+
+                // Remove existing categories
+                _context.TransactionCategories.RemoveRange(transaction.TransactionCategories);
+
+                // Add new categories
+                foreach (var category in categories)
+                {
+                    var amount = category.Amount ?? transaction.Amount;
+                    _context.TransactionCategories.Add(new TransactionCategory
+                    {
+                        TransactionId = id,
+                        CategoryId = category.CategoryId,
+                        Amount = amount
+                    });
+                }
+
+                transaction.UpdatedAt = DateTime.UtcNow;
+                result.SuccessCount++;
+                result.SuccessfulIds.Add(id);
+            }
+            catch (Exception ex)
+            {
+                result.FailureCount++;
+                result.FailedIds.Add(id);
+                result.Errors.Add($"Error categorizing transaction {id}: {ex.Message}");
+            }
+        }
+
+        if (result.SuccessCount > 0)
+        {
+            await _context.SaveChangesAsync();
+        }
+
+        return result;
+    }
+
+    public async Task<BulkOperationResult> BulkLinkToHouseholdAsync(List<int> transactionIds, int? householdId)
+    {
+        var result = new BulkOperationResult
+        {
+            TotalCount = transactionIds.Count,
+            OperationType = "LinkHousehold",
+            OperationId = Guid.NewGuid().ToString()
+        };
+
+        // Validate household exists if provided
+        if (householdId.HasValue)
+        {
+            var householdExists = await _context.Households.AnyAsync(h => h.HouseholdId == householdId.Value);
+            if (!householdExists)
+            {
+                result.Errors.Add($"Household {householdId.Value} not found");
+                return result;
+            }
+        }
+
+        foreach (var id in transactionIds)
+        {
+            try
+            {
+                var transaction = await _context.Transactions.FindAsync(id);
+                if (transaction == null)
+                {
+                    result.FailureCount++;
+                    result.FailedIds.Add(id);
+                    result.Errors.Add($"Transaction {id} not found");
+                    continue;
+                }
+
+                // Check if transaction is locked
+                if (transaction.IsLocked)
+                {
+                    result.FailureCount++;
+                    result.FailedIds.Add(id);
+                    result.Errors.Add($"Transaction {id} is locked and cannot be edited");
+                    continue;
+                }
+
+                // Check user ownership if authenticated
+                if (_currentUserService?.IsAuthenticated == true && 
+                    _currentUserService.UserId != null && 
+                    transaction.UserId != _currentUserService.UserId)
+                {
+                    result.FailureCount++;
+                    result.FailedIds.Add(id);
+                    result.Errors.Add($"Transaction {id} does not belong to current user");
+                    continue;
+                }
+
+                transaction.HouseholdId = householdId;
+                transaction.UpdatedAt = DateTime.UtcNow;
+                result.SuccessCount++;
+                result.SuccessfulIds.Add(id);
+            }
+            catch (Exception ex)
+            {
+                result.FailureCount++;
+                result.FailedIds.Add(id);
+                result.Errors.Add($"Error linking transaction {id} to household: {ex.Message}");
+            }
+        }
+
+        if (result.SuccessCount > 0)
+        {
+            await _context.SaveChangesAsync();
+        }
+
+        return result;
+    }
+
+    public async Task<BulkOperationSnapshot> CreateOperationSnapshotAsync(
+        List<int> transactionIds, 
+        BulkOperationType operationType)
+    {
+        var snapshot = new BulkOperationSnapshot
+        {
+            OperationType = operationType,
+            AffectedTransactionIds = transactionIds,
+            UserId = _currentUserService?.UserId
+        };
+
+        var transactions = await _context.Transactions
+            .Include(t => t.TransactionCategories)
+            .Where(t => transactionIds.Contains(t.TransactionId))
+            .ToListAsync();
+
+        snapshot.TransactionSnapshots = transactions.Select(t => new TransactionSnapshot
+        {
+            TransactionId = t.TransactionId,
+            HouseholdId = t.HouseholdId,
+            CategoryIds = t.TransactionCategories.Select(tc => tc.CategoryId).ToList(),
+            CategoryAmounts = t.TransactionCategories.Select(tc => tc.Amount).ToList()
+        }).ToList();
+
+        return snapshot;
+    }
+
+    public async Task<BulkOperationResult> UndoBulkOperationAsync(BulkOperationSnapshot snapshot)
+    {
+        var result = new BulkOperationResult
+        {
+            TotalCount = snapshot.AffectedTransactionIds.Count,
+            OperationType = $"Undo{snapshot.OperationType}",
+            OperationId = Guid.NewGuid().ToString()
+        };
+
+        switch (snapshot.OperationType)
+        {
+            case BulkOperationType.Delete:
+                // Cannot undo deletions - transactions are gone
+                result.Errors.Add("Cannot undo delete operations - data has been permanently removed");
+                result.FailureCount = snapshot.AffectedTransactionIds.Count;
+                result.FailedIds.AddRange(snapshot.AffectedTransactionIds);
+                break;
+
+            case BulkOperationType.Categorize:
+            case BulkOperationType.UpdateCategories:
+                await UndoCategorizeAsync(snapshot, result);
+                break;
+
+            case BulkOperationType.LinkHousehold:
+                await UndoLinkHouseholdAsync(snapshot, result);
+                break;
+
+            default:
+                result.Errors.Add($"Unknown operation type: {snapshot.OperationType}");
+                result.FailureCount = snapshot.AffectedTransactionIds.Count;
+                result.FailedIds.AddRange(snapshot.AffectedTransactionIds);
+                break;
+        }
+
+        return result;
+    }
+
+    private async Task UndoCategorizeAsync(BulkOperationSnapshot snapshot, BulkOperationResult result)
+    {
+        if (snapshot.TransactionSnapshots == null)
+        {
+            result.Errors.Add("No snapshot data available for undo");
+            result.FailureCount = snapshot.AffectedTransactionIds.Count;
+            result.FailedIds.AddRange(snapshot.AffectedTransactionIds);
+            return;
+        }
+
+        foreach (var txSnapshot in snapshot.TransactionSnapshots)
+        {
+            try
+            {
+                var transaction = await _context.Transactions
+                    .Include(t => t.TransactionCategories)
+                    .FirstOrDefaultAsync(t => t.TransactionId == txSnapshot.TransactionId);
+
+                if (transaction == null)
+                {
+                    result.FailureCount++;
+                    result.FailedIds.Add(txSnapshot.TransactionId);
+                    result.Errors.Add($"Transaction {txSnapshot.TransactionId} not found");
+                    continue;
+                }
+
+                // Remove current categories
+                _context.TransactionCategories.RemoveRange(transaction.TransactionCategories);
+
+                // Restore original categories
+                for (int i = 0; i < txSnapshot.CategoryIds.Count; i++)
+                {
+                    _context.TransactionCategories.Add(new TransactionCategory
+                    {
+                        TransactionId = txSnapshot.TransactionId,
+                        CategoryId = txSnapshot.CategoryIds[i],
+                        Amount = txSnapshot.CategoryAmounts[i]
+                    });
+                }
+
+                transaction.UpdatedAt = DateTime.UtcNow;
+                result.SuccessCount++;
+                result.SuccessfulIds.Add(txSnapshot.TransactionId);
+            }
+            catch (Exception ex)
+            {
+                result.FailureCount++;
+                result.FailedIds.Add(txSnapshot.TransactionId);
+                result.Errors.Add($"Error undoing categorization for transaction {txSnapshot.TransactionId}: {ex.Message}");
+            }
+        }
+
+        if (result.SuccessCount > 0)
+        {
+            await _context.SaveChangesAsync();
+        }
+    }
+
+    private async Task UndoLinkHouseholdAsync(BulkOperationSnapshot snapshot, BulkOperationResult result)
+    {
+        if (snapshot.TransactionSnapshots == null)
+        {
+            result.Errors.Add("No snapshot data available for undo");
+            result.FailureCount = snapshot.AffectedTransactionIds.Count;
+            result.FailedIds.AddRange(snapshot.AffectedTransactionIds);
+            return;
+        }
+
+        foreach (var txSnapshot in snapshot.TransactionSnapshots)
+        {
+            try
+            {
+                var transaction = await _context.Transactions.FindAsync(txSnapshot.TransactionId);
+                if (transaction == null)
+                {
+                    result.FailureCount++;
+                    result.FailedIds.Add(txSnapshot.TransactionId);
+                    result.Errors.Add($"Transaction {txSnapshot.TransactionId} not found");
+                    continue;
+                }
+
+                transaction.HouseholdId = txSnapshot.HouseholdId;
+                transaction.UpdatedAt = DateTime.UtcNow;
+                result.SuccessCount++;
+                result.SuccessfulIds.Add(txSnapshot.TransactionId);
+            }
+            catch (Exception ex)
+            {
+                result.FailureCount++;
+                result.FailedIds.Add(txSnapshot.TransactionId);
+                result.Errors.Add($"Error undoing household link for transaction {txSnapshot.TransactionId}: {ex.Message}");
+            }
+        }
+
+        if (result.SuccessCount > 0)
+        {
+            await _context.SaveChangesAsync();
+        }
+    }
 }

@@ -103,6 +103,11 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
     // Round-up Savings
     public DbSet<RoundUpSettings> RoundUpSettings { get; set; }
     public DbSet<RoundUpTransaction> RoundUpTransactions { get; set; }
+    
+    // Budget Alerts
+    public DbSet<BudgetAlert> BudgetAlerts { get; set; }
+    public DbSet<BudgetAlertSettings> BudgetAlertSettings { get; set; }
+    public DbSet<BudgetFreeze> BudgetFreezes { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
