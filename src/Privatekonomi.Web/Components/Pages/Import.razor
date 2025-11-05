@@ -5,42 +5,106 @@
 @inject ISnackbar Snackbar
 @inject NavigationManager Navigation
 @inject HttpClient Http
+@inject IInvestmentService InvestmentService
+@inject IBankSourceService BankSourceService
 @using Privatekonomi.Web.Services
+@using System.Globalization
 
-<PageTitle>Importera Transaktioner - Privatekonomi</PageTitle>
+<PageTitle>Importera - Privatekonomi</PageTitle>
 
 <MudText Typo="Typo.h4" Class="mb-4">
     <MudIcon Icon="@Icons.Material.Filled.Upload" Color="Color.Primary" Class="mr-2" aria-hidden="true" />
-    Importera Transaktioner
+    @(_importType == ImportType.None ? "Importera" : _importType == ImportType.Transactions ? "Importera Transaktioner" : "Importera Investeringar")
 </MudText>
 
-@if (_currentStep == ImportStep.BankSelection)
+@if (_currentStep == ImportStep.TypeSelection)
+{
+    <MudPaper Class="pa-6">
+        <MudText Typo="Typo.h6" Class="mb-4">Vad vill du importera?</MudText>
+        
+        <MudGrid>
+            <MudItem xs="12" md="6">
+                <MudPaper Outlined="true" Class="pa-6 cursor-pointer" Style="height: 100%;" @onclick="() => SelectImportType(ImportType.Transactions)">
+                    <div class="d-flex flex-column align-center text-center">
+                        <MudIcon Icon="@Icons.Material.Filled.AccountBalance" Size="Size.Large" Color="Color.Primary" Class="mb-2" />
+                        <MudText Typo="Typo.h6" Class="mb-2">Transaktioner</MudText>
+                        <MudText Typo="Typo.body2">Importera transaktioner från bankfiler (ICA-banken, Swedbank)</MudText>
+                    </div>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudPaper Outlined="true" Class="pa-6 cursor-pointer" Style="height: 100%;" @onclick="() => SelectImportType(ImportType.Investments)">
+                    <div class="d-flex flex-column align-center text-center">
+                        <MudIcon Icon="@Icons.Material.Filled.TrendingUp" Size="Size.Large" Color="Color.Primary" Class="mb-2" />
+                        <MudText Typo="Typo.h6" Class="mb-2">Investeringar</MudText>
+                        <MudText Typo="Typo.body2">Importera innehav från depåfiler (Avanza)</MudText>
+                    </div>
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+}
+else if (_currentStep == ImportStep.BankSelection)
 {
     <MudPaper Class="pa-6">
         <MudText Typo="Typo.h6" Class="mb-4">Välj bank</MudText>
         
-        <MudRadioGroup @bind-Value="_selectedBank">
-            <MudRadio Value="@("ICA-banken")" Color="Color.Primary">
-                <MudText>ICA-banken</MudText>
-            </MudRadio>
-            <MudRadio Value="@("Swedbank")" Color="Color.Primary">
-                <MudText>Swedbank</MudText>
-            </MudRadio>
-        </MudRadioGroup>
+        @if (_importType == ImportType.Transactions)
+        {
+            <MudRadioGroup @bind-Value="_selectedBank">
+                <MudRadio Value="@("ICA-banken")" Color="Color.Primary">
+                    <MudText>ICA-banken</MudText>
+                </MudRadio>
+                <MudRadio Value="@("Swedbank")" Color="Color.Primary">
+                    <MudText>Swedbank</MudText>
+                </MudRadio>
+            </MudRadioGroup>
+        }
+        else if (_importType == ImportType.Investments)
+        {
+            <MudRadioGroup @bind-Value="_selectedBankId">
+                @foreach (var bank in _investmentBanks)
+                {
+                    <MudRadio Value="@bank.BankSourceId" Color="Color.Primary">
+                        <MudText>@bank.Name</MudText>
+                    </MudRadio>
+                }
+            </MudRadioGroup>
+        }
         
         <MudDivider Class="my-4" />
         
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" 
-                   OnClick="NextToFileSelection" Disabled="string.IsNullOrEmpty(_selectedBank)">
-            Nästa
-        </MudButton>
+        <div class="d-flex justify-space-between">
+            <MudButton Variant="Variant.Outlined" Color="Color.Default" OnClick="BackToTypeSelection">
+                Tillbaka
+            </MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" 
+                       OnClick="NextToFileSelection" 
+                       Disabled="@IsNextButtonDisabled">
+                Nästa
+            </MudButton>
+        </div>
     </MudPaper>
 }
 else if (_currentStep == ImportStep.FileSelection)
 {
     <MudPaper Class="pa-6">
         <MudText Typo="Typo.h6" Class="mb-4">Välj fil att importera</MudText>
-        <MudText Typo="Typo.body2" Class="mb-2">Bank: <strong>@_selectedBank</strong></MudText>
+        <MudText Typo="Typo.body2" Class="mb-2">
+            Bank: <strong>@(_importType == ImportType.Transactions ? _selectedBank : _selectedBankName)</strong>
+        </MudText>
+        
+        @if (_importType == ImportType.Investments && _selectedBankName == "Avanza")
+        {
+            <MudAlert Severity="Severity.Info" Class="mb-4">
+                Avanza tillhandahåller två CSV-format:
+                <ul>
+                    <li><strong>Mitt innehav fördelat per konto</strong> - Visar innehav per konto med kontonummer</li>
+                    <li><strong>Mitt sammanställda innehav</strong> - Visar sammanställt innehav över alla konton</li>
+                </ul>
+                Båda formaten stöds!
+            </MudAlert>
+        }
         
         <MudFileUpload T="IBrowserFile" FilesChanged="OnFileSelected" Accept=".csv">
             <ActivatorContent>
@@ -74,15 +138,16 @@ else if (_currentStep == ImportStep.FileSelection)
                 Tillbaka
             </MudButton>
             <MudButton Variant="Variant.Filled" Color="Color.Primary" 
-                       OnClick="UploadAndPreview" Disabled="_selectedFile == null || _uploading">
-                @if (_uploading)
+                       OnClick="@(_importType == ImportType.Transactions ? UploadAndPreview : ImportInvestmentFile)" 
+                       Disabled="_selectedFile == null || _uploading || _importing">
+                @if (_uploading || _importing)
                 {
                     <MudProgressCircular Size="Size.Small" Indeterminate="true" />
-                    <MudText Class="ml-2">Läser fil...</MudText>
+                    <MudText Class="ml-2">@(_importType == ImportType.Transactions ? "Läser fil..." : "Importerar...")</MudText>
                 }
                 else
                 {
-                    <span>Importera</span>
+                    <span>@(_importType == ImportType.Transactions ? "Förhandsgranska" : "Importera")</span>
                 }
             </MudButton>
         </div>
@@ -169,12 +234,17 @@ else if (_currentStep == ImportStep.Preview)
 }
 else if (_currentStep == ImportStep.Complete)
 {
+    var successState = GetSuccessState();
     <MudPaper Class="pa-6">
         <div class="d-flex flex-column align-center">
-            <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Size="Size.Large" Class="mb-4" />
-            <MudText Typo="Typo.h5" Class="mb-2">Import slutförd!</MudText>
+            <MudIcon Icon="@successState.Icon" 
+                     Color="@successState.Color" 
+                     Size="Size.Large" Class="mb-4" />
+            <MudText Typo="Typo.h5" Class="mb-2">
+                @successState.Message
+            </MudText>
             
-            @if (_importResult != null)
+            @if (_importType == ImportType.Transactions && _importResult != null)
             {
                 <MudAlert Severity="Severity.Success" Class="mt-4" Style="width: 100%;">
                     <MudText><strong>@_importResult.Imported</strong> transaktioner importerade</MudText>
@@ -188,6 +258,29 @@ else if (_currentStep == ImportStep.Complete)
                     }
                 </MudAlert>
             }
+            else if (_importType == ImportType.Investments && _investmentImportResult != null)
+            {
+                <MudAlert Severity="@(_investmentImportResult.Success ? Severity.Success : Severity.Error)" Class="mt-4" Style="width: 100%;">
+                    @if (_investmentImportResult.Success)
+                    {
+                        <MudText><strong>@_investmentImportResult.ImportedCount</strong> nya investeringar importerade</MudText>
+                        @if (_investmentImportResult.DuplicateCount > 0)
+                        {
+                            <MudText><strong>@_investmentImportResult.DuplicateCount</strong> befintliga investeringar uppdaterades</MudText>
+                        }
+                        <MudText>Totalt <strong>@_investmentImportResult.TotalRows</strong> rader bearbetades</MudText>
+                    }
+                    
+                    @if (_investmentImportResult.ErrorCount > 0 || _investmentImportResult.Errors.Any())
+                    {
+                        <MudText Class="mt-2"><strong>Fel:</strong></MudText>
+                        @foreach (var error in _investmentImportResult.Errors)
+                        {
+                            <MudText Class="red-text">• @error.ErrorMessage</MudText>
+                        }
+                    }
+                </MudAlert>
+            }
             
             <MudDivider Class="my-4" Style="width: 100%;" />
             
@@ -195,8 +288,9 @@ else if (_currentStep == ImportStep.Complete)
                 <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="StartNewImport">
                     Importera fler
                 </MudButton>
-                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="GoToTransactions">
-                    Gå till transaktioner
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" 
+                           OnClick="@(_importType == ImportType.Transactions ? GoToTransactions : GoToInvestments)">
+                    Gå till @(_importType == ImportType.Transactions ? "transaktioner" : "investeringar")
                 </MudButton>
             </div>
         </div>
@@ -206,25 +300,74 @@ else if (_currentStep == ImportStep.Complete)
 @code {
     private enum ImportStep
     {
+        TypeSelection,
         BankSelection,
         FileSelection,
         Preview,
         Complete
     }
 
-    private ImportStep _currentStep = ImportStep.BankSelection;
+    private enum ImportType
+    {
+        None,
+        Transactions,
+        Investments
+    }
+
+    private ImportStep _currentStep = ImportStep.TypeSelection;
+    private ImportType _importType = ImportType.None;
+    
+    // Transaction import fields
     private string _selectedBank = string.Empty;
     private IBrowserFile? _selectedFile;
     private bool _uploading = false;
     private bool _confirming = false;
     private string _fileId = string.Empty;
-    
     private List<PreviewTransaction>? _previewData;
     private SummaryData? _summary;
     private ImportResultData? _importResult;
+    
+    // Investment import fields
+    private List<BankSource> _investmentBanks = new();
+    private int _selectedBankId = 0;
+    private string _selectedBankName = "";
+    private bool _importing = false;
+    private CsvImportResult? _investmentImportResult;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var allBanks = await BankSourceService.GetAllBankSourcesAsync();
+        // Only show Avanza for now
+        _investmentBanks = allBanks.Where(b => b.Name == "Avanza").ToList();
+        
+        // If Avanza doesn't exist, add all banks
+        if (!_investmentBanks.Any())
+        {
+            _investmentBanks = allBanks.ToList();
+        }
+    }
+
+    private void SelectImportType(ImportType type)
+    {
+        _importType = type;
+        _currentStep = ImportStep.BankSelection;
+    }
+
+    private void BackToTypeSelection()
+    {
+        _currentStep = ImportStep.TypeSelection;
+        _importType = ImportType.None;
+        _selectedBank = string.Empty;
+        _selectedBankId = 0;
+        _selectedFile = null;
+    }
 
     private void NextToFileSelection()
     {
+        if (_importType == ImportType.Investments)
+        {
+            _selectedBankName = _investmentBanks.FirstOrDefault(b => b.BankSourceId == _selectedBankId)?.Name ?? "";
+        }
         _currentStep = ImportStep.FileSelection;
     }
 
@@ -245,6 +388,46 @@ else if (_currentStep == ImportStep.Complete)
     private void OnFileSelected(IBrowserFile file)
     {
         _selectedFile = file;
+    }
+
+    private async Task ImportInvestmentFile()
+    {
+        if (_selectedFile == null) return;
+
+        const long maxFileSize = 10 * 1024 * 1024; // 10 MB
+
+        if (_selectedFile.Size > maxFileSize)
+        {
+            Snackbar.Add("Filen är för stor. Max storlek är 10 MB.", Severity.Error);
+            return;
+        }
+
+        _importing = true;
+
+        try
+        {
+            using var stream = _selectedFile.OpenReadStream(maxFileSize);
+            _investmentImportResult = await InvestmentService.ImportFromCsvAsync(stream, _selectedBankId);
+
+            if (_investmentImportResult.Success)
+            {
+                Snackbar.Add($"Import slutförd! {_investmentImportResult.ImportedCount} investeringar importerade.", Severity.Success);
+            }
+            else
+            {
+                Snackbar.Add("Import misslyckades. Se detaljer nedan.", Severity.Error);
+            }
+
+            _currentStep = ImportStep.Complete;
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Ett fel uppstod: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _importing = false;
+        }
     }
 
     private async Task UploadAndPreview()
@@ -352,18 +535,48 @@ else if (_currentStep == ImportStep.Complete)
 
     private void StartNewImport()
     {
-        _currentStep = ImportStep.BankSelection;
+        _currentStep = ImportStep.TypeSelection;
+        _importType = ImportType.None;
         _selectedBank = string.Empty;
+        _selectedBankId = 0;
+        _selectedBankName = "";
         _selectedFile = null;
         _previewData = null;
         _summary = null;
         _importResult = null;
+        _investmentImportResult = null;
         _fileId = string.Empty;
     }
 
     private void GoToTransactions()
     {
         Navigation.NavigateTo("/economy/transactions");
+    }
+
+    private void GoToInvestments()
+    {
+        Navigation.NavigateTo("/investments/overview");
+    }
+
+    private (string Icon, Color Color, string Message) GetSuccessState()
+    {
+        if (_importType == ImportType.Investments && _investmentImportResult != null)
+        {
+            return _investmentImportResult.Success 
+                ? (Icons.Material.Filled.CheckCircle, Color.Success, "Import slutförd!")
+                : (Icons.Material.Filled.Error, Color.Error, "Import misslyckades");
+        }
+        return (Icons.Material.Filled.CheckCircle, Color.Success, "Import slutförd!");
+    }
+
+    private bool IsNextButtonDisabled
+    {
+        get
+        {
+            return _importType == ImportType.Transactions 
+                ? string.IsNullOrEmpty(_selectedBank) 
+                : _selectedBankId == 0;
+        }
     }
 
     private string FormatFileSize(long bytes)
