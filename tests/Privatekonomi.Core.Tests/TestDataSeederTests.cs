@@ -28,8 +28,25 @@ public class TestDataSeederTests : IDisposable
 
         // Setup mock UserManager
         var userStoreMock = new Mock<IUserStore<ApplicationUser>>();
+        var optionsAccessorMock = new Mock<Microsoft.Extensions.Options.IOptions<IdentityOptions>>();
+        var passwordHasherMock = new Mock<IPasswordHasher<ApplicationUser>>();
+        var userValidatorMock = new Mock<IUserValidator<ApplicationUser>>();
+        var passwordValidatorMock = new Mock<IPasswordValidator<ApplicationUser>>();
+        var keyNormalizerMock = new Mock<ILookupNormalizer>();
+        var errorsMock = new Mock<IdentityErrorDescriber>();
+        var serviceProviderMock = new Mock<System.IServiceProvider>();
+        var loggerMock = new Mock<Microsoft.Extensions.Logging.ILogger<UserManager<ApplicationUser>>>();
+
         _mockUserManager = new Mock<UserManager<ApplicationUser>>(
-            userStoreMock.Object, null, null, null, null, null, null, null, null);
+            userStoreMock.Object, 
+            optionsAccessorMock.Object, 
+            passwordHasherMock.Object, 
+            new[] { userValidatorMock.Object }, 
+            new[] { passwordValidatorMock.Object }, 
+            keyNormalizerMock.Object, 
+            errorsMock.Object, 
+            serviceProviderMock.Object, 
+            loggerMock.Object);
         
         // Setup FindByEmailAsync to return null (user doesn't exist)
         _mockUserManager.Setup(x => x.FindByEmailAsync(It.IsAny<string>()))
