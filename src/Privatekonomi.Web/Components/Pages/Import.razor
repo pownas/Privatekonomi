@@ -80,7 +80,7 @@ else if (_currentStep == ImportStep.BankSelection)
             </MudButton>
             <MudButton Variant="Variant.Filled" Color="Color.Primary" 
                        OnClick="NextToFileSelection" 
-                       Disabled="@(_importType == ImportType.Transactions ? string.IsNullOrEmpty(_selectedBank) : _selectedBankId == 0)">
+                       Disabled="@IsNextButtonDisabled">
                 Nästa
             </MudButton>
         </div>
@@ -234,13 +234,14 @@ else if (_currentStep == ImportStep.Preview)
 }
 else if (_currentStep == ImportStep.Complete)
 {
+    var successState = GetSuccessState();
     <MudPaper Class="pa-6">
         <div class="d-flex flex-column align-center">
-            <MudIcon Icon="@(_getSuccessIcon())" 
-                     Color="@(_getSuccessColor())" 
+            <MudIcon Icon="@successState.Icon" 
+                     Color="@successState.Color" 
                      Size="Size.Large" Class="mb-4" />
             <MudText Typo="Typo.h5" Class="mb-2">
-                @(_getSuccessMessage())
+                @successState.Message
             </MudText>
             
             @if (_importType == ImportType.Transactions && _importResult != null)
@@ -557,31 +558,25 @@ else if (_currentStep == ImportStep.Complete)
         Navigation.NavigateTo("/investments/overview");
     }
 
-    private string _getSuccessIcon()
+    private (string Icon, Color Color, string Message) GetSuccessState()
     {
         if (_importType == ImportType.Investments && _investmentImportResult != null)
         {
-            return _investmentImportResult.Success ? Icons.Material.Filled.CheckCircle : Icons.Material.Filled.Error;
+            return _investmentImportResult.Success 
+                ? (Icons.Material.Filled.CheckCircle, Color.Success, "Import slutförd!")
+                : (Icons.Material.Filled.Error, Color.Error, "Import misslyckades");
         }
-        return Icons.Material.Filled.CheckCircle;
+        return (Icons.Material.Filled.CheckCircle, Color.Success, "Import slutförd!");
     }
 
-    private Color _getSuccessColor()
+    private bool IsNextButtonDisabled
     {
-        if (_importType == ImportType.Investments && _investmentImportResult != null)
+        get
         {
-            return _investmentImportResult.Success ? Color.Success : Color.Error;
+            return _importType == ImportType.Transactions 
+                ? string.IsNullOrEmpty(_selectedBank) 
+                : _selectedBankId == 0;
         }
-        return Color.Success;
-    }
-
-    private string _getSuccessMessage()
-    {
-        if (_importType == ImportType.Investments && _investmentImportResult != null)
-        {
-            return _investmentImportResult.Success ? "Import slutförd!" : "Import misslyckades";
-        }
-        return "Import slutförd!";
     }
 
     private string FormatFileSize(long bytes)
