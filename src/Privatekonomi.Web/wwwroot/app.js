@@ -463,13 +463,15 @@ window.pwaManager = {
                     return null;
                 }
                 
+                // TODO: Get VAPID public key from server API instead of hard-coding
+                // Example: const vapidKey = await fetch('/api/push/vapid-key').then(r => r.text());
+                // This is a placeholder key and should be replaced with the actual server key
+                const vapidKey = 'BEl62iUYgUivxIkv69yViEuiBIa-Ib37J8xQmrpcPBblQjBIL1WsJ3-eN6_JG-eL5E2QdN3qZPTaC-lJQJqG1XY';
+                
                 // Subscribe to push
                 subscription = await registration.pushManager.subscribe({
                     userVisibleOnly: true,
-                    applicationServerKey: this.urlBase64ToUint8Array(
-                        // TODO: Replace with actual VAPID public key from server
-                        'BEl62iUYgUivxIkv69yViEuiBIa-Ib37J8xQmrpcPBblQjBIL1WsJ3-eN6_JG-eL5E2QdN3qZPTaC-lJQJqG1XY'
-                    )
+                    applicationServerKey: this.urlBase64ToUint8Array(vapidKey)
                 });
             }
             

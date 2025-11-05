@@ -1,9 +1,9 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('PWA Functionality', () => {
-  test('should have a valid manifest.json', async ({ page }) => {
+  test('should have a valid manifest.json', async ({ page, baseURL }) => {
     // Navigate to the manifest
-    const response = await page.goto('http://localhost:5274/manifest.json');
+    const response = await page.goto(`${baseURL}/manifest.json`);
     
     // Check response is successful
     expect(response?.status()).toBe(200);
@@ -32,9 +32,9 @@ test.describe('PWA Functionality', () => {
     expect(icon512).toBeDefined();
   });
 
-  test('should have accessible service worker file', async ({ page }) => {
+  test('should have accessible service worker file', async ({ page, baseURL }) => {
     // Navigate to the service worker
-    const response = await page.goto('http://localhost:5274/service-worker.js');
+    const response = await page.goto(`${baseURL}/service-worker.js`);
     
     // Check response is successful
     expect(response?.status()).toBe(200);
@@ -51,22 +51,22 @@ test.describe('PWA Functionality', () => {
     expect(content).toContain('activate');
   });
 
-  test('should have accessible PWA icons', async ({ page }) => {
+  test('should have accessible PWA icons', async ({ page, baseURL }) => {
     // Test 192x192 icon
-    const icon192Response = await page.goto('http://localhost:5274/icon-192x192.png');
+    const icon192Response = await page.goto(`${baseURL}/icon-192x192.png`);
     expect(icon192Response?.status()).toBe(200);
     
     // Test 512x512 icon
-    const icon512Response = await page.goto('http://localhost:5274/icon-512x512.png');
+    const icon512Response = await page.goto(`${baseURL}/icon-512x512.png`);
     expect(icon512Response?.status()).toBe(200);
     
     // Test apple touch icon
-    const appleTouchResponse = await page.goto('http://localhost:5274/apple-touch-icon.png');
+    const appleTouchResponse = await page.goto(`${baseURL}/apple-touch-icon.png`);
     expect(appleTouchResponse?.status()).toBe(200);
   });
 
-  test('should have offline.html page', async ({ page }) => {
-    const response = await page.goto('http://localhost:5274/offline.html');
+  test('should have offline.html page', async ({ page, baseURL }) => {
+    const response = await page.goto(`${baseURL}/offline.html`);
     
     expect(response?.status()).toBe(200);
     
@@ -76,7 +76,7 @@ test.describe('PWA Functionality', () => {
   });
 
   test('should register service worker on page load', async ({ page }) => {
-    await page.goto('http://localhost:5274/');
+    await page.goto('/');
     
     // Wait for the page to load
     await page.waitForLoadState('networkidle');
@@ -94,7 +94,7 @@ test.describe('PWA Functionality', () => {
   });
 
   test('should have pwaManager available', async ({ page }) => {
-    await page.goto('http://localhost:5274/');
+    await page.goto('/');
     
     // Wait for the page to load
     await page.waitForLoadState('networkidle');
@@ -120,7 +120,7 @@ test.describe('PWA Functionality', () => {
   });
 
   test('should have manifest link in HTML', async ({ page }) => {
-    await page.goto('http://localhost:5274/');
+    await page.goto('/');
     
     // Check for manifest link
     const manifestLink = await page.locator('link[rel="manifest"]').getAttribute('href');
@@ -128,7 +128,7 @@ test.describe('PWA Functionality', () => {
   });
 
   test('should have apple-touch-icon link in HTML', async ({ page }) => {
-    await page.goto('http://localhost:5274/');
+    await page.goto('/');
     
     // Check for apple touch icon link
     const appleTouchIconLink = await page.locator('link[rel="apple-touch-icon"]').getAttribute('href');
@@ -136,7 +136,7 @@ test.describe('PWA Functionality', () => {
   });
 
   test('should have theme-color meta tag', async ({ page }) => {
-    await page.goto('http://localhost:5274/');
+    await page.goto('/');
     
     // Check for theme color meta tag
     const themeColor = await page.locator('meta[name="theme-color"]').getAttribute('content');
@@ -145,7 +145,7 @@ test.describe('PWA Functionality', () => {
   });
 
   test('should have viewport meta tag', async ({ page }) => {
-    await page.goto('http://localhost:5274/');
+    await page.goto('/');
     
     // Check for viewport meta tag
     const viewport = await page.locator('meta[name="viewport"]').getAttribute('content');
