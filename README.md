@@ -99,13 +99,13 @@ En privatekonomi-applikation byggd med .NET 9, Blazor Server och MudBlazor för 
 - **Progressive Web App (PWA)**: ⭐ NYT!
   - Installationsbar på mobil och desktop (Android, iOS, Windows, Mac, Linux)
   - Offline-funktionalitet för läsning av transaktioner och budgetar
-  - Automatisk synkronisering när du kommer online igen
+  - Automatisk synkronisering när du kommer online igen (⚠️ iOS kräver att appen är öppen)
   - Offline-kö för transaktioner skapade utan internet
-  - Background Sync API för automatisk synkning
-  - Push-notifikationer (om tillåtet)
+  - Background Sync API för automatisk synkning (Android/Windows/Linux)
+  - Push-notifikationer (Android/Windows/Linux - ⚠️ begränsat på iOS)
   - Service Worker med smart cache-strategi (network-first, fallback cache)
   - Lighthouse PWA score > 90
-  - Se [PWA Guide](docs/PWA_GUIDE.md) för installation och användning
+  - Se [PWA Guide](docs/PWA_GUIDE.md) för installation och [iOS-begränsningar](docs/PWA_IOS_LIMITATIONS.md)
 - **Löneutveckling**:
   - Spåra och följa din lön över tid (hela karriären, 50+ år)
   - Visualisera löneutveckling med interaktiv graf

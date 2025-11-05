@@ -30,6 +30,12 @@ En Progressive Web App är en webbapplikation som upplevs som en native app. Den
 5. Tryck på **"Lägg till"**
 6. Appen finns nu på din hemskärm
 
+> **⚠️ iOS-begränsningar:**
+> - **Bakgrundssynkronisering fungerar INTE** - du måste ha appen öppen för att synkronisera offline-transaktioner
+> - **Push-notifikationer fungerar INTE** i Safari och är mycket begränsade även i installerade PWA:er (iOS 16.4+)
+> - Detta är en begränsning från Apple, inte ett fel i appen
+> - Läs mer i [iOS-begränsningar guide](PWA_IOS_LIMITATIONS.md)
+
 ### Desktop (Windows/Mac/Linux)
 
 1. Öppna Privatekonomi i Chrome, Edge, eller annat stödjt webbläsare
@@ -197,6 +203,12 @@ För att rensa offline-data:
 3. Kontrollera antalet väntande transaktioner i offline-bannern
 4. Försök manuell omladdning
 
+**⚠️ På iOS/Safari:**
+- Bakgrundssynkronisering fungerar INTE
+- Du måste ha appen öppen för att synkronisera
+- När du öppnar appen och är online kommer synkning ske automatiskt
+- Detta är en Apple-begränsning, inte ett fel
+
 ### Notifikationer kommer inte fram
 
 **Kontrollera:**
@@ -204,6 +216,30 @@ För att rensa offline-data:
 2. Att systemnotifikationer är aktiverade
 3. Att "Stör ej"-läge inte är aktivt
 4. Webbläsarens notifikationsinställningar
+
+**⚠️ På iOS:**
+- Push-notifikationer fungerar INTE i Safari
+- Push fungerar begränsat på iOS 16.4+ om appen är installerad
+- Överväg att använda email-notifikationer istället
+- Detta är en Apple-begränsning, inte ett fel
+
+### iOS-specifika problem
+
+**Problem:** Appen synkroniserar inte automatiskt när jag kommer online
+
+**Lösning:** 
+- iOS stödjer inte Background Sync API
+- Du måste ha appen öppen för att synkronisera
+- Öppna appen när du är online så synkas data automatiskt
+
+**Problem:** Jag får inga push-notifikationer på iPhone
+
+**Lösning:**
+- Safari stödjer inte Web Push på iOS (eller mycket begränsat från iOS 16.4+)
+- Detta är en plattformsbegränsning från Apple
+- Använd email-notifikationer som alternativ
+
+**Mer information:** Se [iOS PWA-begränsningar guide](PWA_IOS_LIMITATIONS.md)
 
 ## 📖 Teknisk information
 
