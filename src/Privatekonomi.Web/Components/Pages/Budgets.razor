@@ -1,13 +1,47 @@
 @page "/economy/budgets"
 @page "/budgets"
 @rendermode InteractiveServer
+@using Privatekonomi.Web.Components.Shared
 @inject IBudgetService BudgetService
+@inject IBudgetAlertService BudgetAlertService
 @inject ICategoryService CategoryService
 @inject IHouseholdService HouseholdService
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 
 <PageTitle>Budget - Privatekonomi</PageTitle>
+
+@* Budget Alerts Section *@
+@if (_activeAlerts.Any())
+{
+    <MudPaper Class="pa-4 mb-4" Elevation="2">
+        <MudText Typo="Typo.h6" Class="mb-3">
+            <MudIcon Icon="@Icons.Material.Filled.NotificationsActive" Color="Color.Error" Class="mr-2" />
+            Aktiva Budgetvarningar (@_activeAlerts.Count())
+        </MudText>
+        
+        @foreach (var alert in _activeAlerts.Take(3))
+        {
+            var budgetCategory = _budgets
+                .SelectMany(b => b.BudgetCategories)
+                .FirstOrDefault(bc => bc.BudgetCategoryId == alert.BudgetCategoryId);
+            
+            if (budgetCategory != null)
+            {
+                <BudgetAlertCard Alert="@alert" 
+                               BudgetCategory="@budgetCategory"
+                               OnAlertAcknowledged="@LoadAlertsAsync" />
+            }
+        }
+        
+        @if (_activeAlerts.Count() > 3)
+        {
+            <MudText Typo="Typo.body2" Class="mt-2">
+                Och @(_activeAlerts.Count() - 3) fler varningar...
+            </MudText>
+        }
+    </MudPaper>
+}
 
 <div class="d-flex justify-space-between align-center mb-4">
     <MudText Typo="Typo.h4">
@@ -406,6 +440,7 @@
     private bool _showCreateForm = false;
     private Budget? _editingBudget = null;
     private IEnumerable<Budget> _budgets = new List<Budget>();
+    private IEnumerable<BudgetAlert> _activeAlerts = new List<BudgetAlert>();
     private IEnumerable<Category> _categories = new List<Category>();
     private IEnumerable<Household> _households = new List<Household>();
     private Budget _newBudget = new();
@@ -420,6 +455,7 @@
     protected override async Task OnInitializedAsync()
     {
         await LoadData();
+        await LoadAlertsAsync();
     }
 
     private async Task LoadData()
@@ -721,6 +757,18 @@
         catch (Exception ex)
         {
             Snackbar.Add($"Fel vid skapande av nästa månads budgetar: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task LoadAlertsAsync()
+    {
+        try
+        {
+            _activeAlerts = await BudgetAlertService.GetActiveAlertsAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Kunde inte ladda budgetvarningar: {ex.Message}", Severity.Error);
         }
     }
 }

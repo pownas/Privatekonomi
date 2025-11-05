@@ -99,6 +99,11 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
     public DbSet<CommentLike> CommentLikes { get; set; }
     public DbSet<GroupGoal> GroupGoals { get; set; }
     public DbSet<UserPrivacySettings> UserPrivacySettings { get; set; }
+    
+    // Budget Alerts
+    public DbSet<BudgetAlert> BudgetAlerts { get; set; }
+    public DbSet<BudgetAlertSettings> BudgetAlertSettings { get; set; }
+    public DbSet<BudgetFreeze> BudgetFreezes { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
