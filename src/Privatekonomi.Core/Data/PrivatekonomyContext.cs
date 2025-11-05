@@ -108,6 +108,10 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
     public DbSet<BudgetAlert> BudgetAlerts { get; set; }
     public DbSet<BudgetAlertSettings> BudgetAlertSettings { get; set; }
     public DbSet<BudgetFreeze> BudgetFreezes { get; set; }
+    
+    // Reminders
+    public DbSet<Reminder> Reminders { get; set; }
+    public DbSet<ReminderSettings> ReminderSettings { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
