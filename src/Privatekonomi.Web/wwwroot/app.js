@@ -170,21 +170,338 @@ window.keyboardShortcuts = {
     }
 };
 
-// PWA Service Worker registration
+// PWA Service Worker registration and management
 window.pwaManager = {
+    deferredPrompt: null,
+    isOnline: navigator.onLine,
+    pendingTransactions: [],
+    
+    // Initialize PWA features
+    init: function() {
+        this.register();
+        this.setupInstallPrompt();
+        this.setupOnlineStatusMonitoring();
+        this.setupServiceWorkerMessages();
+        this.checkPendingTransactions();
+    },
+    
+    // Register service worker
     register: function() {
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('/service-worker.js')
                 .then((registration) => {
-                    console.log('Service Worker registered:', registration);
+                    console.log('[PWA] Service Worker registered:', registration);
+                    
+                    // Check for updates
+                    registration.addEventListener('updatefound', () => {
+                        const newWorker = registration.installing;
+                        console.log('[PWA] New service worker found');
+                        
+                        newWorker.addEventListener('statechange', () => {
+                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                // New service worker available
+                                console.log('[PWA] New version available');
+                                this.showUpdateNotification();
+                            }
+                        });
+                    });
+                    
+                    // Periodic update check (every hour)
+                    setInterval(() => {
+                        registration.update();
+                    }, 60 * 60 * 1000);
                 })
                 .catch((error) => {
-                    console.log('Service Worker registration failed:', error);
+                    console.error('[PWA] Service Worker registration failed:', error);
                 });
         }
     },
     
-    isInstallable: function() {
-        return 'serviceWorker' in navigator && 'BeforeInstallPromptEvent' in window;
+    // Setup install prompt capture
+    setupInstallPrompt: function() {
+        window.addEventListener('beforeinstallprompt', (e) => {
+            console.log('[PWA] Install prompt available');
+            e.preventDefault();
+            this.deferredPrompt = e;
+            
+            // Notify app that install is available
+            if (window.blazorPwaCallbacks && window.blazorPwaCallbacks.onInstallAvailable) {
+                window.blazorPwaCallbacks.onInstallAvailable();
+            }
+        });
+        
+        window.addEventListener('appinstalled', () => {
+            console.log('[PWA] App installed');
+            this.deferredPrompt = null;
+            
+            // Notify app of successful installation
+            if (window.blazorPwaCallbacks && window.blazorPwaCallbacks.onInstalled) {
+                window.blazorPwaCallbacks.onInstalled();
+            }
+        });
+    },
+    
+    // Show install prompt
+    showInstallPrompt: async function() {
+        if (!this.deferredPrompt) {
+            console.log('[PWA] Install prompt not available');
+            return false;
+        }
+        
+        this.deferredPrompt.prompt();
+        const { outcome } = await this.deferredPrompt.userChoice;
+        console.log(`[PWA] User response to install prompt: ${outcome}`);
+        
+        this.deferredPrompt = null;
+        return outcome === 'accepted';
+    },
+    
+    // Check if app can be installed
+    canInstall: function() {
+        return this.deferredPrompt !== null;
+    },
+    
+    // Monitor online/offline status
+    setupOnlineStatusMonitoring: function() {
+        window.addEventListener('online', () => {
+            console.log('[PWA] Browser is online');
+            this.isOnline = true;
+            this.onOnline();
+        });
+        
+        window.addEventListener('offline', () => {
+            console.log('[PWA] Browser is offline');
+            this.isOnline = false;
+            this.onOffline();
+        });
+    },
+    
+    // Handle online event
+    onOnline: function() {
+        // Notify Blazor app
+        if (window.blazorPwaCallbacks && window.blazorPwaCallbacks.onOnline) {
+            window.blazorPwaCallbacks.onOnline();
+        }
+        
+        // Trigger background sync if supported
+        if ('serviceWorker' in navigator && 'sync' in navigator.serviceWorker) {
+            navigator.serviceWorker.ready.then(registration => {
+                return registration.sync.register('sync-transactions');
+            }).then(() => {
+                console.log('[PWA] Background sync registered');
+            }).catch(err => {
+                console.error('[PWA] Background sync failed:', err);
+            });
+        }
+    },
+    
+    // Handle offline event
+    onOffline: function() {
+        // Notify Blazor app
+        if (window.blazorPwaCallbacks && window.blazorPwaCallbacks.onOffline) {
+            window.blazorPwaCallbacks.onOffline();
+        }
+    },
+    
+    // Setup service worker message handling
+    setupServiceWorkerMessages: function() {
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.addEventListener('message', (event) => {
+                console.log('[PWA] Message from service worker:', event.data);
+                
+                if (event.data && event.data.type === 'TRANSACTION_SYNCED') {
+                    // Notify Blazor app about synced transaction
+                    if (window.blazorPwaCallbacks && window.blazorPwaCallbacks.onTransactionSynced) {
+                        window.blazorPwaCallbacks.onTransactionSynced(event.data.transactionId);
+                    }
+                }
+            });
+        }
+    },
+    
+    // Queue transaction for offline sync
+    queueTransaction: async function(transactionData) {
+        if (!('indexedDB' in window)) {
+            console.error('[PWA] IndexedDB not supported');
+            return false;
+        }
+        
+        try {
+            const db = await this.openDatabase();
+            const transaction = db.transaction(['pendingTransactions'], 'readwrite');
+            const store = transaction.objectStore('pendingTransactions');
+            
+            const item = {
+                data: transactionData,
+                timestamp: new Date().toISOString()
+            };
+            
+            await new Promise((resolve, reject) => {
+                const request = store.add(item);
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+            
+            console.log('[PWA] Transaction queued for sync');
+            
+            // Update pending count
+            await this.checkPendingTransactions();
+            
+            db.close();
+            return true;
+        } catch (error) {
+            console.error('[PWA] Failed to queue transaction:', error);
+            return false;
+        }
+    },
+    
+    // Get pending transactions count
+    checkPendingTransactions: async function() {
+        if (!('indexedDB' in window)) {
+            return 0;
+        }
+        
+        try {
+            const db = await this.openDatabase();
+            const transaction = db.transaction(['pendingTransactions'], 'readonly');
+            const store = transaction.objectStore('pendingTransactions');
+            
+            const count = await new Promise((resolve, reject) => {
+                const request = store.count();
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+            
+            db.close();
+            
+            // Notify Blazor app
+            if (window.blazorPwaCallbacks && window.blazorPwaCallbacks.onPendingCountChanged) {
+                window.blazorPwaCallbacks.onPendingCountChanged(count);
+            }
+            
+            return count;
+        } catch (error) {
+            console.error('[PWA] Failed to check pending transactions:', error);
+            return 0;
+        }
+    },
+    
+    // Open IndexedDB
+    openDatabase: function() {
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.open('PrivatekonomyOfflineDB', 1);
+            
+            request.onerror = () => reject(request.error);
+            request.onsuccess = () => resolve(request.result);
+            
+            request.onupgradeneeded = (event) => {
+                const db = event.target.result;
+                
+                if (!db.objectStoreNames.contains('pendingTransactions')) {
+                    const store = db.createObjectStore('pendingTransactions', { 
+                        keyPath: 'id', 
+                        autoIncrement: true 
+                    });
+                    store.createIndex('timestamp', 'timestamp', { unique: false });
+                }
+            };
+        });
+    },
+    
+    // Show update notification
+    showUpdateNotification: function() {
+        if (window.blazorPwaCallbacks && window.blazorPwaCallbacks.onUpdateAvailable) {
+            window.blazorPwaCallbacks.onUpdateAvailable();
+        }
+    },
+    
+    // Apply update (reload page with new service worker)
+    applyUpdate: function() {
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.ready.then(registration => {
+                if (registration.waiting) {
+                    registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+                }
+            });
+            
+            // Reload page after a short delay
+            setTimeout(() => {
+                window.location.reload();
+            }, 100);
+        }
+    },
+    
+    // Request notification permission
+    requestNotificationPermission: async function() {
+        if (!('Notification' in window)) {
+            console.log('[PWA] Notifications not supported');
+            return false;
+        }
+        
+        const permission = await Notification.requestPermission();
+        console.log('[PWA] Notification permission:', permission);
+        return permission === 'granted';
+    },
+    
+    // Subscribe to push notifications
+    subscribeToPush: async function() {
+        if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+            console.log('[PWA] Push notifications not supported');
+            return null;
+        }
+        
+        try {
+            const registration = await navigator.serviceWorker.ready;
+            
+            // Check if already subscribed
+            let subscription = await registration.pushManager.getSubscription();
+            
+            if (!subscription) {
+                // Request permission first
+                const hasPermission = await this.requestNotificationPermission();
+                if (!hasPermission) {
+                    return null;
+                }
+                
+                // TODO: Get VAPID public key from server API instead of hard-coding
+                // Example: const vapidKey = await fetch('/api/push/vapid-key').then(r => r.text());
+                // This is a placeholder key and should be replaced with the actual server key
+                const vapidKey = 'BEl62iUYgUivxIkv69yViEuiBIa-Ib37J8xQmrpcPBblQjBIL1WsJ3-eN6_JG-eL5E2QdN3qZPTaC-lJQJqG1XY';
+                
+                // Subscribe to push
+                subscription = await registration.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: this.urlBase64ToUint8Array(vapidKey)
+                });
+            }
+            
+            return subscription;
+        } catch (error) {
+            console.error('[PWA] Failed to subscribe to push:', error);
+            return null;
+        }
+    },
+    
+    // Helper to convert VAPID key
+    urlBase64ToUint8Array: function(base64String) {
+        const padding = '='.repeat((4 - base64String.length % 4) % 4);
+        const base64 = (base64String + padding)
+            .replace(/\-/g, '+')
+            .replace(/_/g, '/');
+        
+        const rawData = window.atob(base64);
+        const outputArray = new Uint8Array(rawData.length);
+        
+        for (let i = 0; i < rawData.length; ++i) {
+            outputArray[i] = rawData.charCodeAt(i);
+        }
+        return outputArray;
+    },
+    
+    // Check if app is running as PWA
+    isRunningAsPWA: function() {
+        return window.matchMedia('(display-mode: standalone)').matches ||
+               window.navigator.standalone === true ||
+               document.referrer.includes('android-app://');
     }
 };
