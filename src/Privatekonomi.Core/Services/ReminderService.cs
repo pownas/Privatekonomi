@@ -261,19 +261,8 @@ public class ReminderService : IReminderService
         _logger.LogInformation("Escalating reminder {ReminderId} to level {EscalationLevel}", 
             reminderId, reminder.EscalationLevel);
         
-        // Send escalation notification through configured channels
-        var channels = NotificationChannelFlags.InApp;
-        
-        if (settings.EscalateToEmail)
-        {
-            channels |= NotificationChannelFlags.Email;
-        }
-        
-        if (settings.EscalateToPush)
-        {
-            channels |= NotificationChannelFlags.Push;
-        }
-        
+        // Send escalation notification with critical priority
+        // The NotificationService will use user's preferences to determine channels
         await _notificationService.SendNotificationAsync(
             reminder.UserId,
             SystemNotificationType.BillOverdue,
