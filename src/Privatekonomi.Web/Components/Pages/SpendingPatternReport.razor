@@ -1,0 +1,458 @@
+@page "/economy/reports/spending-pattern"
+@page "/reports/spending-pattern"
+@rendermode InteractiveServer
+@using Privatekonomi.Core.Services
+@inject IReportService ReportService
+@inject ITransactionService TransactionService
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+
+<PageTitle>Utgiftsmönster-analys - Privatekonomi</PageTitle>
+
+<div class="d-flex flex-column flex-md-row justify-space-between align-start align-md-center mb-4 gap-2">
+    <div>
+        <MudText Typo="Typo.h4">
+            <MudIcon Icon="@Icons.Material.Filled.Analytics" Color="Color.Primary" Class="mr-2" aria-hidden="true" />
+            Utgiftsmönster-analys
+        </MudText>
+        <MudText Typo="Typo.body2" Color="Color.Secondary">
+            Få insikter om dina utgiftsmönster, trender och rekommendationer för besparing
+        </MudText>
+    </div>
+</div>
+
+@if (_loading)
+{
+    <div class="d-flex flex-column align-center pa-6">
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Large" />
+        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-4">Analyserar utgiftsmönster...</MudText>
+    </div>
+}
+else
+{
+    <!-- Period Selection -->
+    <MudPaper Class="pa-4 mb-4" Elevation="2">
+        <MudText Typo="Typo.subtitle2" Class="mb-2">Tidsperiod</MudText>
+        <div class="d-flex flex-wrap gap-2 mb-3">
+            <MudButtonGroup Color="Color.Primary" Variant="Variant.Outlined">
+                <MudButton OnClick="@(() => SelectPeriod(PeriodType.Month))" 
+                           Variant="@(_periodType == PeriodType.Month ? Variant.Filled : Variant.Outlined)">
+                    Senaste månaden
+                </MudButton>
+                <MudButton OnClick="@(() => SelectPeriod(PeriodType.Quarter))" 
+                           Variant="@(_periodType == PeriodType.Quarter ? Variant.Filled : Variant.Outlined)">
+                    Senaste kvartalet
+                </MudButton>
+                <MudButton OnClick="@(() => SelectPeriod(PeriodType.Year))" 
+                           Variant="@(_periodType == PeriodType.Year ? Variant.Filled : Variant.Outlined)">
+                    Senaste året
+                </MudButton>
+                <MudButton OnClick="@(() => SelectPeriod(PeriodType.Custom))" 
+                           Variant="@(_periodType == PeriodType.Custom ? Variant.Filled : Variant.Outlined)">
+                    Anpassad
+                </MudButton>
+            </MudButtonGroup>
+        </div>
+        
+        @if (_periodType == PeriodType.Custom)
+        {
+            <div class="d-flex flex-column flex-md-row gap-3 align-end mt-3">
+                <MudDatePicker Label="Från datum" 
+                              @bind-Date="_fromDate"
+                              DateFormat="yyyy-MM-dd"
+                              Color="Color.Primary" />
+                
+                <MudDatePicker Label="Till datum" 
+                              @bind-Date="_toDate"
+                              DateFormat="yyyy-MM-dd"
+                              Color="Color.Primary" />
+                
+                <MudButton Variant="Variant.Filled" 
+                          Color="Color.Primary" 
+                          OnClick="LoadReportData"
+                          StartIcon="@Icons.Material.Filled.Refresh">
+                    Uppdatera
+                </MudButton>
+            </div>
+        }
+        
+        <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-2">
+            Period: @_fromDate?.ToString("yyyy-MM-dd") - @_toDate?.ToString("yyyy-MM-dd")
+        </MudText>
+    </MudPaper>
+
+    @if (_report != null)
+    {
+        <!-- Summary Cards -->
+        <div class="d-flex flex-wrap gap-3 mb-4">
+            <MudPaper Class="pa-4 flex-grow-1" Elevation="2" Style="min-width: 200px;">
+                <MudText Typo="Typo.subtitle2" Color="Color.Secondary">Total utgifter</MudText>
+                <MudText Typo="Typo.h5" Color="Color.Error">@_report.TotalSpending.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))</MudText>
+            </MudPaper>
+            
+            <MudPaper Class="pa-4 flex-grow-1" Elevation="2" Style="min-width: 200px;">
+                <MudText Typo="Typo.subtitle2" Color="Color.Secondary">Genomsnitt/månad</MudText>
+                <MudText Typo="Typo.h5">@_report.AverageMonthlySpending.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))</MudText>
+            </MudPaper>
+            
+            <MudPaper Class="pa-4 flex-grow-1" Elevation="2" Style="min-width: 200px;">
+                <MudText Typo="Typo.subtitle2" Color="Color.Secondary">Kategorier</MudText>
+                <MudText Typo="Typo.h5" Color="Color.Info">@_report.CategoryDistribution.Count</MudText>
+            </MudPaper>
+            
+            <MudPaper Class="pa-4 flex-grow-1" Elevation="2" Style="min-width: 200px;">
+                <MudText Typo="Typo.subtitle2" Color="Color.Secondary">Avvikelser</MudText>
+                <MudText Typo="Typo.h5" Color="Color.Warning">@_report.Anomalies.Count</MudText>
+            </MudPaper>
+        </div>
+
+        <!-- Recommendations -->
+        @if (_report.Recommendations.Any())
+        {
+            <MudPaper Class="pa-4 mb-4" Elevation="2">
+                <MudText Typo="Typo.h6" Class="mb-3">
+                    <MudIcon Icon="@Icons.Material.Filled.Lightbulb" Color="Color.Warning" Size="Size.Small" />
+                    Rekommendationer
+                </MudText>
+                
+                <div class="d-flex flex-column gap-2">
+                    @foreach (var recommendation in _report.Recommendations.Take(5))
+                    {
+                        var alertColor = recommendation.Priority switch
+                        {
+                            "High" => Color.Error,
+                            "Medium" => Color.Warning,
+                            _ => Color.Info
+                        };
+                        
+                        <MudAlert Severity="@GetSeverity(recommendation.Priority)" Variant="Variant.Outlined" Class="mb-2">
+                            <MudText Typo="Typo.subtitle2" Class="font-weight-bold">@recommendation.Title</MudText>
+                            <MudText Typo="Typo.body2">@recommendation.Description</MudText>
+                            @if (recommendation.PotentialSavings.HasValue && recommendation.PotentialSavings.Value > 0)
+                            {
+                                <MudText Typo="Typo.caption" Color="Color.Success" Class="mt-1">
+                                    💰 Potentiell besparing: @recommendation.PotentialSavings.Value.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))
+                                </MudText>
+                            }
+                        </MudAlert>
+                    }
+                </div>
+            </MudPaper>
+        }
+
+        <!-- Category Distribution -->
+        <MudPaper Class="pa-4 mb-4" Elevation="2">
+            <MudText Typo="Typo.h6" Class="mb-3">
+                <MudIcon Icon="@Icons.Material.Filled.PieChart" Color="Color.Primary" Size="Size.Small" />
+                Utgiftsfördelning per kategori
+            </MudText>
+            
+            @if (_report.CategoryDistribution.Any())
+            {
+                <MudSimpleTable Hover="true" Dense="true" Style="overflow-x: auto;">
+                    <thead>
+                        <tr>
+                            <th>Kategori</th>
+                            <th class="text-right">Belopp</th>
+                            <th class="text-right">Andel</th>
+                            <th class="text-right">Antal</th>
+                            <th class="text-right">Snitt/trans.</th>
+                            <th class="text-right">Förändring</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var category in _report.CategoryDistribution.Take(10))
+                        {
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-center gap-2">
+                                        <div style="@($"width: 16px; height: 16px; background-color: {category.CategoryColor}; border-radius: 50%;")" />
+                                        @category.CategoryName
+                                    </div>
+                                </td>
+                                <td class="text-right">@category.Amount.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))</td>
+                                <td class="text-right">
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Primary">@category.Percentage.ToString("F1")%</MudChip>
+                                </td>
+                                <td class="text-right">@category.TransactionCount</td>
+                                <td class="text-right">@category.AverageTransactionAmount.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))</td>
+                                <td class="text-right">
+                                    @if (category.ChangePercentage.HasValue)
+                                    {
+                                        var changeColor = category.ChangePercentage.Value > 0 ? Color.Error : Color.Success;
+                                        var changeIcon = category.ChangePercentage.Value > 0 ? Icons.Material.Filled.TrendingUp : Icons.Material.Filled.TrendingDown;
+                                        
+                                        <div class="d-flex align-center justify-end gap-1">
+                                            <MudIcon Icon="@changeIcon" Color="@changeColor" Size="Size.Small" />
+                                            <MudText Color="@changeColor" Typo="Typo.body2">@Math.Abs(category.ChangePercentage.Value).ToString("F1")%</MudText>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <MudText Typo="Typo.body2" Color="Color.Secondary">-</MudText>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </MudSimpleTable>
+                
+                @if (_report.CategoryDistribution.Count > 10)
+                {
+                    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-2">
+                        Visar topp 10 av @_report.CategoryDistribution.Count kategorier
+                    </MudText>
+                }
+            }
+            else
+            {
+                <MudText Typo="Typo.body2" Color="Color.Secondary">Ingen data tillgänglig för vald period.</MudText>
+            }
+        </MudPaper>
+
+        <!-- Top Categories -->
+        @if (_report.TopCategories.Any())
+        {
+            <MudPaper Class="pa-4 mb-4" Elevation="2">
+                <MudText Typo="Typo.h6" Class="mb-3">
+                    <MudIcon Icon="@Icons.Material.Filled.Star" Color="Color.Warning" Size="Size.Small" />
+                    Topp 5 utgiftskategorier
+                </MudText>
+                
+                <div class="d-flex flex-column gap-2">
+                    @{
+                        var index = 0;
+                    }
+                    @foreach (var category in _report.TopCategories)
+                    {
+                        var barWidth = _report.TopCategories.First().Amount > 0 
+                            ? (category.Amount / _report.TopCategories.First().Amount * 100).ToString("F0") 
+                            : "0";
+                        
+                        <div>
+                            <div class="d-flex justify-space-between align-center mb-1">
+                                <div class="d-flex align-center gap-2">
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Primary">#@(index + 1)</MudChip>
+                                    <MudText Typo="Typo.body2">@category.CategoryName</MudText>
+                                </div>
+                                <MudText Typo="Typo.body2" Class="font-weight-bold">
+                                    @category.Amount.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))
+                                </MudText>
+                            </div>
+                            <MudProgressLinear Color="Color.Primary" Size="Size.Medium" Value="@double.Parse(barWidth)" />
+                        </div>
+                        index++;
+                    }
+                </div>
+            </MudPaper>
+        }
+
+        <!-- Monthly Trend -->
+        @if (_report.MonthlyData.Any())
+        {
+            <MudPaper Class="pa-4 mb-4" Elevation="2">
+                <MudText Typo="Typo.h6" Class="mb-3">
+                    <MudIcon Icon="@Icons.Material.Filled.Timeline" Color="Color.Info" Size="Size.Small" />
+                    Månatlig trend
+                </MudText>
+                
+                <MudSimpleTable Hover="true" Dense="true">
+                    <thead>
+                        <tr>
+                            <th>Månad</th>
+                            <th class="text-right">Belopp</th>
+                            <th class="text-right">Transaktioner</th>
+                            <th class="text-right">Snitt/dag</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var month in _report.MonthlyData.OrderByDescending(m => m.Date))
+                        {
+                            var daysInMonth = DateTime.DaysInMonth(month.Date.Year, month.Date.Month);
+                            var avgPerDay = month.TotalAmount / daysInMonth;
+                            
+                            <tr>
+                                <td>@month.Date.ToString("MMMM yyyy", new System.Globalization.CultureInfo("sv-SE"))</td>
+                                <td class="text-right">@month.TotalAmount.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))</td>
+                                <td class="text-right">@month.TransactionCount</td>
+                                <td class="text-right">@avgPerDay.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))</td>
+                            </tr>
+                        }
+                    </tbody>
+                </MudSimpleTable>
+            </MudPaper>
+        }
+
+        <!-- Trends -->
+        @if (_report.Trends.Any())
+        {
+            <MudPaper Class="pa-4 mb-4" Elevation="2">
+                <MudText Typo="Typo.h6" Class="mb-3">
+                    <MudIcon Icon="@Icons.Material.Filled.ShowChart" Color="Color.Success" Size="Size.Small" />
+                    Trendanalys
+                </MudText>
+                
+                <div class="d-flex flex-column gap-3">
+                    @foreach (var trend in _report.Trends.Take(5))
+                    {
+                        var trendColor = trend.TrendType switch
+                        {
+                            "Increasing" => Color.Error,
+                            "Decreasing" => Color.Success,
+                            _ => Color.Default
+                        };
+                        
+                        var trendIcon = trend.TrendType switch
+                        {
+                            "Increasing" => Icons.Material.Filled.TrendingUp,
+                            "Decreasing" => Icons.Material.Filled.TrendingDown,
+                            _ => Icons.Material.Filled.TrendingFlat
+                        };
+                        
+                        <MudCard Elevation="1">
+                            <MudCardContent>
+                                <div class="d-flex align-center gap-2 mb-2">
+                                    <MudIcon Icon="@trendIcon" Color="@trendColor" />
+                                    <MudText Typo="Typo.subtitle1" Class="font-weight-bold">@trend.CategoryName</MudText>
+                                    <MudChip T="string" Size="Size.Small" Color="@trendColor">@Math.Abs(trend.TrendPercentage).ToString("F1")%</MudChip>
+                                </div>
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">@trend.Description</MudText>
+                            </MudCardContent>
+                        </MudCard>
+                    }
+                </div>
+            </MudPaper>
+        }
+
+        <!-- Anomalies -->
+        @if (_report.Anomalies.Any())
+        {
+            <MudPaper Class="pa-4 mb-4" Elevation="2">
+                <MudText Typo="Typo.h6" Class="mb-3">
+                    <MudIcon Icon="@Icons.Material.Filled.Warning" Color="Color.Warning" Size="Size.Small" />
+                    Upptäckta avvikelser
+                </MudText>
+                
+                <MudSimpleTable Hover="true" Dense="true">
+                    <thead>
+                        <tr>
+                            <th>Datum</th>
+                            <th>Typ</th>
+                            <th class="text-right">Belopp</th>
+                            <th class="text-right">Förväntat</th>
+                            <th>Beskrivning</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var anomaly in _report.Anomalies)
+                        {
+                            var anomalyColor = anomaly.Type == "UnusuallyHigh" ? Color.Error : Color.Info;
+                            
+                            <tr>
+                                <td>@anomaly.Date.ToString("yyyy-MM-dd")</td>
+                                <td>
+                                    <MudChip T="string" Size="Size.Small" Color="@anomalyColor">
+                                        @(anomaly.Type == "UnusuallyHigh" ? "Högt" : "Lågt")
+                                    </MudChip>
+                                </td>
+                                <td class="text-right">@anomaly.Amount.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))</td>
+                                <td class="text-right">@anomaly.ExpectedAmount.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))</td>
+                                <td>@anomaly.Description</td>
+                            </tr>
+                        }
+                    </tbody>
+                </MudSimpleTable>
+            </MudPaper>
+        }
+    }
+}
+
+@code {
+    private bool _loading = true;
+    private Core.Services.SpendingPatternReport? _report;
+    private DateTime? _fromDate;
+    private DateTime? _toDate;
+    private PeriodType _periodType = PeriodType.Month;
+
+    private enum PeriodType
+    {
+        Month,
+        Quarter,
+        Year,
+        Custom
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await SelectPeriod(PeriodType.Month);
+    }
+
+    private async Task SelectPeriod(PeriodType periodType)
+    {
+        _periodType = periodType;
+        
+        var today = DateTime.Today;
+        _toDate = today;
+        
+        _fromDate = periodType switch
+        {
+            PeriodType.Month => today.AddMonths(-1),
+            PeriodType.Quarter => today.AddMonths(-3),
+            PeriodType.Year => today.AddYears(-1),
+            PeriodType.Custom => today.AddMonths(-1),
+            _ => today.AddMonths(-1)
+        };
+
+        if (periodType != PeriodType.Custom)
+        {
+            await LoadReportData();
+        }
+    }
+
+    private async Task LoadReportData()
+    {
+        if (!_fromDate.HasValue || !_toDate.HasValue)
+        {
+            Snackbar.Add("Välj ett giltigt datumintervall", Severity.Warning);
+            return;
+        }
+
+        if (_fromDate.Value > _toDate.Value)
+        {
+            Snackbar.Add("Startdatum måste vara före slutdatum", Severity.Error);
+            return;
+        }
+
+        _loading = true;
+        StateHasChanged();
+
+        try
+        {
+            _report = await ReportService.GetSpendingPatternReportAsync(_fromDate.Value, _toDate.Value);
+            
+            if (_report.TotalSpending == 0)
+            {
+                Snackbar.Add("Ingen data hittades för vald period", Severity.Info);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Fel vid hämtning av rapport: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+            StateHasChanged();
+        }
+    }
+
+    private Severity GetSeverity(string priority)
+    {
+        return priority switch
+        {
+            "High" => Severity.Error,
+            "Medium" => Severity.Warning,
+            _ => Severity.Info
+        };
+    }
+}
