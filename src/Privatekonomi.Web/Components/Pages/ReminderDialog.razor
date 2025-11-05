@@ -1,0 +1,176 @@
+@using Privatekonomi.Core.Models
+@using Privatekonomi.Core.Services
+@inject IReminderService ReminderService
+
+<MudDialog>
+    <DialogContent>
+        <MudGrid>
+            <MudItem xs="12">
+                <MudTextField @bind-Value="_reminder.Title" 
+                              Label="Titel" 
+                              Variant="Variant.Outlined"
+                              Required="true"
+                              MaxLength="200" />
+            </MudItem>
+            <MudItem xs="12">
+                <MudTextField @bind-Value="_reminder.Description" 
+                              Label="Beskrivning" 
+                              Variant="Variant.Outlined"
+                              Lines="3"
+                              MaxLength="1000" />
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudDatePicker @bind-Date="_reminderDate" 
+                               Label="Datum" 
+                               Variant="Variant.Outlined"
+                               Required="true" />
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudTimePicker @bind-Time="_reminderTime" 
+                               Label="Tid" 
+                               Variant="Variant.Outlined"
+                               Required="true" />
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudSelect @bind-Value="_reminder.Priority" 
+                           Label="Prioritet" 
+                           Variant="Variant.Outlined">
+                    <MudSelectItem Value="ReminderPriority.Low">Låg</MudSelectItem>
+                    <MudSelectItem Value="ReminderPriority.Normal">Normal</MudSelectItem>
+                    <MudSelectItem Value="ReminderPriority.High">Hög</MudSelectItem>
+                    <MudSelectItem Value="ReminderPriority.Critical">Kritisk</MudSelectItem>
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudTextField @bind-Value="_reminder.ReminderType" 
+                              Label="Typ (valfritt)" 
+                              Variant="Variant.Outlined"
+                              MaxLength="50" 
+                              Placeholder="t.ex. Räkning, Möte, Uppgift" />
+            </MudItem>
+            <MudItem xs="12">
+                <MudTextField @bind-Value="_reminder.ActionUrl" 
+                              Label="Åtgärdslänk (valfritt)" 
+                              Variant="Variant.Outlined"
+                              MaxLength="500" 
+                              Placeholder="/bills/123" />
+            </MudItem>
+            <MudItem xs="12">
+                <MudCheckBox @bind-Value="_reminder.EnableFollowUp" 
+                             Label="Aktivera automatisk uppföljning" 
+                             Color="Color.Primary" />
+            </MudItem>
+            @if (_reminder.EnableFollowUp)
+            {
+                <MudItem xs="12" md="6">
+                    <MudNumericField @bind-Value="_reminder.FollowUpIntervalHours" 
+                                     Label="Uppföljningsintervall (timmar)" 
+                                     Variant="Variant.Outlined"
+                                     Min="1"
+                                     Max="168" />
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudNumericField @bind-Value="_reminder.MaxFollowUps" 
+                                     Label="Max antal uppföljningar" 
+                                     Variant="Variant.Outlined"
+                                     Min="1"
+                                     Max="10" />
+                </MudItem>
+            }
+        </MudGrid>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Avbryt</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Submit" Disabled="_saving">
+            @if (_saving)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" />
+            }
+            else
+            {
+                <text>Spara</text>
+            }
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] 
+    public required IMudDialogInstance MudDialog { get; set; }
+    
+    [Parameter] public Reminder Reminder { get; set; } = new();
+
+    private Reminder _reminder = new();
+    private DateTime? _reminderDate;
+    private TimeSpan? _reminderTime;
+    private bool _saving = false;
+
+    protected override void OnInitialized()
+    {
+        // Create a copy to avoid modifying the original
+        _reminder = new Reminder
+        {
+            ReminderId = Reminder.ReminderId,
+            UserId = Reminder.UserId,
+            Title = Reminder.Title,
+            Description = Reminder.Description,
+            Priority = Reminder.Priority,
+            ReminderType = Reminder.ReminderType,
+            ActionUrl = Reminder.ActionUrl,
+            EnableFollowUp = Reminder.EnableFollowUp,
+            FollowUpIntervalHours = Reminder.FollowUpIntervalHours,
+            MaxFollowUps = Reminder.MaxFollowUps,
+            RelatedEntityId = Reminder.RelatedEntityId,
+            RelatedEntityType = Reminder.RelatedEntityType,
+            Status = Reminder.Status
+        };
+
+        var localDate = Reminder.ReminderDate.ToLocalTime();
+        _reminderDate = localDate.Date;
+        _reminderTime = localDate.TimeOfDay;
+    }
+
+    private async Task Submit()
+    {
+        if (string.IsNullOrWhiteSpace(_reminder.Title))
+        {
+            return;
+        }
+
+        if (!_reminderDate.HasValue || !_reminderTime.HasValue)
+        {
+            return;
+        }
+
+        _saving = true;
+        try
+        {
+            // Combine date and time
+            var localDateTime = _reminderDate.Value.Date.Add(_reminderTime.Value);
+            _reminder.ReminderDate = localDateTime.ToUniversalTime();
+
+            if (_reminder.ReminderId > 0)
+            {
+                // Update existing
+                await ReminderService.UpdateReminderAsync(_reminder);
+            }
+            else
+            {
+                // Create new
+                await ReminderService.CreateReminderAsync(_reminder);
+            }
+
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        catch (Exception)
+        {
+            _saving = false;
+            throw;
+        }
+    }
+
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+}

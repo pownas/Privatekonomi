@@ -63,6 +63,7 @@
     </MudNavGroup>
 
     <MudNavGroup Title="Inställningar" Icon="@Icons.Material.Filled.Settings" Class="@GetGroupClass(SettingsKey)" Expanded="@IsGroupExpanded(SettingsKey)" ExpandedChanged="@(expanded => OnGroupExpandedChanged(SettingsKey, expanded))">
+        <MudNavLink Href="/reminders" Icon="@Icons.Material.Filled.NotificationImportant">Påminnelser</MudNavLink>
         <MudNavLink Href="/settings/notifications" Icon="@Icons.Material.Filled.Notifications">Notifikationer</MudNavLink>
         <MudNavLink Href="/settings/bank-connections" Icon="@Icons.Material.Filled.CloudSync">Bankkopplingar</MudNavLink>
         <MudNavLink Href="/settings/import" Icon="@Icons.Material.Filled.Upload">Importera CSV</MudNavLink>

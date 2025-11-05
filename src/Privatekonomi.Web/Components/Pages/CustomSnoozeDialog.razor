@@ -1,0 +1,73 @@
+@using Privatekonomi.Core.Models
+
+<MudDialog>
+    <DialogContent>
+        <MudGrid>
+            <MudItem xs="12">
+                <MudText Typo="Typo.body1" Class="mb-3">
+                    Välj hur länge du vill snooze påminnelsen:
+                </MudText>
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudNumericField @bind-Value="_hours" 
+                                 Label="Timmar" 
+                                 Variant="Variant.Outlined"
+                                 Min="0"
+                                 Max="999" />
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudNumericField @bind-Value="_minutes" 
+                                 Label="Minuter" 
+                                 Variant="Variant.Outlined"
+                                 Min="0"
+                                 Max="59" />
+            </MudItem>
+            <MudItem xs="12">
+                <MudText Typo="Typo.caption" Color="Color.Default">
+                    Snooze till: @GetSnoozeUntilText()
+                </MudText>
+            </MudItem>
+        </MudGrid>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Avbryt</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Submit" Disabled="_totalMinutes == 0">
+            Snooze
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] 
+    public required IMudDialogInstance MudDialog { get; set; }
+    
+    [Parameter] public Reminder Reminder { get; set; } = new();
+
+    private int _hours = 1;
+    private int _minutes = 0;
+    private int _totalMinutes => _hours * 60 + _minutes;
+
+    private string GetSnoozeUntilText()
+    {
+        if (_totalMinutes == 0)
+        {
+            return "Ange en giltig varaktighet";
+        }
+
+        var snoozeUntil = DateTime.Now.AddMinutes(_totalMinutes);
+        return snoozeUntil.ToString("g");
+    }
+
+    private void Submit()
+    {
+        if (_totalMinutes > 0)
+        {
+            MudDialog.Close(DialogResult.Ok(_totalMinutes));
+        }
+    }
+
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+}
