@@ -32,7 +32,7 @@ public class WeeklyBudgetDigestService : BackgroundService
         {
             try
             {
-                var now = DateTime.Now;
+                var now = DateTime.UtcNow;
                 
                 // Check if it's the right day and hour
                 if (now.DayOfWeek == DigestDay && now.Hour == DigestHour)
@@ -119,13 +119,16 @@ public class WeeklyBudgetDigestService : BackgroundService
         {
             "# Veckosammanfattning - Budgetar",
             "",
-            $"Här är din budgetöversikt för vecka {GetWeekNumber(DateTime.Now)}:",
+            $"Här är din budgetöversikt för vecka {GetWeekNumber(DateTime.UtcNow)}:",
             ""
         };
 
         int totalCategories = 0;
         int categoriesOverBudget = 0;
         int categoriesNearLimit = 0;
+
+        // Build summary section
+        var summaryLines = new List<string>();
 
         foreach (var budget in userBudgets)
         {
@@ -151,7 +154,8 @@ public class WeeklyBudgetDigestService : BackgroundService
                 if (usage >= 100m) categoriesOverBudget++;
                 else if (usage >= 75m) categoriesNearLimit++;
 
-                digestLines.Add($"{emoji} **{budgetCategory.Category?.Name ?? "Okänd"}**: {spent:N0} kr / {budgetCategory.PlannedAmount:N0} kr ({usage:F0}%)");
+                var categoryName = budgetCategory.Category?.Name ?? "Okänd kategori";
+                digestLines.Add($"{emoji} **{categoryName}**: {spent:N0} kr / {budgetCategory.PlannedAmount:N0} kr ({usage:F0}%)");
                 
                 if (remaining > 0)
                 {
@@ -176,19 +180,21 @@ public class WeeklyBudgetDigestService : BackgroundService
             }
         }
 
-        // Add summary
-        digestLines.Insert(3, "");
-        digestLines.Insert(4, $"**Sammanfattning:** {totalCategories} kategorier");
+        // Add summary at the top
+        summaryLines.Add("");
+        summaryLines.Add($"**Sammanfattning:** {totalCategories} kategorier");
         if (categoriesOverBudget > 0)
         {
-            digestLines.Insert(5, $"🔴 {categoriesOverBudget} över budget");
+            summaryLines.Add($"🔴 {categoriesOverBudget} över budget");
         }
         if (categoriesNearLimit > 0)
         {
-            digestLines.Insert(5 + (categoriesOverBudget > 0 ? 1 : 0), 
-                $"🟡 {categoriesNearLimit} närmar sig gränsen");
+            summaryLines.Add($"🟡 {categoriesNearLimit} närmar sig gränsen");
         }
-        digestLines.Insert(5 + (categoriesOverBudget > 0 ? 1 : 0) + (categoriesNearLimit > 0 ? 1 : 0), "");
+        summaryLines.Add("");
+        
+        // Insert summary after header (at index 4)
+        digestLines.InsertRange(4, summaryLines);
 
         var digestMessage = string.Join("\n", digestLines);
 

@@ -1,4 +1,5 @@
 @inject IJSRuntime JSRuntime
+@inject ILogger<UpdateNotification> _logger
 @implements IAsyncDisposable
 
 @if (ShowUpdateNotification)
@@ -46,9 +47,10 @@
                     window.blazorPwaCallbacks.updateNotificationRef = arguments[0];
                 ", objRef);
             }
-            catch
+            catch (Exception ex)
             {
-                // Silently fail if PWA JS is not available
+                // Log at debug level to avoid noise while maintaining graceful degradation
+                _logger.LogDebug(ex, "PWA JavaScript not available for UpdateNotification");
             }
         }
     }
