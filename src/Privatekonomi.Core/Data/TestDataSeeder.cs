@@ -711,6 +711,261 @@ public static class TestDataSeeder
 
         context.Goals.AddRange(goals);
         context.SaveChanges();
+
+        // Add milestones for each goal
+        var milestones = new List<GoalMilestone>();
+        int milestoneId = 1;
+
+        // Milestones for Goal 1: Semesterresa till Japan (30% progress - 15000/50000)
+        // Reached: 25%
+        milestones.Add(new GoalMilestone
+        {
+            GoalMilestoneId = milestoneId++,
+            GoalId = 1,
+            TargetAmount = 12500m,
+            Percentage = 25,
+            Description = "25% av målet uppnått",
+            IsReached = true,
+            ReachedAt = DateTime.UtcNow.AddMonths(-2),
+            IsAutomatic = true,
+            CreatedAt = DateTime.UtcNow.AddMonths(-6)
+        });
+        // Not reached: 50%, 75%, 100%
+        milestones.Add(new GoalMilestone
+        {
+            GoalMilestoneId = milestoneId++,
+            GoalId = 1,
+            TargetAmount = 25000m,
+            Percentage = 50,
+            Description = "50% av målet uppnått",
+            IsReached = false,
+            IsAutomatic = true,
+            CreatedAt = DateTime.UtcNow.AddMonths(-6)
+        });
+        milestones.Add(new GoalMilestone
+        {
+            GoalMilestoneId = milestoneId++,
+            GoalId = 1,
+            TargetAmount = 37500m,
+            Percentage = 75,
+            Description = "75% av målet uppnått",
+            IsReached = false,
+            IsAutomatic = true,
+            CreatedAt = DateTime.UtcNow.AddMonths(-6)
+        });
+        milestones.Add(new GoalMilestone
+        {
+            GoalMilestoneId = milestoneId++,
+            GoalId = 1,
+            TargetAmount = 50000m,
+            Percentage = 100,
+            Description = "100% av målet uppnått",
+            IsReached = false,
+            IsAutomatic = true,
+            CreatedAt = DateTime.UtcNow.AddMonths(-6)
+        });
+
+        // Milestones for Goal 2: Ny laptop (34% progress - 8500/25000)
+        // Reached: 25%
+        milestones.Add(new GoalMilestone
+        {
+            GoalMilestoneId = milestoneId++,
+            GoalId = 2,
+            TargetAmount = 6250m,
+            Percentage = 25,
+            Description = "25% av målet uppnått",
+            IsReached = true,
+            ReachedAt = DateTime.UtcNow.AddMonths(-1),
+            IsAutomatic = true,
+            CreatedAt = DateTime.UtcNow.AddMonths(-4)
+        });
+        // Not reached: 50%, 75%, 100%
+        milestones.Add(new GoalMilestone
+        {
+            GoalMilestoneId = milestoneId++,
+            GoalId = 2,
+            TargetAmount = 12500m,
+            Percentage = 50,
+            Description = "50% av målet uppnått",
+            IsReached = false,
+            IsAutomatic = true,
+            CreatedAt = DateTime.UtcNow.AddMonths(-4)
+        });
+        milestones.Add(new GoalMilestone
+        {
+            GoalMilestoneId = milestoneId++,
+            GoalId = 2,
+            TargetAmount = 18750m,
+            Percentage = 75,
+            Description = "75% av målet uppnått",
+            IsReached = false,
+            IsAutomatic = true,
+            CreatedAt = DateTime.UtcNow.AddMonths(-4)
+        });
+        milestones.Add(new GoalMilestone
+        {
+            GoalMilestoneId = milestoneId++,
+            GoalId = 2,
+            TargetAmount = 25000m,
+            Percentage = 100,
+            Description = "100% av målet uppnått",
+            IsReached = false,
+            IsAutomatic = true,
+            CreatedAt = DateTime.UtcNow.AddMonths(-4)
+        });
+
+        // Milestones for Goal 3: Nödfond (50% progress - 45000/90000)
+        // Reached: 25%, 50%
+        milestones.Add(new GoalMilestone
+        {
+            GoalMilestoneId = milestoneId++,
+            GoalId = 3,
+            TargetAmount = 22500m,
+            Percentage = 25,
+            Description = "25% av målet uppnått",
+            IsReached = true,
+            ReachedAt = DateTime.UtcNow.AddMonths(-4),
+            IsAutomatic = true,
+            CreatedAt = DateTime.UtcNow.AddMonths(-8)
+        });
+        milestones.Add(new GoalMilestone
+        {
+            GoalMilestoneId = milestoneId++,
+            GoalId = 3,
+            TargetAmount = 45000m,
+            Percentage = 50,
+            Description = "50% av målet uppnått",
+            IsReached = true,
+            ReachedAt = DateTime.UtcNow.AddDays(-10),
+            IsAutomatic = true,
+            CreatedAt = DateTime.UtcNow.AddMonths(-8)
+        });
+        // Not reached: 75%, 100%
+        milestones.Add(new GoalMilestone
+        {
+            GoalMilestoneId = milestoneId++,
+            GoalId = 3,
+            TargetAmount = 67500m,
+            Percentage = 75,
+            Description = "75% av målet uppnått",
+            IsReached = false,
+            IsAutomatic = true,
+            CreatedAt = DateTime.UtcNow.AddMonths(-8)
+        });
+        milestones.Add(new GoalMilestone
+        {
+            GoalMilestoneId = milestoneId++,
+            GoalId = 3,
+            TargetAmount = 90000m,
+            Percentage = 100,
+            Description = "100% av målet uppnått",
+            IsReached = false,
+            IsAutomatic = true,
+            CreatedAt = DateTime.UtcNow.AddMonths(-8)
+        });
+
+        // Milestones for Goal 4: Kontantinsats lägenhet (40% progress - 120000/300000)
+        // Reached: 25%
+        milestones.Add(new GoalMilestone
+        {
+            GoalMilestoneId = milestoneId++,
+            GoalId = 4,
+            TargetAmount = 75000m,
+            Percentage = 25,
+            Description = "25% av målet uppnått",
+            IsReached = true,
+            ReachedAt = DateTime.UtcNow.AddMonths(-3),
+            IsAutomatic = true,
+            CreatedAt = DateTime.UtcNow.AddMonths(-10)
+        });
+        // Not reached: 50%, 75%, 100%
+        milestones.Add(new GoalMilestone
+        {
+            GoalMilestoneId = milestoneId++,
+            GoalId = 4,
+            TargetAmount = 150000m,
+            Percentage = 50,
+            Description = "50% av målet uppnått",
+            IsReached = false,
+            IsAutomatic = true,
+            CreatedAt = DateTime.UtcNow.AddMonths(-10)
+        });
+        milestones.Add(new GoalMilestone
+        {
+            GoalMilestoneId = milestoneId++,
+            GoalId = 4,
+            TargetAmount = 225000m,
+            Percentage = 75,
+            Description = "75% av målet uppnått",
+            IsReached = false,
+            IsAutomatic = true,
+            CreatedAt = DateTime.UtcNow.AddMonths(-10)
+        });
+        milestones.Add(new GoalMilestone
+        {
+            GoalMilestoneId = milestoneId++,
+            GoalId = 4,
+            TargetAmount = 300000m,
+            Percentage = 100,
+            Description = "100% av målet uppnått",
+            IsReached = false,
+            IsAutomatic = true,
+            CreatedAt = DateTime.UtcNow.AddMonths(-10)
+        });
+
+        // Milestones for Goal 5: Ny cykel (80% progress - 12000/15000)
+        // Reached: 25%, 50%, 75%
+        milestones.Add(new GoalMilestone
+        {
+            GoalMilestoneId = milestoneId++,
+            GoalId = 5,
+            TargetAmount = 3750m,
+            Percentage = 25,
+            Description = "25% av målet uppnått",
+            IsReached = true,
+            ReachedAt = DateTime.UtcNow.AddMonths(-2),
+            IsAutomatic = true,
+            CreatedAt = DateTime.UtcNow.AddMonths(-3)
+        });
+        milestones.Add(new GoalMilestone
+        {
+            GoalMilestoneId = milestoneId++,
+            GoalId = 5,
+            TargetAmount = 7500m,
+            Percentage = 50,
+            Description = "50% av målet uppnått",
+            IsReached = true,
+            ReachedAt = DateTime.UtcNow.AddMonths(-1),
+            IsAutomatic = true,
+            CreatedAt = DateTime.UtcNow.AddMonths(-3)
+        });
+        milestones.Add(new GoalMilestone
+        {
+            GoalMilestoneId = milestoneId++,
+            GoalId = 5,
+            TargetAmount = 11250m,
+            Percentage = 75,
+            Description = "75% av målet uppnått",
+            IsReached = true,
+            ReachedAt = DateTime.UtcNow.AddDays(-15),
+            IsAutomatic = true,
+            CreatedAt = DateTime.UtcNow.AddMonths(-3)
+        });
+        // Not reached: 100%
+        milestones.Add(new GoalMilestone
+        {
+            GoalMilestoneId = milestoneId++,
+            GoalId = 5,
+            TargetAmount = 15000m,
+            Percentage = 100,
+            Description = "100% av målet uppnått",
+            IsReached = false,
+            IsAutomatic = true,
+            CreatedAt = DateTime.UtcNow.AddMonths(-3)
+        });
+
+        context.GoalMilestones.AddRange(milestones);
+        context.SaveChanges();
     }
 
     private static void SeedAssets(PrivatekonomyContext context, string userId)
