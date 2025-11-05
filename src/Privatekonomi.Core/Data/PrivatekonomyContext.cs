@@ -100,6 +100,10 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
     public DbSet<GroupGoal> GroupGoals { get; set; }
     public DbSet<UserPrivacySettings> UserPrivacySettings { get; set; }
     
+    // Round-up Savings
+    public DbSet<RoundUpSettings> RoundUpSettings { get; set; }
+    public DbSet<RoundUpTransaction> RoundUpTransactions { get; set; }
+    
     // Budget Alerts
     public DbSet<BudgetAlert> BudgetAlerts { get; set; }
     public DbSet<BudgetAlertSettings> BudgetAlertSettings { get; set; }

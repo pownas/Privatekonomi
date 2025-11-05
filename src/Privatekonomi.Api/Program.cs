@@ -49,6 +49,7 @@ builder.Services.AddScoped<IHouseholdService, HouseholdService>();
 builder.Services.AddScoped<IChildAllowanceService, ChildAllowanceService>();
 builder.Services.AddScoped<IAuditLogService, AuditLogService>();
 builder.Services.AddScoped<IGoalService, GoalService>();
+builder.Services.AddScoped<IRoundUpService, RoundUpService>();
 builder.Services.AddScoped<IPocketService, PocketService>();
 builder.Services.AddScoped<IExportService, ExportService>();
 builder.Services.AddScoped<IDataImportService, DataImportService>();

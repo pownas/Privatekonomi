@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Privatekonomi.Core.Data;
 using Privatekonomi.Core.Models;
 using Privatekonomi.Core.ML;
@@ -12,19 +13,25 @@ public class TransactionService : ITransactionService
     private readonly ICategoryRuleService _categoryRuleService;
     private readonly IAuditLogService _auditLogService;
     private readonly ITransactionMLService? _mlService;
+    private readonly IRoundUpService? _roundUpService;
+    private readonly ILogger<TransactionService>? _logger;
 
     public TransactionService(
         PrivatekonomyContext context, 
         ICategoryRuleService categoryRuleService, 
         IAuditLogService auditLogService,
         ICurrentUserService? currentUserService = null,
-        ITransactionMLService? mlService = null)
+        ITransactionMLService? mlService = null,
+        IRoundUpService? roundUpService = null,
+        ILogger<TransactionService>? logger = null)
     {
         _context = context;
         _currentUserService = currentUserService;
         _categoryRuleService = categoryRuleService;
         _auditLogService = auditLogService;
         _mlService = mlService;
+        _roundUpService = roundUpService;
+        _logger = logger;
     }
 
     public async Task<IEnumerable<Transaction>> GetAllTransactionsAsync()
@@ -124,6 +131,30 @@ public class TransactionService : ITransactionService
 
         _context.Transactions.Add(transaction);
         await _context.SaveChangesAsync();
+        
+        // Process round-up if service is available
+        if (_roundUpService != null)
+        {
+            try
+            {
+                if (transaction.IsIncome)
+                {
+                    // Process salary auto-save for income transactions
+                    await _roundUpService.ProcessSalaryAutoSaveAsync(transaction.TransactionId);
+                }
+                else
+                {
+                    // Process round-up for expense transactions
+                    await _roundUpService.ProcessRoundUpForTransactionAsync(transaction.TransactionId);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log error but don't fail transaction creation
+                _logger?.LogWarning(ex, "Failed to process round-up for transaction {TransactionId}", transaction.TransactionId);
+            }
+        }
+        
         return transaction;
     }
 
