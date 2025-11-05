@@ -115,7 +115,7 @@ public class HeatmapAnalysisService : IHeatmapAnalysisService
         CalculateIntensityLevels(heatmapData);
 
         // Generate insights
-        heatmapData.Insights = await GenerateInsightsAsync(transactions, startDate, endDate, heatmapData.TotalExpenses);
+        heatmapData.Insights = GenerateInsights(transactions, startDate, endDate, heatmapData.TotalExpenses);
 
         return heatmapData;
     }
@@ -130,7 +130,7 @@ public class HeatmapAnalysisService : IHeatmapAnalysisService
         return heatmapData.Insights;
     }
 
-    private async Task<PatternInsights> GenerateInsightsAsync(
+    private PatternInsights GenerateInsights(
         List<Transaction> transactions,
         DateTime startDate,
         DateTime endDate,
