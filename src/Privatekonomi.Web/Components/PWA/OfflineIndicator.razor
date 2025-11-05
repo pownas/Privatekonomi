@@ -30,37 +30,58 @@
     private bool IsOnline { get; set; } = true;
     private int PendingTransactions { get; set; } = 0;
     private DotNetObjectReference<OfflineIndicator>? objRef;
+    private bool _hasRendered = false;
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        objRef = DotNetObjectReference.Create(this);
-        
-        // Register callbacks with JavaScript
-        await JSRuntime.InvokeVoidAsync("eval", @"
-            window.blazorPwaCallbacks = window.blazorPwaCallbacks || {};
-            window.blazorPwaCallbacks.onOnline = () => {
-                if (window.blazorPwaCallbacks.offlineIndicatorRef) {
-                    window.blazorPwaCallbacks.offlineIndicatorRef.invokeMethodAsync('OnOnlineStatusChanged', true);
+        if (firstRender && !_hasRendered)
+        {
+            _hasRendered = true;
+            objRef = DotNetObjectReference.Create(this);
+            
+            try
+            {
+                // Register callbacks with JavaScript
+                await JSRuntime.InvokeVoidAsync("eval", @"
+                    window.blazorPwaCallbacks = window.blazorPwaCallbacks || {};
+                    window.blazorPwaCallbacks.onOnline = () => {
+                        if (window.blazorPwaCallbacks.offlineIndicatorRef) {
+                            window.blazorPwaCallbacks.offlineIndicatorRef.invokeMethodAsync('OnOnlineStatusChanged', true);
+                        }
+                    };
+                    window.blazorPwaCallbacks.onOffline = () => {
+                        if (window.blazorPwaCallbacks.offlineIndicatorRef) {
+                            window.blazorPwaCallbacks.offlineIndicatorRef.invokeMethodAsync('OnOnlineStatusChanged', false);
+                        }
+                    };
+                    window.blazorPwaCallbacks.onPendingCountChanged = (count) => {
+                        if (window.blazorPwaCallbacks.offlineIndicatorRef) {
+                            window.blazorPwaCallbacks.offlineIndicatorRef.invokeMethodAsync('OnPendingCountChanged', count);
+                        }
+                    };
+                    window.blazorPwaCallbacks.offlineIndicatorRef = arguments[0];
+                ", objRef);
+                
+                // Get initial online status
+                IsOnline = await JSRuntime.InvokeAsync<bool>("eval", "navigator.onLine");
+                
+                // Check pending transactions - if function doesn't exist, default to 0
+                try
+                {
+                    PendingTransactions = await JSRuntime.InvokeAsync<int>("pwaManager.checkPendingTransactions");
                 }
-            };
-            window.blazorPwaCallbacks.onOffline = () => {
-                if (window.blazorPwaCallbacks.offlineIndicatorRef) {
-                    window.blazorPwaCallbacks.offlineIndicatorRef.invokeMethodAsync('OnOnlineStatusChanged', false);
+                catch
+                {
+                    PendingTransactions = 0;
                 }
-            };
-            window.blazorPwaCallbacks.onPendingCountChanged = (count) => {
-                if (window.blazorPwaCallbacks.offlineIndicatorRef) {
-                    window.blazorPwaCallbacks.offlineIndicatorRef.invokeMethodAsync('OnPendingCountChanged', count);
-                }
-            };
-            window.blazorPwaCallbacks.offlineIndicatorRef = arguments[0];
-        ", objRef);
-        
-        // Get initial online status
-        IsOnline = await JSRuntime.InvokeAsync<bool>("eval", "navigator.onLine");
-        
-        // Check pending transactions
-        PendingTransactions = await JSRuntime.InvokeAsync<int>("pwaManager.checkPendingTransactions");
+                
+                StateHasChanged();
+            }
+            catch
+            {
+                // Silently fail if PWA JS is not available
+            }
+        }
     }
 
     [JSInvokable]
@@ -81,14 +102,21 @@
     {
         if (objRef != null)
         {
-            await JSRuntime.InvokeVoidAsync("eval", @"
-                if (window.blazorPwaCallbacks) {
-                    delete window.blazorPwaCallbacks.onOnline;
-                    delete window.blazorPwaCallbacks.onOffline;
-                    delete window.blazorPwaCallbacks.onPendingCountChanged;
-                    delete window.blazorPwaCallbacks.offlineIndicatorRef;
-                }
-            ");
+            try
+            {
+                await JSRuntime.InvokeVoidAsync("eval", @"
+                    if (window.blazorPwaCallbacks) {
+                        delete window.blazorPwaCallbacks.onOnline;
+                        delete window.blazorPwaCallbacks.onOffline;
+                        delete window.blazorPwaCallbacks.onPendingCountChanged;
+                        delete window.blazorPwaCallbacks.offlineIndicatorRef;
+                    }
+                ");
+            }
+            catch
+            {
+                // Silently fail if JS is not available during disposal
+            }
             objRef.Dispose();
         }
     }
