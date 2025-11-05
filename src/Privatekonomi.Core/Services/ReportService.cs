@@ -1114,4 +1114,425 @@ public class ReportService : IReportService
             Description = coefficientOfVariation > 30 ? "Inkomsten varierar mycket mellan månader" : ""
         };
     }
+
+    public async Task<SpendingPatternReport> GetSpendingPatternReportAsync(DateTime fromDate, DateTime toDate, int? householdId = null)
+    {
+        // Get all expense transactions for the period
+        var query = _context.Transactions
+            .Include(t => t.TransactionCategories)
+                .ThenInclude(tc => tc.Category)
+            .Where(t => !t.IsIncome && t.Date >= fromDate && t.Date <= toDate);
+
+        if (householdId.HasValue)
+        {
+            query = query.Where(t => t.HouseholdId == householdId.Value);
+        }
+
+        var transactions = await query.OrderBy(t => t.Date).ToListAsync();
+        var totalSpending = transactions.Sum(t => t.Amount);
+
+        // Calculate number of months in period
+        var monthsDiff = ((toDate.Year - fromDate.Year) * 12) + toDate.Month - fromDate.Month + 1;
+        var averageMonthlySpending = monthsDiff > 0 ? totalSpending / monthsDiff : totalSpending;
+
+        // Category distribution analysis
+        var categoryDistribution = await CalculateCategoryDistribution(transactions, totalSpending, fromDate, toDate, householdId);
+        
+        // Top spending categories (top 5)
+        var topCategories = categoryDistribution
+            .OrderByDescending(c => c.Amount)
+            .Take(5)
+            .ToList();
+
+        // Monthly data for visualization
+        var monthlyData = CalculateMonthlyData(transactions);
+
+        // Trend analysis
+        var trends = await CalculateSpendingTrends(transactions, fromDate, toDate);
+
+        // Anomaly detection
+        var anomalies = DetectSpendingAnomalies(transactions, monthlyData);
+
+        // Generate recommendations
+        var recommendations = GenerateRecommendations(categoryDistribution, trends, anomalies, averageMonthlySpending);
+
+        return new SpendingPatternReport
+        {
+            FromDate = fromDate,
+            ToDate = toDate,
+            TotalSpending = totalSpending,
+            AverageMonthlySpending = averageMonthlySpending,
+            CategoryDistribution = categoryDistribution,
+            TopCategories = topCategories,
+            Trends = trends,
+            Anomalies = anomalies,
+            Recommendations = recommendations,
+            MonthlyData = monthlyData,
+            GeneratedAt = DateTime.UtcNow
+        };
+    }
+
+    private async Task<List<CategorySpending>> CalculateCategoryDistribution(
+        List<Transaction> transactions, 
+        decimal totalSpending, 
+        DateTime fromDate, 
+        DateTime toDate,
+        int? householdId)
+    {
+        // Calculate previous period for comparison
+        var periodLength = (toDate - fromDate).Days;
+        var previousFromDate = fromDate.AddDays(-periodLength);
+        var previousToDate = fromDate.AddDays(-1);
+
+        var previousQuery = _context.Transactions
+            .Include(t => t.TransactionCategories)
+                .ThenInclude(tc => tc.Category)
+            .Where(t => !t.IsIncome && t.Date >= previousFromDate && t.Date <= previousToDate);
+
+        if (householdId.HasValue)
+        {
+            previousQuery = previousQuery.Where(t => t.HouseholdId == householdId.Value);
+        }
+
+        var previousTransactions = await previousQuery.ToListAsync();
+
+        // Group by category
+        var categoryGroups = transactions
+            .SelectMany(t => t.TransactionCategories.Select(tc => new { Transaction = t, Category = tc.Category }))
+            .GroupBy(x => new { x.Category?.CategoryId, x.Category?.Name, x.Category?.Color })
+            .Select(g => new
+            {
+                CategoryId = g.Key.CategoryId ?? 0,
+                CategoryName = g.Key.Name ?? "Okategoriserad",
+                CategoryColor = g.Key.Color ?? "#757575",
+                Transactions = g.Select(x => x.Transaction).ToList()
+            })
+            .ToList();
+
+        var result = new List<CategorySpending>();
+
+        foreach (var group in categoryGroups)
+        {
+            var amount = group.Transactions.Sum(t => t.Amount);
+            var transactionCount = group.Transactions.Count;
+            
+            // Calculate previous period amount for this category
+            var previousAmount = previousTransactions
+                .Where(t => t.TransactionCategories.Any(tc => tc.CategoryId == group.CategoryId))
+                .Sum(t => t.Amount);
+
+            var change = amount - previousAmount;
+            var changePercentage = previousAmount > 0 ? (change / previousAmount) * 100 : 0;
+
+            result.Add(new CategorySpending
+            {
+                CategoryId = group.CategoryId,
+                CategoryName = group.CategoryName,
+                CategoryColor = group.CategoryColor,
+                Amount = amount,
+                Percentage = totalSpending > 0 ? (amount / totalSpending) * 100 : 0,
+                TransactionCount = transactionCount,
+                AverageTransactionAmount = transactionCount > 0 ? amount / transactionCount : 0,
+                PreviousPeriodAmount = previousAmount,
+                ChangeFromPreviousPeriod = change,
+                ChangePercentage = changePercentage
+            });
+        }
+
+        // Handle uncategorized transactions
+        var uncategorizedTransactions = transactions.Where(t => !t.TransactionCategories.Any()).ToList();
+        if (uncategorizedTransactions.Any())
+        {
+            var amount = uncategorizedTransactions.Sum(t => t.Amount);
+            var transactionCount = uncategorizedTransactions.Count;
+            
+            var previousUncategorized = previousTransactions.Where(t => !t.TransactionCategories.Any()).Sum(t => t.Amount);
+            var change = amount - previousUncategorized;
+            var changePercentage = previousUncategorized > 0 ? (change / previousUncategorized) * 100 : 0;
+
+            result.Add(new CategorySpending
+            {
+                CategoryId = 0,
+                CategoryName = "Okategoriserad",
+                CategoryColor = "#757575",
+                Amount = amount,
+                Percentage = totalSpending > 0 ? (amount / totalSpending) * 100 : 0,
+                TransactionCount = transactionCount,
+                AverageTransactionAmount = transactionCount > 0 ? amount / transactionCount : 0,
+                PreviousPeriodAmount = previousUncategorized,
+                ChangeFromPreviousPeriod = change,
+                ChangePercentage = changePercentage
+            });
+        }
+
+        return result.OrderByDescending(c => c.Amount).ToList();
+    }
+
+    private List<MonthlySpendingData> CalculateMonthlyData(List<Transaction> transactions)
+    {
+        return transactions
+            .GroupBy(t => new { t.Date.Year, t.Date.Month })
+            .OrderBy(g => g.Key.Year)
+            .ThenBy(g => g.Key.Month)
+            .Select(g =>
+            {
+                var categoryBreakdown = g
+                    .SelectMany(t => t.TransactionCategories.Select(tc => new { t.Amount, CategoryName = tc.Category?.Name ?? "Okategoriserad" }))
+                    .GroupBy(x => x.CategoryName)
+                    .ToDictionary(cg => cg.Key, cg => cg.Sum(x => x.Amount));
+
+                return new MonthlySpendingData
+                {
+                    Month = $"{g.Key.Year}-{g.Key.Month:D2}",
+                    Date = new DateTime(g.Key.Year, g.Key.Month, 1),
+                    TotalAmount = g.Sum(t => t.Amount),
+                    TransactionCount = g.Count(),
+                    CategoryBreakdown = categoryBreakdown
+                };
+            })
+            .ToList();
+    }
+
+    private Task<List<SpendingTrend>> CalculateSpendingTrends(List<Transaction> transactions, DateTime fromDate, DateTime toDate)
+    {
+        var trends = new List<SpendingTrend>();
+
+        // Overall spending trend
+        var monthlyData = transactions
+            .GroupBy(t => new { t.Date.Year, t.Date.Month })
+            .OrderBy(g => g.Key.Year)
+            .ThenBy(g => g.Key.Month)
+            .Select(g => new
+            {
+                Period = $"{g.Key.Year}-{g.Key.Month:D2}",
+                Date = new DateTime(g.Key.Year, g.Key.Month, 1),
+                Amount = g.Sum(t => t.Amount)
+            })
+            .ToList();
+
+        if (monthlyData.Count >= 3)
+        {
+            var firstHalfAvg = monthlyData.Take(monthlyData.Count / 2).Average(m => m.Amount);
+            var secondHalfAvg = monthlyData.Skip(monthlyData.Count / 2).Average(m => m.Amount);
+            var trendPercentage = firstHalfAvg > 0 ? ((secondHalfAvg - firstHalfAvg) / firstHalfAvg) * 100 : 0;
+
+            var trendType = Math.Abs(trendPercentage) < 5 ? "Stable" : trendPercentage > 0 ? "Increasing" : "Decreasing";
+            var description = trendType == "Stable" 
+                ? "Dina totala utgifter är relativt stabila över perioden."
+                : trendType == "Increasing"
+                ? $"Dina totala utgifter ökar med i genomsnitt {Math.Abs(trendPercentage):F1}% mellan perioderna."
+                : $"Dina totala utgifter minskar med i genomsnitt {Math.Abs(trendPercentage):F1}% mellan perioderna.";
+
+            trends.Add(new SpendingTrend
+            {
+                CategoryId = null,
+                CategoryName = "Total utgifter",
+                TrendType = trendType,
+                TrendPercentage = trendPercentage,
+                Description = description,
+                DataPoints = monthlyData.Select(m => new TrendDataPoint
+                {
+                    Date = m.Date,
+                    Period = m.Period,
+                    Amount = m.Amount
+                }).ToList()
+            });
+        }
+
+        // Category-level trends
+        var categoriesWithTrends = transactions
+            .SelectMany(t => t.TransactionCategories.Select(tc => new { Transaction = t, Category = tc.Category }))
+            .GroupBy(x => new { x.Category?.CategoryId, x.Category?.Name })
+            .Where(g => g.Key.CategoryId.HasValue)
+            .ToList();
+
+        foreach (var categoryGroup in categoriesWithTrends)
+        {
+            var categoryMonthlyData = categoryGroup
+                .GroupBy(x => new { x.Transaction.Date.Year, x.Transaction.Date.Month })
+                .OrderBy(g => g.Key.Year)
+                .ThenBy(g => g.Key.Month)
+                .Select(g => new
+                {
+                    Period = $"{g.Key.Year}-{g.Key.Month:D2}",
+                    Date = new DateTime(g.Key.Year, g.Key.Month, 1),
+                    Amount = g.Sum(x => x.Transaction.Amount)
+                })
+                .ToList();
+
+            if (categoryMonthlyData.Count >= 3)
+            {
+                var firstHalfAvg = categoryMonthlyData.Take(categoryMonthlyData.Count / 2).Average(m => m.Amount);
+                var secondHalfAvg = categoryMonthlyData.Skip(categoryMonthlyData.Count / 2).Average(m => m.Amount);
+                var trendPercentage = firstHalfAvg > 0 ? ((secondHalfAvg - firstHalfAvg) / firstHalfAvg) * 100 : 0;
+
+                // Only include significant trends (> 10% change)
+                if (Math.Abs(trendPercentage) > 10)
+                {
+                    var trendType = trendPercentage > 0 ? "Increasing" : "Decreasing";
+                    var description = trendType == "Increasing"
+                        ? $"Utgifter i kategorin {categoryGroup.Key.Name} ökar med {Math.Abs(trendPercentage):F1}%."
+                        : $"Utgifter i kategorin {categoryGroup.Key.Name} minskar med {Math.Abs(trendPercentage):F1}%.";
+
+                    trends.Add(new SpendingTrend
+                    {
+                        CategoryId = categoryGroup.Key.CategoryId,
+                        CategoryName = categoryGroup.Key.Name ?? "Okategoriserad",
+                        TrendType = trendType,
+                        TrendPercentage = trendPercentage,
+                        Description = description,
+                        DataPoints = categoryMonthlyData.Select(m => new TrendDataPoint
+                        {
+                            Date = m.Date,
+                            Period = m.Period,
+                            Amount = m.Amount
+                        }).ToList()
+                    });
+                }
+            }
+        }
+
+        return Task.FromResult(trends);
+    }
+
+    private List<SpendingAnomaly> DetectSpendingAnomalies(List<Transaction> transactions, List<MonthlySpendingData> monthlyData)
+    {
+        var anomalies = new List<SpendingAnomaly>();
+
+        if (monthlyData.Count < 3)
+            return anomalies;
+
+        // Calculate average and standard deviation for overall spending
+        var amounts = monthlyData.Select(m => (double)m.TotalAmount).ToArray();
+        var average = amounts.Average();
+        var stdDev = Math.Sqrt(amounts.Average(v => Math.Pow(v - average, 2)));
+
+        // Detect months with unusually high or low spending (> 2 standard deviations)
+        foreach (var month in monthlyData)
+        {
+            var deviation = ((double)month.TotalAmount - average) / (stdDev > 0 ? stdDev : 1);
+            
+            if (Math.Abs(deviation) > 2)
+            {
+                var type = deviation > 0 ? "UnusuallyHigh" : "UnusuallyLow";
+                var description = deviation > 0
+                    ? $"Ovanligt höga utgifter i {month.Month}: {month.TotalAmount:C0} (förväntat: {average:C0})"
+                    : $"Ovanligt låga utgifter i {month.Month}: {month.TotalAmount:C0} (förväntat: {average:C0})";
+
+                anomalies.Add(new SpendingAnomaly
+                {
+                    Date = month.Date,
+                    Type = type,
+                    CategoryName = "Alla kategorier",
+                    Amount = month.TotalAmount,
+                    ExpectedAmount = (decimal)average,
+                    Deviation = (decimal)(deviation * stdDev),
+                    Description = description
+                });
+            }
+        }
+
+        return anomalies.OrderByDescending(a => Math.Abs(a.Deviation)).Take(5).ToList();
+    }
+
+    private List<SpendingRecommendation> GenerateRecommendations(
+        List<CategorySpending> categoryDistribution,
+        List<SpendingTrend> trends,
+        List<SpendingAnomaly> anomalies,
+        decimal averageMonthlySpending)
+    {
+        var recommendations = new List<SpendingRecommendation>();
+
+        // Recommendation: High percentage categories
+        var highPercentageCategories = categoryDistribution
+            .Where(c => c.Percentage > 20 && c.CategoryName != "Okategoriserad")
+            .OrderByDescending(c => c.Percentage)
+            .Take(2);
+
+        foreach (var category in highPercentageCategories)
+        {
+            recommendations.Add(new SpendingRecommendation
+            {
+                Type = "BudgetAlert",
+                Priority = "Medium",
+                Title = $"Hög andel utgifter i {category.CategoryName}",
+                Description = $"{category.CategoryName} utgör {category.Percentage:F1}% av dina totala utgifter. Överväg om det finns möjligheter att minska kostnaderna i denna kategori.",
+                CategoryName = category.CategoryName
+            });
+        }
+
+        // Recommendation: Increasing trends
+        var increasingTrends = trends
+            .Where(t => t.TrendType == "Increasing" && t.TrendPercentage > 15)
+            .OrderByDescending(t => t.TrendPercentage)
+            .Take(2);
+
+        foreach (var trend in increasingTrends)
+        {
+            var potentialSavings = categoryDistribution
+                .FirstOrDefault(c => c.CategoryId == trend.CategoryId)?.Amount * 0.1m; // Assume 10% reduction potential
+
+            recommendations.Add(new SpendingRecommendation
+            {
+                Type = "TrendWarning",
+                Priority = "High",
+                Title = $"Stigande trend i {trend.CategoryName}",
+                Description = $"Utgifter i {trend.CategoryName} ökar med {trend.TrendPercentage:F1}%. Detta kan påverka din ekonomiska planering.",
+                PotentialSavings = potentialSavings,
+                CategoryName = trend.CategoryName
+            });
+        }
+
+        // Recommendation: Uncategorized transactions
+        var uncategorized = categoryDistribution.FirstOrDefault(c => c.CategoryName == "Okategoriserad");
+        if (uncategorized != null && uncategorized.Percentage > 10)
+        {
+            recommendations.Add(new SpendingRecommendation
+            {
+                Type = "SavingsOpportunity",
+                Priority = "Low",
+                Title = "Många okategoriserade transaktioner",
+                Description = $"{uncategorized.Percentage:F1}% av dina utgifter är okategoriserade. Kategorisera dem för bättre överblick och kontroll.",
+                CategoryName = "Okategoriserad"
+            });
+        }
+
+        // Recommendation: Anomalies
+        if (anomalies.Any(a => a.Type == "UnusuallyHigh"))
+        {
+            var highestAnomaly = anomalies.Where(a => a.Type == "UnusuallyHigh").OrderByDescending(a => a.Deviation).First();
+            recommendations.Add(new SpendingRecommendation
+            {
+                Type = "TrendWarning",
+                Priority = "Medium",
+                Title = "Ovanligt hög utgift upptäckt",
+                Description = highestAnomaly.Description,
+                CategoryName = highestAnomaly.CategoryName
+            });
+        }
+
+        // Recommendation: Decreasing trends (positive feedback)
+        var decreasingTrends = trends
+            .Where(t => t.TrendType == "Decreasing" && t.TrendPercentage < -10)
+            .OrderBy(t => t.TrendPercentage)
+            .Take(1);
+
+        foreach (var trend in decreasingTrends)
+        {
+            var actualSavings = categoryDistribution
+                .FirstOrDefault(c => c.CategoryId == trend.CategoryId)?.ChangeFromPreviousPeriod;
+
+            recommendations.Add(new SpendingRecommendation
+            {
+                Type = "SavingsOpportunity",
+                Priority = "Low",
+                Title = $"Bra jobbat! Minskade utgifter i {trend.CategoryName}",
+                Description = $"Du har minskat utgifter i {trend.CategoryName} med {Math.Abs(trend.TrendPercentage):F1}%. Fortsätt så!",
+                PotentialSavings = actualSavings.HasValue ? Math.Abs(actualSavings.Value) : null,
+                CategoryName = trend.CategoryName
+            });
+        }
+
+        return recommendations.OrderByDescending(r => r.Priority == "High" ? 3 : r.Priority == "Medium" ? 2 : 1).ToList();
+    }
 }

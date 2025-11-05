@@ -43,6 +43,11 @@ public interface IReportService
     /// Get economic health score (0-100) based on multiple financial factors
     /// </summary>
     Task<HealthScoreReport> GetHealthScoreAsync(int? householdId = null);
+    
+    /// <summary>
+    /// Get spending pattern analysis report with category distribution, trends, anomalies and recommendations
+    /// </summary>
+    Task<SpendingPatternReport> GetSpendingPatternReportAsync(DateTime fromDate, DateTime toDate, int? householdId = null);
 }
 
 public class CashFlowReport
@@ -204,4 +209,101 @@ public class HealthScoreHistoryPoint
 {
     public DateTime Date { get; set; }
     public int Score { get; set; }
+}
+
+/// <summary>
+/// Comprehensive spending pattern analysis report
+/// </summary>
+public class SpendingPatternReport
+{
+    public DateTime FromDate { get; set; }
+    public DateTime ToDate { get; set; }
+    public decimal TotalSpending { get; set; }
+    public decimal AverageMonthlySpending { get; set; }
+    public List<CategorySpending> CategoryDistribution { get; set; } = new();
+    public List<CategorySpending> TopCategories { get; set; } = new();
+    public List<SpendingTrend> Trends { get; set; } = new();
+    public List<SpendingAnomaly> Anomalies { get; set; } = new();
+    public List<SpendingRecommendation> Recommendations { get; set; } = new();
+    public List<MonthlySpendingData> MonthlyData { get; set; } = new();
+    public DateTime GeneratedAt { get; set; }
+}
+
+/// <summary>
+/// Spending data for a specific category
+/// </summary>
+public class CategorySpending
+{
+    public int CategoryId { get; set; }
+    public string CategoryName { get; set; } = string.Empty;
+    public string CategoryColor { get; set; } = "#000000";
+    public decimal Amount { get; set; }
+    public decimal Percentage { get; set; }
+    public int TransactionCount { get; set; }
+    public decimal AverageTransactionAmount { get; set; }
+    public decimal? PreviousPeriodAmount { get; set; }
+    public decimal? ChangeFromPreviousPeriod { get; set; }
+    public decimal? ChangePercentage { get; set; }
+}
+
+/// <summary>
+/// Spending trend analysis for a category or overall spending
+/// </summary>
+public class SpendingTrend
+{
+    public int? CategoryId { get; set; }
+    public string CategoryName { get; set; } = string.Empty;
+    public string TrendType { get; set; } = string.Empty; // "Increasing", "Decreasing", "Stable"
+    public decimal TrendPercentage { get; set; }
+    public string Description { get; set; } = string.Empty;
+    public List<TrendDataPoint> DataPoints { get; set; } = new();
+}
+
+/// <summary>
+/// Data point for trend visualization
+/// </summary>
+public class TrendDataPoint
+{
+    public DateTime Date { get; set; }
+    public string Period { get; set; } = string.Empty;
+    public decimal Amount { get; set; }
+}
+
+/// <summary>
+/// Detected spending anomaly (unusual patterns)
+/// </summary>
+public class SpendingAnomaly
+{
+    public DateTime Date { get; set; }
+    public string Type { get; set; } = string.Empty; // "UnusuallyHigh", "UnusuallyLow", "FrequencyChange"
+    public string CategoryName { get; set; } = string.Empty;
+    public decimal Amount { get; set; }
+    public decimal ExpectedAmount { get; set; }
+    public decimal Deviation { get; set; }
+    public string Description { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// Actionable recommendation based on spending patterns
+/// </summary>
+public class SpendingRecommendation
+{
+    public string Type { get; set; } = string.Empty; // "SavingsOpportunity", "BudgetAlert", "TrendWarning"
+    public string Priority { get; set; } = string.Empty; // "High", "Medium", "Low"
+    public string Title { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public decimal? PotentialSavings { get; set; }
+    public string? CategoryName { get; set; }
+}
+
+/// <summary>
+/// Monthly spending summary data
+/// </summary>
+public class MonthlySpendingData
+{
+    public string Month { get; set; } = string.Empty;
+    public DateTime Date { get; set; }
+    public decimal TotalAmount { get; set; }
+    public int TransactionCount { get; set; }
+    public Dictionary<string, decimal> CategoryBreakdown { get; set; } = new();
 }

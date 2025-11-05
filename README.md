@@ -76,6 +76,15 @@ En privatekonomi-applikation byggd med .NET 9, Blazor Server och MudBlazor för 
   - Automatisk synkronisering av transaktioner
   - Realtidsdata från banken
 - **CSV-export**: Exportera investeringar för analys och rapportering
+- **Utgiftsmönster-analys**: ⭐ NYTT!
+  - Omfattande analys av dina utgiftsmönster över tid
+  - Automatisk kategorisering och fördelning av utgifter
+  - Trenddetektering för att upptäcka ökande eller minskande utgifter
+  - Anomalidetektering för att flagga ovanliga utgiftsmönster
+  - AI-baserade rekommendationer för besparingar
+  - Visuell presentation med diagram och tabeller
+  - Månatlig, kvartalsvis eller årlig analys
+  - Se [Utgiftsmönster-analys guide](docs/UTGIFTSMÖNSTER_ANALYS.md)
 - **Förbättrad datamodell**: Utökade modeller med audit trail, valutastöd och mer
 - **Familjesamarbete**:
   - Hushållshantering med flera medlemmar
