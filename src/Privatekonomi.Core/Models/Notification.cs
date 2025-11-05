@@ -70,6 +70,21 @@ public class Notification
     /// </summary>
     [MaxLength(500)]
     public string? ActionUrl { get; set; }
+    
+    /// <summary>
+    /// Snooze until this date/time
+    /// </summary>
+    public DateTime? SnoozeUntil { get; set; }
+    
+    /// <summary>
+    /// Number of times this notification has been snoozed
+    /// </summary>
+    public int SnoozeCount { get; set; } = 0;
+    
+    /// <summary>
+    /// Related BillReminder ID if this is a bill reminder notification
+    /// </summary>
+    public int? BillReminderId { get; set; }
 }
 
 /// <summary>
@@ -141,4 +156,14 @@ public enum NotificationPriority
     Normal = 2,
     High = 3,
     Critical = 4
+}
+
+/// <summary>
+/// Snooze duration options
+/// </summary>
+public enum SnoozeDuration
+{
+    OneHour = 1,
+    OneDay = 2,
+    OneWeek = 3
 }
