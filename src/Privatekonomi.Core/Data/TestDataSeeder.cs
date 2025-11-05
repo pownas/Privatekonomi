@@ -49,6 +49,27 @@ public static class TestDataSeeder
         SeedCurrencyAccounts(context, testUserId);
         SeedLifeTimelineMilestones(context, testUserId);
         SeedNotifications(context, testUserId);
+        SeedAuditLogs(context, testUserId);
+        SeedAdditionalBudgets(context, testUserId);
+        SeedMoreInvestmentHistory(context, testUserId);
+        SeedMoreNetWorthSnapshots(context, testUserId);
+        
+        //// Missing seed placeholders for other data types
+        // SeedBankConnections(context);
+        // SeedTaxDeductions(context, testUserId);
+        // SeedCapitalGains(context, testUserId);
+        // SeedCommuteDeductions(context, testUserId);
+        // SeedCreditRatings(context, testUserId);
+        // SeedReceipts(context, testUserId);
+        // SeedPortfolioAllocations(context, testUserId);
+        // SeedMLModels(context);
+        // SeedUserFeedback(context, testUserId);
+        // SeedNotificationPreferences(context, testUserId);
+        // SeedDoNotDisturbSchedules(context, testUserId);
+        // SeedLifeTimelineScenarios(context, testUserId);
+        // SeedGoalShares(context, testUserId);
+        // SeedSavingsGroups(context, testUserId);
+        // SeedUserPrivacySettings(context, testUserId);
     }
     
     private static async Task<string> SeedUsers(UserManager<ApplicationUser> userManager)
@@ -3325,6 +3346,245 @@ public static class TestDataSeeder
         };
 
         context.Notifications.AddRange(notifications);
+        context.SaveChanges();
+    }
+
+
+
+    private static void SeedAuditLogs(PrivatekonomyContext context, string userId)
+    {
+        // Only seed if no audit logs exist
+        if (context.AuditLogs.Any())
+        {
+            return;
+        }
+
+        var auditLogs = new List<AuditLog>();
+        var random = new Random(42);
+        var startDate = DateTime.UtcNow.AddDays(-550);
+
+        var actions = new[] { "Create", "Update", "Delete", "Login", "Logout", "Import", "Export" };
+        var entityTypes = new[] { "Transaction", "Budget", "Goal", "Investment", "User", "Category" };
+
+        for (int i = 1; i <= 200; i++)
+        {
+            var auditDate = startDate.AddDays(random.Next(0, 550));
+            var action = actions[random.Next(actions.Length)];
+            var entityType = entityTypes[random.Next(entityTypes.Length)];
+
+            var auditLog = new AuditLog
+            {
+                AuditLogId = i,
+                Action = action,
+                EntityType = entityType,
+                EntityId = random.Next(1, 100),
+                UserId = userId,
+                IpAddress = $"192.168.1.{random.Next(1, 255)}",
+                Details = $"{action} {entityType.ToLower()} with ID {random.Next(1, 100)}",
+                CreatedAt = auditDate
+            };
+
+            auditLogs.Add(auditLog);
+        }
+
+        context.AuditLogs.AddRange(auditLogs);
+        context.SaveChanges();
+    }
+
+    private static void SeedAdditionalBudgets(PrivatekonomyContext context, string userId)
+    {
+        // Only seed additional budgets if less than 10 budgets exist
+        if (context.Budgets.Count() >= 10)
+        {
+            return;
+        }
+
+        var budgets = new List<Budget>();
+        var budgetCategories = new List<BudgetCategory>();
+        var random = new Random(42);
+        var startDate = DateTime.UtcNow.AddDays(-550);
+
+        // Create budgets for each month over the last 18 months
+        for (int i = 0; i < 16; i++) // 16 more months (already have 2)
+        {
+            var monthDate = startDate.AddMonths(i);
+            var startOfMonth = new DateTime(monthDate.Year, monthDate.Month, 1);
+            var endOfMonth = startOfMonth.AddMonths(1).AddDays(-1);
+
+            var budget = new Budget
+            {
+                BudgetId = i + 3, // Start from ID 3 (1-2 already exist)
+                Name = "Månadsbudget " + monthDate.ToString("MMMM yyyy", new System.Globalization.CultureInfo("sv-SE")),
+                Description = $"Budget för {monthDate:MMMM yyyy}",
+                StartDate = startOfMonth,
+                EndDate = endOfMonth,
+                Period = BudgetPeriod.Monthly,
+                CreatedAt = startOfMonth.AddDays(-5),
+                UserId = userId
+            };
+
+            budgets.Add(budget);
+
+            // Add budget categories for this budget
+            var categoryBudgets = new[]
+            {
+                new { CategoryId = 1, BaseAmount = 4500m }, // Mat & Dryck
+                new { CategoryId = 2, BaseAmount = 1400m }, // Transport
+                new { CategoryId = 3, BaseAmount = 11500m }, // Boende
+                new { CategoryId = 4, BaseAmount = 1800m }, // Nöje
+                new { CategoryId = 5, BaseAmount = 2800m }, // Shopping
+                new { CategoryId = 6, BaseAmount = 900m },  // Hälsa
+            };
+
+            foreach (var cat in categoryBudgets)
+            {
+                var variation = random.Next(-200, 300);
+                budgetCategories.Add(new BudgetCategory
+                {
+                    BudgetCategoryId = (i * 6) + cat.CategoryId + 6, // Offset by existing budget categories
+                    BudgetId = budget.BudgetId,
+                    CategoryId = cat.CategoryId,
+                    PlannedAmount = cat.BaseAmount + variation
+                });
+            }
+        }
+
+        context.Budgets.AddRange(budgets);
+        context.BudgetCategories.AddRange(budgetCategories);
+        context.SaveChanges();
+    }
+
+    private static void SeedMoreInvestmentHistory(PrivatekonomyContext context, string userId)
+    {
+        // Only seed if we don't have many investment transactions yet
+        if (context.InvestmentTransactions.Count() >= 50)
+        {
+            return;
+        }
+
+        var investmentTransactions = new List<InvestmentTransaction>();
+        var random = new Random(42);
+        var startDate = DateTime.UtcNow.AddDays(-550);
+
+        // Get existing investments
+        var investmentIds = new[] { 1, 2, 3, 4, 5, 6, 7, 8 };
+        var transactionTypes = new[] { "Buy", "Sell", "Dividend", "Fee" };
+
+        // Generate investment transactions over 18 months
+        for (int i = 1; i <= 80; i++)
+        {
+            var transactionDate = startDate.AddDays(random.Next(0, 550));
+            var investmentId = investmentIds[random.Next(investmentIds.Length)];
+            var transactionType = transactionTypes[random.Next(transactionTypes.Length)];
+            
+            decimal amount = transactionType switch
+            {
+                "Buy" => -(random.Next(1000, 50000)),
+                "Sell" => random.Next(500, 30000),
+                "Dividend" => random.Next(50, 2000),
+                "Fee" => -(random.Next(10, 200)),
+                _ => 0
+            };
+
+            var transaction = new InvestmentTransaction
+            {
+                InvestmentTransactionId = i + 20, // Offset existing ones
+                InvestmentId = investmentId,
+                Type = transactionType,
+                Quantity = transactionType is "Buy" or "Sell" ? random.Next(1, 100) : null,
+                Price = transactionType is "Buy" or "Sell" ? random.Next(50, 500) : null,
+                Amount = amount,
+                Currency = "SEK",
+                TransactionDate = transactionDate,
+                Description = GetInvestmentTransactionDescription(transactionType, investmentId),
+                CreatedAt = transactionDate.AddHours(2),
+                UserId = userId
+            };
+
+            investmentTransactions.Add(transaction);
+        }
+
+        context.InvestmentTransactions.AddRange(investmentTransactions);
+        context.SaveChanges();
+    }
+
+    private static string GetInvestmentTransactionDescription(string type, int investmentId)
+    {
+        var investmentNames = new Dictionary<int, string>
+        {
+            { 1, "Volvo B" },
+            { 2, "SEB A" },
+            { 3, "Investor B" },
+            { 4, "SPP Aktiefond Global" },
+            { 5, "Länsförsäkringar Sverige" },
+            { 6, "Avanza Global" },
+            { 7, "Ericsson B" },
+            { 8, "Nordea" }
+        };
+
+        var name = investmentNames.GetValueOrDefault(investmentId, "Okänd investering");
+        
+        return type switch
+        {
+            "Buy" => $"Köp av {name}",
+            "Sell" => $"Försäljning av {name}",
+            "Dividend" => $"Utdelning från {name}",
+            "Fee" => $"Avgift för {name}",
+            _ => $"Transaktion för {name}"
+        };
+    }
+
+    private static void SeedMoreNetWorthSnapshots(PrivatekonomyContext context, string userId)
+    {
+        // Only seed if we don't have many snapshots
+        if (context.NetWorthSnapshots.Count() >= 20)
+        {
+            return;
+        }
+
+        var snapshots = new List<NetWorthSnapshot>();
+        var random = new Random(42);
+        var startDate = DateTime.UtcNow.AddDays(-550);
+
+        // Generate monthly net worth snapshots over 18 months
+        for (int i = 0; i < 18; i++)
+        {
+            var snapshotDate = startDate.AddDays(i * 30);
+            var baseNetWorth = 850000m + (i * 15000m); // Growing net worth over time
+            var variation = random.Next(-20000, 30000);
+            var totalNetWorth = baseNetWorth + variation;
+
+            var assets = totalNetWorth * (decimal)(0.85 + random.NextDouble() * 0.1); // 85-95% of net worth
+            var liabilities = totalNetWorth - assets;
+
+            var snapshot = new NetWorthSnapshot
+            {
+                NetWorthSnapshotId = i + 5, // Offset existing ones
+                UserId = userId,
+                SnapshotDate = snapshotDate,
+                TotalAssets = Math.Max(0, assets),
+                TotalLiabilities = Math.Max(0, Math.Abs(liabilities)),
+                NetWorth = totalNetWorth,
+                CashAndSavings = assets * 0.25m,
+                Investments = assets * 0.45m,
+                RealEstate = assets * 0.25m,
+                OtherAssets = assets * 0.05m,
+                Loans = Math.Abs(liabilities) * 0.80m,
+                CreditCards = Math.Abs(liabilities) * 0.15m,
+                OtherLiabilities = Math.Abs(liabilities) * 0.05m,
+                MonthlyIncome = 48000m + random.Next(-2000, 3000),
+                MonthlyExpenses = 35000m + random.Next(-3000, 5000),
+                SavingsRate = 0.27m + (decimal)(random.NextDouble() * 0.1 - 0.05),
+                Notes = i % 6 == 0 ? "Halvårsutvärdering av ekonomin" : 
+                       i % 3 == 0 ? "Kvartalsutvärdering" : null,
+                CreatedAt = snapshotDate,
+                IsManual = i % 4 == 0 // Every 4th snapshot is manually created
+            };
+
+            snapshots.Add(snapshot);
+        }
+
+        context.NetWorthSnapshots.AddRange(snapshots);
         context.SaveChanges();
     }
 }
