@@ -113,6 +113,11 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
     // Reminders
     public DbSet<Reminder> Reminders { get; set; }
     public DbSet<ReminderSettings> ReminderSettings { get; set; }
+    
+    // RBAC - Role-Based Access Control
+    public DbSet<HouseholdRole> HouseholdRoles { get; set; }
+    public DbSet<RolePermission> RolePermissions { get; set; }
+    public DbSet<AuditLogEntry> AuditLogEntries { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -1516,6 +1521,74 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
             entity.HasIndex(e => e.UserId);
             entity.HasIndex(e => e.IsActive);
             entity.HasIndex(e => new { e.UserId, e.IsActive });
+        });
+        
+        // RBAC - HouseholdRole configuration
+        modelBuilder.Entity<HouseholdRole>(entity =>
+        {
+            entity.HasKey(e => e.HouseholdRoleId);
+            entity.Property(e => e.RoleType).IsRequired();
+            entity.Property(e => e.IsDelegated).IsRequired();
+            entity.Property(e => e.DelegatedBy).HasMaxLength(450);
+            entity.Property(e => e.AssignedBy).HasMaxLength(450);
+            entity.Property(e => e.RevokedBy).HasMaxLength(450);
+            entity.Property(e => e.IsActive).IsRequired();
+            entity.Property(e => e.AssignedDate).IsRequired();
+            
+            entity.HasOne(e => e.HouseholdMember)
+                .WithMany(m => m.Roles)
+                .HasForeignKey(e => e.HouseholdMemberId)
+                .OnDelete(DeleteBehavior.Cascade);
+                
+            entity.HasIndex(e => e.HouseholdMemberId);
+            entity.HasIndex(e => e.RoleType);
+            entity.HasIndex(e => e.IsActive);
+            entity.HasIndex(e => new { e.HouseholdMemberId, e.IsActive });
+            entity.HasIndex(e => e.DelegationEndDate);
+        });
+        
+        // RBAC - RolePermission configuration
+        modelBuilder.Entity<RolePermission>(entity =>
+        {
+            entity.HasKey(e => e.RolePermissionId);
+            entity.Property(e => e.RoleType).IsRequired();
+            entity.Property(e => e.PermissionKey).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.IsAllowed).IsRequired();
+            entity.Property(e => e.AmountLimit).HasPrecision(18, 2);
+            
+            entity.HasIndex(e => e.RoleType);
+            entity.HasIndex(e => e.PermissionKey);
+            entity.HasIndex(e => new { e.RoleType, e.PermissionKey });
+        });
+        
+        // RBAC - AuditLogEntry configuration
+        modelBuilder.Entity<AuditLogEntry>(entity =>
+        {
+            entity.HasKey(e => e.AuditLogEntryId);
+            entity.Property(e => e.Timestamp).IsRequired();
+            entity.Property(e => e.UserId).HasMaxLength(450);
+            entity.Property(e => e.UserEmail).HasMaxLength(256);
+            entity.Property(e => e.UserName).HasMaxLength(256);
+            entity.Property(e => e.Action).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.Category).IsRequired();
+            entity.Property(e => e.Severity).IsRequired();
+            entity.Property(e => e.ResourceType).HasMaxLength(100);
+            entity.Property(e => e.Details).HasMaxLength(2000);
+            entity.Property(e => e.OldValue).HasMaxLength(1000);
+            entity.Property(e => e.NewValue).HasMaxLength(1000);
+            entity.Property(e => e.IpAddress).HasMaxLength(50);
+            entity.Property(e => e.UserAgent).HasMaxLength(500);
+            entity.Property(e => e.Success).IsRequired();
+            entity.Property(e => e.ErrorMessage).HasMaxLength(1000);
+            
+            entity.HasIndex(e => e.Timestamp);
+            entity.HasIndex(e => e.UserId);
+            entity.HasIndex(e => e.HouseholdId);
+            entity.HasIndex(e => e.Action);
+            entity.HasIndex(e => e.Category);
+            entity.HasIndex(e => e.Severity);
+            entity.HasIndex(e => new { e.HouseholdId, e.Timestamp });
+            entity.HasIndex(e => new { e.UserId, e.Timestamp });
         });
     }
 }
