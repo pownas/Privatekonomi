@@ -109,6 +109,7 @@ builder.Services.AddScoped<IAssetService, AssetService>();
 builder.Services.AddScoped<IBudgetService, BudgetService>();
 builder.Services.AddScoped<IBankSourceService, BankSourceService>();
 builder.Services.AddScoped<IHouseholdService, HouseholdService>();
+builder.Services.AddScoped<IRbacService, RbacService>();
 builder.Services.AddScoped<IChildAllowanceService, ChildAllowanceService>();
 builder.Services.AddScoped<IGoalMilestoneService, GoalMilestoneService>();
 builder.Services.AddScoped<IGoalService, GoalService>();
