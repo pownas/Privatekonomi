@@ -67,24 +67,36 @@ Ladda ner och installera Raspberry Pi Imager från [raspberrypi.com/software](ht
 
 ### 4. Anslut via SSH (om du använder Lite version)
 
+Använd Windows PowerShell (stöd från windows 10), putty eller bash för att ansluta via SSH till din pi. 
+
 ```bash
 ssh pi@raspberrypi.local
 # Eller använd IP-adressen om .local inte fungerar
 ssh pi@192.168.1.XXX
 ```
 
+Där `pi` är användarnamnet du konfigurerat för din raspberry pi. 
+
 Standard användarnamn och lösenord är det du konfigurerade i Imager.
+
+(Det kan vara så att man missade aktivera SSH i installationen, då behöver det aktiveras via Rasperry pi start -> Preferences -> Control center -> Interfaces -> SSH)
 
 ## Installation av .NET 9
 
-### 1. Uppdatera systemet
+### 1. Uppdatera Raspberry Pi-systemet
+
+Uppdatera din Raspberry pi till senaste versionerna med kommandona: 
 
 ```bash
+# Anslut och kntrollera om det finns uppdateringar
 sudo apt update
+# Uppdatera till senaste versionerna
 sudo apt upgrade -y
 ```
 
 ### 2. Installera .NET 9 SDK
+
+Installera nu .NET 9 eller nyare.
 
 ```bash
 # Ladda ner och installera .NET 9
@@ -121,6 +133,26 @@ cd Privatekonomi
 ```bash
 dotnet build -c Release
 ```
+
+Man kan också behöva skapa en NuGet.Config om det är första gången via: 
+
+```bash
+nano /home/PIUSERNAME/.nuget/NuGet/NuGet.Config
+```
+
+Klistra sedan in denna standard NuGet.Config XML-kod: 
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+  <packageSources>
+    <add key="nuget.org" value="https://api.nuget.org/v3/index.json" />
+  </packageSources>
+</configuration>
+```
+
+Spara och avsluta nano:  
+Tryck CTRL+O (spara - Write Out), Enter, och sedan CTRL+X (avsluta).
 
 ### 3. Skapa datakatalog
 
