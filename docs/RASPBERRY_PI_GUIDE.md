@@ -407,8 +407,8 @@ if [ -d "$DATA_DIR" ] && [ "$(ls -A $DATA_DIR/*.json 2>/dev/null)" ]; then
     echo "JSON backup skapad: $BACKUP_DIR/privatekonomi_json_$DATE.tar.gz"
 fi
 
-# Ta bort backuper äldre än 30 dagar
-find $BACKUP_DIR -name "privatekonomi_*" -type f -mtime +30 -delete
+# Ta bort backuper äldre än 750 dagar (ca 2 år)
+find $BACKUP_DIR -name "privatekonomi_*" -type f -mtime +750 -delete
 
 echo "Backup klar: $(date)"
 ```

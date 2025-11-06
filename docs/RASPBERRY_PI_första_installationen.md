@@ -1,4 +1,63 @@
-# Installera entity framework på Raspberry pi: 
+# Raspberry Pi Installation och Konfiguration
+
+## 🚀 Automatisk Installation (Rekommenderat)
+
+**Enklaste sättet:** Använd det automatiserade installationsskriptet som hanterar hela processen:
+
+```bash
+# Ladda ner och kör installationsskriptet
+curl -sSL https://raw.githubusercontent.com/pownas/Privatekonomi/main/raspberry-pi-install.sh | bash
+
+# Eller klona repository och kör lokalt
+git clone https://github.com/pownas/Privatekonomi.git
+cd Privatekonomi
+./raspberry-pi-install.sh
+```
+
+Installationsskriptet hanterar:
+- ✅ Kontroll av systemkrav och Raspberry Pi-miljö
+- ✅ Installation av .NET 9 SDK
+- ✅ Skapande av NuGet.Config om det saknas
+- ✅ Konfiguration av PATH och miljövariabler
+- ✅ Kloning/uppdatering av Privatekonomi-projekt
+- ✅ Återställning av NuGet-paket och Aspire workloads
+- ✅ Val av lagringsalternativ (SQLite/JsonFile)
+- ✅ Automatisk skapande av appsettings.Production.json
+- ✅ Skapande av datakatalog och backup-katalog
+- ✅ Installation av Entity Framework CLI-verktyg
+- ✅ Konfiguration av utvecklingscertifikat
+- ✅ Byggning av applikationen
+- ✅ Swap-optimering för system med lågt minne (valfri)
+- ✅ Valfri systemd-tjänst för automatisk start
+- ✅ Brandväggskonfiguration med UFW (valfri)
+- ✅ Automatiska dagliga backuper med cron (valfri)
+- ✅ Statisk IP-konfiguration (valfri)
+- ✅ Verifiering och användningsinstruktioner
+
+**Kommandoradsalternativ:**
+```bash
+# Full interaktiv installation
+./raspberry-pi-install.sh
+
+# Automatisk installation utan interaktiva frågor
+./raspberry-pi-install.sh --skip-interactive
+
+# Anpassad installation
+./raspberry-pi-install.sh --no-service --no-firewall --no-backup
+
+# Visa hjälp
+./raspberry-pi-install.sh --help
+```
+
+**Efter installation:**
+```bash
+cd ~/Privatekonomi
+./raspberry-pi-start.sh
+```
+
+## 📋 Manuell Installation (För referens)
+
+### Installera Entity Framework på Raspberry Pi: 
 
 ```terminal
 username@raspberrypi:~/Privatekonomi $ dotnet tool install --global dotnet-ef
@@ -60,11 +119,11 @@ Kort svar: På Raspberry Pi behöver du normalt inte “öppna” portar lokalt.
       ```
       dotnet run --urls "http://0.0.0.0:17127"
       ```
-    - I kod (Program.cs):
+    - I kod (Program.cs) - **IMPLEMENTERAT**:
       ```csharp
       builder.WebHost.UseUrls("http://0.0.0.0:17127");
       ```
-    - Via konfig (appsettings.json):
+    - Via konfig (appsettings.RaspberryPi.json) - **IMPLEMENTERAT**:
       ```json
       {
         "Kestrel": {
@@ -153,6 +212,36 @@ WantedBy=multi-user.target
   ```
 
 Behöver du hjälp att sätta detta för just din app (t.ex. Program.cs eller appsettings), klistra in hur du startar appen idag så visar jag exakt ändringen.
+
+## Implementerade Lösningar för Aspire AppHost
+
+### Alternativ 1: Automatisk Raspberry Pi-detektering (Rekommenderat)
+Koden i `src/Privatekonomi.AppHost/Program.cs` har uppdaterats för att automatiskt konfigurera Kestrel när miljövariabeln `PRIVATEKONOMI_RASPBERRY_PI=true` är satt.
+
+### Alternativ 2: Konfigurationsfil
+En dedikerad `appsettings.RaspberryPi.json` har skapats med korrekt Kestrel-konfiguration.
+
+### Alternativ 3: Startup-skript
+Ett enkelt startup-skript `raspberry-pi-start.sh` har skapats som:
+- Sätter rätt miljövariabler
+- Konfigurerar ASPNETCORE_URLS automatiskt  
+- Startar applikationen med rätt inställningar
+
+#### Användning av startup-skriptet:
+```bash
+# Från repository-roten
+./raspberry-pi-start.sh
+```
+
+#### Manuell start med miljövariabler:
+```bash
+cd src/Privatekonomi.AppHost
+export PRIVATEKONOMI_RASPBERRY_PI=true
+export ASPNETCORE_URLS="http://0.0.0.0:17127"
+dotnet run
+```
+
+Efter start kommer Aspire Dashboard att vara tillgänglig på `http://[raspberry-pi-ip]:17127` från andra enheter på nätverket.
 
 
 
