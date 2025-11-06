@@ -323,6 +323,30 @@ EOF
 }
 EOF
     
+    # Create appsettings.Production.json for AppHost (Aspire Dashboard)
+    local apphost_config="$INSTALL_DIR/src/Privatekonomi.AppHost/appsettings.Production.json"
+    log_info "Skapar $apphost_config..."
+    
+    cat > "$apphost_config" << EOF
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning",
+      "Aspire.Hosting": "Information"
+    }
+  },
+  "Kestrel": {
+    "Endpoints": {
+      "Http": {
+        "Url": "http://0.0.0.0:$DEFAULT_PORT"
+      }
+    }
+  },
+  "AllowedHosts": "*"
+}
+EOF
+    
     log_success "Lagringskonfiguration skapad"
 }
 

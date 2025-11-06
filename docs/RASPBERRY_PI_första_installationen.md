@@ -145,7 +145,7 @@ Kort svar: På Raspberry Pi behöver du normalt inte “öppna” portar lokalt.
       ```csharp
       builder.WebHost.UseUrls("http://0.0.0.0:17127");
       ```
-    - Via konfig (appsettings.RaspberryPi.json) - **IMPLEMENTERAT**:
+    - Via konfig (appsettings.Production.json) - **IMPLEMENTERAT**:
       ```json
       {
         "Kestrel": {
@@ -157,6 +157,7 @@ Kort svar: På Raspberry Pi behöver du normalt inte “öppna” portar lokalt.
         }
       }
       ```
+      Denna fil skapas automatiskt av installationsskriptet för AppHost, Web och API.
   - Egen TCP/UDP-server: bind till 0.0.0.0 (eller Pi:ns LAN-IP) på port 17127.
 - Verifiera att portarna lyssnar:
   ```bash
