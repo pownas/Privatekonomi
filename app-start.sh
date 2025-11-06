@@ -197,7 +197,7 @@ show_help() {
     echo ""
     echo -e "${YELLOW}What this script does:${NC}"
     echo -e "  1. Stops any existing .NET processes and frees up ports"
-    echo -e "  2. Checks that prerequisites are installed (.NET 9, Aspire workload)"
+    echo -e "  2. Checks that prerequisites are installed (.NET 9, Aspire dependencies)"
     echo -e "  3. Verifies the project builds successfully"
     echo -e "  4. Starts the Aspire Dashboard with all services"
     echo ""

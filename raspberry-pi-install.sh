@@ -222,9 +222,6 @@ setup_project() {
     log_info "Återställer NuGet-paket..."
     dotnet restore
     
-    log_info "Återställer workloads (för Aspire)..."
-    dotnet workload restore || log_warning "Kunde inte återställa workloads (kan ignoreras om Aspire inte används)"
-    
     log_info "Bygger lösningen..."
     dotnet build --configuration Release
     
@@ -243,11 +240,31 @@ configure_storage() {
     mkdir -p "$BACKUP_DIR"
     log_info "Backup-katalog skapad: $BACKUP_DIR"
     
-    # Ask user for storage provider
+    # Check existing configuration
+    local web_config="$INSTALL_DIR/src/Privatekonomi.Web/appsettings.Production.json"
+    local existing_provider=""
+    
+    if [ -f "$web_config" ]; then
+        # Try to extract existing provider from config
+        existing_provider=$(grep -Po '"Provider":\s*"\K[^"]+' "$web_config" 2>/dev/null || echo "")
+        if [ -n "$existing_provider" ]; then
+            log_info "Befintlig lagringskonfiguration hittad: $existing_provider"
+        fi
+    fi
+    
+    # Ask user for storage provider (always ask to allow easy change)
     echo -e "${YELLOW}Välj lagringsalternativ:${NC}"
     echo "  1) SQLite (Rekommenderat - snabb, låg resursanvändning)"
     echo "  2) JsonFile (Enkel backup, automatisk sparning var 5:e minut)"
-    read -p "Ditt val (1/2) [1]: " storage_choice
+    
+    if [ "$existing_provider" = "Sqlite" ]; then
+        read -p "Ditt val (1/2) [1 - nuvarande]: " storage_choice
+    elif [ "$existing_provider" = "JsonFile" ]; then
+        read -p "Ditt val (1/2) [2 - nuvarande]: " storage_choice
+    else
+        read -p "Ditt val (1/2) [1]: " storage_choice
+    fi
+    
     storage_choice=${storage_choice:-1}
     
     local storage_provider
@@ -264,7 +281,6 @@ configure_storage() {
     fi
     
     # Create appsettings.Production.json for Web
-    local web_config="$INSTALL_DIR/src/Privatekonomi.Web/appsettings.Production.json"
     log_info "Skapar $web_config..."
     
     cat > "$web_config" << EOF
@@ -366,7 +382,19 @@ optimize_swap() {
         return 0
     fi
     
-    log_warning "Lågt minne detekterat ($mem_mb MB)"
+    # Check current swap size
+    local current_swap_kb=$(grep SwapTotal /proc/meminfo | awk '{print $2}')
+    local current_swap_mb=$((current_swap_kb / 1024))
+    
+    log_info "Nuvarande minne: ${mem_mb}MB"
+    log_info "Nuvarande swap: ${current_swap_mb}MB"
+    
+    if [ $current_swap_mb -ge 2048 ]; then
+        log_success "Swap är redan optimerat (${current_swap_mb}MB)"
+        return 0
+    fi
+    
+    log_warning "Lågt minne detekterat och swap är bara ${current_swap_mb}MB"
     read -p "Vill du öka swap-storleken till 2GB för bättre prestanda? (y/n): " -n 1 -r
     echo
     if [[ ! $REPLY =~ ^[Yy]$ ]]; then
@@ -409,6 +437,22 @@ configure_firewall() {
         fi
     fi
     
+    # Check if UFW is already configured with our ports
+    local ufw_status=$(sudo ufw status 2>/dev/null || echo "inactive")
+    local has_dashboard=$(echo "$ufw_status" | grep -q "$DEFAULT_PORT" && echo "yes" || echo "no")
+    local has_web=$(echo "$ufw_status" | grep -q "$WEB_PORT" && echo "yes" || echo "no")
+    local has_api=$(echo "$ufw_status" | grep -q "$API_PORT" && echo "yes" || echo "no")
+    
+    if [ "$has_dashboard" = "yes" ] && [ "$has_web" = "yes" ] && [ "$has_api" = "yes" ]; then
+        log_success "UFW är redan konfigurerat med alla Privatekonomi-portar"
+        sudo ufw status | grep -E "$DEFAULT_PORT|$WEB_PORT|$API_PORT"
+        return 0
+    fi
+    
+    if [ "$has_dashboard" = "yes" ] || [ "$has_web" = "yes" ] || [ "$has_api" = "yes" ]; then
+        log_info "UFW är delvis konfigurerat. Saknade portar kommer att läggas till."
+    fi
+    
     read -p "Vill du konfigurera UFW-brandväggen? (y/n): " -n 1 -r
     echo
     if [[ ! $REPLY =~ ^[Yy]$ ]]; then
@@ -421,13 +465,22 @@ configure_firewall() {
     sudo ufw allow ssh
     
     # Allow Aspire Dashboard
-    sudo ufw allow $DEFAULT_PORT/tcp comment "Privatekonomi Aspire Dashboard"
+    if [ "$has_dashboard" = "no" ]; then
+        sudo ufw allow $DEFAULT_PORT/tcp comment "Privatekonomi Aspire Dashboard"
+        log_info "Port $DEFAULT_PORT (Aspire Dashboard) öppnad"
+    fi
     
     # Allow Web application
-    sudo ufw allow $WEB_PORT/tcp comment "Privatekonomi Web App"
+    if [ "$has_web" = "no" ]; then
+        sudo ufw allow $WEB_PORT/tcp comment "Privatekonomi Web App"
+        log_info "Port $WEB_PORT (Web App) öppnad"
+    fi
     
     # Allow API
-    sudo ufw allow $API_PORT/tcp comment "Privatekonomi API"
+    if [ "$has_api" = "no" ]; then
+        sudo ufw allow $API_PORT/tcp comment "Privatekonomi API"
+        log_info "Port $API_PORT (API) öppnad"
+    fi
     
     # Enable firewall
     sudo ufw --force enable
@@ -445,13 +498,29 @@ create_systemd_service() {
     
     log_section "Skapar systemd-tjänst (valfritt)"
     
-    read -p "Vill du skapa en systemd-tjänst för att starta Privatekonomi automatiskt? (y/n): " -n 1 -r
-    echo
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        return 0
+    local service_file="/etc/systemd/system/${SERVICE_NAME}.service"
+    
+    # Check if service already exists
+    if [ -f "$service_file" ]; then
+        log_info "Systemd-tjänst '$SERVICE_NAME' finns redan"
+        
+        if systemctl is-enabled "$SERVICE_NAME" &>/dev/null; then
+            log_success "Tjänsten är redan aktiverad"
+            
+            read -p "Vill du uppdatera tjänstekonfigurationen? (y/n): " -n 1 -r
+            echo
+            if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+                return 0
+            fi
+        fi
+    else
+        read -p "Vill du skapa en systemd-tjänst för att starta Privatekonomi automatiskt? (y/n): " -n 1 -r
+        echo
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            return 0
+        fi
     fi
     
-    local service_file="/etc/systemd/system/${SERVICE_NAME}.service"
     local user=$(whoami)
     
     log_info "Skapar systemd-tjänst: $service_file"
@@ -502,16 +571,35 @@ setup_backup() {
     
     log_section "Konfigurerar automatiska backuper (valfritt)"
     
-    read -p "Vill du skapa automatiska dagliga backuper? (y/n): " -n 1 -r
-    echo
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        return 0
+    local scripts_dir="$HOME/scripts"
+    local backup_script="$scripts_dir/backup-privatekonomi.sh"
+    
+    # Check if backup script already exists
+    if [ -f "$backup_script" ]; then
+        log_info "Backup-script finns redan: $backup_script"
+        
+        # Check if cron job exists
+        if crontab -l 2>/dev/null | grep -q "backup-privatekonomi.sh"; then
+            log_success "Automatisk backup är redan schemalagd"
+            crontab -l 2>/dev/null | grep "backup-privatekonomi.sh"
+            
+            read -p "Vill du uppdatera backup-skriptet? (y/n): " -n 1 -r
+            echo
+            if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+                return 0
+            fi
+        else
+            log_info "Backup-script finns men är inte schemalagt"
+        fi
+    else
+        read -p "Vill du skapa automatiska dagliga backuper? (y/n): " -n 1 -r
+        echo
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            return 0
+        fi
     fi
     
-    local scripts_dir="$HOME/scripts"
     mkdir -p "$scripts_dir"
-    
-    local backup_script="$scripts_dir/backup-privatekonomi.sh"
     
     log_info "Skapar backup-script: $backup_script"
     
@@ -578,6 +666,20 @@ configure_static_ip() {
     
     log_section "Konfigurera statisk IP-adress (valfritt)"
     
+    # Check if static IP is already configured
+    if [ -f /etc/dhcpcd.conf ]; then
+        if grep -q "^interface.*" /etc/dhcpcd.conf && grep -q "^static ip_address=" /etc/dhcpcd.conf; then
+            log_info "Statisk IP verkar redan vara konfigurerad:"
+            grep -A 3 "^interface" /etc/dhcpcd.conf | grep -E "^(interface|static)" | head -4
+            
+            read -p "Vill du ändra statisk IP-konfiguration? (y/n): " -n 1 -r
+            echo
+            if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+                return 0
+            fi
+        fi
+    fi
+    
     read -p "Vill du konfigurera en statisk IP-adress? (y/n): " -n 1 -r
     echo
     if [[ ! $REPLY =~ ^[Yy]$ ]]; then
@@ -624,6 +726,16 @@ EOF
 verify_installation() {
     log_section "Verifierar installation"
     
+    # Ensure .NET is in PATH
+    if [ -d "$HOME/.dotnet" ]; then
+        export PATH="$PATH:$HOME/.dotnet"
+        export DOTNET_ROOT="$HOME/.dotnet"
+    fi
+    
+    if [ -d "$HOME/.dotnet/tools" ]; then
+        export PATH="$PATH:$HOME/.dotnet/tools"
+    fi
+    
     # Check .NET
     if command -v dotnet &> /dev/null; then
         local dotnet_version=$(dotnet --version)
@@ -635,11 +747,18 @@ verify_installation() {
     
     # Check EF tools
     if command -v dotnet-ef &> /dev/null; then
-        local ef_version=$(dotnet-ef --version | head -n1)
+        local ef_version=$(dotnet-ef --version 2>&1 | head -n1)
         log_success "Entity Framework CLI: $ef_version"
     else
-        log_error "Entity Framework CLI inte funnet"
-        return 1
+        log_warning "Entity Framework CLI inte funnet i PATH"
+        # Try direct path
+        if [ -f "$HOME/.dotnet/tools/dotnet-ef" ]; then
+            local ef_version=$("$HOME/.dotnet/tools/dotnet-ef" --version 2>&1 | head -n1)
+            log_success "Entity Framework CLI: $ef_version"
+        else
+            log_error "Entity Framework CLI inte installerat"
+            return 1
+        fi
     fi
     
     # Check project
