@@ -6,6 +6,12 @@ En privatekonomi-applikation byggd med .NET 9, Blazor Server och MudBlazor för 
 
 - **Användarautentisering**: Komplett användarsystem med registrering, inloggning och dataisolering per användare
 - **Dashboard**: Översikt över totala inkomster, utgifter och nettoresultat
+- **Anpassad Dashboard med Widget-system**: ⭐ NYT!
+  - Skapa personliga dashboard-layouter med anpassningsbara widgets
+  - 6 olika widget-typer: Nettoförmögenhet, Kassaflöde, Sparmål, Budget, Transaktioner, Snabbåtgärder
+  - Flera layouter för olika användningsområden (Hem, Investeringar, Budget)
+  - Automatisk default layout för nya användare
+  - Se [Dashboard Widgets guide](docs/DASHBOARD_WIDGETS.md)
 - **Transaktionshantering**: Registrera, visa och ta bort transaktioner
 - **Budgethantering**: Skapa och följa upp budgetar med visualisering av planerat vs faktiskt utfall
   - **Svenska budgetmallar**: ⭐ NYTT!

@@ -138,6 +138,7 @@ builder.Services.AddScoped<IKonsumentverketComparisonService, KonsumentverketCom
 builder.Services.AddScoped<IKalpService, KalpService>();
 builder.Services.AddScoped<ThemeService>();
 builder.Services.AddScoped<DashboardPreferencesService>();
+builder.Services.AddScoped<IDashboardLayoutService, DashboardLayoutService>();
 builder.Services.AddScoped<ViewDensityService>();
 
 // Register background services

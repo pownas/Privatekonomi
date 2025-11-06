@@ -101,6 +101,10 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
     public DbSet<GroupGoal> GroupGoals { get; set; }
     public DbSet<UserPrivacySettings> UserPrivacySettings { get; set; }
     
+    // Dashboard Layouts
+    public DbSet<DashboardLayout> DashboardLayouts { get; set; }
+    public DbSet<WidgetConfiguration> WidgetConfigurations { get; set; }
+    
     // Round-up Savings
     public DbSet<RoundUpSettings> RoundUpSettings { get; set; }
     public DbSet<RoundUpTransaction> RoundUpTransactions { get; set; }
@@ -1516,6 +1520,45 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
             entity.HasIndex(e => e.UserId);
             entity.HasIndex(e => e.IsActive);
             entity.HasIndex(e => new { e.UserId, e.IsActive });
+        });
+
+        // DashboardLayout configuration
+        modelBuilder.Entity<DashboardLayout>(entity =>
+        {
+            entity.HasKey(e => e.LayoutId);
+            entity.Property(e => e.UserId).IsRequired().HasMaxLength(450);
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.IsDefault).IsRequired();
+            entity.Property(e => e.CreatedAt).IsRequired();
+            entity.Property(e => e.UpdatedAt).IsRequired();
+            
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.HasMany(e => e.Widgets)
+                .WithOne(w => w.Layout)
+                .HasForeignKey(w => w.LayoutId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.HasIndex(e => e.UserId);
+            entity.HasIndex(e => new { e.UserId, e.IsDefault });
+        });
+
+        // WidgetConfiguration configuration
+        modelBuilder.Entity<WidgetConfiguration>(entity =>
+        {
+            entity.HasKey(e => e.WidgetConfigId);
+            entity.Property(e => e.LayoutId).IsRequired();
+            entity.Property(e => e.Type).IsRequired();
+            entity.Property(e => e.Row).IsRequired();
+            entity.Property(e => e.Column).IsRequired();
+            entity.Property(e => e.Width).IsRequired();
+            entity.Property(e => e.Height).IsRequired();
+            entity.Property(e => e.Settings).HasMaxLength(2000);
+            
+            entity.HasIndex(e => e.LayoutId);
         });
     }
 }
