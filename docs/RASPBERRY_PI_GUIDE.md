@@ -137,8 +137,9 @@ dotnet build -c Release
 Man kan också behöva skapa en NuGet.Config om det är första gången via: 
 
 ```bash
-nano /home/PIUSERNAME/.nuget/NuGet/NuGet.Config
+nano /home/[PIUSERNAME]/.nuget/NuGet/NuGet.Config
 ```
+Där `[PIUSERNAME]` är ditt användarnamn på din raspberry pi. 
 
 Klistra sedan in denna standard NuGet.Config XML-kod: 
 
@@ -153,6 +154,11 @@ Klistra sedan in denna standard NuGet.Config XML-kod:
 
 Spara och avsluta nano:  
 Tryck CTRL+O (spara - Write Out), Enter, och sedan CTRL+X (avsluta).
+
+Behöver sedan köra workload restore, för att få Aspire-dashboard installerad via NuGet: 
+```bash
+dotnet workload restore
+```
 
 ### 3. Skapa datakatalog
 
@@ -401,8 +407,8 @@ if [ -d "$DATA_DIR" ] && [ "$(ls -A $DATA_DIR/*.json 2>/dev/null)" ]; then
     echo "JSON backup skapad: $BACKUP_DIR/privatekonomi_json_$DATE.tar.gz"
 fi
 
-# Ta bort backuper äldre än 30 dagar
-find $BACKUP_DIR -name "privatekonomi_*" -type f -mtime +30 -delete
+# Ta bort backuper äldre än 750 dagar (ca 2 år)
+find $BACKUP_DIR -name "privatekonomi_*" -type f -mtime +750 -delete
 
 echo "Backup klar: $(date)"
 ```

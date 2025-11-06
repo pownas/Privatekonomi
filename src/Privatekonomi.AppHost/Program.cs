@@ -1,5 +1,21 @@
 var builder = DistributedApplication.CreateBuilder(args);
 
+// Konfigurera för Raspberry Pi - lyssna på alla nätverksinterfaces
+if (Environment.GetEnvironmentVariable("PRIVATEKONOMI_RASPBERRY_PI") == "true")
+{
+    builder.Services.Configure<Microsoft.AspNetCore.Hosting.HostingOptions>(options =>
+    {
+        // Sätt ingen timeout för Raspberry Pi
+        options.ShutdownTimeout = TimeSpan.FromSeconds(30);
+    });
+    
+    builder.Services.Configure<Microsoft.AspNetCore.Server.Kestrel.Core.KestrelServerOptions>(options =>
+    {
+        // Lyssna på alla IP-adresser för Raspberry Pi
+        options.ListenAnyIP(17127);
+    });
+}
+
 var aspnetEnvironment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")
     ?? builder.Environment.EnvironmentName;
 

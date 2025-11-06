@@ -179,6 +179,39 @@ Se [ASPIRE_GUIDE.md](docs/ASPIRE_GUIDE.md) för mer information.
 
 ### Installation och körning
 
+#### 🍓 Raspberry Pi Installation (Automatisk)
+
+För Raspberry Pi-användare finns ett komplett installationsskript som automatiserar hela installationsprocessen:
+
+```bash
+# Automatisk installation på Raspberry Pi
+curl -sSL https://raw.githubusercontent.com/pownas/Privatekonomi/main/raspberry-pi-install.sh | bash
+
+# Efter installation
+cd ~/Privatekonomi
+./raspberry-pi-start.sh
+```
+
+**Installationsskriptet hanterar automatiskt:**
+- ✅ Installation av .NET 9 SDK
+- ✅ Val av lagringsalternativ (SQLite/JsonFile)
+- ✅ Skapande av konfigurationsfiler
+- ✅ Byggning av applikationen
+- ✅ Valfri systemd-tjänst för automatisk start
+- ✅ Automatiska dagliga backuper med cron
+- ✅ Brandväggskonfiguration (UFW)
+- ✅ Statisk IP-konfiguration
+- ✅ Swap-optimering för lågt minne
+
+**Kommandoradsalternativ:**
+```bash
+./raspberry-pi-install.sh --help              # Visa hjälp
+./raspberry-pi-install.sh --skip-interactive  # Automatisk installation
+./raspberry-pi-install.sh --no-service        # Hoppa över systemd-tjänst
+```
+
+Se [RASPBERRY_PI_första_installationen.md](docs/RASPBERRY_PI_första_installationen.md) för detaljerad information och [RASPBERRY_PI_GUIDE.md](docs/RASPBERRY_PI_GUIDE.md) för manuell installation.
+
 #### Snabbstart med startskript (Enklast för Codespaces)
 
 1. Klona repositoriet:
