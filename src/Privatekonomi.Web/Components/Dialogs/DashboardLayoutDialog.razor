@@ -37,19 +37,19 @@
                                                    Size="Size.Small"
                                                    Color="Color.Default"
                                                    OnClick="@(() => SetAsDefault(dashboardLayout.LayoutId))"
-                                                   Title="Sätt som standard" />
+                                                   title="Sätt som standard" />
                                 }
                                 <MudIconButton Icon="@Icons.Material.Filled.Edit" 
                                                Size="Size.Small"
                                                Color="Color.Primary"
                                                OnClick="@(() => SelectLayout(dashboardLayout))"
-                                               Title="Välj layout" />
+                                               title="Välj layout" />
                                 <MudIconButton Icon="@Icons.Material.Filled.Delete" 
                                                Size="Size.Small"
                                                Color="Color.Error"
                                                OnClick="@(() => DeleteLayout(dashboardLayout.LayoutId))"
                                                Disabled="@dashboardLayout.IsDefault"
-                                               Title="Ta bort" />
+                                               title="Ta bort" />
                             </div>
                         </div>
                     </MudListItem>

@@ -41,6 +41,7 @@ BACKUP_DIR="$HOME/privatekonomi-backups"
 SERVICE_NAME="privatekonomi"
 DEFAULT_PORT="17127"
 WEB_PORT="5274"
+API_PORT="5277"
 
 # Logging functions
 log_info() {
@@ -301,6 +302,7 @@ EOF
       "Microsoft.AspNetCore": "Warning"
     }
   },
+  "Urls": "http://0.0.0.0:$API_PORT",
   "AllowedHosts": "*"
 }
 EOF
@@ -424,6 +426,9 @@ configure_firewall() {
     # Allow Web application
     sudo ufw allow $WEB_PORT/tcp comment "Privatekonomi Web App"
     
+    # Allow API
+    sudo ufw allow $API_PORT/tcp comment "Privatekonomi API"
+    
     # Enable firewall
     sudo ufw --force enable
     
@@ -466,6 +471,7 @@ Environment=PRIVATEKONOMI_ENVIRONMENT=RaspberryPi
 Environment=PRIVATEKONOMI_STORAGE_PROVIDER=Sqlite
 Environment=PRIVATEKONOMI_RASPBERRY_PI=true
 Environment=ASPNETCORE_URLS=http://0.0.0.0:$DEFAULT_PORT
+Environment=DOTNET_DASHBOARD_URLS=http://0.0.0.0:$DEFAULT_PORT
 Environment=DOTNET_ROOT=$HOME/.dotnet
 ExecStart=$HOME/.dotnet/dotnet run --configuration Release
 Restart=always
@@ -684,14 +690,16 @@ show_usage_info() {
     echo -e "  ${YELLOW}Lokalt (på Raspberry Pi):${NC}"
     echo -e "    http://localhost:$DEFAULT_PORT (Aspire Dashboard)"
     echo -e "    http://localhost:$WEB_PORT (Web App)"
+    echo -e "    http://localhost:$API_PORT (API)"
     echo -e ""
     echo -e "  ${YELLOW}Från andra enheter på nätverket:${NC}"
     echo -e "    http://$pi_ip:$DEFAULT_PORT (Aspire Dashboard)"
     echo -e "    http://$pi_ip:$WEB_PORT (Web App)"
+    echo -e "    http://$pi_ip:$API_PORT (API)"
     echo -e ""
     echo -e "${BLUE}Användbara kommandon:${NC}"
     echo -e "  ${YELLOW}Kontrollera portar:${NC}"
-    echo -e "    ss -lntp | grep '$DEFAULT_PORT\\|$WEB_PORT'"
+    echo -e "    ss -lntp | grep '$DEFAULT_PORT\\|$WEB_PORT\\|$API_PORT'"
     echo -e ""
     echo -e "  ${YELLOW}Visa IP-adress:${NC}"
     echo -e "    hostname -I"
