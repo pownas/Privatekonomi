@@ -155,9 +155,9 @@ Klistra sedan in denna standard NuGet.Config XML-kod:
 Spara och avsluta nano:  
 Tryck CTRL+O (spara - Write Out), Enter, och sedan CTRL+X (avsluta).
 
-Behöver sedan köra workload restore, för att få Aspire-dashboard installerad via NuGet: 
+Behöver sedan återställa NuGet-paket och Aspire-beroenden: 
 ```bash
-dotnet workload restore
+dotnet restore
 ```
 
 ### 3. Skapa datakatalog

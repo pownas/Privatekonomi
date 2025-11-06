@@ -20,7 +20,7 @@ Installationsskriptet hanterar:
 - ✅ Skapande av NuGet.Config om det saknas
 - ✅ Konfiguration av PATH och miljövariabler
 - ✅ Kloning/uppdatering av Privatekonomi-projekt
-- ✅ Återställning av NuGet-paket och Aspire workloads
+- ✅ Återställning av NuGet-paket och Aspire-beroenden
 - ✅ Val av lagringsalternativ (SQLite/JsonFile)
 - ✅ Automatisk skapande av appsettings.Production.json
 - ✅ Skapande av datakatalog och backup-katalog
@@ -53,6 +53,28 @@ Installationsskriptet hanterar:
 ```bash
 cd ~/Privatekonomi
 ./raspberry-pi-start.sh
+```
+
+**Åtkomst till tjänsterna:**
+
+Efter installation kommer följande tjänster att vara tillgängliga:
+
+| Tjänst | Port | Lokal åtkomst | Nätverksåtkomst |
+|--------|------|---------------|-----------------|
+| **Aspire Dashboard** | 17127 | `http://localhost:17127` | `http://[raspberry-pi-ip]:17127` |
+| **Web App** | 5274 | `http://localhost:5274` | `http://[raspberry-pi-ip]:5274` |
+| **API (Swagger)** | 5277 | `http://localhost:5277` | `http://[raspberry-pi-ip]:5277` |
+
+**Hitta din Raspberry Pi IP-adress:**
+```bash
+hostname -I
+# Exempel output: 192.168.1.100
+```
+
+**Kontrollera att portarna lyssnar:**
+```bash
+ss -lntp | grep '17127\|5274\|5277'
+# Ska visa att alla tre portar lyssnar på 0.0.0.0 (alla nätverksinterfaces)
 ```
 
 ## 📋 Manuell Installation (För referens)
@@ -136,55 +158,69 @@ Kort svar: På Raspberry Pi behöver du normalt inte “öppna” portar lokalt.
       }
       ```
   - Egen TCP/UDP-server: bind till 0.0.0.0 (eller Pi:ns LAN-IP) på port 17127.
-- Verifiera att porten lyssnar:
-  ```
-  ss -lntp | grep 17127    # TCP
-  ss -lnup | grep 17127    # UDP (om relevant)
+- Verifiera att portarna lyssnar:
+  ```bash
+  ss -lntp | grep '17127\|5274\|5277'    # Kontrollera alla tre portar
+  # Ska visa 0.0.0.0:XXXX (inte 127.0.0.1:XXXX)
   ```
 
-2) Brandvägg (ufw) – om aktiverad
-- Raspberry Pi OS har oftast ingen aktiv brandvägg, men om du använder ufw:
-  ```
-  sudo apt-get update
-  sudo apt-get install -y ufw
+2) Brandvägg (om ufw är aktiverad)
+- Öppna TCP-portar för alla tjänster:
+  ```bash
   sudo ufw status
-  sudo ufw allow 17127/tcp
-  # (och/eller) sudo ufw allow 17127/udp
+  sudo ufw allow 17127/tcp              # Aspire Dashboard
+  sudo ufw allow 5274/tcp               # Web App  
+  sudo ufw allow 5277/tcp               # API
   sudo ufw reload
   sudo ufw status
   ```
 
-3) Testa från annan enhet på samma nät
+2) Testa från annan enhet på samma nät
 - Byt 192.168.x.y mot Pi:ns IP:
   ```
+  # Testa Aspire Dashboard
   curl http://192.168.x.y:17127/
-  # eller
+  
+  # Testa Web App
+  curl http://192.168.x.y:5274/
+  
+  # Testa API
+  curl http://192.168.x.y:5277/health
+  
+  # Eller med netcat
   nc -vz 192.168.x.y 17127
+  nc -vz 192.168.x.y 5274
+  nc -vz 192.168.x.y 5277
   ```
-- Om det inte fungerar: kontrollera att appen inte bara lyssnar på 127.0.0.1:
+- Kontrollera att alla tjänster lyssnar på alla interfaces (inte bara 127.0.0.1):
   ```
-  ss -lntp | grep 17127
+  ss -lntp | grep '17127\|5274\|5277'
   ```
-  Ska visa 0.0.0.0:17127 eller [::]:17127 (inte 127.0.0.1:17127).
+  Ska visa 0.0.0.0:17127, 0.0.0.0:5274, 0.0.0.0:5277 eller [::]:17127 etc. (inte 127.0.0.1).
 
-4) Köra som systemd-tjänst (rekommenderat)
-- Sätt URL via environment så den alltid lyssnar på nätet.
+3) Köra som systemd-tjänst (rekommenderat)
+- Automatiskt konfigurerat av installationsskriptet med alla nödvändiga miljövariabler.
 
-```ini name=/etc/systemd/system/myapp.service
+```ini name=/etc/systemd/system/privatekonomi.service
 [Unit]
-Description=My .NET app
+Description=Privatekonomi Financial Management Application
 After=network-online.target
 Wants=network-online.target
 
 [Service]
-WorkingDirectory=/opt/myapp
-ExecStart=/usr/bin/dotnet /opt/myapp/MyApp.dll
-# Lyssna på alla interface på port 17127
+Type=simple
+WorkingDirectory=/home/pi/Privatekonomi/src/Privatekonomi.AppHost
+ExecStart=/usr/bin/dotnet run
+# Miljövariabler för Raspberry Pi-konfiguration
+Environment=PRIVATEKONOMI_RASPBERRY_PI=true
 Environment=ASPNETCORE_URLS=http://0.0.0.0:17127
-# (lägg till annan miljökonfig här vid behov)
+Environment=DOTNET_DASHBOARD_URLS=http://0.0.0.0:17127
+Environment=ASPNETCORE_ENVIRONMENT=Production
+Environment=PRIVATEKONOMI_ENVIRONMENT=RaspberryPi
 Restart=always
-RestartSec=5
+RestartSec=10
 User=pi
+Group=pi
 # Säkrare filbehörigheter
 UMask=0027
 
@@ -193,55 +229,126 @@ WantedBy=multi-user.target
 ```
 
 - Aktivera och starta:
-  ```
+  ```bash
   sudo systemctl daemon-reload
-  sudo systemctl enable --now myapp.service
-  sudo systemctl status myapp.service
+  sudo systemctl enable privatekonomi
+  sudo systemctl start privatekonomi
+  sudo systemctl status privatekonomi
   ```
 
-5) Vanliga orsaker när det ändå inte fungerar
-- Appen lyssnar bara på localhost (fixa med UseUrls/ASPNETCORE_URLS).
-- Fel protokoll (TCP vs UDP) – öppna rätt protokoll i ufw och bind rätt i appen.
-- Docker/kontainer: glöm inte port-publicering:
-  ```
-  docker run -p 17127:17127 <image>
-  ```
-- Fel IP används vid test – kontrollera Pi:ns IP:
-  ```
-  hostname -I
-  ```
+4) Vanliga felsökningssteg
+- **Tjänsterna lyssnar bara på localhost:** Kontrollera att miljövariabeln `PRIVATEKONOMI_RASPBERRY_PI=true` är satt
+- **Brandväggen blockerar:** Verifiera UFW-regler med `sudo ufw status`
+- **Fel IP används vid test:** Kontrollera Pi:ns IP med `hostname -I`
+- **Tjänsten startar inte:** Kolla systemd-loggar med `journalctl -u privatekonomi -n 50`
+- **Port redan används:** Stänga eventuell annan process med `sudo lsof -i :17127` (eller :5274, :5277)
 
-Behöver du hjälp att sätta detta för just din app (t.ex. Program.cs eller appsettings), klistra in hur du startar appen idag så visar jag exakt ändringen.
+**Felsökningsverktyg:**
+```bash
+# Kontrollera vilka portar som lyssnar
+sudo netstat -tulpn | grep LISTEN
+
+# Kontrollera specifik tjänst
+ss -lntp | grep '17127\|5274\|5277'
+
+# Testa lokalt
+curl http://localhost:17127/
+curl http://localhost:5274/
+curl http://localhost:5277/health
+
+# Kontrollera Pi:ns IP
+hostname -I
+
+# Visa systemd-loggar
+journalctl -u privatekonomi -f
+```
 
 ## Implementerade Lösningar för Aspire AppHost
 
-### Alternativ 1: Automatisk Raspberry Pi-detektering (Rekommenderat)
-Koden i `src/Privatekonomi.AppHost/Program.cs` har uppdaterats för att automatiskt konfigurera Kestrel när miljövariabeln `PRIVATEKONOMI_RASPBERRY_PI=true` är satt.
+### Automatisk konfiguration via miljövariabler
 
-### Alternativ 2: Konfigurationsfil
-En dedikerad `appsettings.RaspberryPi.json` har skapats med korrekt Kestrel-konfiguration.
+Privatekonomi detekterar automatiskt Raspberry Pi-miljön och konfigurerar alla tjänster att lyssna på alla nätverksinterfaces när `PRIVATEKONOMI_RASPBERRY_PI=true`.
 
-### Alternativ 3: Startup-skript
-Ett enkelt startup-skript `raspberry-pi-start.sh` har skapats som:
-- Sätter rätt miljövariabler
-- Konfigurerar ASPNETCORE_URLS automatiskt  
-- Startar applikationen med rätt inställningar
+**I Program.cs (AppHost):**
+```csharp
+var isRaspberryPi = Environment.GetEnvironmentVariable("PRIVATEKONOMI_RASPBERRY_PI") == "true";
+var webUrls = isRaspberryPi ? "http://0.0.0.0:5274" : null;
+var apiUrls = isRaspberryPi ? "http://0.0.0.0:5277" : null;
+```
+
+**Miljövariabler som sätts automatiskt:**
+```bash
+PRIVATEKONOMI_RASPBERRY_PI=true
+ASPNETCORE_URLS=http://0.0.0.0:17127          # Aspire Dashboard
+DOTNET_DASHBOARD_URLS=http://0.0.0.0:17127    # Aspire Dashboard
+ASPNETCORE_ENVIRONMENT=Production
+PRIVATEKONOMI_ENVIRONMENT=RaspberryPi
+```
+
+### Startup-skript
+
+Ett dedikerat startup-skript `raspberry-pi-start.sh` hanterar automatiskt:
+- Sätter alla nödvändiga miljövariabler
+- Konfigurerar URL:er för alla tjänster
+- Startar Aspire AppHost med rätt inställningar
 
 #### Användning av startup-skriptet:
 ```bash
 # Från repository-roten
+cd ~/Privatekonomi
 ./raspberry-pi-start.sh
 ```
 
 #### Manuell start med miljövariabler:
 ```bash
-cd src/Privatekonomi.AppHost
+cd ~/Privatekonomi/src/Privatekonomi.AppHost
 export PRIVATEKONOMI_RASPBERRY_PI=true
 export ASPNETCORE_URLS="http://0.0.0.0:17127"
+export DOTNET_DASHBOARD_URLS="http://0.0.0.0:17127"
+export ASPNETCORE_ENVIRONMENT=Production
+export PRIVATEKONOMI_ENVIRONMENT=RaspberryPi
 dotnet run
 ```
 
-Efter start kommer Aspire Dashboard att vara tillgänglig på `http://[raspberry-pi-ip]:17127` från andra enheter på nätverket.
+### Brandväggskonfiguration (UFW)
+
+Om du valt att konfigurera brandväggen under installationen, öppnas automatiskt:
+
+```bash
+sudo ufw allow ssh                    # SSH-åtkomst
+sudo ufw allow 17127/tcp              # Aspire Dashboard
+sudo ufw allow 5274/tcp               # Web App
+sudo ufw allow 5277/tcp               # API
+sudo ufw enable
+```
+
+**Kontrollera brandväggsstatus:**
+```bash
+sudo ufw status
+```
+
+### Systemd-tjänst (Valfri)
+
+Om du valt att skapa en systemd-tjänst under installationen:
+
+```bash
+# Starta tjänsten
+sudo systemctl start privatekonomi
+
+# Stoppa tjänsten
+sudo systemctl stop privatekonomi
+
+# Kontrollera status
+sudo systemctl status privatekonomi
+
+# Visa loggar
+journalctl -u privatekonomi -f
+```
+
+**Systemd-tjänsten konfigurerar automatiskt:**
+- Alla miljövariabler för Raspberry Pi
+- Automatisk omstart vid fel
+- Startar automatiskt vid systemuppstart
 
 
 
