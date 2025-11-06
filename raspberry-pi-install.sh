@@ -228,6 +228,83 @@ setup_project() {
     log_success "Projekt konfigurerat framgångsrikt"
 }
 
+# Publish application for production
+publish_application() {
+    if [ "$SKIP_PUBLISH" = true ]; then
+        log_info "Hoppar över publicering (--no-publish)"
+        return 0
+    fi
+    
+    log_section "Publicerar applikation för produktion"
+    
+    local publish_dir="$INSTALL_DIR/publish"
+    
+    # Check if already published
+    if [ -d "$publish_dir" ]; then
+        log_info "Publicerad katalog finns redan: $publish_dir"
+        read -p "Vill du publicera om applikationen? (y/n): " -n 1 -r
+        echo
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            return 0
+        fi
+        
+        log_info "Rensar befintlig publicering..."
+        rm -rf "$publish_dir"
+    fi
+    
+    log_info "Publicerar för linux-arm64 med self-contained..."
+    
+    cd "$INSTALL_DIR"
+    
+    # Publish AppHost (Aspire orchestrator)
+    log_info "Publicerar Privatekonomi.AppHost..."
+    dotnet publish src/Privatekonomi.AppHost/Privatekonomi.AppHost.csproj \
+        --runtime linux-arm64 \
+        --self-contained \
+        --configuration Release \
+        -o "$publish_dir/AppHost" \
+        /p:PublishTrimmed=false \
+        /p:PublishSingleFile=false
+    
+    # Publish Web
+    log_info "Publicerar Privatekonomi.Web..."
+    dotnet publish src/Privatekonomi.Web/Privatekonomi.Web.csproj \
+        --runtime linux-arm64 \
+        --self-contained \
+        --configuration Release \
+        -o "$publish_dir/Web" \
+        /p:PublishTrimmed=false \
+        /p:PublishSingleFile=false
+    
+    # Publish API
+    log_info "Publicerar Privatekonomi.Api..."
+    dotnet publish src/Privatekonomi.Api/Privatekonomi.Api.csproj \
+        --runtime linux-arm64 \
+        --self-contained \
+        --configuration Release \
+        -o "$publish_dir/Api" \
+        /p:PublishTrimmed=false \
+        /p:PublishSingleFile=false
+    
+    # Copy appsettings to publish directories
+    log_info "Kopierar konfigurationsfiler..."
+    
+    if [ -f "src/Privatekonomi.AppHost/appsettings.Production.json" ]; then
+        cp "src/Privatekonomi.AppHost/appsettings.Production.json" "$publish_dir/AppHost/"
+    fi
+    
+    if [ -f "src/Privatekonomi.Web/appsettings.Production.json" ]; then
+        cp "src/Privatekonomi.Web/appsettings.Production.json" "$publish_dir/Web/"
+    fi
+    
+    if [ -f "src/Privatekonomi.Api/appsettings.Production.json" ]; then
+        cp "src/Privatekonomi.Api/appsettings.Production.json" "$publish_dir/Api/"
+    fi
+    
+    log_success "Applikation publicerad till: $publish_dir"
+    log_info "Publicerade binärer är optimerade för ARM64 och inkluderar alla beroenden"
+}
+
 # Create data directory and configuration
 configure_storage() {
     log_section "Konfigurerar datalagring"
@@ -389,6 +466,405 @@ configure_dev_certs() {
     log_success "Utvecklingscertifikat konfigurerade"
 }
 
+# Configure Nginx as reverse proxy
+configure_nginx() {
+    if [ "$SKIP_NGINX" = true ]; then
+        log_info "Hoppar över Nginx-konfiguration (--no-nginx)"
+        return 0
+    fi
+    
+    log_section "Konfigurerar Nginx som Reverse Proxy (valfritt)"
+    
+    # Check if nginx is already installed and configured
+    if command -v nginx &> /dev/null; then
+        log_info "Nginx är redan installerat"
+        
+        if [ -f "/etc/nginx/sites-available/privatekonomi" ]; then
+            log_success "Nginx är redan konfigurerat för Privatekonomi"
+            
+            read -p "Vill du uppdatera Nginx-konfigurationen? (y/n): " -n 1 -r
+            echo
+            if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+                return 0
+            fi
+        fi
+    else
+        read -p "Vill du installera och konfigurera Nginx som reverse proxy? (y/n): " -n 1 -r
+        echo
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            log_info "Hoppar över Nginx-installation"
+            return 0
+        fi
+    fi
+    
+    log_info "Installerar Nginx..."
+    sudo apt update
+    sudo apt install -y nginx
+    
+    # Get server IP or domain
+    local server_ip=$(hostname -I | awk '{print $1}')
+    log_info "Detekterad IP-adress: $server_ip"
+    
+    read -p "Ange domännamn eller IP-adress [$server_ip]: " server_name
+    server_name=${server_name:-$server_ip}
+    
+    # Determine if using published binaries or dotnet run
+    local use_published=false
+    if [ -d "$INSTALL_DIR/publish/Web" ] && [ -d "$INSTALL_DIR/publish/Api" ]; then
+        use_published=true
+        log_info "Använder publicerade binärer för Nginx-konfiguration"
+    else
+        log_info "Använder dotnet run för Nginx-konfiguration"
+    fi
+    
+    # Create Nginx configuration
+    log_info "Skapar Nginx-konfiguration..."
+    
+    sudo tee /etc/nginx/sites-available/privatekonomi > /dev/null << EOF
+# Privatekonomi Nginx Reverse Proxy Configuration
+# Created by raspberry-pi-install.sh
+
+# Redirect HTTP to HTTPS (uncomment after SSL is configured)
+# server {
+#     listen 80;
+#     listen [::]:80;
+#     server_name $server_name;
+#     return 301 https://\$host\$request_uri;
+# }
+
+# Main server block (HTTP - change to 443 with SSL)
+server {
+    listen 80;
+    listen [::]:80;
+    server_name $server_name;
+    
+    # Security headers
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    
+    # Increase body size for file uploads
+    client_max_body_size 20M;
+    
+    # Web Application (Main Site)
+    location / {
+        proxy_pass http://localhost:$WEB_PORT;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection keep-alive;
+        proxy_set_header Host \$host;
+        proxy_cache_bypass \$http_upgrade;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_set_header X-Real-IP \$remote_addr;
+        
+        # Blazor SignalR specific settings
+        proxy_buffering off;
+        proxy_read_timeout 100s;
+    }
+    
+    # API Endpoints
+    location /api/ {
+        proxy_pass http://localhost:$API_PORT/;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection keep-alive;
+        proxy_set_header Host \$host;
+        proxy_cache_bypass \$http_upgrade;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_set_header X-Real-IP \$remote_addr;
+    }
+    
+    # Aspire Dashboard (optional - comment out in production)
+    location /aspire/ {
+        proxy_pass http://localhost:$DEFAULT_PORT/;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection keep-alive;
+        proxy_set_header Host \$host;
+        proxy_cache_bypass \$http_upgrade;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+    }
+    
+    # Health check endpoint
+    location /health {
+        access_log off;
+        return 200 "healthy\n";
+        add_header Content-Type text/plain;
+    }
+}
+EOF
+    
+    # Enable the site
+    log_info "Aktiverar Privatekonomi-sajt..."
+    sudo ln -sf /etc/nginx/sites-available/privatekonomi /etc/nginx/sites-enabled/
+    
+    # Test configuration
+    if sudo nginx -t; then
+        log_success "Nginx-konfiguration är giltig"
+        
+        # Restart Nginx
+        sudo systemctl restart nginx
+        sudo systemctl enable nginx
+        
+        log_success "Nginx konfigurerat och startat"
+        echo -e ""
+        echo -e "${GREEN}Nginx Reverse Proxy är nu aktivt:${NC}"
+        echo -e "  ${YELLOW}HTTP:${NC} http://$server_name"
+        echo -e "  ${YELLOW}API:${NC} http://$server_name/api/"
+        echo -e "  ${YELLOW}Aspire Dashboard:${NC} http://$server_name/aspire/"
+        echo -e ""
+        echo -e "${BLUE}Nästa steg:${NC}"
+        echo -e "  1. Konfigurera SSL/HTTPS med: ${YELLOW}sudo certbot --nginx -d $server_name${NC}"
+        echo -e "  2. Eller kör: ${YELLOW}./raspberry-pi-install.sh --configure-ssl${NC}"
+        echo -e ""
+    else
+        log_error "Nginx-konfigurationen är ogiltig"
+        log_info "Kontrollerar konfigurationsfil: /etc/nginx/sites-available/privatekonomi"
+        return 1
+    fi
+}
+
+# Configure SSL/HTTPS
+configure_ssl() {
+    if [ "$SKIP_SSL" = true ]; then
+        log_info "Hoppar över SSL-konfiguration (--no-ssl)"
+        return 0
+    fi
+    
+    log_section "Konfigurerar SSL/HTTPS (valfritt)"
+    
+    # Check if Nginx is installed
+    if ! command -v nginx &> /dev/null; then
+        log_warning "Nginx är inte installerat. Kör först Nginx-konfiguration."
+        return 0
+    fi
+    
+    # Check if already has SSL
+    if [ -f "/etc/letsencrypt/live/*/fullchain.pem" ] 2>/dev/null; then
+        log_info "Let's Encrypt certifikat finns redan"
+        
+        read -p "Vill du förnya eller konfigurera om SSL? (y/n): " -n 1 -r
+        echo
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            return 0
+        fi
+    fi
+    
+    echo -e "${YELLOW}Välj SSL-alternativ:${NC}"
+    echo "  1) Let's Encrypt (Gratis, automatisk förnyelse, kräver domännamn)"
+    echo "  2) Self-signed certifikat (Lokal utveckling, browser-varningar)"
+    echo "  3) Hoppa över SSL-konfiguration"
+    
+    read -p "Ditt val (1/2/3) [3]: " ssl_choice
+    ssl_choice=${ssl_choice:-3}
+    
+    case $ssl_choice in
+        1)
+            configure_letsencrypt
+            ;;
+        2)
+            configure_selfsigned
+            ;;
+        *)
+            log_info "Hoppar över SSL-konfiguration"
+            return 0
+            ;;
+    esac
+}
+
+# Configure Let's Encrypt SSL
+configure_letsencrypt() {
+    log_info "Konfigurerar Let's Encrypt SSL..."
+    
+    # Install certbot
+    if ! command -v certbot &> /dev/null; then
+        log_info "Installerar certbot..."
+        sudo apt update
+        sudo apt install -y certbot python3-certbot-nginx
+    fi
+    
+    # Get domain name
+    local server_ip=$(hostname -I | awk '{print $1}')
+    read -p "Ange ditt domännamn (t.ex. privatekonomi.example.com): " domain_name
+    
+    if [ -z "$domain_name" ]; then
+        log_error "Domännamn krävs för Let's Encrypt"
+        return 1
+    fi
+    
+    # Get email for renewal notifications
+    read -p "Ange din e-postadress för förnyelse-notifikationer: " email
+    
+    if [ -z "$email" ]; then
+        log_error "E-postadress krävs för Let's Encrypt"
+        return 1
+    fi
+    
+    log_info "Hämtar SSL-certifikat från Let's Encrypt..."
+    log_warning "Kontrollera att domänen $domain_name pekar på $server_ip"
+    
+    read -p "Fortsätt med certifikatförfrågan? (y/n): " -n 1 -r
+    echo
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        return 0
+    fi
+    
+    # Run certbot
+    sudo certbot --nginx -d "$domain_name" --non-interactive --agree-tos --email "$email" --redirect
+    
+    if [ $? -eq 0 ]; then
+        log_success "Let's Encrypt SSL konfigurerat framgångsrikt"
+        
+        # Setup auto-renewal
+        sudo systemctl enable certbot.timer
+        sudo systemctl start certbot.timer
+        
+        log_success "Automatisk förnyelse av certifikat är aktiverad"
+        echo -e ""
+        echo -e "${GREEN}HTTPS är nu aktivt:${NC}"
+        echo -e "  ${YELLOW}https://$domain_name${NC}"
+        echo -e ""
+    else
+        log_error "Misslyckades med att hämta Let's Encrypt certifikat"
+        log_info "Kontrollera att:"
+        log_info "  1. Domänen pekar på rätt IP-adress"
+        log_info "  2. Port 80 och 443 är öppna i brandväggen"
+        log_info "  3. Nginx är igång: sudo systemctl status nginx"
+        return 1
+    fi
+}
+
+# Configure self-signed SSL certificate
+configure_selfsigned() {
+    log_info "Skapar self-signed SSL-certifikat..."
+    
+    local cert_dir="/etc/ssl/privatekonomi"
+    local server_ip=$(hostname -I | awk '{print $1}')
+    
+    # Create directory for certificates
+    sudo mkdir -p "$cert_dir"
+    
+    # Generate self-signed certificate
+    log_info "Genererar certifikat (giltigt i 365 dagar)..."
+    sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+        -keyout "$cert_dir/privatekonomi.key" \
+        -out "$cert_dir/privatekonomi.crt" \
+        -subj "/C=SE/ST=Sweden/L=Stockholm/O=Privatekonomi/CN=$server_ip"
+    
+    if [ $? -ne 0 ]; then
+        log_error "Misslyckades med att generera certifikat"
+        return 1
+    fi
+    
+    # Update Nginx configuration to use SSL
+    log_info "Uppdaterar Nginx-konfiguration för SSL..."
+    
+    sudo tee /etc/nginx/sites-available/privatekonomi > /dev/null << EOF
+# Privatekonomi Nginx Reverse Proxy Configuration with Self-Signed SSL
+# Created by raspberry-pi-install.sh
+
+# Redirect HTTP to HTTPS
+server {
+    listen 80;
+    listen [::]:80;
+    server_name $server_ip;
+    return 301 https://\$host\$request_uri;
+}
+
+# HTTPS server block
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name $server_ip;
+    
+    # SSL Configuration
+    ssl_certificate $cert_dir/privatekonomi.crt;
+    ssl_certificate_key $cert_dir/privatekonomi.key;
+    
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers HIGH:!aNULL:!MD5;
+    ssl_prefer_server_ciphers on;
+    
+    # Security headers
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+    
+    # Increase body size for file uploads
+    client_max_body_size 20M;
+    
+    # Web Application (Main Site)
+    location / {
+        proxy_pass http://localhost:$WEB_PORT;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection keep-alive;
+        proxy_set_header Host \$host;
+        proxy_cache_bypass \$http_upgrade;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_set_header X-Real-IP \$remote_addr;
+        
+        # Blazor SignalR specific settings
+        proxy_buffering off;
+        proxy_read_timeout 100s;
+    }
+    
+    # API Endpoints
+    location /api/ {
+        proxy_pass http://localhost:$API_PORT/;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection keep-alive;
+        proxy_set_header Host \$host;
+        proxy_cache_bypass \$http_upgrade;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_set_header X-Real-IP \$remote_addr;
+    }
+    
+    # Aspire Dashboard (optional - comment out in production)
+    location /aspire/ {
+        proxy_pass http://localhost:$DEFAULT_PORT/;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection keep-alive;
+        proxy_set_header Host \$host;
+        proxy_cache_bypass \$http_upgrade;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+    }
+    
+    # Health check endpoint
+    location /health {
+        access_log off;
+        return 200 "healthy\n";
+        add_header Content-Type text/plain;
+    }
+}
+EOF
+    
+    # Test and reload Nginx
+    if sudo nginx -t; then
+        sudo systemctl reload nginx
+        log_success "Self-signed SSL-certifikat installerat"
+        echo -e ""
+        echo -e "${GREEN}HTTPS är nu aktivt (self-signed):${NC}"
+        echo -e "  ${YELLOW}https://$server_ip${NC}"
+        echo -e ""
+        echo -e "${YELLOW}⚠️  Observera:${NC} Webbläsare visar säkerhetsvarning för self-signed certifikat."
+        echo -e "   Detta är normalt och kan accepteras för lokal användning."
+        echo -e ""
+    else
+        log_error "Nginx-konfigurationen är ogiltig"
+        return 1
+    fi
+}
+
 # Optimize swap for low memory systems
 optimize_swap() {
     if [ "$SKIP_SWAP" = true ]; then
@@ -511,6 +987,14 @@ configure_firewall() {
     
     log_success "Brandvägg konfigurerad"
     sudo ufw status
+    
+    # Open HTTP/HTTPS ports if Nginx is configured
+    if command -v nginx &> /dev/null && [ -f "/etc/nginx/sites-available/privatekonomi" ]; then
+        log_info "Nginx detekterat - öppnar HTTP/HTTPS-portar..."
+        sudo ufw allow 80/tcp comment "HTTP"
+        sudo ufw allow 443/tcp comment "HTTPS"
+        log_success "HTTP (80) och HTTPS (443) portar öppnade"
+    fi
 }
 
 # Create systemd service (optional)
@@ -546,6 +1030,19 @@ create_systemd_service() {
     fi
     
     local user=$(whoami)
+    local working_dir
+    local exec_command
+    
+    # Determine if using published binaries or dotnet run
+    if [ -d "$INSTALL_DIR/publish/AppHost" ] && [ -f "$INSTALL_DIR/publish/AppHost/Privatekonomi.AppHost" ]; then
+        working_dir="$INSTALL_DIR/publish/AppHost"
+        exec_command="$INSTALL_DIR/publish/AppHost/Privatekonomi.AppHost"
+        log_info "Använder publicerade binärer för systemd-tjänst"
+    else
+        working_dir="$INSTALL_DIR/src/Privatekonomi.AppHost"
+        exec_command="$HOME/.dotnet/dotnet run --configuration Release"
+        log_info "Använder dotnet run för systemd-tjänst"
+    fi
     
     log_info "Skapar systemd-tjänst: $service_file"
     
@@ -558,7 +1055,7 @@ After=network.target
 Type=notify
 User=$user
 Group=$user
-WorkingDirectory=$INSTALL_DIR/src/Privatekonomi.AppHost
+WorkingDirectory=$working_dir
 Environment=ASPNETCORE_ENVIRONMENT=Production
 Environment=PRIVATEKONOMI_ENVIRONMENT=RaspberryPi
 Environment=PRIVATEKONOMI_STORAGE_PROVIDER=Sqlite
@@ -566,7 +1063,7 @@ Environment=PRIVATEKONOMI_RASPBERRY_PI=true
 Environment=ASPNETCORE_URLS=http://0.0.0.0:$DEFAULT_PORT
 Environment=DOTNET_DASHBOARD_URLS=http://0.0.0.0:$DEFAULT_PORT
 Environment=DOTNET_ROOT=$HOME/.dotnet
-ExecStart=$HOME/.dotnet/dotnet run --configuration Release
+ExecStart=$exec_command
 Restart=always
 RestartSec=10
 SyslogIdentifier=$SERVICE_NAME
@@ -892,10 +1389,13 @@ main() {
     create_nuget_config
     install_dotnet_9
     setup_project
+    publish_application
     configure_storage
     install_ef_tools
     configure_dev_certs
     optimize_swap
+    configure_nginx
+    configure_ssl
     configure_firewall
     create_systemd_service
     setup_backup
@@ -914,6 +1414,9 @@ SKIP_FIREWALL=false
 SKIP_BACKUP=false
 SKIP_STATIC_IP=false
 SKIP_SWAP=false
+SKIP_PUBLISH=false
+SKIP_NGINX=false
+SKIP_SSL=false
 
 case "${1:-}" in
     --help|-h)
@@ -922,18 +1425,24 @@ case "${1:-}" in
         echo "Användning: $0 [ALTERNATIV]"
         echo ""
         echo "Alternativ:"
-        echo "  --help, -h         Visa denna hjälp"
-        echo "  --no-service       Hoppa över skapande av systemd-tjänst"
-        echo "  --no-firewall      Hoppa över brandväggskonfiguration"
-        echo "  --no-backup        Hoppa över backup-konfiguration"
-        echo "  --no-static-ip     Hoppa över statisk IP-konfiguration"
-        echo "  --no-swap          Hoppa över swap-optimering"
-        echo "  --skip-interactive Hoppa över alla interaktiva frågor (använd standardvärden)"
+        echo "  --help, -h           Visa denna hjälp"
+        echo "  --no-service         Hoppa över skapande av systemd-tjänst"
+        echo "  --no-firewall        Hoppa över brandväggskonfiguration"
+        echo "  --no-backup          Hoppa över backup-konfiguration"
+        echo "  --no-static-ip       Hoppa över statisk IP-konfiguration"
+        echo "  --no-swap            Hoppa över swap-optimering"
+        echo "  --no-publish         Hoppa över publicering (använd dotnet run istället)"
+        echo "  --no-nginx           Hoppa över Nginx reverse proxy-konfiguration"
+        echo "  --no-ssl             Hoppa över SSL/HTTPS-konfiguration"
+        echo "  --skip-interactive   Hoppa över alla interaktiva frågor (använd standardvärden)"
+        echo "  --configure-ssl      Kör endast SSL-konfiguration"
         echo ""
         echo "Exempel:"
-        echo "  $0                    # Full interaktiv installation"
-        echo "  $0 --no-service       # Installera utan systemd-tjänst"
-        echo "  $0 --skip-interactive # Automatisk installation utan frågor"
+        echo "  $0                      # Full interaktiv installation"
+        echo "  $0 --no-service         # Installera utan systemd-tjänst"
+        echo "  $0 --skip-interactive   # Automatisk installation utan frågor"
+        echo "  $0 --no-publish         # Installera utan att publicera (snabbare utveckling)"
+        echo "  $0 --configure-ssl      # Konfigurera endast SSL för befintlig installation"
         echo ""
         exit 0
         ;;
@@ -952,12 +1461,29 @@ case "${1:-}" in
     --no-swap)
         SKIP_SWAP=true
         ;;
+    --no-publish)
+        SKIP_PUBLISH=true
+        ;;
+    --no-nginx)
+        SKIP_NGINX=true
+        ;;
+    --no-ssl)
+        SKIP_SSL=true
+        ;;
+    --configure-ssl)
+        # Only run SSL configuration
+        configure_ssl
+        exit 0
+        ;;
     --skip-interactive)
         SKIP_SERVICE=false  # Create service by default in non-interactive mode
         SKIP_FIREWALL=true
         SKIP_BACKUP=false   # Create backup script by default
         SKIP_STATIC_IP=true
         SKIP_SWAP=true
+        SKIP_PUBLISH=false  # Do publish in non-interactive mode
+        SKIP_NGINX=false    # Configure Nginx in non-interactive mode
+        SKIP_SSL=true       # Skip SSL in non-interactive mode (requires manual input)
         ;;
 esac
 

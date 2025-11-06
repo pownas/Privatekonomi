@@ -194,12 +194,15 @@ cd ~/Privatekonomi
 
 **Installationsskriptet hanterar automatiskt:**
 - ✅ Installation av .NET 9 SDK
+- ✅ **Publicering för linux-arm64 med self-contained binärer (NYTT)**
 - ✅ Val av lagringsalternativ (SQLite/JsonFile)
 - ✅ Skapande av konfigurationsfiler
 - ✅ Byggning av applikationen
+- ✅ **Nginx reverse proxy-konfiguration (NYTT)**
+- ✅ **SSL/HTTPS med Let's Encrypt eller self-signed certifikat (NYTT)**
 - ✅ Valfri systemd-tjänst för automatisk start
 - ✅ Automatiska dagliga backuper med cron
-- ✅ Brandväggskonfiguration (UFW)
+- ✅ Brandväggskonfiguration (UFW, inkluderar HTTP/HTTPS-portar)
 - ✅ Statisk IP-konfiguration
 - ✅ Swap-optimering för lågt minne
 
@@ -208,9 +211,18 @@ cd ~/Privatekonomi
 ./raspberry-pi-install.sh --help              # Visa hjälp
 ./raspberry-pi-install.sh --skip-interactive  # Automatisk installation
 ./raspberry-pi-install.sh --no-service        # Hoppa över systemd-tjänst
+./raspberry-pi-install.sh --no-publish        # Hoppa över publicering (använd dotnet run)
+./raspberry-pi-install.sh --no-nginx          # Hoppa över Nginx reverse proxy
+./raspberry-pi-install.sh --no-ssl            # Hoppa över SSL/HTTPS
+./raspberry-pi-install.sh --configure-ssl     # Konfigurera endast SSL
 ```
 
-Se [RASPBERRY_PI_första_installationen.md](docs/RASPBERRY_PI_första_installationen.md) för detaljerad information och [RASPBERRY_PI_GUIDE.md](docs/RASPBERRY_PI_GUIDE.md) för manuell installation.
+**Nya funktioner:**
+- **Self-contained publish**: Optimerade ARM64-binärer med snabbare uppstart och lägre resursanvändning
+- **Nginx reverse proxy**: Enkel HTTPS-åtkomst via port 80/443 för alla tjänster
+- **SSL/HTTPS**: Automatisk Let's Encrypt-konfiguration eller self-signed certifikat
+
+Se [RASPBERRY_PI_första_installationen.md](docs/RASPBERRY_PI_första_installationen.md) för detaljerad information, [RASPBERRY_PI_NGINX_SSL.md](docs/RASPBERRY_PI_NGINX_SSL.md) för Nginx och SSL-guide, och [RASPBERRY_PI_GUIDE.md](docs/RASPBERRY_PI_GUIDE.md) för manuell installation.
 
 #### Snabbstart med startskript (Enklast för Codespaces)
 

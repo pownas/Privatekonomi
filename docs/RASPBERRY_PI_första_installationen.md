@@ -21,15 +21,18 @@ Installationsskriptet hanterar:
 - ✅ Konfiguration av PATH och miljövariabler
 - ✅ Kloning/uppdatering av Privatekonomi-projekt
 - ✅ Återställning av NuGet-paket och Aspire-beroenden
+- ✅ **Publicering för linux-arm64 med self-contained binärer (NYTT)**
 - ✅ Val av lagringsalternativ (SQLite/JsonFile)
 - ✅ Automatisk skapande av appsettings.Production.json
 - ✅ Skapande av datakatalog och backup-katalog
 - ✅ Installation av Entity Framework CLI-verktyg
 - ✅ Konfiguration av utvecklingscertifikat
 - ✅ Byggning av applikationen
+- ✅ **Nginx reverse proxy-konfiguration (NYTT)**
+- ✅ **SSL/HTTPS med Let's Encrypt eller self-signed certifikat (NYTT)**
 - ✅ Swap-optimering för system med lågt minne (valfri)
 - ✅ Valfri systemd-tjänst för automatisk start
-- ✅ Brandväggskonfiguration med UFW (valfri)
+- ✅ Brandväggskonfiguration med UFW (valfri, inkluderar HTTP/HTTPS-portar)
 - ✅ Automatiska dagliga backuper med cron (valfri)
 - ✅ Statisk IP-konfiguration (valfri)
 - ✅ Verifiering och användningsinstruktioner
@@ -42,8 +45,20 @@ Installationsskriptet hanterar:
 # Automatisk installation utan interaktiva frågor
 ./raspberry-pi-install.sh --skip-interactive
 
-# Anpassad installation
+# Anpassad installation (hoppa över vissa steg)
 ./raspberry-pi-install.sh --no-service --no-firewall --no-backup
+
+# Installera utan publicering (använd dotnet run istället)
+./raspberry-pi-install.sh --no-publish
+
+# Installera utan Nginx reverse proxy
+./raspberry-pi-install.sh --no-nginx
+
+# Installera utan SSL/HTTPS
+./raspberry-pi-install.sh --no-ssl
+
+# Konfigurera endast SSL (för befintlig installation)
+./raspberry-pi-install.sh --configure-ssl
 
 # Visa hjälp
 ./raspberry-pi-install.sh --help
@@ -59,11 +74,30 @@ cd ~/Privatekonomi
 
 Efter installation kommer följande tjänster att vara tillgängliga:
 
+### Utan Nginx (Direktåtkomst)
+
 | Tjänst | Port | Lokal åtkomst | Nätverksåtkomst |
 |--------|------|---------------|-----------------|
 | **Aspire Dashboard** | 17127 | `http://localhost:17127` | `http://[raspberry-pi-ip]:17127` |
 | **Web App** | 5274 | `http://localhost:5274` | `http://[raspberry-pi-ip]:5274` |
 | **API (Swagger)** | 5277 | `http://localhost:5277` | `http://[raspberry-pi-ip]:5277` |
+
+### Med Nginx Reverse Proxy (Rekommenderat för produktion)
+
+| Tjänst | URL | Beskrivning |
+|--------|-----|-------------|
+| **Web App** | `https://[domain-eller-ip]/` | Huvudapplikation via Nginx |
+| **API** | `https://[domain-eller-ip]/api/` | API-endpoints via Nginx |
+| **Aspire Dashboard** | `https://[domain-eller-ip]/aspire/` | Övervakningsdashboard (valfri) |
+| **Health Check** | `https://[domain-eller-ip]/health` | Hälsokontroll endpoint |
+
+**Fördelar med Nginx:**
+- ✅ SSL/HTTPS-kryptering med Let's Encrypt (gratis certifikat)
+- ✅ Enkel domänbaserad åtkomst
+- ✅ Säkerhetsheaders (X-Frame-Options, CSP, etc.)
+- ✅ Bättre prestanda med caching och buffering
+- ✅ Centraliserad loggning och övervakning
+- ✅ Reverse proxy för alla tjänster på port 80/443
 
 **Hitta din Raspberry Pi IP-adress:**
 ```bash
@@ -72,9 +106,53 @@ hostname -I
 ```
 
 **Kontrollera att portarna lyssnar:**
+
 ```bash
+# Direktåtkomst (utan Nginx)
 ss -lntp | grep '17127\|5274\|5277'
 # Ska visa att alla tre portar lyssnar på 0.0.0.0 (alla nätverksinterfaces)
+
+# Med Nginx
+ss -lntp | grep ':80\|:443'
+# Ska visa att Nginx lyssnar på port 80 och 443
+
+# Kontrollera Nginx status
+sudo systemctl status nginx
+
+# Kontrollera Nginx-konfiguration
+sudo nginx -t
+```
+
+**SSL/HTTPS-alternativ:**
+
+1. **Let's Encrypt (Rekommenderat för produktionsmiljö)**
+   - Gratis SSL-certifikat
+   - Automatisk förnyelse
+   - Kräver domännamn som pekar på din Raspberry Pi
+   - Installeras automatiskt vid `./raspberry-pi-install.sh` om Nginx är aktiverat
+   - Eller kör: `./raspberry-pi-install.sh --configure-ssl`
+
+2. **Self-signed Certificate (För lokal användning)**
+   - Fungerar utan domännamn
+   - Webbläsare visar säkerhetsvarning (normalt)
+   - Bra för privat hemmanätverk
+   - Välj "self-signed" under SSL-konfigurationen
+
+**Publicerade binärer:**
+
+Installationsskriptet publicerar applikationen med följande optimeringar:
+- `--runtime linux-arm64`: Optimerad för Raspberry Pi ARM64-arkitektur
+- `--self-contained`: Inkluderar alla .NET-beroenden (ingen .NET runtime krävs)
+- Snabbare uppstart jämfört med `dotnet run`
+- Mindre resursanvändning
+- Publicerade binärer sparas i: `~/Privatekonomi/publish/`
+
+**Hoppa över publicering:**
+
+För snabbare utveckling/testning kan du hoppa över publicering:
+```bash
+./raspberry-pi-install.sh --no-publish
+# Systemd-tjänsten använder då "dotnet run" istället
 ```
 
 ## 📋 Manuell Installation (För referens)
