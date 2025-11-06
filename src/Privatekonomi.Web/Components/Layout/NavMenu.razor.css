@@ -89,6 +89,59 @@
     display: block;
 }
 
+
+
+.nav-menu {
+    padding: var(--spacing-xs) calc(var(--spacing-sm) * 1.5);
+    overflow-x: hidden;
+}
+
+
+.nav-menu ::deep .mud-nav-link.active {
+    background-color: var(--mud-palette-primary, #6750a4) !important;
+    color: var(--mud-palette-primary-text, #ffffff) !important;
+    font-weight: var(--font-weight-semibold);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+}
+
+.nav-menu ::deep .mud-nav-link.active:hover {
+    filter: brightness(0.92);
+}
+
+.nav-menu ::deep .mud-nav-link:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+    padding-left: calc(var(--spacing-sm) + 8px);
+    width: 100%;
+    box-sizing: border-box;
+    transition: padding var(--transition-fast), background-color var(--transition-fast), color var(--transition-fast);
+    font-weight: var(--font-weight-medium);
+}
+
+.nav-menu ::deep .mud-nav-group.nav-group-active .mud-nav-group-root,
+.nav-menu ::deep .mud-nav-group.nav-group-active .mud-nav-group-root > .mud-nav-link,
+.nav-menu ::deep .mud-nav-group.nav-group-active .mud-nav-link-text,
+.nav-menu ::deep .nav-group-active > .mud-nav-link,
+.nav-menu ::deep .nav-group-active > .mud-nav-link > .mud-nav-link-text,
+nav.mud-nav-group.nav-group-active > button > div,
+.nav-group-active > .mud-nav-link > .mud-nav-link-text {
+    background-color: var(--mud-palette-primary, #6750a4) !important;
+    color: var(--mud-palette-primary-text, #ffffff) !important;
+    font-weight: var(--font-weight-semibold);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+}
+
+.nav-menu ::deep .mud-nav-group.nav-group-active .mud-nav-group-root:hover,
+.nav-menu ::deep .mud-nav-group.nav-group-active .mud-nav-group-root > .mud-nav-link:hover,
+.nav-menu ::deep .nav-group-active > .mud-nav-link:hover {
+    filter: brightness(0.92);
+}
+
+.nav-menu ::deep .nav-group-active .mud-collapse {
+    border-left: 3px solid var(--mud-palette-primary, #6750a4);
+    margin-left: calc(var(--spacing-xs) * 0.5);
+    padding-left: calc(var(--spacing-xs) * 0.5);
+}
+
 @media (min-width: 641px) {
     .navbar-toggler {
         display: none;

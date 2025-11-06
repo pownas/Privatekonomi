@@ -32,6 +32,7 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
     public DbSet<AllowanceTransaction> AllowanceTransactions { get; set; }
     public DbSet<AllowanceTask> AllowanceTasks { get; set; }
     public DbSet<Goal> Goals { get; set; }
+    public DbSet<GoalMilestone> GoalMilestones { get; set; }
     public DbSet<SalaryHistory> SalaryHistories { get; set; }
     
     // Pockets for savings accounts
@@ -79,6 +80,7 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
     // Savings Challenges
     public DbSet<SavingsChallenge> SavingsChallenges { get; set; }
     public DbSet<SavingsChallengeProgress> SavingsChallengeProgress { get; set; }
+    public DbSet<ChallengeTemplate> ChallengeTemplates { get; set; }
     
     // Notifications
     public DbSet<Notification> Notifications { get; set; }
@@ -102,6 +104,19 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
     // Dashboard Layouts
     public DbSet<DashboardLayout> DashboardLayouts { get; set; }
     public DbSet<WidgetConfiguration> WidgetConfigurations { get; set; }
+    
+    // Round-up Savings
+    public DbSet<RoundUpSettings> RoundUpSettings { get; set; }
+    public DbSet<RoundUpTransaction> RoundUpTransactions { get; set; }
+    
+    // Budget Alerts
+    public DbSet<BudgetAlert> BudgetAlerts { get; set; }
+    public DbSet<BudgetAlertSettings> BudgetAlertSettings { get; set; }
+    public DbSet<BudgetFreeze> BudgetFreezes { get; set; }
+    
+    // Reminders
+    public DbSet<Reminder> Reminders { get; set; }
+    public DbSet<ReminderSettings> ReminderSettings { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -455,6 +470,7 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
         {
             entity.HasKey(e => e.BudgetCategoryId);
             entity.Property(e => e.PlannedAmount).HasPrecision(18, 2);
+            entity.Property(e => e.RecurrencePeriodMonths).IsRequired().HasDefaultValue(1);
             
             entity.HasOne(e => e.Budget)
                 .WithMany(b => b.BudgetCategories)
@@ -465,6 +481,9 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
                 .WithMany()
                 .HasForeignKey(e => e.CategoryId)
                 .OnDelete(DeleteBehavior.Restrict);
+            
+            // Ignore computed property
+            entity.Ignore(e => e.MonthlyAmount);
         });
 
         // Goal configuration
@@ -496,6 +515,27 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
             entity.HasIndex(e => e.ValidFrom);
             entity.HasIndex(e => e.ValidTo);
             entity.HasIndex(e => new { e.ValidFrom, e.ValidTo });
+        });
+        
+        // GoalMilestone configuration
+        modelBuilder.Entity<GoalMilestone>(entity =>
+        {
+            entity.HasKey(e => e.GoalMilestoneId);
+            entity.Property(e => e.TargetAmount).HasPrecision(18, 2);
+            entity.Property(e => e.Percentage).IsRequired();
+            entity.Property(e => e.Description).HasMaxLength(500);
+            entity.Property(e => e.IsReached).IsRequired();
+            entity.Property(e => e.IsAutomatic).IsRequired();
+            entity.Property(e => e.CreatedAt).IsRequired();
+            
+            entity.HasOne(e => e.Goal)
+                .WithMany()
+                .HasForeignKey(e => e.GoalId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.HasIndex(e => e.GoalId);
+            entity.HasIndex(e => e.IsReached);
+            entity.HasIndex(e => new { e.GoalId, e.Percentage });
         });
         
         // SalaryHistory configuration
@@ -1113,13 +1153,14 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
             entity.Property(e => e.PaymentMethod).HasMaxLength(50);
             entity.Property(e => e.Notes).HasMaxLength(500);
             entity.HasOne(e => e.Transaction)
-                .WithMany()
+                .WithMany(t => t.Receipts)
                 .HasForeignKey(e => e.TransactionId)
                 .OnDelete(DeleteBehavior.SetNull);
             
             entity.HasIndex(e => e.UserId);
             entity.HasIndex(e => e.ReceiptDate);
             entity.HasIndex(e => e.Merchant);
+            entity.HasIndex(e => e.TransactionId);
         });
         
         // ReceiptLineItem configuration

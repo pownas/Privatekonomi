@@ -1,3 +1,5 @@
+@page "/settings/data-management"
+@page "/admin/data-management"
 @page "/data-management"
 @rendermode InteractiveServer
 @inject ISnackbar Snackbar
@@ -10,7 +12,10 @@
 
 <PageTitle>Datahantering - Privatekonomi</PageTitle>
 
-<MudText Typo="Typo.h4" Class="mb-4">Datahantering</MudText>
+<MudText Typo="Typo.h4" Class="mb-4">
+    <MudIcon Icon="@Icons.Material.Filled.Backup" Color="Color.Primary" Class="mr-2" aria-hidden="true" />
+    Datahantering
+</MudText>
 
 <MudText Typo="Typo.body1" Class="mb-6">
     Här kan du exportera, importera och spara din ekonomidata. Detta är användbart för backup, migrering mellan enheter och dataåterställning.

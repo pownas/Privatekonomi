@@ -28,6 +28,17 @@ public static class TestDataSeeder
         SeedSalaryHistory(context, testUserId);
         SeedNetWorthSnapshots(context, testUserId);
         SeedPockets(context, testUserId);
+        SeedChallengeTemplates(context);
+        SeedSubscriptions(context, testUserId);
+        SeedBills(context, testUserId);
+        SeedBillReminders(context, testUserId);
+        SeedPensions(context, testUserId);
+        SeedDividends(context, testUserId);
+        SeedInvestmentTransactions(context, testUserId);
+        SeedSavingsChallenges(context, testUserId);
+        SeedCurrencyAccounts(context, testUserId);
+        SeedLifeTimelineMilestones(context, testUserId);
+        SeedNotifications(context, testUserId);
     }
     
     private static async Task<string> SeedUsers(UserManager<ApplicationUser> userManager)
@@ -132,7 +143,7 @@ public static class TestDataSeeder
     {
 
         var random = new Random(42); // Fixed seed for reproducible data
-        var startDate = DateTime.Now.AddMonths(-3); // Start from 3 months ago
+        var startDate = DateTime.UtcNow.AddDays(-550); // Start from approximately 18 months ago
 
         var transactions = new List<Transaction>();
         var transactionCategories = new List<TransactionCategory>();
@@ -150,6 +161,37 @@ public static class TestDataSeeder
             { 8, new[] { "Sparande sparkonto", "Månadsspar aktier", "ISK insättning" } }, // Sparande
             { 9, new[] { "Swish betalning", "Gåva", "Okategoriserad", "Diverse", "Kontantuttag" } } // Övrigt
         };
+
+        // Notes for transactions to add context
+        var transactionNotes = new Dictionary<int, string?[]>
+        {
+            { 1, new string?[] { "Veckans matinköp", "Snabbhandling efter jobbet", "Storkok för veckan", "Lunch med kollegor", "Fredagsmys", "Söndagsmiddag", null, null } },
+            { 2, new string?[] { "Månadskort", "Tankning för bilsemester", "Pendling till jobbet", "Resa till Göteborg", null, null } },
+            { 3, new string?[] { "Månadshyra december", "Elräkning för november", "Hemförsäkring årspremie", null } },
+            { 4, new string?[] { "Film med familjen", "Månadsprenumeration", "Träningspass", "Kväll på bio", "Konsert med vänner", null } },
+            { 5, new string?[] { "Nya kläder", "Julklapp till barn", "Ny dator till hemmakontor", "Hushållsprylar", null } },
+            { 6, new string?[] { "Tandläkarkontroll", "Medicin för förkylning", "Årlig hälsokontroll", null } },
+            { 7, new string?[] { "Månadslön", "Årsbonus", "Semesterpeng", null } },
+            { 8, new string?[] { "Automatiskt sparande", "Extra sparande denna månad", "Överföring till ISK", null } },
+            { 9, new string?[] { "Betalning till vän", "Julklapp", null } }
+        };
+
+        // Payees for different categories
+        var payees = new Dictionary<int, string?[]>
+        {
+            { 1, new string?[] { "ICA AB", "KF Coop", "Axfood AB", "Axfood AB", "Bella Italia AB", "Bella Italia AB", "Espresso House", "McDonald's Sverige", "Pizzeria Napoli", "Sushi Yama" } },
+            { 2, new string?[] { "SL AB", "Circle K", "Stockholm Parkering", "Preem AB", "Taxi Stockholm", "OK Biltvätt", "SJ AB", "Flygbussarna" } },
+            { 3, new string?[] { "Hyresvärden", "Vattenfall AB", "Telia Company AB", "Folksam", "Hantverkare AB" } },
+            { 4, new string?[] { "SF Bio", "Spotify AB", "Netflix International", "Fitness24Seven", "Dramaten", "Live Nation", "Bowlinghallen Stockholm", "Ticketmaster" } },
+            { 5, new string?[] { "H&M AB", "Elgiganten AB", "IKEA Sverige", "Clas Ohlson AB", "Stadium AB", "Apoteket AB", "Bokus AB", "Webhallen AB" } },
+            { 6, new string?[] { "Folktandvården", "Apoteket AB", "Naprapatkliniken", "Fitness24Seven", "Vitaminer.se", "Synoptik AB" } },
+            { 7, new string?[] { "Arbetsgivare AB", "Arbetsgivare AB", "Arbetsgivare AB" } },
+            { 8, new string?[] { null, null, null } },
+            { 9, new string?[] { null, null, null, null, null } }
+        };
+
+        // Payment methods for different categories
+        var paymentMethods = new[] { "Kort", "Swish", "Autogiro", "Banköverföring", "Kontant", "E-faktura" };
 
         // Bank source IDs to simulate transactions from different banks (1-6 as per seeded data)
         var bankSourceIds = new[] { 1, 2, 3, 4, 5, 6 };
@@ -171,8 +213,8 @@ public static class TestDataSeeder
         int transactionId = 1;
         int transactionCategoryId = 1;
 
-        // Generate 50 transactions
-        for (int i = 0; i < 50; i++)
+        // Generate 300 transactions (approximately 6x more than before to cover 18 months vs 3 months)
+        for (int i = 0; i < 300; i++)
         {
             // Randomly select a category (weighted towards common categories)
             var categoryWeights = new[] { 1, 1, 1, 2, 2, 3, 3, 4, 5, 6, 7, 8, 9, 1, 2 };
@@ -182,12 +224,24 @@ public static class TestDataSeeder
             var descArray = descriptions[categoryId];
             var description = descArray[random.Next(descArray.Length)];
             
+            // Select notes, payee, and payment method
+            var notesArray = transactionNotes[categoryId];
+            var notes = notesArray[random.Next(notesArray.Length)];
+            
+            var payeeArray = payees[categoryId];
+            var payee = payeeArray[random.Next(payeeArray.Length)];
+            
+            var paymentMethod = paymentMethods[random.Next(paymentMethods.Length)];
+            
+            // For recurring transactions (like subscriptions in category 3, 4)
+            var isRecurring = (categoryId == 3 || categoryId == 4) && random.Next(0, 100) < 30; // 30% chance
+            
             // Generate amount within the range for this category
             var range = amountRanges[categoryId];
             var amount = Math.Round(range.min + (decimal)random.NextDouble() * (range.max - range.min), 2);
             
-            // Generate random date within the last 3 months
-            var daysBack = random.Next(0, 90);
+            // Generate random date within the last 18 months (approximately 550 days)
+            var daysBack = random.Next(0, 550);
             var date = startDate.AddDays(daysBack);
             
             // Determine if it's income (category 7 = Lön is always income)
@@ -204,6 +258,10 @@ public static class TestDataSeeder
                 Currency = "SEK",
                 Imported = false,
                 Cleared = true,
+                Notes = notes,
+                Payee = payee,
+                PaymentMethod = paymentMethod,
+                IsRecurring = isRecurring,
                 CreatedAt = DateTime.UtcNow,
                 UserId = userId,
                 ValidFrom = DateTime.UtcNow,
@@ -229,6 +287,7 @@ public static class TestDataSeeder
 
         // Add 5 unmapped transactions (without categories) to demonstrate the feature
         var unmappedDescriptions = new[] { "Okänd transaktion", "Kontant betalning", "Swish från okänd", "Okategoriserad köp", "Diverse utgift" };
+        var unmappedNotes = new string?[] { "Behöver kategoriseras", "Glömt kvitto", "Privatköp", "Vet inte vad detta var", null };
         for (int i = 0; i < 5; i++)
         {
             var transaction = new Transaction
@@ -236,12 +295,14 @@ public static class TestDataSeeder
                 TransactionId = transactionId,
                 Amount = Math.Round(100m + (decimal)random.NextDouble() * 500m, 2),
                 Description = unmappedDescriptions[i],
-                Date = startDate.AddDays(random.Next(0, 90)),
+                Date = startDate.AddDays(random.Next(0, 550)),
                 IsIncome = false,
                 BankSourceId = bankSourceIds[random.Next(bankSourceIds.Length)],
                 Currency = "SEK",
                 Imported = false,
                 Cleared = false,
+                Notes = unmappedNotes[i],
+                PaymentMethod = paymentMethods[random.Next(paymentMethods.Length)],
                 CreatedAt = DateTime.UtcNow,
                 UserId = userId,
                 ValidFrom = DateTime.UtcNow,
@@ -271,8 +332,8 @@ public static class TestDataSeeder
                 Quantity = 100,
                 PurchasePrice = 245.50m,
                 CurrentPrice = 268.75m,
-                PurchaseDate = DateTime.Now.AddMonths(-6),
-                LastUpdated = DateTime.Now.AddDays(-1),
+                PurchaseDate = DateTime.UtcNow.AddMonths(-6),
+                LastUpdated = DateTime.UtcNow.AddDays(-1),
                 Market = "Stockholm",
                 CreatedAt = DateTime.UtcNow,
                 UserId = userId,
@@ -288,8 +349,8 @@ public static class TestDataSeeder
                 Quantity = 50,
                 PurchasePrice = 152.30m,
                 CurrentPrice = 165.20m,
-                PurchaseDate = DateTime.Now.AddMonths(-8),
-                LastUpdated = DateTime.Now.AddDays(-2),
+                PurchaseDate = DateTime.UtcNow.AddMonths(-8),
+                LastUpdated = DateTime.UtcNow.AddDays(-2),
                 Market = "Stockholm",
                 CreatedAt = DateTime.UtcNow,
                 UserId = userId,
@@ -305,8 +366,8 @@ public static class TestDataSeeder
                 Quantity = 75,
                 PurchasePrice = 289.00m,
                 CurrentPrice = 312.50m,
-                PurchaseDate = DateTime.Now.AddMonths(-4),
-                LastUpdated = DateTime.Now.AddDays(-1),
+                PurchaseDate = DateTime.UtcNow.AddMonths(-4),
+                LastUpdated = DateTime.UtcNow.AddDays(-1),
                 Market = "Stockholm",
                 CreatedAt = DateTime.UtcNow,
                 UserId = userId,
@@ -321,8 +382,8 @@ public static class TestDataSeeder
                 Quantity = 150,
                 PurchasePrice = 125.75m,
                 CurrentPrice = 138.40m,
-                PurchaseDate = DateTime.Now.AddMonths(-12),
-                LastUpdated = DateTime.Now.AddDays(-3),
+                PurchaseDate = DateTime.UtcNow.AddMonths(-12),
+                LastUpdated = DateTime.UtcNow.AddDays(-3),
                 CreatedAt = DateTime.UtcNow,
                 UserId = userId,
                 ValidFrom = DateTime.UtcNow,
@@ -336,8 +397,8 @@ public static class TestDataSeeder
                 Quantity = 200,
                 PurchasePrice = 98.50m,
                 CurrentPrice = 104.80m,
-                PurchaseDate = DateTime.Now.AddMonths(-10),
-                LastUpdated = DateTime.Now.AddDays(-1),
+                PurchaseDate = DateTime.UtcNow.AddMonths(-10),
+                LastUpdated = DateTime.UtcNow.AddDays(-1),
                 CreatedAt = DateTime.UtcNow,
                 UserId = userId,
                 ValidFrom = DateTime.UtcNow,
@@ -351,8 +412,8 @@ public static class TestDataSeeder
                 Quantity = 120,
                 PurchasePrice = 215.30m,
                 CurrentPrice = 232.90m,
-                PurchaseDate = DateTime.Now.AddMonths(-9),
-                LastUpdated = DateTime.Now.AddDays(-2),
+                PurchaseDate = DateTime.UtcNow.AddMonths(-9),
+                LastUpdated = DateTime.UtcNow.AddDays(-2),
                 CreatedAt = DateTime.UtcNow,
                 UserId = userId,
                 ValidFrom = DateTime.UtcNow,
@@ -367,8 +428,8 @@ public static class TestDataSeeder
                 Quantity = 250,
                 PurchasePrice = 58.20m,
                 CurrentPrice = 62.15m,
-                PurchaseDate = DateTime.Now.AddMonths(-5),
-                LastUpdated = DateTime.Now,
+                PurchaseDate = DateTime.UtcNow.AddMonths(-5),
+                LastUpdated = DateTime.UtcNow,
                 Market = "Stockholm",
                 CreatedAt = DateTime.UtcNow,
                 UserId = userId,
@@ -384,8 +445,8 @@ public static class TestDataSeeder
                 Quantity = 80,
                 PurchasePrice = 125.40m,
                 CurrentPrice = 118.90m,
-                PurchaseDate = DateTime.Now.AddMonths(-3),
-                LastUpdated = DateTime.Now.AddDays(-1),
+                PurchaseDate = DateTime.UtcNow.AddMonths(-3),
+                LastUpdated = DateTime.UtcNow.AddDays(-1),
                 Market = "Stockholm",
                 CreatedAt = DateTime.UtcNow,
                 UserId = userId,
@@ -401,7 +462,7 @@ public static class TestDataSeeder
     private static void SeedBudgets(PrivatekonomyContext context, string userId)
     {
         // Create a budget for the current month
-        var now = DateTime.Now;
+        var now = DateTime.UtcNow;
         var startOfMonth = new DateTime(now.Year, now.Month, 1);
         var endOfMonth = startOfMonth.AddMonths(1).AddDays(-1);
 
@@ -468,7 +529,7 @@ public static class TestDataSeeder
             HouseholdId = 1,
             Name = "Familjen Andersson",
             Description = "Hushåll med delad lägenhet i Stockholm",
-            CreatedDate = DateTime.Now.AddMonths(-6)
+            CreatedDate = DateTime.UtcNow.AddMonths(-6)
         };
 
         var members = new List<HouseholdMember>
@@ -480,7 +541,7 @@ public static class TestDataSeeder
                 Name = "Anna Andersson",
                 Email = "anna@example.com",
                 IsActive = true,
-                JoinedDate = DateTime.Now.AddMonths(-6)
+                JoinedDate = DateTime.UtcNow.AddMonths(-6)
             },
             new HouseholdMember
             {
@@ -489,7 +550,7 @@ public static class TestDataSeeder
                 Name = "Erik Andersson",
                 Email = "erik@example.com",
                 IsActive = true,
-                JoinedDate = DateTime.Now.AddMonths(-6)
+                JoinedDate = DateTime.UtcNow.AddMonths(-6)
             },
             new HouseholdMember
             {
@@ -498,7 +559,7 @@ public static class TestDataSeeder
                 Name = "Sara Johansson",
                 Email = "sara@example.com",
                 IsActive = true,
-                JoinedDate = DateTime.Now.AddMonths(-3)
+                JoinedDate = DateTime.UtcNow.AddMonths(-3)
             }
         };
 
@@ -513,8 +574,8 @@ public static class TestDataSeeder
                 Description = "Månadshyra för 3-rummare",
                 TotalAmount = 15000m,
                 Type = ExpenseType.Rent,
-                ExpenseDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1),
-                CreatedDate = DateTime.Now.AddDays(-5),
+                ExpenseDate = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1),
+                CreatedDate = DateTime.UtcNow.AddDays(-5),
                 SplitMethod = SplitMethod.Equal
             },
             new SharedExpense
@@ -525,8 +586,8 @@ public static class TestDataSeeder
                 Description = "Elräkning för månaden",
                 TotalAmount = 1200m,
                 Type = ExpenseType.Electricity,
-                ExpenseDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 15),
-                CreatedDate = DateTime.Now.AddDays(-2),
+                ExpenseDate = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 15),
+                CreatedDate = DateTime.UtcNow.AddDays(-2),
                 SplitMethod = SplitMethod.Equal
             },
             new SharedExpense
@@ -537,8 +598,8 @@ public static class TestDataSeeder
                 Description = "Telia bredband 500 Mbit/s",
                 TotalAmount = 399m,
                 Type = ExpenseType.Internet,
-                ExpenseDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1),
-                CreatedDate = DateTime.Now.AddDays(-10),
+                ExpenseDate = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1),
+                CreatedDate = DateTime.UtcNow.AddDays(-10),
                 SplitMethod = SplitMethod.Equal
             }
         };
@@ -579,7 +640,7 @@ public static class TestDataSeeder
                 Description = "Spara till en två veckors resa till Japan",
                 TargetAmount = 50000m,
                 CurrentAmount = 15000m,
-                TargetDate = DateTime.Now.AddMonths(12),
+                TargetDate = DateTime.UtcNow.AddMonths(12),
                 Priority = 1,
                 FundedFromBankSourceId = 1,
                 CreatedAt = DateTime.UtcNow,
@@ -594,7 +655,7 @@ public static class TestDataSeeder
                 Description = "MacBook Pro för arbete och studier",
                 TargetAmount = 25000m,
                 CurrentAmount = 8500m,
-                TargetDate = DateTime.Now.AddMonths(6),
+                TargetDate = DateTime.UtcNow.AddMonths(6),
                 Priority = 2,
                 FundedFromBankSourceId = 1,
                 CreatedAt = DateTime.UtcNow,
@@ -609,7 +670,7 @@ public static class TestDataSeeder
                 Description = "Buffert för oförutsedda utgifter - 3 månadslöner",
                 TargetAmount = 90000m,
                 CurrentAmount = 45000m,
-                TargetDate = DateTime.Now.AddMonths(18),
+                TargetDate = DateTime.UtcNow.AddMonths(18),
                 Priority = 1,
                 FundedFromBankSourceId = 2,
                 CreatedAt = DateTime.UtcNow,
@@ -624,7 +685,7 @@ public static class TestDataSeeder
                 Description = "Spara till 15% kontantinsats för lägenhet",
                 TargetAmount = 300000m,
                 CurrentAmount = 120000m,
-                TargetDate = DateTime.Now.AddMonths(24),
+                TargetDate = DateTime.UtcNow.AddMonths(24),
                 Priority = 1,
                 CreatedAt = DateTime.UtcNow,
                 UserId = userId,
@@ -638,7 +699,7 @@ public static class TestDataSeeder
                 Description = "Elcykel för pendling",
                 TargetAmount = 15000m,
                 CurrentAmount = 12000m,
-                TargetDate = DateTime.Now.AddMonths(3),
+                TargetDate = DateTime.UtcNow.AddMonths(3),
                 Priority = 3,
                 FundedFromBankSourceId = 1,
                 CreatedAt = DateTime.UtcNow,
@@ -649,6 +710,261 @@ public static class TestDataSeeder
         };
 
         context.Goals.AddRange(goals);
+        context.SaveChanges();
+
+        // Add milestones for each goal
+        var milestones = new List<GoalMilestone>();
+        int milestoneId = 1;
+
+        // Milestones for Goal 1: Semesterresa till Japan (30% progress - 15000/50000)
+        // Reached: 25%
+        milestones.Add(new GoalMilestone
+        {
+            GoalMilestoneId = milestoneId++,
+            GoalId = 1,
+            TargetAmount = 12500m,
+            Percentage = 25,
+            Description = "25% av målet uppnått",
+            IsReached = true,
+            ReachedAt = DateTime.UtcNow.AddMonths(-2),
+            IsAutomatic = true,
+            CreatedAt = DateTime.UtcNow.AddMonths(-6)
+        });
+        // Not reached: 50%, 75%, 100%
+        milestones.Add(new GoalMilestone
+        {
+            GoalMilestoneId = milestoneId++,
+            GoalId = 1,
+            TargetAmount = 25000m,
+            Percentage = 50,
+            Description = "50% av målet uppnått",
+            IsReached = false,
+            IsAutomatic = true,
+            CreatedAt = DateTime.UtcNow.AddMonths(-6)
+        });
+        milestones.Add(new GoalMilestone
+        {
+            GoalMilestoneId = milestoneId++,
+            GoalId = 1,
+            TargetAmount = 37500m,
+            Percentage = 75,
+            Description = "75% av målet uppnått",
+            IsReached = false,
+            IsAutomatic = true,
+            CreatedAt = DateTime.UtcNow.AddMonths(-6)
+        });
+        milestones.Add(new GoalMilestone
+        {
+            GoalMilestoneId = milestoneId++,
+            GoalId = 1,
+            TargetAmount = 50000m,
+            Percentage = 100,
+            Description = "100% av målet uppnått",
+            IsReached = false,
+            IsAutomatic = true,
+            CreatedAt = DateTime.UtcNow.AddMonths(-6)
+        });
+
+        // Milestones for Goal 2: Ny laptop (34% progress - 8500/25000)
+        // Reached: 25%
+        milestones.Add(new GoalMilestone
+        {
+            GoalMilestoneId = milestoneId++,
+            GoalId = 2,
+            TargetAmount = 6250m,
+            Percentage = 25,
+            Description = "25% av målet uppnått",
+            IsReached = true,
+            ReachedAt = DateTime.UtcNow.AddMonths(-1),
+            IsAutomatic = true,
+            CreatedAt = DateTime.UtcNow.AddMonths(-4)
+        });
+        // Not reached: 50%, 75%, 100%
+        milestones.Add(new GoalMilestone
+        {
+            GoalMilestoneId = milestoneId++,
+            GoalId = 2,
+            TargetAmount = 12500m,
+            Percentage = 50,
+            Description = "50% av målet uppnått",
+            IsReached = false,
+            IsAutomatic = true,
+            CreatedAt = DateTime.UtcNow.AddMonths(-4)
+        });
+        milestones.Add(new GoalMilestone
+        {
+            GoalMilestoneId = milestoneId++,
+            GoalId = 2,
+            TargetAmount = 18750m,
+            Percentage = 75,
+            Description = "75% av målet uppnått",
+            IsReached = false,
+            IsAutomatic = true,
+            CreatedAt = DateTime.UtcNow.AddMonths(-4)
+        });
+        milestones.Add(new GoalMilestone
+        {
+            GoalMilestoneId = milestoneId++,
+            GoalId = 2,
+            TargetAmount = 25000m,
+            Percentage = 100,
+            Description = "100% av målet uppnått",
+            IsReached = false,
+            IsAutomatic = true,
+            CreatedAt = DateTime.UtcNow.AddMonths(-4)
+        });
+
+        // Milestones for Goal 3: Nödfond (50% progress - 45000/90000)
+        // Reached: 25%, 50%
+        milestones.Add(new GoalMilestone
+        {
+            GoalMilestoneId = milestoneId++,
+            GoalId = 3,
+            TargetAmount = 22500m,
+            Percentage = 25,
+            Description = "25% av målet uppnått",
+            IsReached = true,
+            ReachedAt = DateTime.UtcNow.AddMonths(-4),
+            IsAutomatic = true,
+            CreatedAt = DateTime.UtcNow.AddMonths(-8)
+        });
+        milestones.Add(new GoalMilestone
+        {
+            GoalMilestoneId = milestoneId++,
+            GoalId = 3,
+            TargetAmount = 45000m,
+            Percentage = 50,
+            Description = "50% av målet uppnått",
+            IsReached = true,
+            ReachedAt = DateTime.UtcNow.AddDays(-10),
+            IsAutomatic = true,
+            CreatedAt = DateTime.UtcNow.AddMonths(-8)
+        });
+        // Not reached: 75%, 100%
+        milestones.Add(new GoalMilestone
+        {
+            GoalMilestoneId = milestoneId++,
+            GoalId = 3,
+            TargetAmount = 67500m,
+            Percentage = 75,
+            Description = "75% av målet uppnått",
+            IsReached = false,
+            IsAutomatic = true,
+            CreatedAt = DateTime.UtcNow.AddMonths(-8)
+        });
+        milestones.Add(new GoalMilestone
+        {
+            GoalMilestoneId = milestoneId++,
+            GoalId = 3,
+            TargetAmount = 90000m,
+            Percentage = 100,
+            Description = "100% av målet uppnått",
+            IsReached = false,
+            IsAutomatic = true,
+            CreatedAt = DateTime.UtcNow.AddMonths(-8)
+        });
+
+        // Milestones for Goal 4: Kontantinsats lägenhet (40% progress - 120000/300000)
+        // Reached: 25%
+        milestones.Add(new GoalMilestone
+        {
+            GoalMilestoneId = milestoneId++,
+            GoalId = 4,
+            TargetAmount = 75000m,
+            Percentage = 25,
+            Description = "25% av målet uppnått",
+            IsReached = true,
+            ReachedAt = DateTime.UtcNow.AddMonths(-3),
+            IsAutomatic = true,
+            CreatedAt = DateTime.UtcNow.AddMonths(-10)
+        });
+        // Not reached: 50%, 75%, 100%
+        milestones.Add(new GoalMilestone
+        {
+            GoalMilestoneId = milestoneId++,
+            GoalId = 4,
+            TargetAmount = 150000m,
+            Percentage = 50,
+            Description = "50% av målet uppnått",
+            IsReached = false,
+            IsAutomatic = true,
+            CreatedAt = DateTime.UtcNow.AddMonths(-10)
+        });
+        milestones.Add(new GoalMilestone
+        {
+            GoalMilestoneId = milestoneId++,
+            GoalId = 4,
+            TargetAmount = 225000m,
+            Percentage = 75,
+            Description = "75% av målet uppnått",
+            IsReached = false,
+            IsAutomatic = true,
+            CreatedAt = DateTime.UtcNow.AddMonths(-10)
+        });
+        milestones.Add(new GoalMilestone
+        {
+            GoalMilestoneId = milestoneId++,
+            GoalId = 4,
+            TargetAmount = 300000m,
+            Percentage = 100,
+            Description = "100% av målet uppnått",
+            IsReached = false,
+            IsAutomatic = true,
+            CreatedAt = DateTime.UtcNow.AddMonths(-10)
+        });
+
+        // Milestones for Goal 5: Ny cykel (80% progress - 12000/15000)
+        // Reached: 25%, 50%, 75%
+        milestones.Add(new GoalMilestone
+        {
+            GoalMilestoneId = milestoneId++,
+            GoalId = 5,
+            TargetAmount = 3750m,
+            Percentage = 25,
+            Description = "25% av målet uppnått",
+            IsReached = true,
+            ReachedAt = DateTime.UtcNow.AddMonths(-2),
+            IsAutomatic = true,
+            CreatedAt = DateTime.UtcNow.AddMonths(-3)
+        });
+        milestones.Add(new GoalMilestone
+        {
+            GoalMilestoneId = milestoneId++,
+            GoalId = 5,
+            TargetAmount = 7500m,
+            Percentage = 50,
+            Description = "50% av målet uppnått",
+            IsReached = true,
+            ReachedAt = DateTime.UtcNow.AddMonths(-1),
+            IsAutomatic = true,
+            CreatedAt = DateTime.UtcNow.AddMonths(-3)
+        });
+        milestones.Add(new GoalMilestone
+        {
+            GoalMilestoneId = milestoneId++,
+            GoalId = 5,
+            TargetAmount = 11250m,
+            Percentage = 75,
+            Description = "75% av målet uppnått",
+            IsReached = true,
+            ReachedAt = DateTime.UtcNow.AddDays(-15),
+            IsAutomatic = true,
+            CreatedAt = DateTime.UtcNow.AddMonths(-3)
+        });
+        // Not reached: 100%
+        milestones.Add(new GoalMilestone
+        {
+            GoalMilestoneId = milestoneId++,
+            GoalId = 5,
+            TargetAmount = 15000m,
+            Percentage = 100,
+            Description = "100% av målet uppnått",
+            IsReached = false,
+            IsAutomatic = true,
+            CreatedAt = DateTime.UtcNow.AddMonths(-3)
+        });
+
+        context.GoalMilestones.AddRange(milestones);
         context.SaveChanges();
     }
 
@@ -664,7 +980,7 @@ public static class TestDataSeeder
                 Description = "2:a på Södermalm, Stockholm",
                 PurchaseValue = 2800000m,
                 CurrentValue = 3200000m,
-                PurchaseDate = DateTime.Now.AddYears(-5),
+                PurchaseDate = DateTime.UtcNow.AddYears(-5),
                 Location = "Stockholm, Södermalm",
                 Currency = "SEK",
                 CreatedAt = DateTime.UtcNow,
@@ -680,7 +996,7 @@ public static class TestDataSeeder
                 Description = "2020 års modell, diesel",
                 PurchaseValue = 285000m,
                 CurrentValue = 240000m,
-                PurchaseDate = DateTime.Now.AddYears(-3),
+                PurchaseDate = DateTime.UtcNow.AddYears(-3),
                 Location = "Stockholm",
                 Currency = "SEK",
                 CreatedAt = DateTime.UtcNow,
@@ -696,7 +1012,7 @@ public static class TestDataSeeder
                 Description = "MacBook Pro 16\" M3 Pro",
                 PurchaseValue = 32000m,
                 CurrentValue = 28000m,
-                PurchaseDate = DateTime.Now.AddMonths(-6),
+                PurchaseDate = DateTime.UtcNow.AddMonths(-6),
                 Location = "Hemkontor",
                 Currency = "SEK",
                 CreatedAt = DateTime.UtcNow,
@@ -712,7 +1028,7 @@ public static class TestDataSeeder
                 Description = "Soffa, matbord, och bokhyllor",
                 PurchaseValue = 45000m,
                 CurrentValue = 25000m,
-                PurchaseDate = DateTime.Now.AddYears(-2),
+                PurchaseDate = DateTime.UtcNow.AddYears(-2),
                 Location = "Lägenheten",
                 Currency = "SEK",
                 CreatedAt = DateTime.UtcNow,
@@ -728,7 +1044,7 @@ public static class TestDataSeeder
                 Description = "55\" 4K QLED TV",
                 PurchaseValue = 15000m,
                 CurrentValue = 10000m,
-                PurchaseDate = DateTime.Now.AddYears(-1),
+                PurchaseDate = DateTime.UtcNow.AddYears(-1),
                 Location = "Vardagsrum",
                 Currency = "SEK",
                 CreatedAt = DateTime.UtcNow,
@@ -744,7 +1060,7 @@ public static class TestDataSeeder
                 Description = "Vintage Submariner",
                 PurchaseValue = 85000m,
                 CurrentValue = 120000m,
-                PurchaseDate = DateTime.Now.AddYears(-10),
+                PurchaseDate = DateTime.UtcNow.AddYears(-10),
                 Location = "Bankfack",
                 Currency = "SEK",
                 CreatedAt = DateTime.UtcNow,
@@ -771,8 +1087,8 @@ public static class TestDataSeeder
                 InterestRate = 4.5m,
                 Amortization = 5000m,
                 Currency = "SEK",
-                StartDate = DateTime.Now.AddYears(-5),
-                MaturityDate = DateTime.Now.AddYears(25),
+                StartDate = DateTime.UtcNow.AddYears(-5),
+                MaturityDate = DateTime.UtcNow.AddYears(25),
                 CreatedAt = DateTime.UtcNow,
                 UserId = userId,
                 ValidFrom = DateTime.UtcNow,
@@ -787,8 +1103,8 @@ public static class TestDataSeeder
                 InterestRate = 5.9m,
                 Amortization = 3500m,
                 Currency = "SEK",
-                StartDate = DateTime.Now.AddYears(-3),
-                MaturityDate = DateTime.Now.AddYears(2),
+                StartDate = DateTime.UtcNow.AddYears(-3),
+                MaturityDate = DateTime.UtcNow.AddYears(2),
                 CreatedAt = DateTime.UtcNow,
                 UserId = userId,
                 ValidFrom = DateTime.UtcNow,
@@ -803,8 +1119,8 @@ public static class TestDataSeeder
                 InterestRate = 1.5m,
                 Amortization = 1200m,
                 Currency = "SEK",
-                StartDate = DateTime.Now.AddYears(-8),
-                MaturityDate = DateTime.Now.AddYears(17),
+                StartDate = DateTime.UtcNow.AddYears(-8),
+                MaturityDate = DateTime.UtcNow.AddYears(17),
                 CreatedAt = DateTime.UtcNow,
                 UserId = userId,
                 ValidFrom = DateTime.UtcNow,
@@ -1264,6 +1580,1548 @@ public static class TestDataSeeder
         }
         
         context.NetWorthSnapshots.AddRange(snapshots);
+        context.SaveChanges();
+    }
+
+    private static void SeedChallengeTemplates(PrivatekonomyContext context)
+    {
+        // Only seed if no templates exist
+        if (context.ChallengeTemplates.Any())
+        {
+            return;
+        }
+
+        var templates = new List<ChallengeTemplate>
+        {
+            // Short-term challenges (1-4 weeks)
+            new ChallengeTemplate
+            {
+                Name = "No Spend Weekend",
+                Description = "Ingen shopping eller icke-nödvändiga utgifter under en helg. Mat som redan finns hemma, gratis aktiviteter, och kvalitetstid utan konsumtion.",
+                Icon = "🛍️",
+                Type = ChallengeType.NoSpendWeekend,
+                DurationDays = 2,
+                Difficulty = DifficultyLevel.Easy,
+                Category = ChallengeCategory.Individual,
+                EstimatedSavingsMin = 500,
+                EstimatedSavingsMax = 2000,
+                SuggestedTargetAmount = 1000,
+                Tags = new List<string> { "kortsiktig", "helg", "minimalism" },
+                SortOrder = 1,
+                CreatedAt = DateTime.UtcNow
+            },
+            new ChallengeTemplate
+            {
+                Name = "Matlåda varje dag",
+                Description = "Ta med egen lunch till jobbet/skolan varje dag i 2 veckor. Ingen lunch ute, ingen lunchmeny, ingen foodcourt.",
+                Icon = "🍱",
+                Type = ChallengeType.LunchBox,
+                DurationDays = 14,
+                Difficulty = DifficultyLevel.Medium,
+                Category = ChallengeCategory.Health,
+                EstimatedSavingsMin = 1000,
+                EstimatedSavingsMax = 1500,
+                SuggestedTargetAmount = 1250,
+                Tags = new List<string> { "kortsiktig", "hälsa", "mat" },
+                SortOrder = 2,
+                CreatedAt = DateTime.UtcNow
+            },
+            new ChallengeTemplate
+            {
+                Name = "Endast cykel/kollektivtrafik",
+                Description = "Ingen bilkörning eller taxiresor i 2 veckor. Använd endast cykel, promenader eller kollektivtrafik.",
+                Icon = "🚴",
+                Type = ChallengeType.BikeOrPublic,
+                DurationDays = 14,
+                Difficulty = DifficultyLevel.Medium,
+                Category = ChallengeCategory.Environment,
+                EstimatedSavingsMin = 500,
+                EstimatedSavingsMax = 2000,
+                SuggestedTargetAmount = 1000,
+                Tags = new List<string> { "kortsiktig", "miljö", "hälsa", "transport" },
+                SortOrder = 3,
+                CreatedAt = DateTime.UtcNow
+            },
+            new ChallengeTemplate
+            {
+                Name = "Sälja 5 saker på 30 dagar",
+                Description = "Rensa ut hemma och sälja minst 5 saker på Blocket, Facebook Marketplace, Tradera eller liknande under en månad.",
+                Icon = "📦",
+                Type = ChallengeType.SellItems,
+                DurationDays = 30,
+                Difficulty = DifficultyLevel.Medium,
+                Category = ChallengeCategory.Minimalism,
+                EstimatedSavingsMin = 500,
+                EstimatedSavingsMax = 5000,
+                SuggestedTargetAmount = 2000,
+                Tags = new List<string> { "kortsiktig", "minimalism", "försäljning" },
+                SortOrder = 4,
+                CreatedAt = DateTime.UtcNow
+            },
+            new ChallengeTemplate
+            {
+                Name = "Växelpengsburken",
+                Description = "Spara alla växelpengar (mynt) i en burk varje dag i en månad. Vid månadens slut, räkna och överför till sparkonto.",
+                Icon = "🪙",
+                Type = ChallengeType.ChangeJar,
+                DurationDays = 30,
+                Difficulty = DifficultyLevel.VeryEasy,
+                Category = ChallengeCategory.Individual,
+                EstimatedSavingsMin = 200,
+                EstimatedSavingsMax = 800,
+                SuggestedTargetAmount = 500,
+                Tags = new List<string> { "kortsiktig", "enkelt", "dagligt" },
+                SortOrder = 5,
+                CreatedAt = DateTime.UtcNow
+            },
+
+            // Medium-term challenges (1-3 months)
+            new ChallengeTemplate
+            {
+                Name = "Noll spontanhandel",
+                Description = "Endast planerade inköp under en månad. Allt som inte står på inköpslistan är förbjudet. Handlingsplan krävs före varje shoppingrunda.",
+                Icon = "🛒",
+                Type = ChallengeType.NoImpulseBuying,
+                DurationDays = 30,
+                Difficulty = DifficultyLevel.Hard,
+                Category = ChallengeCategory.Minimalism,
+                EstimatedSavingsMin = 1000,
+                EstimatedSavingsMax = 3000,
+                SuggestedTargetAmount = 2000,
+                Tags = new List<string> { "medellång", "minimalism", "planering" },
+                SortOrder = 6,
+                CreatedAt = DateTime.UtcNow
+            },
+            new ChallengeTemplate
+            {
+                Name = "Strömnings-detox",
+                Description = "Pausa alla betalda strömningsabonnemang (Netflix, HBO, Spotify Premium, etc.) i en månad. Använd gratisalternativ eller bibliotek.",
+                Icon = "📺",
+                Type = ChallengeType.StreamingDetox,
+                DurationDays = 30,
+                Difficulty = DifficultyLevel.Medium,
+                Category = ChallengeCategory.Minimalism,
+                EstimatedSavingsMin = 200,
+                EstimatedSavingsMax = 800,
+                SuggestedTargetAmount = 400,
+                Tags = new List<string> { "medellång", "abonnemang", "digital" },
+                SortOrder = 7,
+                CreatedAt = DateTime.UtcNow
+            },
+            new ChallengeTemplate
+            {
+                Name = "Alkoholfri månad",
+                Description = "Ingen alkohol på en månad - varken hemma eller ute. Inspirerad av 'Dry January' eller 'Sober October'.",
+                Icon = "🍷",
+                Type = ChallengeType.AlcoholFree,
+                DurationDays = 30,
+                Difficulty = DifficultyLevel.Hard,
+                Category = ChallengeCategory.Health,
+                EstimatedSavingsMin = 1000,
+                EstimatedSavingsMax = 5000,
+                SuggestedTargetAmount = 2500,
+                Tags = new List<string> { "medellång", "hälsa", "livsstil" },
+                SortOrder = 8,
+                CreatedAt = DateTime.UtcNow
+            },
+            new ChallengeTemplate
+            {
+                Name = "Gåvofri period (utom födelsedag)",
+                Description = "Inga presenter till vuxna (exkl. faktiska födelsedagar och högtider). Fokus på upplevelser och tid istället för materiella ting.",
+                Icon = "🎁",
+                Type = ChallengeType.GiftFree,
+                DurationDays = 60,
+                Difficulty = DifficultyLevel.Medium,
+                Category = ChallengeCategory.Minimalism,
+                EstimatedSavingsMin = 500,
+                EstimatedSavingsMax = 2000,
+                SuggestedTargetAmount = 1000,
+                Tags = new List<string> { "medellång", "minimalism", "relationer" },
+                SortOrder = 9,
+                CreatedAt = DateTime.UtcNow
+            },
+            new ChallengeTemplate
+            {
+                Name = "Hemma-gymmet",
+                Description = "Pausa gym-medlemskap och träna hemma eller utomhus istället i 3 månader.",
+                Icon = "🏋️",
+                Type = ChallengeType.HomeGym,
+                DurationDays = 90,
+                Difficulty = DifficultyLevel.Medium,
+                Category = ChallengeCategory.Health,
+                EstimatedSavingsMin = 1500,
+                EstimatedSavingsMax = 3000,
+                SuggestedTargetAmount = 2000,
+                Tags = new List<string> { "medellång", "hälsa", "träning" },
+                SortOrder = 10,
+                CreatedAt = DateTime.UtcNow
+            },
+
+            // Long-term challenges (3-6 months)
+            new ChallengeTemplate
+            {
+                Name = "Spara för ett specifikt mål",
+                Description = "Sätt upp ett konkret sparmål (t.ex. resa, ny dator, möbel) och spara systematiskt med delmål och progress-tracking.",
+                Icon = "💰",
+                Type = ChallengeType.SpecificGoal,
+                DurationDays = 90,
+                Difficulty = DifficultyLevel.Hard,
+                Category = ChallengeCategory.GoalBased,
+                EstimatedSavingsMin = 5000,
+                EstimatedSavingsMax = 50000,
+                SuggestedTargetAmount = 10000,
+                Tags = new List<string> { "långsiktig", "målbaserad", "sparande" },
+                SortOrder = 11,
+                CreatedAt = DateTime.UtcNow
+            },
+            new ChallengeTemplate
+            {
+                Name = "Hushålls-challenge: Gemensamt sparmål",
+                Description = "Hela hushållet sparar tillsammans mot ett gemensamt mål (semester, renovering, ny bil). Alla bidrar enligt sina förutsättningar.",
+                Icon = "🏠",
+                Type = ChallengeType.HouseholdGoal,
+                DurationDays = 90,
+                Difficulty = DifficultyLevel.Hard,
+                Category = ChallengeCategory.Household,
+                EstimatedSavingsMin = 10000,
+                EstimatedSavingsMax = 100000,
+                SuggestedTargetAmount = 30000,
+                Tags = new List<string> { "långsiktig", "hushåll", "social", "målbaserad" },
+                SortOrder = 12,
+                CreatedAt = DateTime.UtcNow
+            },
+            new ChallengeTemplate
+            {
+                Name = "Klimatsmart-utmaning",
+                Description = "Kombinerad utmaning för att minska konsumtion och klimatpåverkan samtidigt som man sparar pengar. Fokus på: ingen onlineshopping, lokala/begagnade köp, mindre kött, cykel istället för bil.",
+                Icon = "🌍",
+                Type = ChallengeType.ClimateChallenge,
+                DurationDays = 90,
+                Difficulty = DifficultyLevel.Hard,
+                Category = ChallengeCategory.Environment,
+                EstimatedSavingsMin = 2000,
+                EstimatedSavingsMax = 6000,
+                SuggestedTargetAmount = 4000,
+                Tags = new List<string> { "långsiktig", "miljö", "livsstil" },
+                SortOrder = 13,
+                CreatedAt = DateTime.UtcNow
+            },
+            new ChallengeTemplate
+            {
+                Name = "Spara X% mer varje månad",
+                Description = "Börja med att spara 5% av inkomsten månad 1, sedan öka med 1-2% varje månad tills du når 10-15%. Progressiv sparutmaning.",
+                Icon = "📈",
+                Type = ChallengeType.ProgressiveSaving,
+                DurationDays = 180,
+                Difficulty = DifficultyLevel.VeryHard,
+                Category = ChallengeCategory.GoalBased,
+                EstimatedSavingsMin = 15000,
+                EstimatedSavingsMax = 50000,
+                SuggestedTargetAmount = 25000,
+                Tags = new List<string> { "långsiktig", "progressiv", "procent", "inkomst" },
+                SortOrder = 14,
+                CreatedAt = DateTime.UtcNow
+            },
+            new ChallengeTemplate
+            {
+                Name = "Slump-spararen",
+                Description = "Varje vecka får du en slumpmässig sparutmaning (spara 50 kr extra, ingen fika i 3 dagar, sälja något, etc.). Gamified och oförutsägbar!",
+                Icon = "🎲",
+                Type = ChallengeType.RandomChallenge,
+                DurationDays = 90,
+                Difficulty = DifficultyLevel.Easy,
+                Category = ChallengeCategory.Fun,
+                EstimatedSavingsMin = 1000,
+                EstimatedSavingsMax = 3000,
+                SuggestedTargetAmount = 2000,
+                Tags = new List<string> { "långsiktig", "rolig", "överraskning", "varierad" },
+                SortOrder = 15,
+                CreatedAt = DateTime.UtcNow
+            },
+
+            // Social challenges
+            new ChallengeTemplate
+            {
+                Name = "Spargruppen",
+                Description = "Skapa eller gå med i en spargrupp med vänner. Gemensamt mål att alla sparar minst X kr eller X% av lön. Support och accountability.",
+                Icon = "👥",
+                Type = ChallengeType.SavingsGroup,
+                DurationDays = 60,
+                Difficulty = DifficultyLevel.Medium,
+                Category = ChallengeCategory.Social,
+                EstimatedSavingsMin = 5000,
+                EstimatedSavingsMax = 20000,
+                SuggestedTargetAmount = 10000,
+                Tags = new List<string> { "social", "grupp", "support" },
+                SortOrder = 16,
+                CreatedAt = DateTime.UtcNow
+            },
+            new ChallengeTemplate
+            {
+                Name = "Månadsutmaning med Leaderboard",
+                Description = "Varje månad en ny tävling: vem kan spara mest? Vem kan minska utgifterna mest? Vem har bäst streak? Poäng och ranking.",
+                Icon = "🥇",
+                Type = ChallengeType.Leaderboard,
+                DurationDays = 30,
+                Difficulty = DifficultyLevel.Hard,
+                Category = ChallengeCategory.Social,
+                EstimatedSavingsMin = 2000,
+                EstimatedSavingsMax = 10000,
+                SuggestedTargetAmount = 5000,
+                Tags = new List<string> { "social", "tävling", "leaderboard", "månatlig" },
+                SortOrder = 17,
+                CreatedAt = DateTime.UtcNow
+            }
+        };
+
+        context.ChallengeTemplates.AddRange(templates);
+        context.SaveChanges();
+    }
+
+    private static void SeedSubscriptions(PrivatekonomyContext context, string userId)
+    {
+        var subscriptions = new List<Subscription>
+        {
+            new Subscription
+            {
+                SubscriptionId = 1,
+                Name = "Spotify Premium Family",
+                Description = "Musikstreaming för hela familjen",
+                Price = 179m,
+                Currency = "SEK",
+                BillingFrequency = "Monthly",
+                NextBillingDate = DateTime.UtcNow.AddDays(15),
+                StartDate = DateTime.UtcNow.AddYears(-2),
+                IsActive = true,
+                CategoryId = 20, // Streaming
+                ManagementUrl = "https://www.spotify.com/account",
+                AccountEmail = "test@example.com",
+                LastUsedDate = DateTime.UtcNow.AddDays(-1),
+                SharedWith = "Partner, Barn",
+                Notes = "Familjeplan med 6 konton",
+                CancellationNoticeDays = 30,
+                UserId = userId,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow.AddMonths(-6)
+            },
+            new Subscription
+            {
+                SubscriptionId = 2,
+                Name = "Netflix Standard",
+                Description = "Filmer och serier i HD",
+                Price = 139m,
+                Currency = "SEK",
+                BillingFrequency = "Monthly",
+                NextBillingDate = DateTime.UtcNow.AddDays(5),
+                StartDate = DateTime.UtcNow.AddYears(-3),
+                IsActive = true,
+                CategoryId = 20, // Streaming
+                ManagementUrl = "https://www.netflix.com/YourAccount",
+                CancellationUrl = "https://www.netflix.com/cancelplan",
+                AccountEmail = "test@example.com",
+                LastUsedDate = DateTime.UtcNow.AddDays(-2),
+                SharedWith = "Partner",
+                Notes = "Standard HD-plan",
+                UserId = userId,
+                CreatedAt = DateTime.UtcNow
+            },
+            new Subscription
+            {
+                SubscriptionId = 3,
+                Name = "Fitness24Seven",
+                Description = "Gymmedlemskap",
+                Price = 299m,
+                Currency = "SEK",
+                BillingFrequency = "Monthly",
+                NextBillingDate = DateTime.UtcNow.AddDays(20),
+                StartDate = DateTime.UtcNow.AddMonths(-6),
+                IsActive = true,
+                CategoryId = 21, // Gym
+                ManagementUrl = "https://www.24-7.se/mina-sidor",
+                LastUsedDate = DateTime.UtcNow.AddDays(-3),
+                CancellationNoticeDays = 30,
+                Notes = "Medlemskap på hemmastudion",
+                UserId = userId,
+                CreatedAt = DateTime.UtcNow
+            },
+            new Subscription
+            {
+                SubscriptionId = 4,
+                Name = "HBO Max",
+                Description = "Streaming av HBO-serier och filmer",
+                Price = 109m,
+                Currency = "SEK",
+                BillingFrequency = "Monthly",
+                NextBillingDate = DateTime.UtcNow.AddDays(10),
+                StartDate = DateTime.UtcNow.AddMonths(-8),
+                IsActive = true,
+                CategoryId = 20, // Streaming
+                AccountEmail = "test@example.com",
+                LastUsedDate = DateTime.UtcNow.AddDays(-7),
+                Notes = "För HBO-serier och dokumentärer",
+                UserId = userId,
+                CreatedAt = DateTime.UtcNow
+            },
+            new Subscription
+            {
+                SubscriptionId = 5,
+                Name = "Adobe Creative Cloud",
+                Description = "Photoshop, Illustrator och andra kreativa verktyg",
+                Price = 659m,
+                Currency = "SEK",
+                BillingFrequency = "Monthly",
+                NextBillingDate = DateTime.UtcNow.AddDays(8),
+                StartDate = DateTime.UtcNow.AddYears(-1),
+                IsActive = true,
+                CategoryId = 25, // Elektronik
+                AccountEmail = "test@example.com",
+                LastUsedDate = DateTime.UtcNow.AddDays(-1),
+                Notes = "Behövs för jobbprojekt och hobby",
+                UserId = userId,
+                CreatedAt = DateTime.UtcNow
+            },
+            new Subscription
+            {
+                SubscriptionId = 6,
+                Name = "Aftonbladet Plus",
+                Description = "Nyheter utan annonser",
+                Price = 49m,
+                Currency = "SEK",
+                BillingFrequency = "Monthly",
+                NextBillingDate = DateTime.UtcNow.AddDays(12),
+                StartDate = DateTime.UtcNow.AddMonths(-4),
+                IsActive = true,
+                CategoryId = 4, // Nöje
+                LastUsedDate = DateTime.UtcNow,
+                Notes = "Läser varje morgon",
+                UserId = userId,
+                CreatedAt = DateTime.UtcNow
+            },
+            new Subscription
+            {
+                SubscriptionId = 7,
+                Name = "iCloud+ 200GB",
+                Description = "Molnlagring för Apple-enheter",
+                Price = 29m,
+                Currency = "SEK",
+                BillingFrequency = "Monthly",
+                NextBillingDate = DateTime.UtcNow.AddDays(7),
+                StartDate = DateTime.UtcNow.AddYears(-2),
+                IsActive = true,
+                CategoryId = 5, // Shopping
+                LastUsedDate = DateTime.UtcNow,
+                Notes = "Backup för iPhone och iPad",
+                UserId = userId,
+                CreatedAt = DateTime.UtcNow
+            }
+        };
+
+        context.Subscriptions.AddRange(subscriptions);
+        context.SaveChanges();
+    }
+
+    private static void SeedBills(PrivatekonomyContext context, string userId)
+    {
+        var bills = new List<Bill>
+        {
+            new Bill
+            {
+                BillId = 1,
+                Name = "Elräkning",
+                Description = "Månatlig elförbrukning",
+                Amount = 1450m,
+                Currency = "SEK",
+                IssueDate = DateTime.UtcNow.AddDays(-20),
+                DueDate = DateTime.UtcNow.AddDays(10),
+                Status = "Pending",
+                IsRecurring = true,
+                RecurringFrequency = "Monthly",
+                PaymentMethod = "Autogiro",
+                InvoiceNumber = "EL-2025-001234",
+                Payee = "Vattenfall AB",
+                CategoryId = 17, // El
+                Notes = "Högre förbrukning än vanligt, vinter",
+                UserId = userId,
+                CreatedAt = DateTime.UtcNow
+            },
+            new Bill
+            {
+                BillId = 2,
+                Name = "Hemförsäkring",
+                Description = "Försäkring för lägenhet och lösöre",
+                Amount = 349m,
+                Currency = "SEK",
+                IssueDate = DateTime.UtcNow.AddDays(-25),
+                DueDate = DateTime.UtcNow.AddDays(5),
+                Status = "Pending",
+                IsRecurring = true,
+                RecurringFrequency = "Monthly",
+                PaymentMethod = "Autogiro",
+                InvoiceNumber = "IF-2025-004567",
+                Payee = "IF Skadeförsäkring",
+                CategoryId = 19, // Hemförsäkring
+                Notes = "Automatisk betalning",
+                UserId = userId,
+                CreatedAt = DateTime.UtcNow
+            },
+            new Bill
+            {
+                BillId = 3,
+                Name = "Tandvårdsräkning",
+                Description = "Tandläkarkontroll och lagning",
+                Amount = 2800m,
+                Currency = "SEK",
+                IssueDate = DateTime.UtcNow.AddDays(-5),
+                DueDate = DateTime.UtcNow.AddDays(25),
+                Status = "Pending",
+                IsRecurring = false,
+                InvoiceNumber = "TV-2025-00789",
+                OCR = "123456789012345",
+                Bankgiro = "123-4567",
+                Payee = "Folktandvården Stockholm",
+                CategoryId = 26, // Tandvård
+                Notes = "Årlig kontroll plus lagning av en tand",
+                UserId = userId,
+                CreatedAt = DateTime.UtcNow
+            },
+            new Bill
+            {
+                BillId = 4,
+                Name = "Mobilabonnemang",
+                Description = "Telia Mobil 50 GB",
+                Amount = 349m,
+                Currency = "SEK",
+                IssueDate = DateTime.UtcNow.AddDays(-15),
+                DueDate = DateTime.UtcNow.AddDays(-5),
+                PaidDate = DateTime.UtcNow.AddDays(-3),
+                Status = "Paid",
+                IsRecurring = true,
+                RecurringFrequency = "Monthly",
+                PaymentMethod = "E-invoice",
+                InvoiceNumber = "TEL-2024-112233",
+                Payee = "Telia Sverige AB",
+                CategoryId = 18, // Bredband
+                Notes = "Betald i tid via e-faktura",
+                UserId = userId,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow.AddDays(-3)
+            },
+            new Bill
+            {
+                BillId = 5,
+                Name = "Bilförsäkring",
+                Description = "Helförsäkring Volvo V60",
+                Amount = 580m,
+                Currency = "SEK",
+                IssueDate = DateTime.UtcNow.AddDays(-30),
+                DueDate = DateTime.UtcNow.AddDays(-10),
+                PaidDate = DateTime.UtcNow.AddDays(-8),
+                Status = "Paid",
+                IsRecurring = true,
+                RecurringFrequency = "Monthly",
+                PaymentMethod = "Autogiro",
+                InvoiceNumber = "BF-2024-445566",
+                Payee = "Länsförsäkringar",
+                CategoryId = 2, // Transport
+                Notes = "Autogiro dras den 20:e varje månad",
+                UserId = userId,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow.AddDays(-8)
+            },
+            // New bills for reminder testing
+            new Bill
+            {
+                BillId = 6,
+                Name = "Hyra",
+                Description = "Månadshyra lägenhet",
+                Amount = 8500m,
+                Currency = "SEK",
+                IssueDate = DateTime.UtcNow.AddDays(-25),
+                DueDate = DateTime.UtcNow.AddDays(2),
+                Status = "Pending",
+                IsRecurring = true,
+                RecurringFrequency = "Monthly",
+                PaymentMethod = "Bankgiro",
+                InvoiceNumber = "HYRA-2025-11",
+                Bankgiro = "555-8888",
+                Payee = "AB Bostäder Stockholm",
+                CategoryId = 3, // Boende
+                Notes = "Hyra förfaller den 1:a varje månad",
+                UserId = userId,
+                CreatedAt = DateTime.UtcNow
+            },
+            new Bill
+            {
+                BillId = 7,
+                Name = "Netflix Premium",
+                Description = "Streaming-tjänst",
+                Amount = 139m,
+                Currency = "SEK",
+                IssueDate = DateTime.UtcNow.AddDays(-5),
+                DueDate = DateTime.UtcNow.AddDays(10),
+                Status = "Pending",
+                IsRecurring = true,
+                RecurringFrequency = "Monthly",
+                PaymentMethod = "Credit Card",
+                InvoiceNumber = "NFLX-2025-11-001",
+                Payee = "Netflix AB",
+                CategoryId = 15, // Nöje
+                Notes = "Automatisk kortbetalning",
+                UserId = userId,
+                CreatedAt = DateTime.UtcNow
+            },
+            new Bill
+            {
+                BillId = 8,
+                Name = "Interneträkning",
+                Description = "Bredband 1000/1000 Mbit",
+                Amount = 399m,
+                Currency = "SEK",
+                IssueDate = DateTime.UtcNow.AddDays(-12),
+                DueDate = DateTime.UtcNow.AddDays(-8),
+                Status = "Overdue",
+                IsRecurring = true,
+                RecurringFrequency = "Monthly",
+                PaymentMethod = "E-invoice",
+                InvoiceNumber = "INET-2025-10-789",
+                OCR = "987654321098765",
+                Payee = "Bahnhof AB",
+                CategoryId = 18, // Bredband
+                Notes = "FÖRSENAD! Betala omedelbart för att undvika avbrott",
+                UserId = userId,
+                CreatedAt = DateTime.UtcNow
+            },
+            new Bill
+            {
+                BillId = 9,
+                Name = "Spotify Family",
+                Description = "Musikstreaming familjeplan",
+                Amount = 179m,
+                Currency = "SEK",
+                IssueDate = DateTime.UtcNow.AddDays(-3),
+                DueDate = DateTime.UtcNow.AddDays(12),
+                Status = "Pending",
+                IsRecurring = true,
+                RecurringFrequency = "Monthly",
+                PaymentMethod = "Credit Card",
+                InvoiceNumber = "SPOT-2025-11-456",
+                Payee = "Spotify AB",
+                CategoryId = 15, // Nöje
+                Notes = "Familjeplan för 6 användare",
+                UserId = userId,
+                CreatedAt = DateTime.UtcNow
+            }
+        };
+
+        context.Bills.AddRange(bills);
+        context.SaveChanges();
+    }
+
+    private static void SeedBillReminders(PrivatekonomyContext context, string userId)
+    {
+        var billReminders = new List<BillReminder>
+        {
+            // Reminder 1: Normal reminder for electricity bill (Bill 1)
+            new BillReminder
+            {
+                BillReminderId = 1,
+                BillId = 1,
+                ReminderDate = DateTime.UtcNow.AddDays(-3),
+                IsSent = true,
+                SentDate = DateTime.UtcNow.AddDays(-3),
+                ReminderMethod = "Notification",
+                Message = "Elräkning på 1,450 kr förfaller om 13 dagar",
+                SnoozeUntil = null,
+                SnoozeCount = 0,
+                IsCompleted = false,
+                EscalationLevel = 0,
+                CreatedAt = DateTime.UtcNow.AddDays(-3)
+            },
+            
+            // Reminder 2: Snoozed once - Rent bill (Bill 6)
+            new BillReminder
+            {
+                BillReminderId = 2,
+                BillId = 6,
+                ReminderDate = DateTime.UtcNow.AddDays(-5),
+                IsSent = true,
+                SentDate = DateTime.UtcNow.AddDays(-5),
+                ReminderMethod = "Notification",
+                Message = "Hyra på 8,500 kr förfaller om 7 dagar",
+                SnoozeUntil = DateTime.UtcNow.AddDays(1),
+                SnoozeCount = 1,
+                IsCompleted = false,
+                EscalationLevel = 0,
+                LastFollowUpDate = null,
+                CreatedAt = DateTime.UtcNow.AddDays(-5)
+            },
+            
+            // Reminder 3: Snoozed multiple times (2 times) - Netflix (Bill 7)
+            new BillReminder
+            {
+                BillReminderId = 3,
+                BillId = 7,
+                ReminderDate = DateTime.UtcNow.AddDays(-10),
+                IsSent = true,
+                SentDate = DateTime.UtcNow.AddDays(-10),
+                ReminderMethod = "Notification",
+                Message = "Netflix Premium på 139 kr förfaller snart",
+                SnoozeUntil = DateTime.UtcNow.AddHours(6),
+                SnoozeCount = 2,
+                IsCompleted = false,
+                EscalationLevel = 0,
+                LastFollowUpDate = null,
+                CreatedAt = DateTime.UtcNow.AddDays(-10)
+            },
+            
+            // Reminder 4: Critical - Overdue internet bill with escalation level 3 (Bill 8)
+            new BillReminder
+            {
+                BillReminderId = 4,
+                BillId = 8,
+                ReminderDate = DateTime.UtcNow.AddDays(-15),
+                IsSent = true,
+                SentDate = DateTime.UtcNow.AddDays(-15),
+                ReminderMethod = "Notification",
+                Message = "⚠️ BRÅDSKANDE: Interneträkning på 399 kr förföll för 8 dagar sedan. Åtgärd krävs omedelbart!",
+                SnoozeUntil = null,
+                SnoozeCount = 2,
+                IsCompleted = false,
+                EscalationLevel = 3,
+                LastFollowUpDate = DateTime.UtcNow.AddHours(-12),
+                CreatedAt = DateTime.UtcNow.AddDays(-15)
+            },
+            
+            // Reminder 5: Escalation level 1 - 1 day overdue (Bill 1 - second reminder)
+            new BillReminder
+            {
+                BillReminderId = 5,
+                BillId = 1,
+                ReminderDate = DateTime.UtcNow.AddDays(-1),
+                IsSent = true,
+                SentDate = DateTime.UtcNow.AddDays(-1),
+                ReminderMethod = "Notification",
+                Message = "Påminnelse: Elräkning på 1,450 kr förfaller om 11 dagar",
+                SnoozeUntil = null,
+                SnoozeCount = 0,
+                IsCompleted = false,
+                EscalationLevel = 1,
+                LastFollowUpDate = DateTime.UtcNow.AddDays(-1),
+                CreatedAt = DateTime.UtcNow.AddDays(-1)
+            },
+            
+            // Reminder 6: Escalation level 2 - 3 days, high priority (Bill 6 - second reminder)
+            new BillReminder
+            {
+                BillReminderId = 6,
+                BillId = 6,
+                ReminderDate = DateTime.UtcNow.AddDays(-3),
+                IsSent = true,
+                SentDate = DateTime.UtcNow.AddDays(-3),
+                ReminderMethod = "Notification",
+                Message = "⚠️ BRÅDSKANDE: Hyra på 8,500 kr förfaller om 5 dagar",
+                SnoozeUntil = null,
+                SnoozeCount = 0,
+                IsCompleted = false,
+                EscalationLevel = 2,
+                LastFollowUpDate = DateTime.UtcNow.AddDays(-3),
+                CreatedAt = DateTime.UtcNow.AddDays(-3)
+            },
+            
+            // Reminder 7: Completed reminder (Bill 4 - paid mobile bill)
+            new BillReminder
+            {
+                BillReminderId = 7,
+                BillId = 4,
+                ReminderDate = DateTime.UtcNow.AddDays(-8),
+                IsSent = true,
+                SentDate = DateTime.UtcNow.AddDays(-8),
+                ReminderMethod = "Notification",
+                Message = "Mobilabonnemang på 349 kr förfaller snart",
+                SnoozeUntil = null,
+                SnoozeCount = 0,
+                IsCompleted = true,
+                CompletedDate = DateTime.UtcNow.AddDays(-3),
+                EscalationLevel = 0,
+                CreatedAt = DateTime.UtcNow.AddDays(-8)
+            },
+            
+            // Reminder 8: Snoozed 3+ times - should trigger warning (Bill 9 - Spotify)
+            new BillReminder
+            {
+                BillReminderId = 8,
+                BillId = 9,
+                ReminderDate = DateTime.UtcNow.AddDays(-12),
+                IsSent = true,
+                SentDate = DateTime.UtcNow.AddDays(-12),
+                ReminderMethod = "Notification",
+                Message = "Spotify Family på 179 kr förfaller snart (Snoozad 3 gånger)",
+                SnoozeUntil = DateTime.UtcNow.AddDays(2),
+                SnoozeCount = 3,
+                IsCompleted = false,
+                EscalationLevel = 1,
+                LastFollowUpDate = DateTime.UtcNow.AddDays(-2),
+                CreatedAt = DateTime.UtcNow.AddDays(-12)
+            },
+            
+            // Reminder 9: Recently sent, not yet actioned (Bill 2 - Home insurance)
+            new BillReminder
+            {
+                BillReminderId = 9,
+                BillId = 2,
+                ReminderDate = DateTime.UtcNow.AddHours(-6),
+                IsSent = true,
+                SentDate = DateTime.UtcNow.AddHours(-6),
+                ReminderMethod = "Notification",
+                Message = "Hemförsäkring på 349 kr förfaller om 5 dagar",
+                SnoozeUntil = null,
+                SnoozeCount = 0,
+                IsCompleted = false,
+                EscalationLevel = 0,
+                CreatedAt = DateTime.UtcNow.AddHours(-6)
+            }
+        };
+
+        context.BillReminders.AddRange(billReminders);
+        context.SaveChanges();
+    }
+
+    private static void SeedPensions(PrivatekonomyContext context, string userId)
+    {
+        var pensions = new List<Pension>
+        {
+            new Pension
+            {
+                PensionId = 1,
+                Name = "Tjänstepension ITP",
+                PensionType = "Tjänstepension",
+                Provider = "Alecta",
+                CurrentValue = 485000m,
+                TotalContributions = 380000m,
+                MonthlyContribution = 3500m,
+                ExpectedMonthlyPension = 12500m,
+                RetirementAge = 65,
+                StartDate = DateTime.UtcNow.AddYears(-10),
+                LastUpdated = DateTime.UtcNow.AddDays(-7),
+                AccountNumber = "ITP-123456",
+                Notes = "Premiebestämd tjänstepension via arbetsgivare",
+                UserId = userId,
+                CreatedAt = DateTime.UtcNow
+            },
+            new Pension
+            {
+                PensionId = 2,
+                Name = "Privat pensionssparande",
+                PensionType = "Privat pension",
+                Provider = "Avanza",
+                CurrentValue = 245000m,
+                TotalContributions = 200000m,
+                MonthlyContribution = 2000m,
+                ExpectedMonthlyPension = 5800m,
+                RetirementAge = 65,
+                StartDate = DateTime.UtcNow.AddYears(-7),
+                LastUpdated = DateTime.UtcNow.AddDays(-2),
+                AccountNumber = "PP-789012",
+                Notes = "Eget pensionssparande med fondförsäkring",
+                UserId = userId,
+                CreatedAt = DateTime.UtcNow
+            },
+            new Pension
+            {
+                PensionId = 3,
+                Name = "AP7 Såfa",
+                PensionType = "Allmän pension (AP7)",
+                Provider = "AP7",
+                CurrentValue = 125000m,
+                TotalContributions = 110000m,
+                ExpectedMonthlyPension = 8500m,
+                RetirementAge = 65,
+                StartDate = DateTime.UtcNow.AddYears(-12),
+                LastUpdated = DateTime.UtcNow.AddMonths(-1),
+                Notes = "Premiepension via AP7 - statlig allmän pension",
+                UserId = userId,
+                CreatedAt = DateTime.UtcNow
+            }
+        };
+
+        context.Pensions.AddRange(pensions);
+        context.SaveChanges();
+    }
+
+    private static void SeedDividends(PrivatekonomyContext context, string userId)
+    {
+        var dividends = new List<Dividend>
+        {
+            // Dividends from Volvo B (InvestmentId = 1)
+            new Dividend
+            {
+                DividendId = 1,
+                InvestmentId = 1,
+                PaymentDate = DateTime.UtcNow.AddMonths(-2),
+                ExDividendDate = DateTime.UtcNow.AddMonths(-2).AddDays(-5),
+                AmountPerShare = 5.50m,
+                TotalAmount = 550m, // 100 shares * 5.50
+                SharesHeld = 100,
+                Currency = "SEK",
+                TaxWithheld = 165m, // 30% tax
+                IsReinvested = false,
+                Notes = "Ordinarie utdelning Q4 2024",
+                UserId = userId,
+                CreatedAt = DateTime.UtcNow
+            },
+            // Dividend from SEB A (InvestmentId = 2)
+            new Dividend
+            {
+                DividendId = 2,
+                InvestmentId = 2,
+                PaymentDate = DateTime.UtcNow.AddMonths(-3),
+                ExDividendDate = DateTime.UtcNow.AddMonths(-3).AddDays(-7),
+                AmountPerShare = 7.25m,
+                TotalAmount = 362.50m, // 50 shares * 7.25
+                SharesHeld = 50,
+                Currency = "SEK",
+                TaxWithheld = 108.75m, // 30% tax
+                IsReinvested = false,
+                Notes = "Ordinarie utdelning 2024",
+                UserId = userId,
+                CreatedAt = DateTime.UtcNow
+            },
+            // Dividend from Investor B (InvestmentId = 3)
+            new Dividend
+            {
+                DividendId = 3,
+                InvestmentId = 3,
+                PaymentDate = DateTime.UtcNow.AddMonths(-1),
+                ExDividendDate = DateTime.UtcNow.AddMonths(-1).AddDays(-10),
+                AmountPerShare = 12.50m,
+                TotalAmount = 937.50m, // 75 shares * 12.50
+                SharesHeld = 75,
+                Currency = "SEK",
+                TaxWithheld = 281.25m, // 30% tax
+                IsReinvested = false,
+                Notes = "Ordinarie utdelning 2025",
+                UserId = userId,
+                CreatedAt = DateTime.UtcNow
+            },
+            // Dividend from Ericsson B (InvestmentId = 7)
+            new Dividend
+            {
+                DividendId = 4,
+                InvestmentId = 7,
+                PaymentDate = DateTime.UtcNow.AddDays(-15),
+                ExDividendDate = DateTime.UtcNow.AddDays(-20),
+                AmountPerShare = 2.80m,
+                TotalAmount = 700m, // 250 shares * 2.80
+                SharesHeld = 250,
+                Currency = "SEK",
+                TaxWithheld = 210m, // 30% tax
+                IsReinvested = false,
+                Notes = "Delårsutdelning Q1 2025",
+                UserId = userId,
+                CreatedAt = DateTime.UtcNow
+            }
+        };
+
+        context.Dividends.AddRange(dividends);
+        context.SaveChanges();
+    }
+
+    private static void SeedInvestmentTransactions(PrivatekonomyContext context, string userId)
+    {
+        var transactions = new List<InvestmentTransaction>
+        {
+            // Purchase of Volvo B
+            new InvestmentTransaction
+            {
+                InvestmentTransactionId = 1,
+                InvestmentId = 1,
+                TransactionType = "Buy",
+                Quantity = 100m,
+                PricePerShare = 245.50m,
+                TotalAmount = 24550m,
+                Fees = 99m,
+                Currency = "SEK",
+                TransactionDate = DateTime.UtcNow.AddMonths(-6),
+                Notes = "Initial köp av Volvo B aktier",
+                UserId = userId,
+                CreatedAt = DateTime.UtcNow
+            },
+            // Purchase of SEB A
+            new InvestmentTransaction
+            {
+                InvestmentTransactionId = 2,
+                InvestmentId = 2,
+                TransactionType = "Buy",
+                Quantity = 50m,
+                PricePerShare = 152.30m,
+                TotalAmount = 7615m,
+                Fees = 99m,
+                Currency = "SEK",
+                TransactionDate = DateTime.UtcNow.AddMonths(-8),
+                Notes = "Köp av SEB A aktier",
+                UserId = userId,
+                CreatedAt = DateTime.UtcNow
+            },
+            // Purchase of Investor B
+            new InvestmentTransaction
+            {
+                InvestmentTransactionId = 3,
+                InvestmentId = 3,
+                TransactionType = "Buy",
+                Quantity = 75m,
+                PricePerShare = 289.00m,
+                TotalAmount = 21675m,
+                Fees = 99m,
+                Currency = "SEK",
+                TransactionDate = DateTime.UtcNow.AddMonths(-4),
+                Notes = "Köp av Investor B",
+                UserId = userId,
+                CreatedAt = DateTime.UtcNow
+            },
+            // Additional purchase of Ericsson B
+            new InvestmentTransaction
+            {
+                InvestmentTransactionId = 4,
+                InvestmentId = 7,
+                TransactionType = "Buy",
+                Quantity = 150m,
+                PricePerShare = 58.20m,
+                TotalAmount = 8730m,
+                Fees = 99m,
+                Currency = "SEK",
+                TransactionDate = DateTime.UtcNow.AddMonths(-5),
+                Notes = "Första köpet av Ericsson B",
+                UserId = userId,
+                CreatedAt = DateTime.UtcNow
+            },
+            new InvestmentTransaction
+            {
+                InvestmentTransactionId = 5,
+                InvestmentId = 7,
+                TransactionType = "Buy",
+                Quantity = 100m,
+                PricePerShare = 58.20m,
+                TotalAmount = 5820m,
+                Fees = 99m,
+                Currency = "SEK",
+                TransactionDate = DateTime.UtcNow.AddMonths(-3),
+                Notes = "Påköp av Ericsson B",
+                UserId = userId,
+                CreatedAt = DateTime.UtcNow
+            },
+            // Sale of some Nordea shares (showing a loss)
+            new InvestmentTransaction
+            {
+                InvestmentTransactionId = 6,
+                InvestmentId = 8,
+                TransactionType = "Sell",
+                Quantity = 20m,
+                PricePerShare = 118.90m,
+                TotalAmount = 2378m,
+                Fees = 99m,
+                Currency = "SEK",
+                TransactionDate = DateTime.UtcNow.AddDays(-10),
+                Notes = "Sålde 20 aktier med förlust",
+                UserId = userId,
+                CreatedAt = DateTime.UtcNow
+            }
+        };
+
+        context.InvestmentTransactions.AddRange(transactions);
+        context.SaveChanges();
+    }
+
+    private static void SeedSavingsChallenges(PrivatekonomyContext context, string userId)
+    {
+        var challenges = new List<SavingsChallenge>
+        {
+            new SavingsChallenge
+            {
+                SavingsChallengeId = 1,
+                Name = "Ingen restaurang i januari",
+                Description = "Spara pengar genom att äta hemlagad mat hela januari",
+                Type = ChallengeType.NoRestaurant,
+                TargetAmount = 3000m,
+                CurrentAmount = 2450m,
+                DurationDays = 31,
+                StartDate = DateTime.UtcNow.AddDays(-25),
+                EndDate = DateTime.UtcNow.AddDays(6),
+                Status = ChallengeStatus.Active,
+                CurrentStreak = 25,
+                BestStreak = 25,
+                Icon = "🍽️",
+                Difficulty = DifficultyLevel.Medium,
+                Category = ChallengeCategory.Health,
+                EstimatedSavingsMin = 2000m,
+                EstimatedSavingsMax = 4000m,
+                UserId = userId,
+                CreatedAt = DateTime.UtcNow
+            },
+            new SavingsChallenge
+            {
+                SavingsChallengeId = 2,
+                Name = "Spara 100 kr per dag",
+                Description = "Sätt undan 100 kronor varje dag i 30 dagar",
+                Type = ChallengeType.SaveDaily,
+                TargetAmount = 3000m,
+                CurrentAmount = 1800m,
+                DurationDays = 30,
+                StartDate = DateTime.UtcNow.AddDays(-18),
+                EndDate = DateTime.UtcNow.AddDays(12),
+                Status = ChallengeStatus.Active,
+                CurrentStreak = 18,
+                BestStreak = 18,
+                Icon = "💰",
+                Difficulty = DifficultyLevel.Easy,
+                Category = ChallengeCategory.Individual,
+                EstimatedSavingsMin = 3000m,
+                EstimatedSavingsMax = 3000m,
+                UserId = userId,
+                CreatedAt = DateTime.UtcNow
+            },
+            new SavingsChallenge
+            {
+                SavingsChallengeId = 3,
+                Name = "Ta med egen lunch",
+                Description = "Ingen lunch ute - matlåda varje dag i 2 veckor",
+                Type = ChallengeType.LunchBox,
+                TargetAmount = 1400m,
+                CurrentAmount = 1400m,
+                DurationDays = 14,
+                StartDate = DateTime.UtcNow.AddDays(-14),
+                EndDate = DateTime.UtcNow,
+                Status = ChallengeStatus.Completed,
+                CurrentStreak = 14,
+                BestStreak = 14,
+                Icon = "🍱",
+                Difficulty = DifficultyLevel.Medium,
+                Category = ChallengeCategory.Health,
+                EstimatedSavingsMin = 1000m,
+                EstimatedSavingsMax = 1500m,
+                UserId = userId,
+                CreatedAt = DateTime.UtcNow
+            },
+            new SavingsChallenge
+            {
+                SavingsChallengeId = 4,
+                Name = "Alkoholfri månad",
+                Description = "Ingen alkohol under hela februari - spara pengar och må bättre",
+                Type = ChallengeType.AlcoholFree,
+                TargetAmount = 2500m,
+                CurrentAmount = 0m,
+                DurationDays = 28,
+                StartDate = DateTime.UtcNow.AddDays(-5), // Started 5 days ago
+                EndDate = DateTime.UtcNow.AddDays(23), // 23 days remaining
+                Status = ChallengeStatus.Active,
+                CurrentStreak = 5,
+                BestStreak = 5,
+                Icon = "🍷",
+                Difficulty = DifficultyLevel.Hard,
+                Category = ChallengeCategory.Health,
+                EstimatedSavingsMin = 1000m,
+                EstimatedSavingsMax = 5000m,
+                UserId = userId,
+                CreatedAt = DateTime.UtcNow
+            }
+        };
+
+        var progressEntries = new List<SavingsChallengeProgress>
+        {
+            // Progress for "Ingen restaurang i januari" (25 days completed)
+            new SavingsChallengeProgress
+            {
+                SavingsChallengeProgressId = 1,
+                SavingsChallengeId = 1,
+                Date = DateTime.UtcNow.AddDays(-25),
+                Completed = true,
+                AmountSaved = 100m,
+                Notes = "Första dagen lyckad!",
+                CreatedAt = DateTime.UtcNow
+            },
+            new SavingsChallengeProgress
+            {
+                SavingsChallengeProgressId = 2,
+                SavingsChallengeId = 1,
+                Date = DateTime.UtcNow.AddDays(-16),
+                Completed = true,
+                AmountSaved = 95m,
+                Notes = "10 dagar klarat",
+                CreatedAt = DateTime.UtcNow
+            },
+            new SavingsChallengeProgress
+            {
+                SavingsChallengeProgressId = 3,
+                SavingsChallengeId = 1,
+                Date = DateTime.UtcNow.AddDays(-6),
+                Completed = true,
+                AmountSaved = 110m,
+                Notes = "20 dagar - går bra!",
+                CreatedAt = DateTime.UtcNow
+            },
+            // Progress for "Spara 100 kr per dag" (18 days completed)
+            new SavingsChallengeProgress
+            {
+                SavingsChallengeProgressId = 4,
+                SavingsChallengeId = 2,
+                Date = DateTime.UtcNow.AddDays(-18),
+                Completed = true,
+                AmountSaved = 100m,
+                CreatedAt = DateTime.UtcNow
+            },
+            new SavingsChallengeProgress
+            {
+                SavingsChallengeProgressId = 5,
+                SavingsChallengeId = 2,
+                Date = DateTime.UtcNow.AddDays(-12),
+                Completed = true,
+                AmountSaved = 100m,
+                Notes = "En vecka klar",
+                CreatedAt = DateTime.UtcNow
+            }
+        };
+
+        context.SavingsChallenges.AddRange(challenges);
+        context.SavingsChallengeProgress.AddRange(progressEntries);
+        context.SaveChanges();
+    }
+
+    private static void SeedCurrencyAccounts(PrivatekonomyContext context, string userId)
+    {
+        var currencyAccounts = new List<CurrencyAccount>
+        {
+            new CurrencyAccount
+            {
+                CurrencyAccountId = 1,
+                Currency = "USD",
+                Balance = 5000m,
+                ExchangeRate = 10.45m, // SEK per USD
+                AccountNumber = "USD-001234",
+                Description = "Sparkonto i USD för USA-resor",
+                UserId = userId,
+                CreatedAt = DateTime.UtcNow
+            },
+            new CurrencyAccount
+            {
+                CurrencyAccountId = 2,
+                Currency = "EUR",
+                Balance = 2500m,
+                ExchangeRate = 11.32m, // SEK per EUR
+                AccountNumber = "EUR-005678",
+                Description = "Euro-konto för semesterresor i Europa",
+                UserId = userId,
+                CreatedAt = DateTime.UtcNow
+            },
+            new CurrencyAccount
+            {
+                CurrencyAccountId = 3,
+                Currency = "GBP",
+                Balance = 1000m,
+                ExchangeRate = 13.15m, // SEK per GBP
+                AccountNumber = "GBP-009012",
+                Description = "Brittiska pund från tidigare resa",
+                UserId = userId,
+                CreatedAt = DateTime.UtcNow
+            }
+        };
+
+        context.CurrencyAccounts.AddRange(currencyAccounts);
+        context.SaveChanges();
+    }
+
+    private static void SeedLifeTimelineMilestones(PrivatekonomyContext context, string userId)
+    {
+        var milestones = new List<LifeTimelineMilestone>
+        {
+            new LifeTimelineMilestone
+            {
+                LifeTimelineMilestoneId = 1,
+                Name = "Köpa första bostaden",
+                Description = "Spara ihop till kontantinsats för en bostadsrätt i Stockholm",
+                MilestoneType = "Housing",
+                PlannedDate = DateTime.UtcNow.AddYears(2),
+                EstimatedCost = 300000m, // 15% av 2 miljoner
+                RequiredMonthlySavings = 12500m,
+                ProgressPercentage = 40m,
+                CurrentSavings = 120000m,
+                Priority = 1,
+                IsCompleted = false,
+                Notes = "Siktar på en 2:a på Södermalm eller liknande område",
+                UserId = userId,
+                CreatedAt = DateTime.UtcNow
+            },
+            new LifeTimelineMilestone
+            {
+                LifeTimelineMilestoneId = 2,
+                Name = "Studera vidare - Masterutbildning",
+                Description = "Spara för masterutbildning utomlands",
+                MilestoneType = "Education",
+                PlannedDate = DateTime.UtcNow.AddYears(1),
+                EstimatedCost = 150000m,
+                RequiredMonthlySavings = 12500m,
+                ProgressPercentage = 20m,
+                CurrentSavings = 30000m,
+                Priority = 2,
+                IsCompleted = false,
+                Notes = "Överväger universitet i Storbritannien eller Nederländerna",
+                UserId = userId,
+                CreatedAt = DateTime.UtcNow
+            },
+            new LifeTimelineMilestone
+            {
+                LifeTimelineMilestoneId = 3,
+                Name = "Pension vid 65",
+                Description = "Spara för en bekväm pension",
+                MilestoneType = "Retirement",
+                PlannedDate = DateTime.UtcNow.AddYears(30),
+                EstimatedCost = 5000000m,
+                RequiredMonthlySavings = 5500m,
+                ProgressPercentage = 17m,
+                CurrentSavings = 855000m, // Sum of pensions
+                Priority = 1,
+                IsCompleted = false,
+                Notes = "Kombinerar tjänstepension, privat pensionssparande och AP7",
+                UserId = userId,
+                CreatedAt = DateTime.UtcNow
+            },
+            new LifeTimelineMilestone
+            {
+                LifeTimelineMilestoneId = 4,
+                Name = "Stor utlandsresa - Japan & Thailand",
+                Description = "Sparar till en drömresa i Asien i 4 veckor",
+                MilestoneType = "Travel",
+                PlannedDate = DateTime.UtcNow.AddMonths(18),
+                EstimatedCost = 75000m,
+                RequiredMonthlySavings = 4200m,
+                ProgressPercentage = 56m,
+                CurrentSavings = 42000m,
+                Priority = 2,
+                IsCompleted = false,
+                Notes = "Tokyo, Kyoto, Bangkok och några thailändska öar",
+                UserId = userId,
+                CreatedAt = DateTime.UtcNow
+            },
+            new LifeTimelineMilestone
+            {
+                LifeTimelineMilestoneId = 5,
+                Name = "Ny bil - Elbil",
+                Description = "Spara till en elbil när nuvarande bil blir för gammal",
+                MilestoneType = "Vehicle",
+                PlannedDate = DateTime.UtcNow.AddYears(3),
+                EstimatedCost = 450000m,
+                RequiredMonthlySavings = 12500m,
+                ProgressPercentage = 28m,
+                CurrentSavings = 125000m,
+                Priority = 3,
+                IsCompleted = false,
+                Notes = "Funderar på Tesla Model 3 eller Polestar 2",
+                UserId = userId,
+                CreatedAt = DateTime.UtcNow
+            }
+        };
+
+        context.LifeTimelineMilestones.AddRange(milestones);
+        context.SaveChanges();
+    }
+
+    private static void SeedNotifications(PrivatekonomyContext context, string userId)
+    {
+        var notifications = new List<Notification>
+        {
+            // Notification 1: Normal reminder - Electricity bill (BillReminder 1)
+            new Notification
+            {
+                NotificationId = 1,
+                UserId = userId,
+                Type = SystemNotificationType.BillDue,
+                Title = "Påminnelse: Betala Elräkning",
+                Message = "Räkning på 1,450 kr förfaller om 13 dagar",
+                IsRead = false,
+                Channel = NotificationChannel.InApp,
+                Priority = NotificationPriority.Normal,
+                ActionUrl = "/economy/bills/1",
+                BillReminderId = 1,
+                SentAt = DateTime.UtcNow.AddDays(-3),
+                CreatedAt = DateTime.UtcNow.AddDays(-3)
+            },
+            
+            // Notification 2: Snoozed - Rent bill (BillReminder 2)
+            new Notification
+            {
+                NotificationId = 2,
+                UserId = userId,
+                Type = SystemNotificationType.BillDue,
+                Title = "Påminnelse: Hyra",
+                Message = "Räkning på 8,500 kr förfaller om 2 dagar",
+                IsRead = false,
+                Channel = NotificationChannel.InApp,
+                Priority = NotificationPriority.High,
+                ActionUrl = "/economy/bills/6",
+                BillReminderId = 2,
+                SnoozeUntil = DateTime.UtcNow.AddDays(1),
+                SnoozeCount = 1,
+                SentAt = DateTime.UtcNow.AddDays(-5),
+                CreatedAt = DateTime.UtcNow.AddDays(-5)
+            },
+            
+            // Notification 3: Snoozed 2 times - Netflix (BillReminder 3)
+            new Notification
+            {
+                NotificationId = 3,
+                UserId = userId,
+                Type = SystemNotificationType.BillDue,
+                Title = "Påminnelse: Netflix Premium",
+                Message = "Räkning på 139 kr förfaller 2025-11-10",
+                IsRead = false,
+                Channel = NotificationChannel.InApp,
+                Priority = NotificationPriority.Normal,
+                ActionUrl = "/economy/bills/7",
+                BillReminderId = 3,
+                SnoozeUntil = DateTime.UtcNow.AddHours(6),
+                SnoozeCount = 2,
+                SentAt = DateTime.UtcNow.AddDays(-10),
+                CreatedAt = DateTime.UtcNow.AddDays(-10)
+            },
+            
+            // Notification 4: Critical overdue - Internet bill (BillReminder 4)
+            new Notification
+            {
+                NotificationId = 4,
+                UserId = userId,
+                Type = SystemNotificationType.BillOverdue,
+                Title = "⚠️ BRÅDSKANDE: Betala Interneträkning",
+                Message = "Räkningen på 399 kr förföll för 8 dagar sedan. Åtgärd krävs omedelbart! (Snoozad 2 gånger)",
+                IsRead = false,
+                Channel = NotificationChannel.InApp,
+                Priority = NotificationPriority.Critical,
+                ActionUrl = "/economy/bills/8",
+                BillReminderId = 4,
+                SnoozeCount = 2,
+                SentAt = DateTime.UtcNow.AddHours(-12),
+                CreatedAt = DateTime.UtcNow.AddDays(-15)
+            },
+            
+            // Notification 5: Escalation level 2 - Rent (BillReminder 6)
+            new Notification
+            {
+                NotificationId = 5,
+                UserId = userId,
+                Type = SystemNotificationType.BillDue,
+                Title = "⚠️ BRÅDSKANDE: Hyra",
+                Message = "Räkning på 8,500 kr förfaller om 5 dagar",
+                IsRead = false,
+                Channel = NotificationChannel.InApp,
+                Priority = NotificationPriority.High,
+                ActionUrl = "/economy/bills/6",
+                BillReminderId = 6,
+                SentAt = DateTime.UtcNow.AddDays(-3),
+                CreatedAt = DateTime.UtcNow.AddDays(-3)
+            },
+            
+            // Notification 6: Completed/Read - Mobile bill (BillReminder 7)
+            new Notification
+            {
+                NotificationId = 6,
+                UserId = userId,
+                Type = SystemNotificationType.BillDue,
+                Title = "Påminnelse: Mobilabonnemang",
+                Message = "Räkning på 349 kr förfaller snart",
+                IsRead = true,
+                Channel = NotificationChannel.InApp,
+                Priority = NotificationPriority.Normal,
+                ActionUrl = "/economy/bills/4",
+                BillReminderId = 7,
+                ReadAt = DateTime.UtcNow.AddDays(-3),
+                SentAt = DateTime.UtcNow.AddDays(-8),
+                CreatedAt = DateTime.UtcNow.AddDays(-8)
+            },
+            
+            // Notification 7: Warning - Snoozed 3 times - Spotify (BillReminder 8)
+            new Notification
+            {
+                NotificationId = 7,
+                UserId = userId,
+                Type = SystemNotificationType.BillDue,
+                Title = "Påminnelse: Spotify Family",
+                Message = "Räkning på 179 kr förfaller 2025-11-17 (Snoozad 3 gånger)",
+                IsRead = false,
+                Channel = NotificationChannel.InApp,
+                Priority = NotificationPriority.High,
+                ActionUrl = "/economy/bills/9",
+                BillReminderId = 8,
+                SnoozeUntil = DateTime.UtcNow.AddDays(2),
+                SnoozeCount = 3,
+                SentAt = DateTime.UtcNow.AddDays(-2),
+                CreatedAt = DateTime.UtcNow.AddDays(-12)
+            },
+            
+            // Notification 8: Recent - Home insurance (BillReminder 9)
+            new Notification
+            {
+                NotificationId = 8,
+                UserId = userId,
+                Type = SystemNotificationType.BillDue,
+                Title = "Påminnelse: Hemförsäkring",
+                Message = "Räkning på 349 kr förfaller om 5 dagar",
+                IsRead = false,
+                Channel = NotificationChannel.InApp,
+                Priority = NotificationPriority.Normal,
+                ActionUrl = "/economy/bills/2",
+                BillReminderId = 9,
+                SentAt = DateTime.UtcNow.AddHours(-6),
+                CreatedAt = DateTime.UtcNow.AddHours(-6)
+            },
+            
+            // Notification 9: Goal achieved (not bill related)
+            new Notification
+            {
+                NotificationId = 9,
+                UserId = userId,
+                Type = SystemNotificationType.GoalAchieved,
+                Title = "Grattis! Sparmål uppnått",
+                Message = "Du har nått ditt sparmål 'Ny cykel' på 15 000 kr!",
+                IsRead = false,
+                Channel = NotificationChannel.InApp,
+                Priority = NotificationPriority.Normal,
+                ActionUrl = "/savings/goals",
+                SentAt = DateTime.UtcNow.AddHours(-5),
+                CreatedAt = DateTime.UtcNow.AddHours(-5)
+            },
+            
+            // Notification 10: Subscription renewal (not bill related)
+            new Notification
+            {
+                NotificationId = 10,
+                UserId = userId,
+                Type = SystemNotificationType.SubscriptionRenewal,
+                Title = "Prenumeration förnyas snart",
+                Message = "Din Spotify Premium Family-prenumeration förnyas om 7 dagar (179 kr)",
+                IsRead = true,
+                Channel = NotificationChannel.InApp,
+                Priority = NotificationPriority.Low,
+                ActionUrl = "/economy/subscriptions",
+                ReadAt = DateTime.UtcNow.AddDays(-2),
+                SentAt = DateTime.UtcNow.AddDays(-3),
+                CreatedAt = DateTime.UtcNow.AddDays(-3)
+            },
+            
+            // Notification 11: Budget warning (not bill related)
+            new Notification
+            {
+                NotificationId = 11,
+                UserId = userId,
+                Type = SystemNotificationType.BudgetWarning,
+                Title = "Budgetvarning",
+                Message = "Du har använt 85% av din budget för 'Mat & Dryck' denna månad",
+                IsRead = false,
+                Channel = NotificationChannel.InApp,
+                Priority = NotificationPriority.High,
+                ActionUrl = "/economy/budgets",
+                SentAt = DateTime.UtcNow.AddHours(-12),
+                CreatedAt = DateTime.UtcNow.AddHours(-12)
+            }
+        };
+
+        context.Notifications.AddRange(notifications);
         context.SaveChanges();
     }
 }

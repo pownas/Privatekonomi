@@ -37,5 +37,7 @@ public enum BudgetTemplateType
     Custom = 0,
     ZeroBased = 1,
     FiftyThirtyTwenty = 2,
-    Envelope = 3
+    Envelope = 3,
+    SwedishFamily = 4,      // Swedish household budget for families (Länsförsäkringar style)
+    SwedishSingle = 5       // Swedish household budget for singles (Länsförsäkringar style)
 }

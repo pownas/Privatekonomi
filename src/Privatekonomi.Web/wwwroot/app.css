@@ -8,13 +8,21 @@
     --font-weight-semibold: 600;
     --font-weight-bold: 700;
     
-    /* Spacing Scale */
+    /* Spacing Scale - Spacious (Default) */
     --spacing-xs: 0.25rem;
     --spacing-sm: 0.5rem;
     --spacing-md: 1rem;
     --spacing-lg: 1.5rem;
     --spacing-xl: 2rem;
     --spacing-2xl: 3rem;
+    
+    /* View Density - Spacious (Default) */
+    --view-density-card-padding: 1rem;
+    --view-density-section-padding: 1.5rem;
+    --view-density-item-spacing: 1rem;
+    --view-density-table-row-height: auto;
+    --view-density-button-padding: 10px 16px;
+    --view-density-content-gap: 1.5rem;
     
     /* Border Radius */
     --radius-sm: 0.25rem;
@@ -32,6 +40,26 @@
     --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
     --transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
     --transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Compact View Density Mode */
+.view-density-compact {
+    --view-density-card-padding: 0.5rem;
+    --view-density-section-padding: 0.75rem;
+    --view-density-item-spacing: 0.5rem;
+    --view-density-table-row-height: auto;
+    --view-density-button-padding: 6px 12px;
+    --view-density-content-gap: 0.75rem;
+}
+
+/* Spacious View Density Mode (explicitly defined for clarity) */
+.view-density-spacious {
+    --view-density-card-padding: 1rem;
+    --view-density-section-padding: 1.5rem;
+    --view-density-item-spacing: 1rem;
+    --view-density-table-row-height: auto;
+    --view-density-button-padding: 10px 16px;
+    --view-density-content-gap: 1.5rem;
 }
 
 html, body {
@@ -109,7 +137,8 @@ a:hover, .btn-link:hover {
 
 /* Fix for main content to prevent overlap with MudAppBar */
 .mud-main-content {
-    padding-top: 80px !important;
+    padding-top: 16px !important;
+    margin-top: 64px !important;
 }
 
 h1:focus {
@@ -240,22 +269,6 @@ h1:focus {
     box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
-/* Navigation Menu */
-.mud-nav-link {
-    border-radius: var(--radius-md);
-    margin: var(--spacing-xs) var(--spacing-sm);
-    transition: all var(--transition-fast);
-    font-weight: var(--font-weight-medium);
-}
-
-.mud-nav-link.active {
-    font-weight: var(--font-weight-semibold);
-}
-
-.mud-nav-link:hover {
-    transform: translateX(2px);
-}
-
 /* Progress Indicators */
 .mud-progress-circular,
 .mud-progress-linear {
@@ -305,6 +318,87 @@ html {
 
 .mud-theme-dark .gradient-header {
     background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
+}
+
+/* ============================================
+   View Density Styles - Apply CSS Variables
+   ============================================ */
+
+/* Apply view density to cards */
+.mud-paper.pa-4 {
+    padding: var(--view-density-card-padding) !important;
+}
+
+/* Apply view density to main content sections - preserve padding-top for AppBar offset */
+.mud-main-content.pa-3,
+.mud-main-content.pa-md-6 {
+    padding-left: var(--view-density-section-padding) !important;
+    padding-right: var(--view-density-section-padding) !important;
+    padding-bottom: var(--view-density-section-padding) !important;
+    padding-top: 80px !important; /* Must maintain for AppBar offset */
+}
+
+/* Apply view density to content gaps and item spacing */
+.d-flex.gap-2,
+.d-flex.gap-4 {
+    gap: var(--view-density-item-spacing) !important;
+}
+
+/* Apply view density to buttons */
+.mud-button-root {
+    padding: var(--view-density-button-padding);
+}
+
+/* Apply view density to table cells */
+.mud-table-cell {
+    padding: var(--view-density-card-padding);
+}
+
+/* Apply view density to list items */
+.mud-list-item {
+    padding-top: var(--view-density-card-padding);
+    padding-bottom: var(--view-density-card-padding);
+}
+
+/* Apply view density to grid spacing */
+.mud-grid.spacing-2,
+.mud-grid.spacing-4 {
+    gap: var(--view-density-item-spacing) !important;
+}
+
+/* Apply view density to expansion panel content */
+.mud-expand-panel-content {
+    padding: var(--view-density-card-padding);
+}
+
+/* Apply view density to dialog content */
+.mud-dialog-content {
+    padding: var(--view-density-section-padding);
+}
+
+/* Apply view density to form field spacing */
+.mud-input-control {
+    margin-bottom: var(--view-density-item-spacing);
+}
+
+/* Compact mode - reduce margins between components */
+.view-density-compact .mb-2,
+.view-density-compact .mb-3,
+.view-density-compact .mb-4 {
+    margin-bottom: 0.5rem !important;
+}
+
+.view-density-compact .mt-2,
+.view-density-compact .mt-3,
+.view-density-compact .mt-4 {
+    margin-top: 0.5rem !important;
+}
+
+.view-density-compact .my-2,
+.view-density-compact .my-3,
+.view-density-compact .my-4 {
+    margin-top: 0.5rem !important;
+    margin-bottom: 0.5rem !important;
 }
 
 /* ============================================

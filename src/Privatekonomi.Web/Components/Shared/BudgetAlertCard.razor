@@ -1,0 +1,115 @@
+@using Privatekonomi.Core.Models
+@inject IBudgetAlertService BudgetAlertService
+@inject ISnackbar Snackbar
+
+@if (Alert != null && BudgetCategory != null)
+{
+    var severity = Alert.ThresholdPercentage >= 100m ? Severity.Error :
+                   Alert.ThresholdPercentage >= 90m ? Severity.Warning :
+                   Severity.Info;
+    
+    var color = Alert.ThresholdPercentage >= 100m ? Color.Error :
+                Alert.ThresholdPercentage >= 90m ? Color.Warning :
+                Color.Info;
+
+    <MudAlert Severity="@severity" 
+              Icon="@Icons.Material.Filled.Warning" 
+              Class="mb-3"
+              CloseIconClicked="@(() => AcknowledgeAlert())">
+        <div>
+            <MudText Typo="Typo.h6" Class="mb-2">
+                🚨 Budgetvarning: @(BudgetCategory.Category?.Name ?? "Okänd kategori")
+            </MudText>
+            
+            <MudText Typo="Typo.body2" Class="mb-2">
+                Du har använt <strong>@Alert.SpentAmount.ToString("N0") kr</strong> av 
+                <strong>@Alert.PlannedAmount.ToString("N0") kr</strong> 
+                (<strong>@Alert.CurrentPercentage.ToString("F0")%</strong>)
+            </MudText>
+            
+            <MudProgressLinear Color="@color" 
+                             Size="Size.Medium" 
+                             Value="@((double)Alert.CurrentPercentage)" 
+                             Class="mb-2" />
+            
+            @{
+                var remaining = Alert.PlannedAmount - Alert.SpentAmount;
+                var budget = BudgetCategory.Budget;
+                var daysRemaining = budget != null ? (budget.EndDate - DateTime.Now).Days : 0;
+            }
+            
+            <MudText Typo="Typo.body2" Class="mb-2">
+                Återstående: <strong>@remaining.ToString("N0") kr</strong> för 
+                <strong>@daysRemaining dagar</strong>
+            </MudText>
+            
+            @if (Alert.ForecastDaysUntilExceeded.HasValue && Alert.ForecastDaysUntilExceeded.Value < daysRemaining)
+            {
+                <MudAlert Severity="Severity.Warning" Dense="true" Class="mt-2">
+                    <MudText Typo="Typo.body2">
+                        <strong>Prognos:</strong> Budget överskrids om 
+                        <strong>@Alert.ForecastDaysUntilExceeded.Value dagar</strong> 
+                        i nuvarande takt (@Alert.DailyRate.ToString("F0") kr/dag)
+                    </MudText>
+                </MudAlert>
+            }
+            
+            <div class="d-flex gap-2 mt-3">
+                @if (OnViewDetails.HasDelegate)
+                {
+                    <MudButton Variant="Variant.Outlined" 
+                             Size="Size.Small"
+                             OnClick="@OnViewDetails">
+                        Visa detaljer
+                    </MudButton>
+                }
+                
+                @if (OnAdjustBudget.HasDelegate)
+                {
+                    <MudButton Variant="Variant.Outlined" 
+                             Size="Size.Small"
+                             OnClick="@OnAdjustBudget">
+                        Justera budget
+                    </MudButton>
+                }
+            </div>
+        </div>
+    </MudAlert>
+}
+
+@code {
+    [Parameter]
+    public BudgetAlert? Alert { get; set; }
+
+    [Parameter]
+    public BudgetCategory? BudgetCategory { get; set; }
+
+    [Parameter]
+    public EventCallback OnViewDetails { get; set; }
+
+    [Parameter]
+    public EventCallback OnAdjustBudget { get; set; }
+
+    [Parameter]
+    public EventCallback OnAlertAcknowledged { get; set; }
+
+    private async Task AcknowledgeAlert()
+    {
+        if (Alert == null) return;
+
+        try
+        {
+            await BudgetAlertService.AcknowledgeAlertAsync(Alert.BudgetAlertId);
+            Snackbar.Add("Varning bekräftad", Severity.Success);
+            
+            if (OnAlertAcknowledged.HasDelegate)
+            {
+                await OnAlertAcknowledged.InvokeAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Kunde inte bekräfta varning: {ex.Message}", Severity.Error);
+        }
+    }
+}

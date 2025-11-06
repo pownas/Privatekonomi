@@ -53,4 +53,29 @@ public interface INotificationService
     /// Send digest notifications for users with digest mode enabled
     /// </summary>
     Task SendDigestNotificationsAsync();
+    
+    /// <summary>
+    /// Snooze a notification for a specified duration
+    /// </summary>
+    Task SnoozeNotificationAsync(int notificationId, string userId, SnoozeDuration duration);
+    
+    /// <summary>
+    /// Mark a bill reminder as completed
+    /// </summary>
+    Task MarkReminderAsCompletedAsync(int notificationId, string userId);
+    
+    /// <summary>
+    /// Get notifications that should be displayed (not snoozed)
+    /// </summary>
+    Task<List<Notification>> GetActiveNotificationsAsync(string userId, bool unreadOnly = false);
+    
+    /// <summary>
+    /// Process follow-ups for reminders that haven't been handled
+    /// </summary>
+    Task ProcessReminderFollowUpsAsync();
+    
+    /// <summary>
+    /// Check if a reminder has been snoozed repeatedly and needs escalation
+    /// </summary>
+    Task<bool> ShouldEscalateReminderAsync(int notificationId);
 }

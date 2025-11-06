@@ -14,13 +14,26 @@ En privatekonomi-applikation byggd med .NET 9, Blazor Server och MudBlazor för 
   - Se [Dashboard Widgets guide](docs/DASHBOARD_WIDGETS.md)
 - **Transaktionshantering**: Registrera, visa och ta bort transaktioner
 - **Budgethantering**: Skapa och följa upp budgetar med visualisering av planerat vs faktiskt utfall
-- **Konsumentverket Jämförelse**: ⭐ NYT!
+  - **Svenska budgetmallar**: ⭐ NYTT!
+    - Förbyggda budgetmallar baserade på Länsförsäkringar's riktlinjer
+    - Svenska Familjehushåll (15% sparkvot)
+    - Svenska Singelhushåll (20% sparkvot) 
+    - 50/30/20-regeln, Zero-based budgeting, Kuvertbudget
+    - Stöd för årskostnader uppdelat månadsvis (t.ex. gymkort 1800 kr/år = 150 kr/månad)
+    - Guidning för att behandla sparande som månadskostnad
+    - Separering av mat i butik vs restaurang
+    - Se [Budget guide](docs/BUDGET_GUIDE.md) och [Snabbguide för hushållsbudget](docs/HUSHALLSBUDGET_SNABBGUIDE.md)
+- **Konsumentverket Jämförelse**:
   - Jämför din hushållsbudget med Konsumentverkets officiella riktlinjer 2025
   - Stöd för alla åldersgrupper och hushållsstorlekar (1-7 personer)
   - Inkluderar livsmedel, individuella och hushållsgemensamma kostnader
   - Visuell jämförelse med diagram och färgkodade differenser
   - Se [Konsumentverket Jämförelse guide](docs/KONSUMENTVERKET_JAMFORELSE.md)
 - **Sparmål**: Sätt upp och följ sparmål med målbelopp, tidsgräns och prioritering
+  - **Målstolpar**: Automatiska delmål (25%, 50%, 75%, 100%) för att fira framsteg
+  - Notifikationer när milestones uppnås
+  - Historik över uppnådda milestones
+  - Se [Målstolpar dokumentation](docs/GOAL_MILESTONES.md)
 - **Gemensamma Sparmål**:
   - Skapa sparmål tillsammans med andra användare
   - Inbjudningssystem med accept/reject
@@ -33,7 +46,7 @@ En privatekonomi-applikation byggd med .NET 9, Blazor Server och MudBlazor för 
   - Aggregering per kontotyp och investeringstyp
   - Import från Avanza Bank
   - CSV-export för analys
-- **Pensionshantering**: ⭐ NYT!
+- **Pensionshantering**: ⭐ NYTT!
   - Spåra pensioner från flera leverantörer (AMF, Alecta, SEB, etc.)
   - Tjänstepension, privat pension och allmän pension
   - Avkastningsberäkning och månatliga inbetalningar
@@ -73,6 +86,15 @@ En privatekonomi-applikation byggd med .NET 9, Blazor Server och MudBlazor för 
   - Automatisk synkronisering av transaktioner
   - Realtidsdata från banken
 - **CSV-export**: Exportera investeringar för analys och rapportering
+- **Utgiftsmönster-analys**: ⭐ NYTT!
+  - Omfattande analys av dina utgiftsmönster över tid
+  - Automatisk kategorisering och fördelning av utgifter
+  - Trenddetektering för att upptäcka ökande eller minskande utgifter
+  - Anomalidetektering för att flagga ovanliga utgiftsmönster
+  - AI-baserade rekommendationer för besparingar
+  - Visuell presentation med diagram och tabeller
+  - Månatlig, kvartalsvis eller årlig analys
+  - Se [Utgiftsmönster-analys guide](docs/UTGIFTSMÖNSTER_ANALYS.md)
 - **Förbättrad datamodell**: Utökade modeller med audit trail, valutastöd och mer
 - **Familjesamarbete**:
   - Hushållshantering med flera medlemmar
@@ -85,7 +107,7 @@ En privatekonomi-applikation byggd med .NET 9, Blazor Server och MudBlazor för 
   - WCAG 2.1 Nivå AA compliance
   - Tangentbordsnavigation och fokusindikatorer
   - Optimerade färgkontraster för ljust och mörkt läge
-- **Mobil-optimerad UI med Gester**: ⭐ NYT!
+- **Mobil-optimerad UI med Gester**: ⭐ NYTT!
   - Touch-optimerade gester för mobil användning
   - Swipe vänster/höger för ta bort/redigera transaktioner
   - Pull-to-refresh för uppdatering av data
@@ -93,19 +115,37 @@ En privatekonomi-applikation byggd med .NET 9, Blazor Server och MudBlazor för 
   - Thumbzone-optimerad layout för enkel navigering
   - Bottom sheets för mobilmenyer
   - Se [Mobile Gestures Guide](docs/MOBILE_GESTURES_GUIDE.md)
+- **Progressive Web App (PWA)**: ⭐ NYTT!
+  - Installationsbar på mobil och desktop (Android, iOS, Windows, Mac, Linux)
+  - Offline-funktionalitet för läsning av transaktioner och budgetar
+  - Automatisk synkronisering när du kommer online igen (⚠️ iOS kräver att appen är öppen)
+  - Offline-kö för transaktioner skapade utan internet
+  - Background Sync API för automatisk synkning (Android/Windows/Linux)
+  - Push-notifikationer (Android/Windows/Linux - ⚠️ begränsat på iOS)
+  - Service Worker med smart cache-strategi (network-first, fallback cache)
+  - Lighthouse PWA score > 90
+  - Se [PWA Guide](docs/PWA_GUIDE.md) för installation och [iOS-begränsningar](docs/PWA_IOS_LIMITATIONS.md)
 - **Löneutveckling**:
   - Spåra och följa din lön över tid (hela karriären, 50+ år)
   - Visualisera löneutveckling med interaktiv graf
   - Beräkna genomsnittslön och lönetillväxt
   - Dokumentera jobbbyten och löneförhöjningar
   - Hantera befattning, arbetsgivare och anställningstyp
-- **Smart Notifikationssystem**: ⭐ NYT!
+- **Smart Notifikationssystem**: ⭐ NYTT!
   - Multi-kanal notifikationer (In-app, Email, SMS, Push, Slack, Teams)
   - Konfigurerbart per notifikationstyp
   - Do Not Disturb-scheman
   - Digest-läge för grupperade notifikationer
   - Prioritetsnivåer (Low, Normal, High, Critical)
   - 20+ notifikationstyper (budget, räkningar, sparmål, investeringar, etc.)
+  - **Påminnelser med Snooze-funktionalitet**: ⭐ NYT!
+    - Snooze påminnelser (1 timme, 1 dag, 1 vecka)
+    - Markera som betald direkt från notifikation
+    - Automatisk uppföljning av ohanterade påminnelser
+    - Eskalering för kritiska påminnelser (3, 7 dagar)
+    - Detektion av återkommande snooze-mönster (3+ snooze)
+    - Quick actions: "Markera som betald", "Skapa transaktion"
+    - Se [Påminnelse-hantering guide](docs/REMINDER_SNOOZE_GUIDE.md)
   - Se [Notifikationssystem guide](docs/NOTIFICATION_SYSTEM.md)
 
 ## 🏗️ Arkitektur
@@ -159,30 +199,27 @@ cd Privatekonomi
 .\app-start.ps1
 ```
 
-Skriptet installerar automatiskt Aspire workload om det behövs och startar Aspire Dashboard som visar alla tjänster, logs, traces och metrics.
+Skriptet säkerställer att .NET 9 finns installerat och startar Aspire Dashboard som visar alla tjänster, logs, traces och metrics.
 
 #### Alternativ 1: Kör med .NET Aspire Orchestrator (Manuellt)
 
 .NET Aspire förenklar hanteringen av alla tjänster och ger inbyggd observerbarhet.
 
-1. Installera Aspire workload:
-```bash
-dotnet workload install aspire
-```
-
-2. Klona repositoriet:
+1. Klona repositoriet:
 ```bash
 git clone https://github.com/pownas/Privatekonomi.git
 cd Privatekonomi
 ```
 
-3. Kör applikationen med Aspire:
+2. Kör applikationen med Aspire:
 ```bash
 cd src/Privatekonomi.AppHost
 dotnet run
 ```
 
-4. Aspire Dashboard öppnas automatiskt och visar alla tjänster, logs, traces och metrics.
+3. Aspire Dashboard öppnas automatiskt och visar alla tjänster, logs, traces och metrics.
+
+> Aspire-funktionaliteten levereras via projektets NuGet-paket – ingen separat workload-installation krävs längre.
 
 Se [ASPIRE_GUIDE.md](docs/ASPIRE_GUIDE.md) för detaljerad information om Aspire-funktionalitet.
 
@@ -224,6 +261,56 @@ dotnet run
 ```
 
 API Swagger-dokumentation finns på: `http://localhost:5000/swagger`
+
+#### Lokal konfiguration (appsettings.local.json & User Secrets)
+
+För lokal utveckling rekommenderas att du lägger dina maskinspecifika inställningar i `appsettings.local.json` och känsliga värden i **User Secrets**. Dessa filer laddas automatiskt när miljön heter `Local` (vilket `local-app-start.ps1` sätter åt dig).
+
+1. **Skapa lokala konfigurationsfiler** (lagras utanför Git):
+  - `src/Privatekonomi.Web/appsettings.local.json`
+  - `src/Privatekonomi.Api/appsettings.local.json` (valfritt om du behöver andra värden i API:t)
+
+  Exempel på innehåll utan hemligheter:
+  ```json
+  {
+    "Storage": {
+     "Provider": "Sqlite",
+     "ConnectionString": "Data Source=C:/Data/privatekonomi-web.db",
+     "SeedTestData": false
+    }
+  }
+  ```
+
+2. **Lägg till hemliga värden via User Secrets** (lagras i `%APPDATA%/Microsoft/UserSecrets/` på Windows):
+  ```powershell
+  # Web-projektet
+  cd src/Privatekonomi.Web
+  dotnet user-secrets init          # Endast första gången – redan satt i repo men skadar inte
+  dotnet user-secrets set "Storage:ConnectionString" "Data Source=C:/Data/privatekonomi-web.db"
+
+  # API-projektet
+  cd ../Privatekonomi.Api
+  dotnet user-secrets init
+  dotnet user-secrets set "Storage:ConnectionString" "Data Source=C:/Data/privatekonomi-api.db"
+  dotnet user-secrets set "Swedbank:ClientId" "din-client-id"
+  dotnet user-secrets set "Swedbank:ClientSecret" "ditt-client-secret"
+  ```
+
+  Använd de nycklar som dokumenteras i respektive guide (t.ex. `docs/BANK_API_CREDENTIALS_GUIDE.md`) för andra hemligheter.
+
+3. **Starta applikationen**:
+  ```powershell
+  cd ../../
+  .\local-app-start.ps1
+  ```
+
+  Skriptet sätter `ASPNETCORE_ENVIRONMENT=Development` och `PRIVATEKONOMI_ENVIRONMENT=Local`, vilket gör att både standardinställningar och dina lokala overrides (appsettings + User Secrets) läses in samtidigt. All annan utveckling (t.ex. i GitHub Codespaces) använder fortsatt miljön `Development`.
+
+  Som standard startar skriptet AppHost med `dotnet watch run` för hot reload. Lägg till flaggan `-NoWatch` om du vill köra utan watch-läget.
+
+  I Aspire Dashboard syns tydligt vilken miljö (`Local/Development/Production`) och vilken lagringsprovider som används via miljövariablerna som exponeras för varje tjänst.
+
+> `appsettings.local.json` finns i `.gitignore`, så du kan tryggt ha lokala inställningar utan risk att lägga dem i en commit.
 
 ### Testdata och Testanvändare
 
@@ -304,35 +391,36 @@ Dokumentationen innehåller screenshots av:
 ### Dashboard
 Översikt över totala inkomster, utgifter, nettoresultat och antal transaktioner. Visar även visualisering av kategorier med cirkeldiagram och stapeldiagram för utgifter per kategori och månad.
 
-![Dashboard](https://github.com/user-attachments/assets/43a0efb5-c9bd-4a14-be1d-3f8fc0f6bc16)
+![Dashboard](https://github.com/user-attachments/assets/c189bdfc-981c-447e-a46d-16425d865389)
 
 ### Transaktioner
 Lista över alla transaktioner med datum, beskrivning, bank, kategori och belopp. Inkluderar sökfunktion och möjlighet att ta bort transaktioner.
 
-![Transaktioner](https://github.com/user-attachments/assets/8af8bab6-5b9a-4daf-8dec-8ce18c480621)
+![Transaktioner](https://github.com/user-attachments/assets/7532e67c-73ea-4327-8798-fec454b1b22f)
 
 ### Budgethantering
 Översikt över aktiva och avslutade budgetar med möjlighet att skapa nya budgetar och följa upp faktiskt utfall mot planerat.
 
-![Budget](https://github.com/user-attachments/assets/dbd0d556-e37a-43df-99fb-a99f09ffdd40)
+![Budget](https://github.com/user-attachments/assets/cd89a07a-ef13-4444-8caf-168b7213eeb6)
 
 ### Importera Transaktioner
 Import av transaktioner från CSV-filer från ICA-banken och Swedbank med dubbletthantering och förhandsvisning.
 
-![Importera](https://github.com/user-attachments/assets/e352caaf-230e-4032-baf0-b850667760f0)
+![Importera](https://github.com/user-attachments/assets/18c51318-823f-476e-a571-f5fc0969dade)
 
 ### Kategorier
 Hantering av utgifts- och inkomstkategorier med färgkodning för enkel överblick.
 
-![Kategorier](https://github.com/user-attachments/assets/fde2ebab-21a6-4a16-8145-08b585abdcc1)
+![Kategorier](https://github.com/user-attachments/assets/642cd585-7954-43da-8a85-e1c4a97f19fa)
 
 ## 🎨 Teknisk stack
 
 - **Frontend**: Blazor Server med MudBlazor
 - **Backend**: ASP.NET Core Web API
-- **Databas**: Entity Framework Core InMemory (kan migreras till SQL Server)
+- **Databas**: Entity Framework Core med flera providers (InMemory, SQLite, SQL Server, JsonFile)
 - **UI-komponenter**: MudBlazor
 - **Språk**: C# (.NET 9)
+- **Orchestration**: .NET Aspire
 
 ## 📁 Projektstruktur
 
@@ -436,16 +524,16 @@ Se [STORAGE_GUIDE.md](docs/STORAGE_GUIDE.md) för detaljerad information om:
 - **[PSD2_API_GUIDE.md](docs/PSD2_API_GUIDE.md)**: Guide för automatisk bankimport via PSD2-API (Swedbank, Avanza, ICA Banken)
 - **[AVANZA_IMPORT_GUIDE.md](docs/AVANZA_IMPORT_GUIDE.md)**: Guide för import av investeringar från Avanza Bank
 - **[STOCK_PRICE_API_GUIDE.md](docs/STOCK_PRICE_API_GUIDE.md)**: Guide för automatisk uppdatering av aktiekurser via API
-- **[INVESTMENT_PENSION_GUIDE.md](docs/INVESTMENT_PENSION_GUIDE.md)**: ⭐ NYT! Guide för investeringar och pensionshantering
+- **[INVESTMENT_PENSION_GUIDE.md](docs/INVESTMENT_PENSION_GUIDE.md)**: ⭐ NYTT! Guide för investeringar och pensionshantering
 - **[BUDGET_GUIDE.md](docs/BUDGET_GUIDE.md)**: Guide för budgethantering
-- **[MOBILE_GESTURES_GUIDE.md](docs/MOBILE_GESTURES_GUIDE.md)**: ⭐ NYT! Guide för mobil-optimerad UI med touch-gester
+- **[MOBILE_GESTURES_GUIDE.md](docs/MOBILE_GESTURES_GUIDE.md)**: ⭐ NYTT! Guide för mobil-optimerad UI med touch-gester
 - **[AUTOMATIC_CATEGORIZATION.md](docs/AUTOMATIC_CATEGORIZATION.md)**: Guide för automatisk kategorisering av transaktioner
 - **[FAMILY_COLLABORATION_GUIDE.md](docs/FAMILY_COLLABORATION_GUIDE.md)**: Guide för familjesamarbete, barnkonton och veckopeng
 - **[DARK_MODE_IMPLEMENTATION.md](docs/DARK_MODE_IMPLEMENTATION.md)**: Guide för MudBlazor Dark Mode och WCAG-compliance
 - **[DARK_MODE_TESTING.md](docs/DARK_MODE_TESTING.md)**: Testguide för dark mode och tillgänglighet
 - **[SALARY_HISTORY_GUIDE.md](docs/SALARY_HISTORY_GUIDE.md)**: Guide för löneutveckling och lönehistorik
 
-### Sverige-specifika integrationer (NYT!)
+### Sverige-specifika integrationer (NYTT!)
 
 - **[SWEDISH_INTEGRATIONS_SUMMARY.md](docs/SWEDISH_INTEGRATIONS_SUMMARY.md)**: Sammanfattning av Sverige-specifika funktioner
 - **[SWEDISH_INTEGRATIONS_EVALUATION.md](docs/SWEDISH_INTEGRATIONS_EVALUATION.md)**: Utvärdering av genomförbarhet

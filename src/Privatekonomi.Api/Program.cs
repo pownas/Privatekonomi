@@ -6,6 +6,12 @@ using Privatekonomi.Core.Configuration;
 
 var builder = WebApplication.CreateBuilder(args);
 
+if (builder.Environment.IsDevelopment() || string.Equals(builder.Environment.EnvironmentName, "Local", StringComparison.OrdinalIgnoreCase))
+{
+    builder.Configuration.AddJsonFile("appsettings.local.json", optional: true, reloadOnChange: true);
+    builder.Configuration.AddUserSecrets(typeof(Program).Assembly, optional: true);
+}
+
 // Add Aspire service defaults
 builder.AddServiceDefaults();
 
@@ -42,7 +48,9 @@ builder.Services.AddScoped<IBankSourceService, BankSourceService>();
 builder.Services.AddScoped<IHouseholdService, HouseholdService>();
 builder.Services.AddScoped<IChildAllowanceService, ChildAllowanceService>();
 builder.Services.AddScoped<IAuditLogService, AuditLogService>();
+builder.Services.AddScoped<IGoalMilestoneService, GoalMilestoneService>();
 builder.Services.AddScoped<IGoalService, GoalService>();
+builder.Services.AddScoped<IRoundUpService, RoundUpService>();
 builder.Services.AddScoped<IPocketService, PocketService>();
 builder.Services.AddScoped<IExportService, ExportService>();
 builder.Services.AddScoped<IDataImportService, DataImportService>();

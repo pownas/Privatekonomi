@@ -1,3 +1,4 @@
+@page "/family/households"
 @page "/households"
 @using Privatekonomi.Core.Models
 @using Privatekonomi.Core.Services
@@ -6,7 +7,10 @@
 
 <PageTitle>Hushåll</PageTitle>
 
-<MudText Typo="Typo.h4" Class="mb-4">Hushåll</MudText>
+<MudText Typo="Typo.h4" Class="mb-4">
+    <MudIcon Icon="@Icons.Material.Filled.Group" Color="Color.Primary" Class="mr-2" aria-hidden="true" />
+    Hushåll
+</MudText>
 
 <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenCreateDialog" Class="mb-4">
     Skapa nytt hushåll
@@ -124,7 +128,7 @@
 
     private void ViewHousehold(int householdId)
     {
-        NavigationManager.NavigateTo($"/households/{householdId}");
+        NavigationManager.NavigateTo($"/family/households/{householdId}");
     }
 
     private async Task DeleteHousehold(int householdId)

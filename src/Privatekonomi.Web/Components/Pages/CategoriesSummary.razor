@@ -1,3 +1,4 @@
+@page "/categories/summary"
 @page "/categories-summary"
 @rendermode InteractiveServer
 @inject ICategoryService CategoryService
@@ -6,7 +7,10 @@
 
 <PageTitle>Kategorisammanfattning - Privatekonomi</PageTitle>
 
-<MudText Typo="Typo.h4" Class="mb-4">Kategorisammanfattning</MudText>
+<MudText Typo="Typo.h4" Class="mb-4">
+    <MudIcon Icon="@Icons.Material.Filled.Summarize" Color="Color.Primary" Class="mr-2" aria-hidden="true" />
+    Kategorisammanfattning
+</MudText>
 
 @if (_loading)
 {
@@ -287,7 +291,7 @@ else
 
     private void NavigateToCategory(int categoryId)
     {
-        NavigationManager.NavigateTo($"/category-overview?categoryId={categoryId}&months={_selectedMonths}");
+        NavigationManager.NavigateTo($"/categories/overview?categoryId={categoryId}&months={_selectedMonths}");
     }
 
     private class MonthlyTotalData

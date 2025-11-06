@@ -322,6 +322,7 @@ public class ReportServiceTests : IDisposable
         Assert.Equal(2, report.Assets.Count);
     }
     
+    [Fact]
     public async Task GetPeriodComparisonAsync_WithTransactions_ReturnsCorrectComparison()
     {
         // Arrange
@@ -533,5 +534,366 @@ public class ReportServiceTests : IDisposable
         Assert.True(result.SparklineData[0] < result.SparklineData[5]);
         Assert.Equal(100, result.SparklineData[0]);
         Assert.Equal(600, result.SparklineData[5]);
+    }
+
+    [Fact]
+    public async Task GetSpendingPatternReportAsync_WithNoData_ReturnsEmptyReport()
+    {
+        // Arrange
+        var fromDate = DateTime.Today.AddMonths(-1);
+        var toDate = DateTime.Today;
+
+        // Act
+        var report = await _reportService.GetSpendingPatternReportAsync(fromDate, toDate);
+
+        // Assert
+        Assert.NotNull(report);
+        Assert.Equal(0, report.TotalSpending);
+        Assert.Equal(0, report.AverageMonthlySpending);
+        Assert.Empty(report.CategoryDistribution);
+        Assert.Empty(report.TopCategories);
+        Assert.Empty(report.MonthlyData);
+    }
+
+    [Fact]
+    public async Task GetSpendingPatternReportAsync_CalculatesTotalSpending()
+    {
+        // Arrange
+        var category = new Category { CategoryId = 1, Name = "Mat", Color = "#FF0000" };
+        _context.Categories.Add(category);
+        
+        var transaction1 = new Transaction
+        {
+            TransactionId = 1,
+            Amount = 500m,
+            Date = DateTime.Today.AddDays(-10),
+            IsIncome = false,
+            UserId = TestUserId,
+            CreatedAt = DateTime.UtcNow,
+            ValidFrom = DateTime.UtcNow,
+            TransactionCategories = new List<TransactionCategory>
+            {
+                new TransactionCategory { CategoryId = 1, Category = category }
+            }
+        };
+        
+        var transaction2 = new Transaction
+        {
+            TransactionId = 2,
+            Amount = 300m,
+            Date = DateTime.Today.AddDays(-5),
+            IsIncome = false,
+            UserId = TestUserId,
+            CreatedAt = DateTime.UtcNow,
+            ValidFrom = DateTime.UtcNow,
+            TransactionCategories = new List<TransactionCategory>
+            {
+                new TransactionCategory { CategoryId = 1, Category = category }
+            }
+        };
+
+        _context.Transactions.AddRange(transaction1, transaction2);
+        await _context.SaveChangesAsync();
+
+        // Act
+        var report = await _reportService.GetSpendingPatternReportAsync(
+            DateTime.Today.AddMonths(-1), 
+            DateTime.Today);
+
+        // Assert
+        Assert.Equal(800m, report.TotalSpending);
+        Assert.NotEmpty(report.CategoryDistribution);
+        Assert.Single(report.CategoryDistribution);
+        Assert.Equal("Mat", report.CategoryDistribution[0].CategoryName);
+        Assert.Equal(800m, report.CategoryDistribution[0].Amount);
+    }
+
+    [Fact]
+    public async Task GetSpendingPatternReportAsync_CalculatesCategoryPercentages()
+    {
+        // Arrange
+        var category1 = new Category { CategoryId = 1, Name = "Mat", Color = "#FF0000" };
+        var category2 = new Category { CategoryId = 2, Name = "Transport", Color = "#00FF00" };
+        _context.Categories.AddRange(category1, category2);
+
+        var transaction1 = new Transaction
+        {
+            TransactionId = 1,
+            Amount = 700m,
+            Date = DateTime.Today.AddDays(-10),
+            IsIncome = false,
+            UserId = TestUserId,
+            CreatedAt = DateTime.UtcNow,
+            ValidFrom = DateTime.UtcNow,
+            TransactionCategories = new List<TransactionCategory>
+            {
+                new TransactionCategory { CategoryId = 1, Category = category1 }
+            }
+        };
+
+        var transaction2 = new Transaction
+        {
+            TransactionId = 2,
+            Amount = 300m,
+            Date = DateTime.Today.AddDays(-5),
+            IsIncome = false,
+            UserId = TestUserId,
+            CreatedAt = DateTime.UtcNow,
+            ValidFrom = DateTime.UtcNow,
+            TransactionCategories = new List<TransactionCategory>
+            {
+                new TransactionCategory { CategoryId = 2, Category = category2 }
+            }
+        };
+
+        _context.Transactions.AddRange(transaction1, transaction2);
+        await _context.SaveChangesAsync();
+
+        // Act
+        var report = await _reportService.GetSpendingPatternReportAsync(
+            DateTime.Today.AddMonths(-1),
+            DateTime.Today);
+
+        // Assert
+        Assert.Equal(1000m, report.TotalSpending);
+        Assert.Equal(2, report.CategoryDistribution.Count);
+        
+        var matCategory = report.CategoryDistribution.First(c => c.CategoryName == "Mat");
+        Assert.Equal(70m, matCategory.Percentage); // 700/1000 * 100
+        
+        var transportCategory = report.CategoryDistribution.First(c => c.CategoryName == "Transport");
+        Assert.Equal(30m, transportCategory.Percentage); // 300/1000 * 100
+    }
+
+    [Fact]
+    public async Task GetSpendingPatternReportAsync_IdentifiesTopCategories()
+    {
+        // Arrange - Create 6 categories with different amounts
+        var categories = new List<Category>
+        {
+            new Category { CategoryId = 1, Name = "Cat1", Color = "#FF0000" },
+            new Category { CategoryId = 2, Name = "Cat2", Color = "#00FF00" },
+            new Category { CategoryId = 3, Name = "Cat3", Color = "#0000FF" },
+            new Category { CategoryId = 4, Name = "Cat4", Color = "#FFFF00" },
+            new Category { CategoryId = 5, Name = "Cat5", Color = "#FF00FF" },
+            new Category { CategoryId = 6, Name = "Cat6", Color = "#00FFFF" }
+        };
+        _context.Categories.AddRange(categories);
+
+        var amounts = new[] { 1000m, 800m, 600m, 400m, 200m, 100m };
+        for (int i = 0; i < 6; i++)
+        {
+            var transaction = new Transaction
+            {
+                TransactionId = i + 1,
+                Amount = amounts[i],
+                Date = DateTime.Today.AddDays(-5),
+                IsIncome = false,
+                UserId = TestUserId,
+                CreatedAt = DateTime.UtcNow,
+                ValidFrom = DateTime.UtcNow,
+                TransactionCategories = new List<TransactionCategory>
+                {
+                    new TransactionCategory { CategoryId = i + 1, Category = categories[i] }
+                }
+            };
+            _context.Transactions.Add(transaction);
+        }
+        await _context.SaveChangesAsync();
+
+        // Act
+        var report = await _reportService.GetSpendingPatternReportAsync(
+            DateTime.Today.AddMonths(-1),
+            DateTime.Today);
+
+        // Assert - Should only have top 5 categories
+        Assert.Equal(5, report.TopCategories.Count);
+        Assert.Equal("Cat1", report.TopCategories[0].CategoryName);
+        Assert.Equal(1000m, report.TopCategories[0].Amount);
+        Assert.Equal("Cat5", report.TopCategories[4].CategoryName);
+        Assert.Equal(200m, report.TopCategories[4].Amount);
+    }
+
+    [Fact]
+    public async Task GetSpendingPatternReportAsync_CalculatesMonthlyData()
+    {
+        // Arrange
+        var category = new Category { CategoryId = 1, Name = "Mat", Color = "#FF0000" };
+        _context.Categories.Add(category);
+
+        // Add transactions across 2 months
+        var month1Transaction = new Transaction
+        {
+            TransactionId = 1,
+            Amount = 500m,
+            Date = DateTime.Today.AddMonths(-2).AddDays(5),
+            IsIncome = false,
+            UserId = TestUserId,
+            CreatedAt = DateTime.UtcNow,
+            ValidFrom = DateTime.UtcNow,
+            TransactionCategories = new List<TransactionCategory>
+            {
+                new TransactionCategory { CategoryId = 1, Category = category }
+            }
+        };
+
+        var month2Transaction = new Transaction
+        {
+            TransactionId = 2,
+            Amount = 700m,
+            Date = DateTime.Today.AddMonths(-1).AddDays(5),
+            IsIncome = false,
+            UserId = TestUserId,
+            CreatedAt = DateTime.UtcNow,
+            ValidFrom = DateTime.UtcNow,
+            TransactionCategories = new List<TransactionCategory>
+            {
+                new TransactionCategory { CategoryId = 1, Category = category }
+            }
+        };
+
+        _context.Transactions.AddRange(month1Transaction, month2Transaction);
+        await _context.SaveChangesAsync();
+
+        // Act
+        var report = await _reportService.GetSpendingPatternReportAsync(
+            DateTime.Today.AddMonths(-3),
+            DateTime.Today);
+
+        // Assert
+        Assert.NotEmpty(report.MonthlyData);
+        Assert.Equal(2, report.MonthlyData.Count);
+        Assert.Equal(500m, report.MonthlyData[0].TotalAmount);
+        Assert.Equal(700m, report.MonthlyData[1].TotalAmount);
+    }
+
+    [Fact]
+    public async Task GetSpendingPatternReportAsync_DetectsTrends()
+    {
+        // Arrange
+        var category = new Category { CategoryId = 1, Name = "Mat", Color = "#FF0000" };
+        _context.Categories.Add(category);
+
+        // Create increasing trend: 100, 200, 300, 400, 500, 600
+        for (int i = 0; i < 6; i++)
+        {
+            var transaction = new Transaction
+            {
+                TransactionId = i + 1,
+                Amount = (i + 1) * 100m,
+                Date = DateTime.Today.AddMonths(-6 + i).AddDays(5),
+                IsIncome = false,
+                UserId = TestUserId,
+                CreatedAt = DateTime.UtcNow,
+                ValidFrom = DateTime.UtcNow,
+                TransactionCategories = new List<TransactionCategory>
+                {
+                    new TransactionCategory { CategoryId = 1, Category = category }
+                }
+            };
+            _context.Transactions.Add(transaction);
+        }
+        await _context.SaveChangesAsync();
+
+        // Act
+        var report = await _reportService.GetSpendingPatternReportAsync(
+            DateTime.Today.AddMonths(-7),
+            DateTime.Today);
+
+        // Assert
+        Assert.NotEmpty(report.Trends);
+        var overallTrend = report.Trends.FirstOrDefault(t => t.CategoryName == "Total utgifter");
+        Assert.NotNull(overallTrend);
+        Assert.Equal("Increasing", overallTrend.TrendType);
+    }
+
+    [Fact]
+    public async Task GetSpendingPatternReportAsync_GeneratesRecommendations()
+    {
+        // Arrange
+        var category = new Category { CategoryId = 1, Name = "Mat", Color = "#FF0000" };
+        _context.Categories.Add(category);
+
+        // Create a category with high percentage (> 20%)
+        var transaction = new Transaction
+        {
+            TransactionId = 1,
+            Amount = 5000m,
+            Date = DateTime.Today.AddDays(-5),
+            IsIncome = false,
+            UserId = TestUserId,
+            CreatedAt = DateTime.UtcNow,
+            ValidFrom = DateTime.UtcNow,
+            TransactionCategories = new List<TransactionCategory>
+            {
+                new TransactionCategory { CategoryId = 1, Category = category }
+            }
+        };
+
+        _context.Transactions.Add(transaction);
+        await _context.SaveChangesAsync();
+
+        // Act
+        var report = await _reportService.GetSpendingPatternReportAsync(
+            DateTime.Today.AddMonths(-1),
+            DateTime.Today);
+
+        // Assert
+        Assert.NotEmpty(report.Recommendations);
+        // Should have recommendation about high percentage category
+        var highPercentageRec = report.Recommendations.FirstOrDefault(r => r.Type == "BudgetAlert");
+        Assert.NotNull(highPercentageRec);
+    }
+
+    [Fact]
+    public async Task GetSpendingPatternReportAsync_FiltersByHousehold()
+    {
+        // Arrange
+        var category = new Category { CategoryId = 1, Name = "Mat", Color = "#FF0000" };
+        _context.Categories.Add(category);
+
+        var household1Transaction = new Transaction
+        {
+            TransactionId = 1,
+            Amount = 500m,
+            Date = DateTime.Today.AddDays(-5),
+            IsIncome = false,
+            HouseholdId = 1,
+            UserId = TestUserId,
+            CreatedAt = DateTime.UtcNow,
+            ValidFrom = DateTime.UtcNow,
+            TransactionCategories = new List<TransactionCategory>
+            {
+                new TransactionCategory { CategoryId = 1, Category = category }
+            }
+        };
+
+        var household2Transaction = new Transaction
+        {
+            TransactionId = 2,
+            Amount = 300m,
+            Date = DateTime.Today.AddDays(-5),
+            IsIncome = false,
+            HouseholdId = 2,
+            UserId = TestUserId,
+            CreatedAt = DateTime.UtcNow,
+            ValidFrom = DateTime.UtcNow,
+            TransactionCategories = new List<TransactionCategory>
+            {
+                new TransactionCategory { CategoryId = 1, Category = category }
+            }
+        };
+
+        _context.Transactions.AddRange(household1Transaction, household2Transaction);
+        await _context.SaveChangesAsync();
+
+        // Act
+        var report = await _reportService.GetSpendingPatternReportAsync(
+            DateTime.Today.AddMonths(-1),
+            DateTime.Today,
+            householdId: 1);
+
+        // Assert
+        Assert.Equal(500m, report.TotalSpending);
     }
 }

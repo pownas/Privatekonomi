@@ -577,4 +577,198 @@ public class NotificationService : INotificationService
             _ => type.ToString()
         };
     }
+    
+    public async Task SnoozeNotificationAsync(int notificationId, string userId, SnoozeDuration duration)
+    {
+        var notification = await _context.Notifications
+            .FirstOrDefaultAsync(n => n.NotificationId == notificationId && n.UserId == userId);
+
+        if (notification == null)
+        {
+            throw new InvalidOperationException("Notification not found");
+        }
+
+        var snoozeUntil = duration switch
+        {
+            SnoozeDuration.OneHour => DateTime.UtcNow.AddHours(1),
+            SnoozeDuration.OneDay => DateTime.UtcNow.AddDays(1),
+            SnoozeDuration.OneWeek => DateTime.UtcNow.AddDays(7),
+            _ => DateTime.UtcNow.AddHours(1)
+        };
+
+        notification.SnoozeUntil = snoozeUntil;
+        notification.SnoozeCount++;
+        
+        // Update related BillReminder if exists
+        if (notification.BillReminderId.HasValue)
+        {
+            var reminder = await _context.BillReminders
+                .FirstOrDefaultAsync(r => r.BillReminderId == notification.BillReminderId.Value);
+            
+            if (reminder != null)
+            {
+                reminder.SnoozeUntil = snoozeUntil;
+                reminder.SnoozeCount++;
+                
+                // Check for recurring snooze pattern (snoozed 3+ times)
+                if (reminder.SnoozeCount >= 3)
+                {
+                    _logger.LogWarning("Reminder {ReminderId} has been snoozed {Count} times - possible recurring snooze pattern",
+                        reminder.BillReminderId, reminder.SnoozeCount);
+                }
+            }
+        }
+
+        await _context.SaveChangesAsync();
+        
+        _logger.LogInformation("Notification {NotificationId} snoozed until {SnoozeUntil} for user {UserId}",
+            notificationId, snoozeUntil, userId);
+    }
+
+    public async Task MarkReminderAsCompletedAsync(int notificationId, string userId)
+    {
+        var notification = await _context.Notifications
+            .FirstOrDefaultAsync(n => n.NotificationId == notificationId && n.UserId == userId);
+
+        if (notification == null)
+        {
+            throw new InvalidOperationException("Notification not found");
+        }
+
+        notification.IsRead = true;
+        notification.ReadAt = DateTime.UtcNow;
+        
+        // Update related BillReminder if exists
+        if (notification.BillReminderId.HasValue)
+        {
+            var reminder = await _context.BillReminders
+                .Include(r => r.Bill)
+                .FirstOrDefaultAsync(r => r.BillReminderId == notification.BillReminderId.Value);
+            
+            if (reminder != null)
+            {
+                reminder.IsCompleted = true;
+                reminder.CompletedDate = DateTime.UtcNow;
+                
+                // Optionally mark bill as paid
+                if (reminder.Bill != null && reminder.Bill.Status == "Pending")
+                {
+                    reminder.Bill.Status = "Paid";
+                    reminder.Bill.PaidDate = DateTime.UtcNow;
+                }
+            }
+        }
+
+        await _context.SaveChangesAsync();
+        
+        _logger.LogInformation("Reminder notification {NotificationId} marked as completed for user {UserId}",
+            notificationId, userId);
+    }
+
+    public async Task<List<Notification>> GetActiveNotificationsAsync(string userId, bool unreadOnly = false)
+    {
+        var query = _context.Notifications
+            .Where(n => n.UserId == userId)
+            .Where(n => !n.SnoozeUntil.HasValue || n.SnoozeUntil.Value <= DateTime.UtcNow);
+
+        if (unreadOnly)
+        {
+            query = query.Where(n => !n.IsRead);
+        }
+
+        return await query
+            .OrderByDescending(n => n.CreatedAt)
+            .Take(100)
+            .ToListAsync();
+    }
+
+    public async Task ProcessReminderFollowUpsAsync()
+    {
+        var now = DateTime.UtcNow;
+        
+        // Find reminders that:
+        // 1. Were sent but not completed
+        // 2. Haven't been followed up recently (last 24 hours)
+        // 3. Are past their reminder date
+        // 4. Are not currently snoozed
+        var remindersNeedingFollowUp = await _context.BillReminders
+            .Include(r => r.Bill)
+            .Where(r => r.IsSent && !r.IsCompleted)
+            .Where(r => r.ReminderDate < now)
+            .Where(r => !r.SnoozeUntil.HasValue || r.SnoozeUntil.Value <= now)
+            .Where(r => !r.LastFollowUpDate.HasValue || r.LastFollowUpDate.Value < now.AddHours(-24))
+            .ToListAsync();
+
+        foreach (var reminder in remindersNeedingFollowUp)
+        {
+            if (reminder.Bill == null) continue;
+
+            var daysSinceReminder = (now - reminder.ReminderDate).TotalDays;
+            var priority = NotificationPriority.Normal;
+            
+            // Escalate based on time elapsed
+            if (daysSinceReminder >= 7)
+            {
+                reminder.EscalationLevel = 3;
+                priority = NotificationPriority.Critical;
+            }
+            else if (daysSinceReminder >= 3)
+            {
+                reminder.EscalationLevel = 2;
+                priority = NotificationPriority.High;
+            }
+            else if (daysSinceReminder >= 1)
+            {
+                reminder.EscalationLevel = 1;
+                priority = NotificationPriority.High;
+            }
+
+            // Send follow-up notification
+            var title = reminder.EscalationLevel >= 2 
+                ? $"⚠️ BRÅDSKANDE: {reminder.Bill.Name}"
+                : $"Påminnelse: {reminder.Bill.Name}";
+                
+            var message = reminder.EscalationLevel >= 3
+                ? $"Räkningen på {reminder.Bill.Amount:N0} kr förföll för {daysSinceReminder:N0} dagar sedan. Åtgärd krävs omedelbart!"
+                : $"Påminnelse om räkning på {reminder.Bill.Amount:N0} kr som förföll {reminder.Bill.DueDate:d}.";
+
+            if (reminder.SnoozeCount >= 3)
+            {
+                message += $" (Snoozad {reminder.SnoozeCount} gånger)";
+            }
+
+            await SendNotificationAsync(
+                reminder.Bill.UserId,
+                SystemNotificationType.BillOverdue,
+                title,
+                message,
+                priority,
+                System.Text.Json.JsonSerializer.Serialize(new { BillId = reminder.Bill.BillId, ReminderId = reminder.BillReminderId }),
+                $"/bills/{reminder.Bill.BillId}");
+
+            reminder.LastFollowUpDate = now;
+            
+            _logger.LogInformation("Follow-up sent for reminder {ReminderId}, escalation level {Level}",
+                reminder.BillReminderId, reminder.EscalationLevel);
+        }
+
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task<bool> ShouldEscalateReminderAsync(int notificationId)
+    {
+        var notification = await _context.Notifications
+            .FirstOrDefaultAsync(n => n.NotificationId == notificationId);
+
+        if (notification?.BillReminderId == null)
+        {
+            return false;
+        }
+
+        var reminder = await _context.BillReminders
+            .FirstOrDefaultAsync(r => r.BillReminderId == notification.BillReminderId.Value);
+
+        // Escalate if snoozed 3+ times or escalation level is already high
+        return reminder != null && (reminder.SnoozeCount >= 3 || reminder.EscalationLevel >= 2);
+    }
 }

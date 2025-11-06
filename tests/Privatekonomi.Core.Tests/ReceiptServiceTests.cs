@@ -282,4 +282,192 @@ public class ReceiptServiceTests : IDisposable
         var result = await _receiptService.GetReceiptByIdAsync(created.ReceiptId, TestUserId);
         Assert.Null(result);
     }
+
+    [Fact]
+    public async Task GetReceiptsByTransactionIdAsync_ReturnsOnlyReceiptsForTransaction()
+    {
+        // Arrange
+        var transaction = new Transaction
+        {
+            UserId = TestUserId,
+            Description = "Test Transaction",
+            Amount = 100.00m,
+            Date = DateTime.Today,
+            IsIncome = false,
+            ValidFrom = DateTime.UtcNow,
+            CreatedAt = DateTime.UtcNow
+        };
+        _context.Transactions.Add(transaction);
+        await _context.SaveChangesAsync();
+
+        var receipt1 = new Receipt
+        {
+            UserId = TestUserId,
+            Merchant = "Store A",
+            ReceiptDate = DateTime.Today,
+            TotalAmount = 100.00m,
+            Currency = "SEK",
+            ReceiptType = "Physical",
+            TransactionId = transaction.TransactionId
+        };
+
+        var receipt2 = new Receipt
+        {
+            UserId = TestUserId,
+            Merchant = "Store B",
+            ReceiptDate = DateTime.Today,
+            TotalAmount = 50.00m,
+            Currency = "SEK",
+            ReceiptType = "Physical"
+            // No TransactionId set
+        };
+
+        await _receiptService.CreateReceiptAsync(receipt1);
+        await _receiptService.CreateReceiptAsync(receipt2);
+
+        // Act
+        var results = await _receiptService.GetReceiptsByTransactionIdAsync(transaction.TransactionId, TestUserId);
+
+        // Assert
+        Assert.Single(results);
+        Assert.Equal("Store A", results[0].Merchant);
+        Assert.Equal(transaction.TransactionId, results[0].TransactionId);
+    }
+
+    [Fact]
+    public async Task LinkReceiptToTransactionAsync_LinksReceiptSuccessfully()
+    {
+        // Arrange
+        var transaction = new Transaction
+        {
+            UserId = TestUserId,
+            Description = "Test Transaction",
+            Amount = 100.00m,
+            Date = DateTime.Today,
+            IsIncome = false,
+            ValidFrom = DateTime.UtcNow,
+            CreatedAt = DateTime.UtcNow
+        };
+        _context.Transactions.Add(transaction);
+        await _context.SaveChangesAsync();
+
+        var receipt = new Receipt
+        {
+            UserId = TestUserId,
+            Merchant = "Test Store",
+            ReceiptDate = DateTime.Today,
+            TotalAmount = 100.00m,
+            Currency = "SEK",
+            ReceiptType = "Physical"
+        };
+        var created = await _receiptService.CreateReceiptAsync(receipt);
+
+        // Act
+        await _receiptService.LinkReceiptToTransactionAsync(created.ReceiptId, transaction.TransactionId, TestUserId);
+
+        // Assert
+        var updated = await _receiptService.GetReceiptByIdAsync(created.ReceiptId, TestUserId);
+        Assert.NotNull(updated);
+        Assert.Equal(transaction.TransactionId, updated.TransactionId);
+        Assert.NotNull(updated.UpdatedAt);
+        
+        _auditLogServiceMock.Verify(
+            x => x.LogAsync("Link", "Receipt", created.ReceiptId, 
+                It.IsAny<string>(), TestUserId, null),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task LinkReceiptToTransactionAsync_ThrowsWhenReceiptNotFound()
+    {
+        // Arrange
+        var transaction = new Transaction
+        {
+            UserId = TestUserId,
+            Description = "Test Transaction",
+            Amount = 100.00m,
+            Date = DateTime.Today,
+            IsIncome = false,
+            ValidFrom = DateTime.UtcNow,
+            CreatedAt = DateTime.UtcNow
+        };
+        _context.Transactions.Add(transaction);
+        await _context.SaveChangesAsync();
+
+        // Act & Assert
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => _receiptService.LinkReceiptToTransactionAsync(999, transaction.TransactionId, TestUserId));
+    }
+
+    [Fact]
+    public async Task LinkReceiptToTransactionAsync_ThrowsWhenTransactionNotFound()
+    {
+        // Arrange
+        var receipt = new Receipt
+        {
+            UserId = TestUserId,
+            Merchant = "Test Store",
+            ReceiptDate = DateTime.Today,
+            TotalAmount = 100.00m,
+            Currency = "SEK",
+            ReceiptType = "Physical"
+        };
+        var created = await _receiptService.CreateReceiptAsync(receipt);
+
+        // Act & Assert
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => _receiptService.LinkReceiptToTransactionAsync(created.ReceiptId, 999, TestUserId));
+    }
+
+    [Fact]
+    public async Task UnlinkReceiptFromTransactionAsync_UnlinksReceiptSuccessfully()
+    {
+        // Arrange
+        var transaction = new Transaction
+        {
+            UserId = TestUserId,
+            Description = "Test Transaction",
+            Amount = 100.00m,
+            Date = DateTime.Today,
+            IsIncome = false,
+            ValidFrom = DateTime.UtcNow,
+            CreatedAt = DateTime.UtcNow
+        };
+        _context.Transactions.Add(transaction);
+        await _context.SaveChangesAsync();
+
+        var receipt = new Receipt
+        {
+            UserId = TestUserId,
+            Merchant = "Test Store",
+            ReceiptDate = DateTime.Today,
+            TotalAmount = 100.00m,
+            Currency = "SEK",
+            ReceiptType = "Physical",
+            TransactionId = transaction.TransactionId
+        };
+        var created = await _receiptService.CreateReceiptAsync(receipt);
+
+        // Act
+        await _receiptService.UnlinkReceiptFromTransactionAsync(created.ReceiptId, TestUserId);
+
+        // Assert
+        var updated = await _receiptService.GetReceiptByIdAsync(created.ReceiptId, TestUserId);
+        Assert.NotNull(updated);
+        Assert.Null(updated.TransactionId);
+        Assert.NotNull(updated.UpdatedAt);
+        
+        _auditLogServiceMock.Verify(
+            x => x.LogAsync("Unlink", "Receipt", created.ReceiptId, 
+                It.IsAny<string>(), TestUserId, null),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task UnlinkReceiptFromTransactionAsync_ThrowsWhenReceiptNotFound()
+    {
+        // Act & Assert
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => _receiptService.UnlinkReceiptFromTransactionAsync(999, TestUserId));
+    }
 }

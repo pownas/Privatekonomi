@@ -1,3 +1,4 @@
+@page "/economy/budgets/konsumentverket-comparison"
 @page "/budgets/konsumentverket-comparison"
 @rendermode InteractiveServer
 @inject IKonsumentverketComparisonService ComparisonService
@@ -7,7 +8,10 @@
 
 <div class="d-flex justify-space-between align-center mb-4">
     <div>
-        <MudText Typo="Typo.h4">Jämför med Konsumentverket</MudText>
+        <MudText Typo="Typo.h4">
+            <MudIcon Icon="@Icons.Material.Filled.CompareArrows" Color="Color.Primary" Class="mr-2" aria-hidden="true" />
+            Jämför med Konsumentverket
+        </MudText>
         <MudText Typo="Typo.body2" Color="Color.Secondary">
             Jämför din hushållsbudget med Konsumentverkets riktlinjer för 2025
         </MudText>
@@ -71,7 +75,7 @@
             </MudText>
             
             <MudExpansionPanels MultiExpansion="true">
-                <MudExpansionPanel Text="Livsmedelskostnader" IsExpanded="true">
+                <MudExpansionPanel Text="Livsmedelskostnader" isexpanded="true">
                     <MudNumericField @bind-Value="_userCosts.FoodCosts" 
                                    Label="Livsmedel totalt" 
                                    Variant="Variant.Outlined"

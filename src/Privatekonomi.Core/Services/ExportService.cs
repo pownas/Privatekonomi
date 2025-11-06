@@ -391,6 +391,120 @@ public class ExportService : IExportService
         return result;
     }
 
+    public async Task<byte[]> ExportSelectedTransactionsToCsvAsync(List<int> transactionIds)
+    {
+        var query = _context.Transactions
+            .Include(t => t.BankSource)
+            .Include(t => t.TransactionCategories)
+            .ThenInclude(tc => tc.Category)
+            .Include(t => t.Household)
+            .Where(t => transactionIds.Contains(t.TransactionId))
+            .AsQueryable();
+
+        // Filter by current user if authenticated
+        if (_currentUserService?.IsAuthenticated == true && _currentUserService.UserId != null)
+        {
+            query = query.Where(t => t.UserId == _currentUserService.UserId);
+        }
+
+        var transactions = await query.OrderBy(t => t.Date).ToListAsync();
+
+        var csv = new StringBuilder();
+        
+        // Header
+        csv.AppendLine("Datum,Beskrivning,Belopp,Typ,Bank,Kategorier,Hushåll,Taggar,Noteringar,Källa,Valuta");
+
+        // Data rows
+        foreach (var transaction in transactions)
+        {
+            var categories = string.Join("; ", transaction.TransactionCategories.Select(tc => tc.Category.Name));
+            var bankName = transaction.BankSource?.Name ?? "";
+            var householdName = transaction.Household?.Name ?? "";
+            var type = transaction.IsIncome ? "Inkomst" : "Utgift";
+            
+            csv.AppendLine($"{transaction.Date:yyyy-MM-dd}," +
+                          $"\"{EscapeCsv(transaction.Description)}\"," +
+                          $"{transaction.Amount:F2}," +
+                          $"{type}," +
+                          $"\"{EscapeCsv(bankName)}\"," +
+                          $"\"{EscapeCsv(categories)}\"," +
+                          $"\"{EscapeCsv(householdName)}\"," +
+                          $"\"{EscapeCsv(transaction.Tags ?? "")}\"," +
+                          $"\"{EscapeCsv(transaction.Notes ?? "")}\"," +
+                          $"\"{EscapeCsv(transaction.ImportSource ?? "")}\"," +
+                          $"{transaction.Currency}");
+        }
+
+        // Use UTF-8 with BOM for proper Excel compatibility with Swedish characters
+        var preamble = Encoding.UTF8.GetPreamble();
+        var content = Encoding.UTF8.GetBytes(csv.ToString());
+        var result = new byte[preamble.Length + content.Length];
+        Buffer.BlockCopy(preamble, 0, result, 0, preamble.Length);
+        Buffer.BlockCopy(content, 0, result, preamble.Length, content.Length);
+        return result;
+    }
+
+    public async Task<byte[]> ExportSelectedTransactionsToJsonAsync(List<int> transactionIds)
+    {
+        var query = _context.Transactions
+            .Include(t => t.BankSource)
+            .Include(t => t.TransactionCategories)
+            .ThenInclude(tc => tc.Category)
+            .Include(t => t.Household)
+            .Include(t => t.Receipts)
+            .Where(t => transactionIds.Contains(t.TransactionId))
+            .AsQueryable();
+
+        // Filter by current user if authenticated
+        if (_currentUserService?.IsAuthenticated == true && _currentUserService.UserId != null)
+        {
+            query = query.Where(t => t.UserId == _currentUserService.UserId);
+        }
+
+        var transactions = await query.OrderBy(t => t.Date).ToListAsync();
+
+        var exportData = new
+        {
+            ExportDate = DateTime.UtcNow,
+            TransactionCount = transactions.Count,
+            Transactions = transactions.Select(t => new
+            {
+                t.TransactionId,
+                t.Date,
+                t.Description,
+                t.Amount,
+                t.IsIncome,
+                t.Currency,
+                BankSource = t.BankSource?.Name,
+                Household = t.Household?.Name,
+                Categories = t.TransactionCategories.Select(tc => new
+                {
+                    tc.Category.Name,
+                    tc.Category.Color,
+                    tc.Amount
+                }),
+                t.Payee,
+                t.Tags,
+                t.Notes,
+                t.PaymentMethod,
+                t.OCR,
+                t.IsRecurring,
+                t.Cleared,
+                t.ImportSource,
+                ReceiptCount = t.Receipts.Count
+            })
+        };
+
+        var options = new JsonSerializerOptions
+        {
+            WriteIndented = true,
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        };
+
+        var json = JsonSerializer.Serialize(exportData, options);
+        return Encoding.UTF8.GetBytes(json);
+    }
+
     private static string EscapeCsv(string value)
     {
         if (string.IsNullOrEmpty(value))

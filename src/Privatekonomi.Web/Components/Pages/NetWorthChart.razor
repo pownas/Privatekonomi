@@ -1,3 +1,4 @@
+@page "/economy/networth-chart"
 @page "/networth-chart"
 @rendermode InteractiveServer
 @inject IReportService ReportService
@@ -7,7 +8,10 @@
 <PageTitle>Nettoförmögenhetskurva - Privatekonomi</PageTitle>
 
 <div class="chart-container">
-    <MudText Typo="Typo.h4" Class="mb-4">Nettoförmögenhetskurva</MudText>
+    <MudText Typo="Typo.h4" Class="mb-4">
+        <MudIcon Icon="@Icons.Material.Filled.ShowChart" Color="Color.Primary" Class="mr-2" aria-hidden="true" />
+        Nettoförmögenhetskurva
+    </MudText>
     <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">
         Visualisering av din ekonomiska utveckling över tid med tillgångar, skulder och nettoförmögenhet.
     </MudText>

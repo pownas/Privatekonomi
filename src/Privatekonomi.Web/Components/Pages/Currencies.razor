@@ -1,3 +1,4 @@
+@page "/investments/currencies"
 @page "/currencies"
 @rendermode InteractiveServer
 @inject ICurrencyAccountService CurrencyAccountService
@@ -7,7 +8,10 @@
 <PageTitle>Kontanter/Valutor - Privatekonomi</PageTitle>
 
 <div class="d-flex justify-space-between align-center mb-4">
-    <MudText Typo="Typo.h4">Kontanter/Valutor</MudText>
+    <MudText Typo="Typo.h4">
+        <MudIcon Icon="@Icons.Material.Filled.AttachMoney" Color="Color.Primary" Class="mr-2" aria-hidden="true" />
+        Kontanter/Valutor
+    </MudText>
     <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="ToggleCreateForm">
         Ny Valuta
     </MudButton>

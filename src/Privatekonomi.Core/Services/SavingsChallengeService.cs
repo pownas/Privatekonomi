@@ -287,4 +287,38 @@ public class SavingsChallengeService : ISavingsChallengeService
 
         return await query.SumAsync(c => c.CurrentAmount);
     }
+
+    // Challenge template methods
+    public async Task<IEnumerable<ChallengeTemplate>> GetAllTemplatesAsync()
+    {
+        return await _context.ChallengeTemplates
+            .Where(t => t.IsActive)
+            .OrderBy(t => t.SortOrder)
+            .ToListAsync();
+    }
+
+    public async Task<ChallengeTemplate?> GetTemplateByIdAsync(int id)
+    {
+        return await _context.ChallengeTemplates
+            .FirstOrDefaultAsync(t => t.ChallengeTemplateId == id && t.IsActive);
+    }
+
+    public async Task<SavingsChallenge> CreateChallengeFromTemplateAsync(int templateId)
+    {
+        var template = await GetTemplateByIdAsync(templateId);
+        if (template == null)
+        {
+            throw new InvalidOperationException($"Template with ID {templateId} not found.");
+        }
+
+        var challenge = template.ToChallenge();
+        
+        // Set user ID for new challenges
+        if (_currentUserService?.IsAuthenticated == true && _currentUserService.UserId != null)
+        {
+            challenge.UserId = _currentUserService.UserId;
+        }
+
+        return await CreateChallengeAsync(challenge);
+    }
 }

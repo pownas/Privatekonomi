@@ -1,20 +1,48 @@
 {
-  "name": "Privatekonomi",
+  "name": "Privatekonomi - Ekonomihantering",
   "short_name": "Privatekonomi",
-  "description": "En privatekonomi-applikation byggd med .NET 9, Blazor Server och MudBlazor",
+  "description": "En privatekonomi-applikation för att hantera dina inkomster, utgifter, budgetar och sparmål",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#1a1a1f",
   "theme_color": "#594AE2",
   "orientation": "any",
   "icons": [
     {
-      "src": "/favicon.png",
-      "sizes": "any",
+      "src": "/icon-192x192.png",
+      "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
     }
   ],
   "categories": ["finance", "productivity"],
-  "screenshots": []
+  "screenshots": [],
+  "prefer_related_applications": false,
+  "lang": "sv-SE",
+  "dir": "ltr"
 }

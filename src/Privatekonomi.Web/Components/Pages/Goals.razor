@@ -1,6 +1,8 @@
+@page "/savings/goals"
 @page "/goals"
 @rendermode InteractiveServer
 @inject IGoalService GoalService
+@inject IGoalMilestoneService GoalMilestoneService
 @inject IBankSourceService BankSourceService
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
@@ -8,7 +10,10 @@
 <PageTitle>Sparmål - Privatekonomi</PageTitle>
 
 <div class="d-flex justify-space-between align-center mb-4">
-    <MudText Typo="Typo.h4">Sparmål</MudText>
+    <MudText Typo="Typo.h4">
+        <MudIcon Icon="@Icons.Material.Filled.EmojiEvents" Color="Color.Primary" Class="mr-2" aria-hidden="true" />
+        Sparmål
+    </MudText>
     <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="ToggleCreateForm">
         Nytt Sparmål
     </MudButton>
@@ -38,7 +43,7 @@
                          Variant="Variant.Outlined"
                          Min="0"
                          Format="N2"
-                         Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                         Culture="@(SwedishCulture)"
                          Class="mb-3" />
 
         <MudNumericField @bind-Value="_formGoal.CurrentAmount" 
@@ -46,7 +51,7 @@
                          Variant="Variant.Outlined"
                          Min="0"
                          Format="N2"
-                         Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                         Culture="@(SwedishCulture)"
                          Class="mb-3" />
 
         <MudDatePicker @bind-Date="_formGoalTargetDate"
@@ -97,7 +102,7 @@ else
                 <MudCard Elevation="2" Class="pa-4">
                     <MudCardContent>
                         <MudText Typo="Typo.h6">Totalt Sparmål</MudText>
-                        <MudText Typo="Typo.h4" Color="Color.Primary">@_totalTargetAmount.ToString("C", new System.Globalization.CultureInfo("sv-SE"))</MudText>
+                        <MudText Typo="Typo.h4" Color="Color.Primary">@_totalTargetAmount.ToString("C", SwedishCulture)</MudText>
                     </MudCardContent>
                 </MudCard>
             </MudItem>
@@ -105,7 +110,7 @@ else
                 <MudCard Elevation="2" Class="pa-4">
                     <MudCardContent>
                         <MudText Typo="Typo.h6">Totalt Sparat</MudText>
-                        <MudText Typo="Typo.h4" Color="Color.Success">@_totalCurrentAmount.ToString("C", new System.Globalization.CultureInfo("sv-SE"))</MudText>
+                        <MudText Typo="Typo.h4" Color="Color.Success">@_totalCurrentAmount.ToString("C", SwedishCulture)</MudText>
                     </MudCardContent>
                 </MudCard>
             </MudItem>
@@ -120,37 +125,72 @@ else
         </MudGrid>
     </MudPaper>
 
-    <MudTable Items="@_goals" Hover="true" Striped="true" Dense="true">
+    <MudTable Items="@_goals" Hover="true" Striped="true" Dense="false">
         <HeaderContent>
+            <MudTh></MudTh>
             <MudTh>Namn</MudTh>
             <MudTh>Beskrivning</MudTh>
             <MudTh>Målbelopp</MudTh>
             <MudTh>Sparat</MudTh>
             <MudTh>Framsteg</MudTh>
+            <MudTh>Milestones</MudTh>
             <MudTh>Målsättningsdatum</MudTh>
             <MudTh>Prioritet</MudTh>
             <MudTh>Sparkonto</MudTh>
             <MudTh>Åtgärder</MudTh>
         </HeaderContent>
         <RowTemplate>
-            <MudTd DataLabel="Namn">@context.Name</MudTd>
-            <MudTd DataLabel="Beskrivning">@context.Description</MudTd>
-            <MudTd DataLabel="Målbelopp">@context.TargetAmount.ToString("C", new System.Globalization.CultureInfo("sv-SE"))</MudTd>
-            <MudTd DataLabel="Sparat">@context.CurrentAmount.ToString("C", new System.Globalization.CultureInfo("sv-SE"))</MudTd>
-            <MudTd DataLabel="Framsteg">
-                <div class="d-flex align-center gap-2">
+            <MudTd>
+                @if (_goalMilestones.ContainsKey(context.GoalId) && _goalMilestones[context.GoalId].Any())
+                {
+                    <MudIconButton Icon="@(_expandedGoals.Contains(context.GoalId) ? Icons.Material.Filled.ExpandLess : Icons.Material.Filled.ExpandMore)" 
+                                   Size="Size.Small" 
+                                   OnClick="@(() => ToggleMilestones(context.GoalId))"
+                                   aria-label="@(_expandedGoals.Contains(context.GoalId) ? "Dölj målstolpar" : "Visa målstolpar")" />
+                }
+            </MudTd>
+            <MudTd DataLabel="Namn">
+                <MudText Typo="Typo.body1"><strong>@context.Name</strong></MudText>
+            </MudTd>
+            <MudTd DataLabel="Beskrivning">
+                <MudText Typo="Typo.body2" Color="Color.Secondary">@context.Description</MudText>
+            </MudTd>
+            <MudTd DataLabel="Målbelopp">
+                <MudText Typo="Typo.body1">@context.TargetAmount.ToString("C", SwedishCulture)</MudText>
+            </MudTd>
+            <MudTd DataLabel="Sparat">
+                <MudText Typo="Typo.body1" Color="Color.Success">@context.CurrentAmount.ToString("C", SwedishCulture)</MudText>
+            </MudTd>
+            <MudTd DataLabel="Framsteg" Style="min-width: 200px;">
+                <div class="d-flex flex-column gap-1">
                     <MudProgressLinear Color="@GetProgressColor(context)" 
                                        Rounded="true" 
                                        Size="Size.Large" 
                                        Value="@GetProgress(context)" 
-                                       Class="flex-grow-1" />
-                    <MudText Typo="Typo.body2">@GetProgress(context).ToString("F0")%</MudText>
+                                       Style="height: 24px;" />
+                    <MudText Typo="Typo.caption" Align="Align.Center">
+                        @context.CurrentAmount.ToString("N0", SwedishCulture) / @context.TargetAmount.ToString("N0", SwedishCulture) kr (@GetProgress(context).ToString("F0")%)
+                    </MudText>
                 </div>
+            </MudTd>
+            <MudTd DataLabel="Milestones">
+                @if (_goalMilestones.ContainsKey(context.GoalId))
+                {
+                    var milestones = _goalMilestones[context.GoalId];
+                    var reached = milestones.Count(m => m.IsReached);
+                    <MudChip T="string" Size="Size.Small" Color="@(reached == milestones.Count() ? Color.Success : Color.Primary)">
+                        @reached/@milestones.Count()
+                    </MudChip>
+                }
+                else
+                {
+                    <MudChip T="string" Size="Size.Small" Color="Color.Default">0/0</MudChip>
+                }
             </MudTd>
             <MudTd DataLabel="Målsättningsdatum">
                 @if (context.TargetDate.HasValue)
                 {
-                    @context.TargetDate.Value.ToString("yyyy-MM-dd")
+                    <MudText Typo="Typo.body2">@context.TargetDate.Value.ToString("yyyy-MM-dd")</MudText>
                 }
                 else
                 {
@@ -175,10 +215,58 @@ else
                 }
             </MudTd>
             <MudTd DataLabel="Åtgärder">
-                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" OnClick="@(() => EditGoal(context))" Color="Color.Primary" />
-                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" OnClick="@(() => DeleteGoal(context.GoalId))" Color="Color.Error" />
+                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" OnClick="@(() => EditGoal(context))" Color="Color.Primary" aria-label="Redigera sparmål" />
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" OnClick="@(() => DeleteGoal(context.GoalId))" Color="Color.Error" aria-label="Ta bort sparmål" />
             </MudTd>
         </RowTemplate>
+        <ChildRowContent>
+            @if (_expandedGoals.Contains(context.GoalId) && _goalMilestones.ContainsKey(context.GoalId))
+            {
+                <MudTr>
+                    <td colspan="11">
+                        <MudCard Elevation="0" Outlined="true" Class="ma-2 mb-3">
+                            <MudCardHeader>
+                                <MudText Typo="Typo.h6">Målstolpar för @context.Name</MudText>
+                            </MudCardHeader>
+                            <MudCardContent>
+                                <div class="d-flex flex-column gap-3">
+                                    @foreach (var milestone in _goalMilestones[context.GoalId].OrderBy(m => m.Percentage))
+                                    {
+                                        <div class="d-flex align-center gap-3 pa-2" style="@(milestone.IsReached ? "background-color: rgba(76, 175, 80, 0.08); border-radius: 8px;" : "")">
+                                            <MudIcon Icon="@(milestone.IsReached ? Icons.Material.Filled.CheckCircle : Icons.Material.Outlined.RadioButtonUnchecked)" 
+                                                     Color="@(milestone.IsReached ? Color.Success : Color.Default)" 
+                                                     Size="Size.Medium" />
+                                            <div class="flex-grow-1">
+                                                <MudText Typo="Typo.body1">
+                                                    <strong>@milestone.Percentage%</strong> (@milestone.TargetAmount.ToString("C", SwedishCulture))
+                                                </MudText>
+                                                @if (!string.IsNullOrEmpty(milestone.Description))
+                                                {
+                                                    <MudText Typo="Typo.body2" Color="Color.Secondary">@milestone.Description</MudText>
+                                                }
+                                                @if (milestone.IsReached && milestone.ReachedAt.HasValue)
+                                                {
+                                                    <MudText Typo="Typo.caption" Color="Color.Success">
+                                                        Uppnådd: @milestone.ReachedAt.Value.ToString("yyyy-MM-dd HH:mm")
+                                                    </MudText>
+                                                }
+                                                else if (!milestone.IsReached)
+                                                {
+                                                    var remaining = milestone.TargetAmount - context.CurrentAmount;
+                                                    <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                                        Återstår: @remaining.ToString("C", SwedishCulture)
+                                                    </MudText>
+                                                }
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            </MudCardContent>
+                        </MudCard>
+                    </td>
+                </MudTr>
+            }
+        </ChildRowContent>
     </MudTable>
 
     @if (!_goals.Any())
@@ -194,8 +282,12 @@ else
 }
 
 @code {
+    private static readonly System.Globalization.CultureInfo SwedishCulture = new System.Globalization.CultureInfo("sv-SE");
+    
     private IEnumerable<Goal> _goals = new List<Goal>();
     private IEnumerable<BankSource> _bankSources = new List<BankSource>();
+    private Dictionary<int, IEnumerable<GoalMilestone>> _goalMilestones = new();
+    private HashSet<int> _expandedGoals = new();
     private bool _loading = true;
     private bool _showCreateForm = false;
     private Goal _formGoal = new();
@@ -211,6 +303,7 @@ else
         _loading = true;
         await LoadGoals();
         await LoadBankSources();
+        await LoadMilestones();
         _loading = false;
     }
 
@@ -226,6 +319,28 @@ else
     private async Task LoadBankSources()
     {
         _bankSources = await BankSourceService.GetAllBankSourcesAsync();
+    }
+    
+    private async Task LoadMilestones()
+    {
+        _goalMilestones.Clear();
+        foreach (var goal in _goals)
+        {
+            var milestones = await GoalMilestoneService.GetMilestonesByGoalIdAsync(goal.GoalId);
+            _goalMilestones[goal.GoalId] = milestones;
+        }
+    }
+    
+    private void ToggleMilestones(int goalId)
+    {
+        if (_expandedGoals.Contains(goalId))
+        {
+            _expandedGoals.Remove(goalId);
+        }
+        else
+        {
+            _expandedGoals.Add(goalId);
+        }
     }
 
     private void ToggleCreateForm()
@@ -274,6 +389,7 @@ else
             }
 
             await LoadGoals();
+            await LoadMilestones();
             CancelForm();
         }
         catch (Exception ex)
@@ -302,6 +418,7 @@ else
             await GoalService.DeleteGoalAsync(goalId);
             Snackbar.Add("Sparmålet har tagits bort", Severity.Info);
             await LoadGoals();
+            await LoadMilestones();
         }
     }
 

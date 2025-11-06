@@ -13,6 +13,12 @@ using Privatekonomi.Core.Configuration;
 
 var builder = WebApplication.CreateBuilder(args);
 
+if (builder.Environment.IsDevelopment() || string.Equals(builder.Environment.EnvironmentName, "Local", StringComparison.OrdinalIgnoreCase))
+{
+    builder.Configuration.AddJsonFile("appsettings.local.json", optional: true, reloadOnChange: true);
+    builder.Configuration.AddUserSecrets(typeof(Program).Assembly, optional: true);
+}
+
 // Configure Swedish culture as default
 var swedishCulture = new CultureInfo("sv-SE");
 CultureInfo.DefaultThreadCurrentCulture = swedishCulture;
@@ -20,6 +26,9 @@ CultureInfo.DefaultThreadCurrentUICulture = swedishCulture;
 
 // Add Aspire service defaults
 builder.AddServiceDefaults();
+
+// Add SignalR for real-time budget alerts
+builder.Services.AddSignalR();
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
@@ -101,7 +110,9 @@ builder.Services.AddScoped<IBudgetService, BudgetService>();
 builder.Services.AddScoped<IBankSourceService, BankSourceService>();
 builder.Services.AddScoped<IHouseholdService, HouseholdService>();
 builder.Services.AddScoped<IChildAllowanceService, ChildAllowanceService>();
+builder.Services.AddScoped<IGoalMilestoneService, GoalMilestoneService>();
 builder.Services.AddScoped<IGoalService, GoalService>();
+builder.Services.AddScoped<IRoundUpService, RoundUpService>();
 builder.Services.AddScoped<IPocketService, PocketService>();
 builder.Services.AddScoped<ISharedGoalService, SharedGoalService>();
 builder.Services.AddScoped<ISocialFeatureService, SocialFeatureService>();
@@ -109,6 +120,7 @@ builder.Services.AddScoped<IAuditLogService, AuditLogService>();
 builder.Services.AddScoped<IExportService, ExportService>();
 builder.Services.AddScoped<IDataImportService, DataImportService>();
 builder.Services.AddScoped<IReportService, ReportService>();
+builder.Services.AddScoped<IHeatmapAnalysisService, HeatmapAnalysisService>();
 builder.Services.AddScoped<ISalaryHistoryService, SalaryHistoryService>();
 builder.Services.AddScoped<ICurrencyAccountService, CurrencyAccountService>();
 builder.Services.AddScoped<IReceiptService, ReceiptService>();
@@ -118,12 +130,19 @@ builder.Services.AddScoped<IPensionService, PensionService>();
 builder.Services.AddScoped<IDividendService, DividendService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<INotificationPreferenceService, NotificationPreferenceService>();
+builder.Services.AddScoped<IReminderService, ReminderService>();
+builder.Services.AddScoped<IBudgetAlertService, BudgetAlertService>();
 builder.Services.AddScoped<ILifeTimelinePlannerService, LifeTimelinePlannerService>();
 builder.Services.AddScoped<ISavingsChallengeService, SavingsChallengeService>();
 builder.Services.AddScoped<IKonsumentverketComparisonService, KonsumentverketComparisonService>();
+builder.Services.AddScoped<IKalpService, KalpService>();
 builder.Services.AddScoped<ThemeService>();
 builder.Services.AddScoped<DashboardPreferencesService>();
 builder.Services.AddScoped<IDashboardLayoutService, DashboardLayoutService>();
+builder.Services.AddScoped<ViewDensityService>();
+
+// Register background services
+builder.Services.AddHostedService<Privatekonomi.Web.Services.BudgetAlertBackgroundService>();
 
 // Swedish-specific services
 builder.Services.AddScoped<ISieExporter, SieExporter>();
@@ -246,5 +265,8 @@ app.MapRazorComponents<App>()
 
 // Add Identity endpoints
 app.MapGroup("/Account").MapIdentityApi<ApplicationUser>();
+
+// Map SignalR hubs
+app.MapHub<Privatekonomi.Web.Hubs.BudgetAlertHub>("/hubs/budgetalert");
 
 app.Run();

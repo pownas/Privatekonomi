@@ -1,3 +1,4 @@
+@page "/social/privacy-settings"
 @page "/privacy-settings"
 @rendermode InteractiveServer
 @inject ISocialFeatureService SocialFeatureService
@@ -7,7 +8,10 @@
 <PageTitle>Integritetsinställningar - Privatekonomi</PageTitle>
 
 <div class="d-flex justify-space-between align-center mb-4">
-    <MudText Typo="Typo.h4">Sociala Funktioner - Integritetsinställningar</MudText>
+    <MudText Typo="Typo.h4">
+        <MudIcon Icon="@Icons.Material.Filled.Security" Color="Color.Primary" Class="mr-2" aria-hidden="true" />
+        Sociala Funktioner - Integritetsinställningar
+    </MudText>
 </div>
 
 @if (_loading)

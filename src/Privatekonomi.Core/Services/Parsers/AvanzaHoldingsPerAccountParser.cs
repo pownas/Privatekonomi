@@ -47,7 +47,7 @@ public class AvanzaHoldingsPerAccountParser : IInvestmentCsvParser
         var currencyIndex = FindColumnIndex(header, new[] { "valuta", "currency" });
         var countryIndex = FindColumnIndex(header, new[] { "land", "country" });
         var isinIndex = FindColumnIndex(header, new[] { "isin" });
-        var marketIndex = FindColumnIndex(header, new[] { "marknad", "market", "exchange" });
+        var marketIndex = FindColumnIndexExact(header, new[] { "marknad", "market", "exchange" });
         var typeIndex = FindColumnIndex(header, new[] { "typ", "type" });
 
         if (nameIndex == -1 || volumeIndex == -1 || marketValueIndex == -1)
@@ -129,6 +129,21 @@ public class AvanzaHoldingsPerAccountParser : IInvestmentCsvParser
             foreach (var name in possibleNames)
             {
                 if (columnName.Contains(name.ToLower()))
+                    return i;
+            }
+        }
+        return -1;
+    }
+
+    private int FindColumnIndexExact(string[] header, string[] possibleNames)
+    {
+        for (int i = 0; i < header.Length; i++)
+        {
+            var columnName = header[i].Trim().ToLower().Replace(" ", "").Replace("(", "").Replace(")", "");
+            foreach (var name in possibleNames)
+            {
+                var searchName = name.ToLower().Replace(" ", "").Replace("(", "").Replace(")", "");
+                if (columnName == searchName)
                     return i;
             }
         }

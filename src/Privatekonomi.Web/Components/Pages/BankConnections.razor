@@ -1,3 +1,5 @@
+@page "/settings/bank-connections"
+@page "/admin/bank-connections"
 @page "/bank-connections"
 @rendermode InteractiveServer
 @inject ISnackbar Snackbar
@@ -10,7 +12,10 @@
 
 <PageTitle>Bankkopplingar - Privatekonomi</PageTitle>
 
-<MudText Typo="Typo.h4" Class="mb-4">Bankkopplingar</MudText>
+<MudText Typo="Typo.h4" Class="mb-4">
+    <MudIcon Icon="@Icons.Material.Filled.CloudSync" Color="Color.Primary" Class="mr-2" aria-hidden="true" />
+    Bankkopplingar
+</MudText>
 
 <MudText Typo="Typo.body1" Class="mb-4">
     Anslut dina bankkonton via PSD2-API för automatisk transaktionsimport. Stöd för Swedbank, Avanza Bank och ICA Banken.
@@ -207,7 +212,7 @@ else
             Snackbar.Add("Bank ansluten! Funktionaliteten är under utveckling.", Severity.Success);
             
             // Clean up URL
-            Navigation.NavigateTo("/bank-connections", replace: true);
+            Navigation.NavigateTo("/settings/bank-connections", replace: true);
         }
         catch (Exception ex)
         {

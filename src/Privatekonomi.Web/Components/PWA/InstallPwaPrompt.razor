@@ -1,0 +1,155 @@
+@inject IJSRuntime JSRuntime
+@inject ISnackbar Snackbar
+@implements IAsyncDisposable
+
+@if (ShowInstallPrompt && !IsRunningAsPWA)
+{
+    <MudPaper Elevation="4" Class="install-prompt">
+        <div class="d-flex align-items-center gap-3 pa-4">
+            <MudIcon Icon="@Icons.Material.Filled.InstallMobile" Size="Size.Large" Color="Color.Primary" />
+            <div class="flex-grow-1">
+                <MudText Typo="Typo.h6">Installera Privatekonomi</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                    Få snabbare åtkomst och använd appen offline
+                </MudText>
+            </div>
+            <div class="d-flex gap-2">
+                <MudButton Variant="Variant.Text" OnClick="Dismiss">Senare</MudButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Install">
+                    Installera
+                </MudButton>
+            </div>
+        </div>
+    </MudPaper>
+}
+
+@code {
+    // Configuration constants
+    private const int InitialPromptDelayMs = 5000; // Wait 5 seconds before showing initial prompt
+    private const int OnInstallAvailableDelayMs = 3000; // Wait 3 seconds before showing prompt when event fires
+    
+    private bool ShowInstallPrompt { get; set; } = false;
+    private bool IsRunningAsPWA { get; set; } = false;
+    private DotNetObjectReference<InstallPwaPrompt>? objRef;
+
+    protected override async Task OnInitializedAsync()
+    {
+        objRef = DotNetObjectReference.Create(this);
+        
+        // Register callbacks with JavaScript
+        await JSRuntime.InvokeVoidAsync("eval", @"
+            window.blazorPwaCallbacks = window.blazorPwaCallbacks || {};
+            window.blazorPwaCallbacks.onInstallAvailable = () => {
+                window.blazorPwaCallbacks.installPromptRef.invokeMethodAsync('OnInstallAvailable');
+            };
+            window.blazorPwaCallbacks.onInstalled = () => {
+                window.blazorPwaCallbacks.installPromptRef.invokeMethodAsync('OnInstalled');
+            };
+            window.blazorPwaCallbacks.installPromptRef = arguments[0];
+        ", objRef);
+        
+        // Check if running as PWA
+        IsRunningAsPWA = await JSRuntime.InvokeAsync<bool>("pwaManager.isRunningAsPWA");
+        
+        // Check if install is available
+        bool canInstall = await JSRuntime.InvokeAsync<bool>("pwaManager.canInstall");
+        if (canInstall && !IsRunningAsPWA)
+        {
+            // Show prompt after a delay (don't annoy users immediately)
+            await Task.Delay(InitialPromptDelayMs);
+            ShowInstallPrompt = true;
+            StateHasChanged();
+        }
+    }
+
+    [JSInvokable]
+    public async Task OnInstallAvailable()
+    {
+        if (!IsRunningAsPWA)
+        {
+            // Wait a bit before showing the prompt
+            await Task.Delay(OnInstallAvailableDelayMs);
+            ShowInstallPrompt = true;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    [JSInvokable]
+    public async Task OnInstalled()
+    {
+        ShowInstallPrompt = false;
+        Snackbar.Add("Privatekonomi har installerats! 🎉", Severity.Success);
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task Install()
+    {
+        try
+        {
+            bool installed = await JSRuntime.InvokeAsync<bool>("pwaManager.showInstallPrompt");
+            if (installed)
+            {
+                ShowInstallPrompt = false;
+                Snackbar.Add("Installation påbörjad...", Severity.Info);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Kunde inte installera appen: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void Dismiss()
+    {
+        ShowInstallPrompt = false;
+        // Store dismissal in localStorage to not show again for a while
+        JSRuntime.InvokeVoidAsync("localStorage.setItem", "pwa-install-dismissed", DateTime.UtcNow.ToString("O"));
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (objRef != null)
+        {
+            await JSRuntime.InvokeVoidAsync("eval", @"
+                if (window.blazorPwaCallbacks) {
+                    delete window.blazorPwaCallbacks.onInstallAvailable;
+                    delete window.blazorPwaCallbacks.onInstalled;
+                    delete window.blazorPwaCallbacks.installPromptRef;
+                }
+            ");
+            objRef.Dispose();
+        }
+    }
+}
+
+<style>
+    .install-prompt {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 9998;
+        max-width: 500px;
+        width: 90%;
+        animation: slideUp 0.3s ease-out;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    }
+
+    @@media (max-width: 600px) {
+        .install-prompt {
+            bottom: 10px;
+            width: 95%;
+        }
+    }
+
+    @@keyframes slideUp {
+        from {
+            transform: translate(-50%, 100%);
+            opacity: 0;
+        }
+        to {
+            transform: translate(-50%, 0);
+            opacity: 1;
+        }
+    }
+</style>

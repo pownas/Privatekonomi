@@ -1,3 +1,4 @@
+@page "/economy/transactions"
 @page "/transactions"
 @rendermode InteractiveServer
 @using Privatekonomi.Web.Components.Dialogs
@@ -13,13 +14,14 @@
 <PageTitle>Transaktioner - Privatekonomi</PageTitle>
 
 <MudText Typo="Typo.h4" Class="mb-4">
+    <MudIcon Icon="@Icons.Material.Filled.List" Color="Color.Primary" Class="mr-2" aria-hidden="true" />
     Transaktioner
     <MudIconButton Icon="@Icons.Material.Filled.Help" 
                    Color="Color.Default" 
                    Size="Size.Small"
                    Class="mobile-only ml-2"
                    OnClick="ShowGestureHelp"
-                   Title="Visa touch-gester hjälp" />
+                   title="Visa touch-gester hjälp" />
 </MudText>
 
 <MudPaper Class="pa-4">
@@ -28,7 +30,7 @@
             <MudButton Variant="Variant.Filled" 
                        Color="Color.Primary" 
                        StartIcon="@Icons.Material.Filled.Add" 
-                       OnClick="@(() => Navigation.NavigateTo("/transactions/new"))">
+                       OnClick="@(() => Navigation.NavigateTo("/economy/transactions/new"))">
                 Ny Transaktion
             </MudButton>
             <MudButtonGroup Color="Color.Primary" Variant="Variant.Outlined">
@@ -61,13 +63,13 @@
                 <MudButton Variant="Variant.Filled" 
                            Color="Color.Primary" 
                            StartIcon="@Icons.Material.Filled.Add"
-                           OnClick="@(() => Navigation.NavigateTo("/transactions/new"))">
+                           OnClick="@(() => Navigation.NavigateTo("/economy/transactions/new"))">
                     Skapa Transaktion
                 </MudButton>
                 <MudButton Variant="Variant.Outlined" 
                            Color="Color.Primary" 
                            StartIcon="@Icons.Material.Filled.Upload"
-                           OnClick="@(() => Navigation.NavigateTo("/import"))">
+                           OnClick="@(() => Navigation.NavigateTo("/settings/import"))">
                     Importera från Bank
                 </MudButton>
             </div>
@@ -75,15 +77,79 @@
     }
     else
     {
-        <MudTable Items="@_transactions" 
-                  Hover="true" 
-                  Striped="true" 
-                  Filter="new Func<Transaction,bool>(FilterFunc)"
-                  Dense="@_dense"
-                  FixedHeader="true"
-                  Height="600px">
+        @if (_selectedTransactions.Any())
+        {
+            <MudPaper Class="pa-4 mb-4" Elevation="2">
+                <MudGrid>
+                    <MudItem xs="12" sm="6" md="4">
+                        <MudText Typo="Typo.subtitle1">
+                            <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Class="mr-2" />
+                            <strong>@_selectedTransactions.Count</strong> @(_selectedTransactions.Count == 1 ? "transaktion vald" : "transaktioner valda")
+                        </MudText>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="8" Class="d-flex flex-wrap gap-2 justify-end">
+                        <MudButton Variant="Variant.Filled" 
+                                   Color="Color.Primary" 
+                                   StartIcon="@Icons.Material.Filled.Category"
+                                   OnClick="BulkCategorize"
+                                   Size="Size.Small">
+                            Kategorisera
+                        </MudButton>
+                        <MudButton Variant="Variant.Filled" 
+                                   Color="Color.Primary" 
+                                   StartIcon="@Icons.Material.Filled.Home"
+                                   OnClick="BulkLinkHousehold"
+                                   Size="Size.Small">
+                            Koppla hushåll
+                        </MudButton>
+                        <MudButton Variant="Variant.Filled" 
+                                   Color="Color.Primary" 
+                                   StartIcon="@Icons.Material.Filled.Download"
+                                   OnClick="BulkExport"
+                                   Size="Size.Small">
+                            Exportera
+                        </MudButton>
+                        <MudButton Variant="Variant.Filled" 
+                                   Color="Color.Error" 
+                                   StartIcon="@Icons.Material.Filled.Delete"
+                                   OnClick="BulkDelete"
+                                   Size="Size.Small">
+                            Ta bort
+                        </MudButton>
+                        <MudButton Variant="Variant.Text" 
+                                   Color="Color.Default"
+                                   OnClick="ClearSelection"
+                                   Size="Size.Small">
+                            Avmarkera alla
+                        </MudButton>
+                        @if (_undoStack.Any())
+                        {
+                            <MudButton Variant="Variant.Text" 
+                                       Color="Color.Secondary"
+                                       StartIcon="@Icons.Material.Filled.Undo"
+                                       OnClick="UndoLastOperation"
+                                       Size="Size.Small">
+                                Ångra
+                            </MudButton>
+                        }
+                    </MudItem>
+                </MudGrid>
+            </MudPaper>
+        }
+
+        <MudDataGrid T="Transaction" 
+                     Items="@_filteredTransactions" 
+                     MultiSelection="true"
+                     @bind-SelectedItems="_selectedTransactions"
+                     Hover="true" 
+                     Striped="true"
+                     Dense="@_dense"
+                     FixedHeader="true"
+                     Height="600px"
+                     SortMode="SortMode.Multiple">
             <ToolBarContent>
                 <MudTextField @bind-Value="_searchString" 
+                              @bind-Value:after="ApplyFilter"
                               Placeholder="Sök transaktion..." 
                               Adornment="Adornment.Start" 
                               AdornmentIcon="@Icons.Material.Filled.Search" 
@@ -92,6 +158,7 @@
                               aria-label="Sök i transaktioner"></MudTextField>
                 <MudSelect T="int?" 
                           @bind-Value="_selectedHouseholdId" 
+                          @bind-Value:after="ApplyFilter"
                           Label="Filtrera efter hushåll" 
                           Clearable="true" 
                           Style="min-width: 200px;" 
@@ -110,121 +177,101 @@
                                    aria-label="Växla mellan tät och luftig layout" />
                 </MudTooltip>
             </ToolBarContent>
-            <HeaderContent>
-                <MudTh>Datum</MudTh>
-                <MudTh>Beskrivning</MudTh>
-                <MudTh>Bank</MudTh>
-                <MudTh>Hushåll</MudTh>
-                <MudTh>Kategori</MudTh>
-                <MudTh Style="text-align: right">Belopp</MudTh>
-                <MudTh>Åtgärder</MudTh>
-            </HeaderContent>
-            <RowTemplate>
-                <MudTd DataLabel="Datum" id="@($"transaction-row-{context.TransactionId}")" class="transaction-row-swipeable">@context.Date.ToString("yyyy-MM-dd")</MudTd>
-                <MudTd DataLabel="Beskrivning">
-                    <div class="d-flex align-center">
-                        @context.Description
-                        @if (!string.IsNullOrWhiteSpace(context.Notes) || !string.IsNullOrWhiteSpace(context.Tags))
-                        {
-                            <MudIconButton Icon="@Icons.Material.Filled.Info" Size="Size.Small" Color="Color.Info"
-                                           OnClick="@(() => ToggleDetails(context.TransactionId))" />
-                        }
-                    </div>
-                    @if (_expandedTransactionId == context.TransactionId)
-                    {
-                        <MudPaper Class="pa-2 mt-2" Elevation="0" Style="background-color: #f5f5f5;">
-                            @if (!string.IsNullOrWhiteSpace(context.Tags))
+            <Columns>
+                <SelectColumn T="Transaction" />
+                <PropertyColumn Property="x => x.Date" Title="Datum" Format="yyyy-MM-dd" />
+                <TemplateColumn Title="Beskrivning" Sortable="false">
+                    <CellTemplate>
+                        <div Style="cursor: pointer;" @onclick="@(() => ViewTransactionDetails(context.Item))">
+                            @context.Item.Description
+                            @if (!string.IsNullOrWhiteSpace(context.Item.Notes))
                             {
-                                <div class="mb-2">
-                                    <MudText Typo="Typo.caption" Style="font-weight: 600;">Taggar:</MudText>
-                                    @foreach (var tag in context.Tags.Split(',', StringSplitOptions.RemoveEmptyEntries))
-                                    {
-                                        <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Outlined">@tag.Trim()</MudChip>
-                                    }
+                                <div class="mt-1">
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary" Style="font-style: italic;">
+                                        <MudIcon Icon="@Icons.Material.Filled.StickyNote2" Size="Size.Small" Style="vertical-align: middle;" />
+                                        @(context.Item.Notes.Length > MaxNotePreviewLength ? context.Item.Notes.Substring(0, MaxNotePreviewLength) + "..." : context.Item.Notes)
+                                    </MudText>
                                 </div>
                             }
-                            @if (!string.IsNullOrWhiteSpace(context.Notes))
-                            {
-                                <div>
-                                    <MudText Typo="Typo.caption" Style="font-weight: 600;">Noteringar:</MudText>
-                                    <MudText Typo="Typo.body2">@context.Notes</MudText>
-                                </div>
-                            }
-                        </MudPaper>
-                    }
-                </MudTd>
-                <MudTd DataLabel="Bank">
-                    @if (context.BankSource != null)
-                    {
-                        <MudChip T="string" Size="Size.Small" Variant="Variant.Filled"
-                                 Style="@($"background-color: {context.BankSource.Color}; color: white;")">
-                            @context.BankSource.Name
-                        </MudChip>
-                    }
-                    else
-                    {
-                        <MudText Typo="Typo.body2" Color="Color.Default">-</MudText>
-                    }
-                </MudTd>
-                <MudTd DataLabel="Hushåll">
-                    @if (context.Household != null)
-                    {
-                        <MudChip T="string" Size="Size.Small" Color="Color.Secondary" Variant="Variant.Outlined">
-                            <MudIcon Icon="@Icons.Material.Filled.Home" Size="Size.Small" /> @context.Household.Name
-                        </MudChip>
-                    }
-                    else
-                    {
-                        <MudText Typo="Typo.caption" Color="Color.Default">Personlig</MudText>
-                    }
-                </MudTd>
-                <MudTd DataLabel="Kategori">
-                    @if (context.TransactionCategories.Any())
-                    {
-                        @foreach (var tc in context.TransactionCategories)
+                        </div>
+                    </CellTemplate>
+                </TemplateColumn>
+                <TemplateColumn Title="Bank" Sortable="false">
+                    <CellTemplate>
+                        @if (context.Item.BankSource != null)
                         {
                             <MudChip T="string" Size="Size.Small" Variant="Variant.Filled"
-                                     Style="@($"background-color: {tc.Category.Color}; color: white; margin: 2px;")">
-                                @tc.Category.Name
+                                     Style="@($"background-color: {context.Item.BankSource.Color}; color: white;")">
+                                @context.Item.BankSource.Name
                             </MudChip>
                         }
-                    }
-                    else
-                    {
-                        <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Default">
-                            Okategoriserad
-                        </MudChip>
-                    }
-                </MudTd>
-                <MudTd DataLabel="Belopp" Style="text-align: right">
-                    <MudText Typo="Typo.body1" Style="@($"font-weight: 600; color: {(context.IsIncome ? "#2e7d32" : "#d32f2f")};")">
-                        @(context.IsIncome ? "+" : "")@context.Amount.ToString("N2", new System.Globalization.CultureInfo("sv-SE")) kr
-                    </MudText>
-                </MudTd>
-                <MudTd DataLabel="Åtgärder">
-                    <MudTooltip Text="Redigera transaktion">
-                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small"
-                                       OnClick="@(() => EditTransaction(context))" />
-                    </MudTooltip>
-                    <MudTooltip Text="Ta bort transaktion">
-                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small"
-                                       OnClick="@(() => DeleteTransaction(context.TransactionId))" />
-                    </MudTooltip>
-                </MudTd>
-            </RowTemplate>
-        </MudTable>
+                        else
+                        {
+                            <MudText Typo="Typo.body2" Color="Color.Default">-</MudText>
+                        }
+                    </CellTemplate>
+                </TemplateColumn>
+                <TemplateColumn Title="Hushåll" Sortable="false">
+                    <CellTemplate>
+                        @if (context.Item.Household != null)
+                        {
+                            <MudChip T="string" Size="Size.Small" Color="Color.Secondary" Variant="Variant.Outlined">
+                                <MudIcon Icon="@Icons.Material.Filled.Home" Size="Size.Small" /> @context.Item.Household.Name
+                            </MudChip>
+                        }
+                        else
+                        {
+                            <MudText Typo="Typo.caption" Color="Color.Default">Personlig</MudText>
+                        }
+                    </CellTemplate>
+                </TemplateColumn>
+                <TemplateColumn Title="Kategori" Sortable="false">
+                    <CellTemplate>
+                        @if (context.Item.TransactionCategories.Any())
+                        {
+                            @foreach (var tc in context.Item.TransactionCategories)
+                            {
+                                <MudChip T="string" Size="Size.Small" Variant="Variant.Filled"
+                                         Style="@($"background-color: {tc.Category.Color}; color: white; margin: 2px;")">
+                                    @tc.Category.Name
+                                </MudChip>
+                            }
+                        }
+                        else
+                        {
+                            <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Default">
+                                Okategoriserad
+                            </MudChip>
+                        }
+                    </CellTemplate>
+                </TemplateColumn>
+                <TemplateColumn Title="Belopp" Sortable="true" SortBy="@(x => x.Amount)">
+                    <CellTemplate>
+                        <div Style="text-align: right;">
+                            <MudText Typo="Typo.body1" Style="@($"font-weight: 600; color: {(context.Item.IsIncome ? "#2e7d32" : "#d32f2f")};")">
+                                @(context.Item.IsIncome ? "+" : "")@context.Item.Amount.ToString("N2", new System.Globalization.CultureInfo("sv-SE")) kr
+                            </MudText>
+                        </div>
+                    </CellTemplate>
+                </TemplateColumn>
+            </Columns>
+        </MudDataGrid>
     }
 </MudPaper>
 
 @code {
+    private const int MaxNotePreviewLength = 50;
+    
     private bool _loading = true;
     private bool _dense = false;
     private IEnumerable<Transaction> _transactions = new List<Transaction>();
+    private IEnumerable<Transaction> _filteredTransactions = new List<Transaction>();
+    private HashSet<Transaction> _selectedTransactions = new();
     private List<Household> _households = new();
     private string _searchString = "";
-    private int? _expandedTransactionId = null;
     private int? _selectedHouseholdId = null;
     private DotNetObjectReference<Transactions>? _dotNetHelper;
+    private Stack<BulkOperationSnapshot> _undoStack = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -293,7 +340,13 @@
         var households = await HouseholdService.GetAllHouseholdsAsync();
         _households = households.ToList();
         _transactions = await TransactionService.GetAllTransactionsAsync();
+        ApplyFilter();
         _loading = false;
+    }
+
+    private void ApplyFilter()
+    {
+        _filteredTransactions = _transactions.Where(FilterFunc).ToList();
     }
 
     private bool FilterFunc(Transaction transaction)
@@ -321,9 +374,37 @@
         return false;
     }
 
-    private void ToggleDetails(int transactionId)
+    private async Task ViewTransactionDetails(Transaction transaction)
     {
-        _expandedTransactionId = _expandedTransactionId == transactionId ? null : transactionId;
+        var parameters = new DialogParameters<TransactionDetailsDialog>
+        {
+            { x => x.Transaction, transaction },
+            { x => x.OnEdit, EventCallback.Factory.Create<Transaction>(this, EditTransactionFromDetails) },
+            { x => x.OnDelete, EventCallback.Factory.Create<Transaction>(this, DeleteTransactionFromDetails) }
+        };
+
+        var dialog = await DialogService.ShowAsync<TransactionDetailsDialog>("Transaktionsdetaljer", parameters, new DialogOptions 
+        { 
+            MaxWidth = MaxWidth.Large, 
+            FullWidth = true 
+        });
+        
+        var result = await dialog.Result;
+        
+        if (result is not null && !result.Canceled)
+        {
+            await LoadData();
+        }
+    }
+
+    private async Task EditTransactionFromDetails(Transaction transaction)
+    {
+        await EditTransaction(transaction);
+    }
+
+    private async Task DeleteTransactionFromDetails(Transaction transaction)
+    {
+        await DeleteTransaction(transaction.TransactionId);
     }
 
     private async Task EditTransaction(Transaction transaction)
@@ -407,5 +488,294 @@
     {
         var base64 = Convert.ToBase64String(fileData);
         await JSRuntime.InvokeVoidAsync("downloadFile", fileName, contentType, base64);
+    }
+
+    // Bulk Operations
+    private void ClearSelection()
+    {
+        _selectedTransactions.Clear();
+    }
+
+    private async Task BulkCategorize()
+    {
+        if (!_selectedTransactions.Any())
+        {
+            Snackbar.Add("Välj minst en transaktion", Severity.Warning);
+            return;
+        }
+
+        var parameters = new DialogParameters<BulkCategorizeDialog>
+        {
+            { x => x.SelectedTransactionCount, _selectedTransactions.Count }
+        };
+
+        var dialog = await DialogService.ShowAsync<BulkCategorizeDialog>("Bulk-kategorisera", parameters, new DialogOptions
+        {
+            MaxWidth = MaxWidth.Medium,
+            FullWidth = true
+        });
+
+        var result = await dialog.Result;
+
+        if (result is not null && !result.Canceled && result.Data != null)
+        {
+            try
+            {
+                var selectedCategories = (List<dynamic>)result.Data;
+                var transactionIds = _selectedTransactions.Select(t => t.TransactionId).ToList();
+
+                // Create snapshot for undo
+                var snapshot = await TransactionService.CreateOperationSnapshotAsync(
+                    transactionIds,
+                    BulkOperationType.Categorize);
+                
+                var categories = selectedCategories
+                    .Select(c => ((int)c.CategoryId, (decimal?)c.Amount))
+                    .ToList();
+
+                var bulkResult = await TransactionService.BulkCategorizeTransactionsAsync(
+                    transactionIds,
+                    categories);
+
+                if (bulkResult.IsSuccess)
+                {
+                    _undoStack.Push(snapshot);
+                    Snackbar.Add($"{bulkResult.SuccessCount} transaktioner kategoriserade", Severity.Success);
+                }
+                else if (bulkResult.IsPartialSuccess)
+                {
+                    _undoStack.Push(snapshot);
+                    Snackbar.Add($"{bulkResult.SuccessCount} kategoriserade, {bulkResult.FailureCount} misslyckades", Severity.Warning);
+                }
+                else
+                {
+                    Snackbar.Add($"Misslyckades: {string.Join(", ", bulkResult.Errors)}", Severity.Error);
+                }
+
+                await LoadData();
+                ClearSelection();
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Fel vid bulk-kategorisering: {ex.Message}", Severity.Error);
+            }
+        }
+    }
+
+    private async Task BulkLinkHousehold()
+    {
+        if (!_selectedTransactions.Any())
+        {
+            Snackbar.Add("Välj minst en transaktion", Severity.Warning);
+            return;
+        }
+
+        var parameters = new DialogParameters<BulkLinkHouseholdDialog>
+        {
+            { x => x.SelectedTransactionCount, _selectedTransactions.Count }
+        };
+
+        var dialog = await DialogService.ShowAsync<BulkLinkHouseholdDialog>("Bulk-koppla hushåll", parameters, new DialogOptions
+        {
+            MaxWidth = MaxWidth.Medium,
+            FullWidth = true
+        });
+
+        var result = await dialog.Result;
+
+        if (result is not null && !result.Canceled)
+        {
+            try
+            {
+                var householdId = (int?)result.Data;
+                var transactionIds = _selectedTransactions.Select(t => t.TransactionId).ToList();
+
+                // Create snapshot for undo
+                var snapshot = await TransactionService.CreateOperationSnapshotAsync(
+                    transactionIds,
+                    BulkOperationType.LinkHousehold);
+
+                var bulkResult = await TransactionService.BulkLinkToHouseholdAsync(
+                    transactionIds,
+                    householdId);
+
+                if (bulkResult.IsSuccess)
+                {
+                    _undoStack.Push(snapshot);
+                    var message = householdId.HasValue
+                        ? $"{bulkResult.SuccessCount} transaktioner kopplade till hushåll"
+                        : $"{bulkResult.SuccessCount} transaktioner bortkopplade från hushåll";
+                    Snackbar.Add(message, Severity.Success);
+                }
+                else if (bulkResult.IsPartialSuccess)
+                {
+                    _undoStack.Push(snapshot);
+                    Snackbar.Add($"{bulkResult.SuccessCount} kopplade, {bulkResult.FailureCount} misslyckades", Severity.Warning);
+                }
+                else
+                {
+                    Snackbar.Add($"Misslyckades: {string.Join(", ", bulkResult.Errors)}", Severity.Error);
+                }
+
+                await LoadData();
+                ClearSelection();
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Fel vid bulk-koppling: {ex.Message}", Severity.Error);
+            }
+        }
+    }
+
+    private async Task BulkExport()
+    {
+        if (!_selectedTransactions.Any())
+        {
+            Snackbar.Add("Välj minst en transaktion", Severity.Warning);
+            return;
+        }
+
+        var parameters = new DialogParameters
+        {
+            { "Message", $"Välj format för export av {_selectedTransactions.Count} transaktioner" }
+        };
+
+        var options = new DialogOptions
+        {
+            MaxWidth = MaxWidth.Small,
+            FullWidth = true
+        };
+
+        var dialog = await DialogService.ShowMessageBox(
+            "Exportera transaktioner",
+            new MarkupString($"Välj format för export av <strong>{_selectedTransactions.Count}</strong> transaktioner:"),
+            "CSV", "JSON", "Avbryt",
+            options);
+
+        if (dialog == true) // CSV
+        {
+            await ExportSelectedToCsv();
+        }
+        else if (dialog == false) // JSON
+        {
+            await ExportSelectedToJson();
+        }
+    }
+
+    private async Task ExportSelectedToCsv()
+    {
+        try
+        {
+            var transactionIds = _selectedTransactions.Select(t => t.TransactionId).ToList();
+            var csvData = await ExportService.ExportSelectedTransactionsToCsvAsync(transactionIds);
+            var fileName = $"transaktioner_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
+            
+            await DownloadFile(csvData, fileName, "text/csv");
+            Snackbar.Add($"{_selectedTransactions.Count} transaktioner exporterade till CSV", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Ett fel uppstod vid export: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task ExportSelectedToJson()
+    {
+        try
+        {
+            var transactionIds = _selectedTransactions.Select(t => t.TransactionId).ToList();
+            var jsonData = await ExportService.ExportSelectedTransactionsToJsonAsync(transactionIds);
+            var fileName = $"transaktioner_{DateTime.Now:yyyyMMdd_HHmmss}.json";
+            
+            await DownloadFile(jsonData, fileName, "application/json");
+            Snackbar.Add($"{_selectedTransactions.Count} transaktioner exporterade till JSON", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Ett fel uppstod vid export: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task BulkDelete()
+    {
+        if (!_selectedTransactions.Any())
+        {
+            Snackbar.Add("Välj minst en transaktion", Severity.Warning);
+            return;
+        }
+
+        var transactionText = _selectedTransactions.Count == 1 ? "transaktion" : "transaktioner";
+        var result = await DialogService.ShowMessageBox(
+            "Bekräfta borttagning",
+            new MarkupString($"Är du säker på att du vill ta bort <strong>{_selectedTransactions.Count}</strong> {transactionText}?<br/><br/><em>OBS: Denna åtgärd kan inte ångras!</em>"),
+            yesText: "Ja, ta bort", cancelText: "Avbryt");
+
+        if (result == true)
+        {
+            try
+            {
+                var transactionIds = _selectedTransactions.Select(t => t.TransactionId).ToList();
+
+                var bulkResult = await TransactionService.BulkDeleteTransactionsAsync(transactionIds);
+
+                if (bulkResult.IsSuccess)
+                {
+                    Snackbar.Add($"{bulkResult.SuccessCount} transaktioner borttagna", Severity.Success);
+                }
+                else if (bulkResult.IsPartialSuccess)
+                {
+                    Snackbar.Add($"{bulkResult.SuccessCount} borttagna, {bulkResult.FailureCount} misslyckades", Severity.Warning);
+                }
+                else
+                {
+                    Snackbar.Add($"Misslyckades: {string.Join(", ", bulkResult.Errors)}", Severity.Error);
+                }
+
+                await LoadData();
+                ClearSelection();
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Fel vid borttagning: {ex.Message}", Severity.Error);
+            }
+        }
+    }
+
+    private async Task UndoLastOperation()
+    {
+        if (!_undoStack.Any())
+        {
+            Snackbar.Add("Ingen operation att ångra", Severity.Info);
+            return;
+        }
+
+        var snapshot = _undoStack.Pop();
+
+        try
+        {
+            var result = await TransactionService.UndoBulkOperationAsync(snapshot);
+
+            if (result.IsSuccess)
+            {
+                Snackbar.Add($"{result.SuccessCount} transaktioner återställda", Severity.Success);
+            }
+            else if (result.IsPartialSuccess)
+            {
+                Snackbar.Add($"{result.SuccessCount} återställda, {result.FailureCount} misslyckades", Severity.Warning);
+            }
+            else
+            {
+                Snackbar.Add($"Misslyckades: {string.Join(", ", result.Errors)}", Severity.Error);
+                // Push back if failed
+                _undoStack.Push(snapshot);
+            }
+
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Fel vid ångra: {ex.Message}", Severity.Error);
+            _undoStack.Push(snapshot);
+        }
     }
 }

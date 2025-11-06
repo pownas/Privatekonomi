@@ -77,6 +77,10 @@ artifacts/
 # ASP.NET Scaffolding
 ScaffoldingReadMe.txt
 
+# Local configuration overrides
+appsettings.local.json
+**/appsettings.local.json
+
 # StyleCop
 StyleCopReport.xml
 

@@ -1,3 +1,4 @@
+@page "/savings/shared-goals"
 @page "/sharedgoals"
 @rendermode InteractiveServer
 @inject ISharedGoalService SharedGoalService
@@ -8,7 +9,10 @@
 <PageTitle>Gemensamma Sparmål - Privatekonomi</PageTitle>
 
 <div class="d-flex justify-space-between align-center mb-4">
-    <MudText Typo="Typo.h4">Gemensamma Sparmål</MudText>
+    <MudText Typo="Typo.h4">
+        <MudIcon Icon="@Icons.Material.Filled.Groups" Color="Color.Primary" Class="mr-2" aria-hidden="true" />
+        Gemensamma Sparmål
+    </MudText>
     <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenCreateDialog">
         Nytt Gemensamt Sparmål
     </MudButton>
@@ -17,7 +21,7 @@
 @if (_unreadNotificationCount > 0)
 {
     <MudAlert Severity="Severity.Info" Class="mb-4">
-        Du har @_unreadNotificationCount olästa notifieringar. <MudLink Href="/sharedgoals/notifications">Visa alla notifieringar</MudLink>
+        Du har @_unreadNotificationCount olästa notifieringar. <MudLink Href="/savings/shared-goals/notifications">Visa alla notifieringar</MudLink>
     </MudAlert>
 }
 
@@ -273,7 +277,7 @@ else
 
     private void NavigateToDetails(int sharedGoalId)
     {
-        NavigationManager.NavigateTo($"/sharedgoals/{sharedGoalId}");
+        NavigationManager.NavigateTo($"/savings/shared-goals/{sharedGoalId}");
     }
 
     private double GetProgress(SharedGoal goal)

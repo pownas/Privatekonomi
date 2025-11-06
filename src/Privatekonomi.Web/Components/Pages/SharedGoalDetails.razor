@@ -1,3 +1,4 @@
+@page "/savings/shared-goals/{SharedGoalId:int}"
 @page "/sharedgoals/{SharedGoalId:int}"
 @rendermode InteractiveServer
 @inject ISharedGoalService SharedGoalService
@@ -20,7 +21,10 @@ else
     <MudBreadcrumbs Items="_breadcrumbs" Class="mb-4"></MudBreadcrumbs>
     
     <div class="d-flex justify-space-between align-center mb-4">
-        <MudText Typo="Typo.h4">@_sharedGoal.Name</MudText>
+        <MudText Typo="Typo.h4">
+            <MudIcon Icon="@Icons.Material.Filled.Groups" Color="Color.Primary" Class="mr-2" aria-hidden="true" />
+            @_sharedGoal.Name
+        </MudText>
         <div>
             @if (_isOwner)
             {
@@ -281,7 +285,7 @@ else
                 
                 _breadcrumbs = new List<BreadcrumbItem>
                 {
-                    new BreadcrumbItem("Gemensamma Sparmål", href: "/sharedgoals", icon: Icons.Material.Filled.Groups),
+                    new BreadcrumbItem("Gemensamma Sparmål", href: "/savings/shared-goals", icon: Icons.Material.Filled.Groups),
                     new BreadcrumbItem(_sharedGoal.Name, href: null, disabled: true)
                 };
             }
@@ -364,7 +368,7 @@ else
             {
                 await SharedGoalService.LeaveSharedGoalAsync(SharedGoalId);
                 Snackbar.Add("Du har lämnat sparmålet", Severity.Info);
-                NavigationManager.NavigateTo("/sharedgoals");
+                NavigationManager.NavigateTo("/savings/shared-goals");
             }
             catch (Exception ex)
             {
