@@ -13,8 +13,6 @@ var storageProvider = Environment.GetEnvironmentVariable("PRIVATEKONOMI_STORAGE_
 
 // Raspberry Pi configuration - listen on all network interfaces
 var isRaspberryPi = Environment.GetEnvironmentVariable("PRIVATEKONOMI_RASPBERRY_PI") == "true";
-var webUrls = isRaspberryPi ? "http://0.0.0.0:5274" : null;
-var apiUrls = isRaspberryPi ? "http://0.0.0.0:5277" : null;
 
 // Add the API project
 var apiBuilder = builder.AddProject<Projects.Privatekonomi_Api>("api")
@@ -24,9 +22,11 @@ var apiBuilder = builder.AddProject<Projects.Privatekonomi_Api>("api")
     .WithEnvironment("PRIVATEKONOMI_ENVIRONMENT", privatekonomiEnvironment)
     .WithEnvironment("PRIVATEKONOMI_STORAGE_PROVIDER", storageProvider);
 
-if (apiUrls != null)
+if (isRaspberryPi)
 {
-    apiBuilder = apiBuilder.WithEnvironment("ASPNETCORE_URLS", apiUrls);
+    // On Raspberry Pi, explicitly set the HTTP endpoint port
+    // The actual binding to 0.0.0.0 is handled by appsettings.Production.json
+    apiBuilder = apiBuilder.WithHttpEndpoint(port: 5277, name: "http");
 }
 
 var api = apiBuilder;
@@ -40,9 +40,11 @@ var webBuilder = builder.AddProject<Projects.Privatekonomi_Web>("web")
     .WithEnvironment("PRIVATEKONOMI_ENVIRONMENT", privatekonomiEnvironment)
     .WithEnvironment("PRIVATEKONOMI_STORAGE_PROVIDER", storageProvider);
 
-if (webUrls != null)
+if (isRaspberryPi)
 {
-    webBuilder = webBuilder.WithEnvironment("ASPNETCORE_URLS", webUrls);
+    // On Raspberry Pi, explicitly set the HTTP endpoint port
+    // The actual binding to 0.0.0.0 is handled by appsettings.Production.json
+    webBuilder = webBuilder.WithHttpEndpoint(port: 5274, name: "http");
 }
 
 var web = webBuilder;

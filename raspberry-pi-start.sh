@@ -33,6 +33,20 @@ export DOTNET_DASHBOARD_URLS="http://0.0.0.0:17127"
 # Navigera till AppHost-katalogen
 cd "$(dirname "$0")/src/Privatekonomi.AppHost"
 
+# Kontrollera att appsettings.Production.json finns
+if [ ! -f "appsettings.Production.json" ]; then
+    echo "⚠️  Varning: appsettings.Production.json saknas för AppHost"
+    echo "Aspire Dashboard kommer endast att lyssna på localhost"
+fi
+
+if [ ! -f "../Privatekonomi.Web/appsettings.Production.json" ] || [ ! -f "../Privatekonomi.Api/appsettings.Production.json" ]; then
+    echo "⚠️  Varning: appsettings.Production.json saknas för Web eller API"
+    echo ""
+    echo "Kör installationsskriptet igen för att skapa konfigurationsfiler:"
+    echo "  ./raspberry-pi-install.sh"
+    echo ""
+fi
+
 echo "Miljövariabler:"
 echo "  PRIVATEKONOMI_RASPBERRY_PI: $PRIVATEKONOMI_RASPBERRY_PI"
 echo "  ASPNETCORE_ENVIRONMENT: $ASPNETCORE_ENVIRONMENT"
