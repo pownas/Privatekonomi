@@ -111,14 +111,15 @@ check_prerequisites() {
     
     log_info "✅ .NET 9 SDK is available"
     
-    # Check if Aspire workload is installed
-    if ! dotnet workload list | grep -q "aspire"; then
-        log_error "Aspire workload is not installed"
-        log_warning "Please run './app-install.sh' first to install Aspire workload"
-        exit 1
+    # Check if Aspire packages are available (via NuGet, not workload)
+    log_info "Checking for Aspire support..."
+    if [[ -f "src/Privatekonomi.AppHost/Privatekonomi.AppHost.csproj" ]]; then
+        if grep -q "Aspire.Hosting" "src/Privatekonomi.AppHost/Privatekonomi.AppHost.csproj"; then
+            log_info "✅ Aspire is configured via NuGet packages"
+        else
+            log_warning "Aspire packages not found in AppHost project"
+        fi
     fi
-    
-    log_info "✅ Aspire workload is installed"
     
     # Check if solution exists and can be built
     if [[ ! -f "Privatekonomi.sln" ]]; then

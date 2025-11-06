@@ -11,8 +11,9 @@ export ASPNETCORE_ENVIRONMENT=Production
 export PRIVATEKONOMI_ENVIRONMENT=RaspberryPi
 export PRIVATEKONOMI_STORAGE_PROVIDER=Sqlite
 
-# Alternativ 1: Använd miljövariabel för URL
+# Konfigurera Aspire Dashboard för att lyssna på alla nätverksinterfaces
 export ASPNETCORE_URLS="http://0.0.0.0:17127"
+export DOTNET_DASHBOARD_URLS="http://0.0.0.0:17127"
 
 # Navigera till AppHost-katalogen
 cd "$(dirname "$0")/src/Privatekonomi.AppHost"
@@ -23,6 +24,7 @@ echo "  ASPNETCORE_ENVIRONMENT: $ASPNETCORE_ENVIRONMENT"
 echo "  PRIVATEKONOMI_ENVIRONMENT: $PRIVATEKONOMI_ENVIRONMENT"
 echo "  PRIVATEKONOMI_STORAGE_PROVIDER: $PRIVATEKONOMI_STORAGE_PROVIDER"
 echo "  ASPNETCORE_URLS: $ASPNETCORE_URLS"
+echo "  DOTNET_DASHBOARD_URLS: $DOTNET_DASHBOARD_URLS"
 echo ""
 
 echo "Startar applikationen..."

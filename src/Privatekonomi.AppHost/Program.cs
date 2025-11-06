@@ -1,21 +1,5 @@
 var builder = DistributedApplication.CreateBuilder(args);
 
-// Konfigurera för Raspberry Pi - lyssna på alla nätverksinterfaces
-if (Environment.GetEnvironmentVariable("PRIVATEKONOMI_RASPBERRY_PI") == "true")
-{
-    builder.Services.Configure<Microsoft.AspNetCore.Hosting.HostingOptions>(options =>
-    {
-        // Sätt ingen timeout för Raspberry Pi
-        options.ShutdownTimeout = TimeSpan.FromSeconds(30);
-    });
-    
-    builder.Services.Configure<Microsoft.AspNetCore.Server.Kestrel.Core.KestrelServerOptions>(options =>
-    {
-        // Lyssna på alla IP-adresser för Raspberry Pi
-        options.ListenAnyIP(17127);
-    });
-}
-
 var aspnetEnvironment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")
     ?? builder.Environment.EnvironmentName;
 
@@ -27,21 +11,40 @@ var privatekonomiEnvironment = Environment.GetEnvironmentVariable("PRIVATEKONOMI
 
 var storageProvider = Environment.GetEnvironmentVariable("PRIVATEKONOMI_STORAGE_PROVIDER") ?? "Unknown";
 
+// Raspberry Pi configuration - listen on all network interfaces
+var isRaspberryPi = Environment.GetEnvironmentVariable("PRIVATEKONOMI_RASPBERRY_PI") == "true";
+var webUrls = isRaspberryPi ? "http://0.0.0.0:5274" : null;
+var apiUrls = isRaspberryPi ? "http://0.0.0.0:5277" : null;
+
 // Add the API project
-var api = builder.AddProject<Projects.Privatekonomi_Api>("api")
+var apiBuilder = builder.AddProject<Projects.Privatekonomi_Api>("api")
     .WithExternalHttpEndpoints()
     .WithEnvironment("ASPNETCORE_ENVIRONMENT", aspnetEnvironment)
     .WithEnvironment("DOTNET_ENVIRONMENT", dotnetEnvironment)
     .WithEnvironment("PRIVATEKONOMI_ENVIRONMENT", privatekonomiEnvironment)
     .WithEnvironment("PRIVATEKONOMI_STORAGE_PROVIDER", storageProvider);
 
+if (apiUrls != null)
+{
+    apiBuilder = apiBuilder.WithEnvironment("ASPNETCORE_URLS", apiUrls);
+}
+
+var api = apiBuilder;
+
 // Add the Web project and reference the API
-var web = builder.AddProject<Projects.Privatekonomi_Web>("web")
+var webBuilder = builder.AddProject<Projects.Privatekonomi_Web>("web")
     .WithReference(api)
     .WithExternalHttpEndpoints()
     .WithEnvironment("ASPNETCORE_ENVIRONMENT", aspnetEnvironment)
     .WithEnvironment("DOTNET_ENVIRONMENT", dotnetEnvironment)
     .WithEnvironment("PRIVATEKONOMI_ENVIRONMENT", privatekonomiEnvironment)
     .WithEnvironment("PRIVATEKONOMI_STORAGE_PROVIDER", storageProvider);
+
+if (webUrls != null)
+{
+    webBuilder = webBuilder.WithEnvironment("ASPNETCORE_URLS", webUrls);
+}
+
+var web = webBuilder;
 
 builder.Build().Run();
