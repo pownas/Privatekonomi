@@ -137,8 +137,9 @@ dotnet build -c Release
 Man kan också behöva skapa en NuGet.Config om det är första gången via: 
 
 ```bash
-nano /home/PIUSERNAME/.nuget/NuGet/NuGet.Config
+nano /home/[PIUSERNAME]/.nuget/NuGet/NuGet.Config
 ```
+Där `[PIUSERNAME]` är ditt användarnamn på din raspberry pi. 
 
 Klistra sedan in denna standard NuGet.Config XML-kod: 
 
@@ -153,6 +154,11 @@ Klistra sedan in denna standard NuGet.Config XML-kod:
 
 Spara och avsluta nano:  
 Tryck CTRL+O (spara - Write Out), Enter, och sedan CTRL+X (avsluta).
+
+Behöver sedan köra workload restore, för att få Aspire-dashboard installerad via NuGet: 
+```bash
+dotnet workload restore
+```
 
 ### 3. Skapa datakatalog
 
