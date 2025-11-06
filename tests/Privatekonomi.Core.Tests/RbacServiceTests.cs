@@ -26,8 +26,13 @@ public class RbacServiceTests : IDisposable
         _mockAuditService = new Mock<IAuditLogService>();
         _rbacService = new RbacService(_context, _mockAuditService.Object);
 
-        // Setup test data
-        SetupTestData().Wait();
+        // Setup test data synchronously using GetAwaiter().GetResult() to avoid deadlocks
+        SetupTestDataSync();
+    }
+
+    private void SetupTestDataSync()
+    {
+        SetupTestData().GetAwaiter().GetResult();
     }
 
     private async Task SetupTestData()

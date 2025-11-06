@@ -201,7 +201,17 @@ public class RbacService : IRbacService
     public async Task<bool> CanPerformActionAsync(string userId, int householdId, string action, decimal? amount = null)
     {
         var result = await CheckPermissionAsync(userId, householdId, action, new { amount });
-        return result.IsAllowed && (!result.RequiresApproval || (amount.HasValue && amount.Value <= (result.AmountLimit ?? decimal.MaxValue)));
+        
+        if (!result.IsAllowed)
+            return false;
+            
+        // If no approval required, action is allowed
+        if (!result.RequiresApproval)
+            return true;
+            
+        // If approval required, check amount is within limit
+        var withinLimit = !amount.HasValue || amount.Value <= (result.AmountLimit ?? decimal.MaxValue);
+        return withinLimit;
     }
 
     public async Task<PermissionCheckResult> CheckPermissionAsync(string userId, int householdId, string permissionKey, object? context = null)
