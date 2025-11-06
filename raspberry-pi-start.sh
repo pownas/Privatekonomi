@@ -5,6 +5,21 @@
 
 echo "Startar Privatekonomi Aspire AppHost på Raspberry Pi..."
 
+# Lägg till .NET i PATH om det inte finns där
+if [ -d "$HOME/.dotnet" ] && ! command -v dotnet &> /dev/null; then
+    export PATH="$PATH:$HOME/.dotnet"
+    export DOTNET_ROOT="$HOME/.dotnet"
+fi
+
+# Verifiera att dotnet finns
+if ! command -v dotnet &> /dev/null; then
+    echo "❌ Fel: dotnet hittades inte i PATH"
+    echo "Kör först: ./raspberry-pi-install.sh"
+    echo "Eller lägg till .NET manuellt i PATH:"
+    echo "  export PATH=\"\$PATH:\$HOME/.dotnet\""
+    exit 1
+fi
+
 # Sätt miljövariabler för Raspberry Pi
 export PRIVATEKONOMI_RASPBERRY_PI=true
 export ASPNETCORE_ENVIRONMENT=Production
@@ -28,6 +43,7 @@ echo "  DOTNET_DASHBOARD_URLS: $DOTNET_DASHBOARD_URLS"
 echo ""
 
 echo "Startar applikationen..."
+echo "Använder .NET version: $(dotnet --version)"
 echo "Aspire Dashboard kommer att vara tillgänglig på: http://[raspberry-pi-ip]:17127"
 echo "Tryck Ctrl+C för att stoppa"
 echo ""

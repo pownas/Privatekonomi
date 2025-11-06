@@ -77,7 +77,7 @@ function Test-AdminPrivileges {
     
     if (-not $isAdmin) {
         Write-LogWarning "This script is not running as Administrator"
-        Write-LogWarning "Some operations (like installing workloads) may require elevated privileges"
+        Write-LogWarning "Some operations may require elevated privileges"
         Write-LogWarning "Consider running PowerShell as Administrator if you encounter issues"
     } else {
         Write-LogInfo "Running with Administrator privileges"
