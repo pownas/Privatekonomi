@@ -162,20 +162,18 @@ public class MetricsService : IMetricsService
             : 0;
 
         // Churn rate - users who haven't logged in this month but were active last month
-        var activeLastMonth = allUsers.Count(u => 
+        // Users active last month
+        var activeLastMonth = allUsers.Where(u => 
             u.LastLoginAt.HasValue && 
             u.LastLoginAt.Value >= startOfLastMonth && 
-            u.LastLoginAt.Value < startOfMonth);
+            u.LastLoginAt.Value < startOfMonth).ToList();
         
         // Churned users are those active last month but not this month
-        var churnedUsers = allUsers.Count(u => 
-            u.LastLoginAt.HasValue && 
-            u.LastLoginAt.Value >= startOfLastMonth && 
-            u.LastLoginAt.Value < startOfMonth &&
-            (u.LastLoginAt.Value < startOfMonth)); // Not active this month
+        var churnedUsers = activeLastMonth.Count(u => 
+            !u.LastLoginAt.HasValue || u.LastLoginAt.Value < startOfMonth);
         
-        var churnRate = activeLastMonth > 0 
-            ? ((decimal)churnedUsers / activeLastMonth) * 100 
+        var churnRate = activeLastMonth.Any() 
+            ? ((decimal)churnedUsers / activeLastMonth.Count) * 100 
             : 0;
 
         return new UserMetrics

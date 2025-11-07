@@ -235,10 +235,21 @@
         await CheckIfSystemAdminAsync();
     }
     
-    private async void OnAuthenticationStateChanged(Task<AuthenticationState> task)
+    private void OnAuthenticationStateChanged(Task<AuthenticationState> task)
     {
-        await CheckIfSystemAdminAsync();
-        await InvokeAsync(StateHasChanged);
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await CheckIfSystemAdminAsync();
+                await InvokeAsync(StateHasChanged);
+            }
+            catch (Exception)
+            {
+                // Silently handle exceptions during auth state change
+                // to prevent unhandled exceptions in event handlers
+            }
+        });
     }
     
     private async Task CheckIfSystemAdminAsync()

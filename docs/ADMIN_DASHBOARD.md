@@ -46,7 +46,7 @@ Mäter hur djupt användare engagerar sig:
 
 - **NPS (Net Promoter Score)**: Användarnöjdhetsmått
   - Mål: >50
-  - Baseras på användarf feedback
+  - Baseras på användarfeedback
 
 ### 3. Prestandastatistik
 Övervakar teknisk prestanda:
@@ -76,7 +76,7 @@ Spårar säkerhetsrelaterade mätetal:
 
 - **Failed Login Attempts**: Andel misslyckade inloggningsförsök
   - Mål: <1%
-  - Kan indikera attacker eller användarpr problem
+  - Kan indikera attacker eller användarproblem
 
 - **Security Incidents**: Antal säkerhetsincidenter
   - Mål: 0
