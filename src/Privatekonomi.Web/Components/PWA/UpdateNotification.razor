@@ -1,4 +1,5 @@
 @inject IJSRuntime JSRuntime
+@inject ILogger<UpdateNotification> _logger
 @implements IAsyncDisposable
 
 @if (ShowUpdateNotification)
@@ -24,19 +25,34 @@
 @code {
     private bool ShowUpdateNotification { get; set; } = false;
     private DotNetObjectReference<UpdateNotification>? objRef;
+    private bool _hasRendered = false;
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        objRef = DotNetObjectReference.Create(this);
-        
-        // Register callback with JavaScript
-        await JSRuntime.InvokeVoidAsync("eval", @"
-            window.blazorPwaCallbacks = window.blazorPwaCallbacks || {};
-            window.blazorPwaCallbacks.onUpdateAvailable = () => {
-                window.blazorPwaCallbacks.updateNotificationRef.invokeMethodAsync('OnUpdateAvailable');
-            };
-            window.blazorPwaCallbacks.updateNotificationRef = arguments[0];
-        ", objRef);
+        if (firstRender && !_hasRendered)
+        {
+            _hasRendered = true;
+            objRef = DotNetObjectReference.Create(this);
+            
+            try
+            {
+                // Register callback with JavaScript
+                await JSRuntime.InvokeVoidAsync("eval", @"
+                    window.blazorPwaCallbacks = window.blazorPwaCallbacks || {};
+                    window.blazorPwaCallbacks.onUpdateAvailable = () => {
+                        if (window.blazorPwaCallbacks.updateNotificationRef) {
+                            window.blazorPwaCallbacks.updateNotificationRef.invokeMethodAsync('OnUpdateAvailable');
+                        }
+                    };
+                    window.blazorPwaCallbacks.updateNotificationRef = arguments[0];
+                ", objRef);
+            }
+            catch (Exception ex)
+            {
+                // Log at debug level to avoid noise while maintaining graceful degradation
+                _logger.LogDebug(ex, "PWA JavaScript not available for UpdateNotification");
+            }
+        }
     }
 
     [JSInvokable]
@@ -56,12 +72,19 @@
     {
         if (objRef != null)
         {
-            await JSRuntime.InvokeVoidAsync("eval", @"
-                if (window.blazorPwaCallbacks) {
-                    delete window.blazorPwaCallbacks.onUpdateAvailable;
-                    delete window.blazorPwaCallbacks.updateNotificationRef;
-                }
-            ");
+            try
+            {
+                await JSRuntime.InvokeVoidAsync("eval", @"
+                    if (window.blazorPwaCallbacks) {
+                        delete window.blazorPwaCallbacks.onUpdateAvailable;
+                        delete window.blazorPwaCallbacks.updateNotificationRef;
+                    }
+                ");
+            }
+            catch
+            {
+                // Silently fail if JS is not available during disposal
+            }
             objRef.Dispose();
         }
     }

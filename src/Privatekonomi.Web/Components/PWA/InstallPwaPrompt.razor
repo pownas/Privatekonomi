@@ -31,34 +31,66 @@
     private bool ShowInstallPrompt { get; set; } = false;
     private bool IsRunningAsPWA { get; set; } = false;
     private DotNetObjectReference<InstallPwaPrompt>? objRef;
+    private bool _hasRendered = false;
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        objRef = DotNetObjectReference.Create(this);
-        
-        // Register callbacks with JavaScript
-        await JSRuntime.InvokeVoidAsync("eval", @"
-            window.blazorPwaCallbacks = window.blazorPwaCallbacks || {};
-            window.blazorPwaCallbacks.onInstallAvailable = () => {
-                window.blazorPwaCallbacks.installPromptRef.invokeMethodAsync('OnInstallAvailable');
-            };
-            window.blazorPwaCallbacks.onInstalled = () => {
-                window.blazorPwaCallbacks.installPromptRef.invokeMethodAsync('OnInstalled');
-            };
-            window.blazorPwaCallbacks.installPromptRef = arguments[0];
-        ", objRef);
-        
-        // Check if running as PWA
-        IsRunningAsPWA = await JSRuntime.InvokeAsync<bool>("pwaManager.isRunningAsPWA");
-        
-        // Check if install is available
-        bool canInstall = await JSRuntime.InvokeAsync<bool>("pwaManager.canInstall");
-        if (canInstall && !IsRunningAsPWA)
+        if (firstRender && !_hasRendered)
         {
-            // Show prompt after a delay (don't annoy users immediately)
-            await Task.Delay(InitialPromptDelayMs);
-            ShowInstallPrompt = true;
-            StateHasChanged();
+            _hasRendered = true;
+            objRef = DotNetObjectReference.Create(this);
+            
+            try
+            {
+                // Register callbacks with JavaScript
+                await JSRuntime.InvokeVoidAsync("eval", @"
+                    window.blazorPwaCallbacks = window.blazorPwaCallbacks || {};
+                    window.blazorPwaCallbacks.onInstallAvailable = () => {
+                        if (window.blazorPwaCallbacks.installPromptRef) {
+                            window.blazorPwaCallbacks.installPromptRef.invokeMethodAsync('OnInstallAvailable');
+                        }
+                    };
+                    window.blazorPwaCallbacks.onInstalled = () => {
+                        if (window.blazorPwaCallbacks.installPromptRef) {
+                            window.blazorPwaCallbacks.installPromptRef.invokeMethodAsync('OnInstalled');
+                        }
+                    };
+                    window.blazorPwaCallbacks.installPromptRef = arguments[0];
+                ", objRef);
+                
+                // Check if running as PWA
+                try
+                {
+                    IsRunningAsPWA = await JSRuntime.InvokeAsync<bool>("pwaManager.isRunningAsPWA");
+                }
+                catch
+                {
+                    IsRunningAsPWA = false;
+                }
+                
+                // Check if install is available
+                bool canInstall = false;
+                try
+                {
+                    canInstall = await JSRuntime.InvokeAsync<bool>("pwaManager.canInstall");
+                }
+                catch
+                {
+                    canInstall = false;
+                }
+                
+                if (canInstall && !IsRunningAsPWA)
+                {
+                    // Show prompt after a delay (don't annoy users immediately)
+                    await Task.Delay(InitialPromptDelayMs);
+                    ShowInstallPrompt = true;
+                    StateHasChanged();
+                }
+            }
+            catch
+            {
+                // Silently fail if PWA JS is not available
+            }
         }
     }
 
@@ -110,13 +142,20 @@
     {
         if (objRef != null)
         {
-            await JSRuntime.InvokeVoidAsync("eval", @"
-                if (window.blazorPwaCallbacks) {
-                    delete window.blazorPwaCallbacks.onInstallAvailable;
-                    delete window.blazorPwaCallbacks.onInstalled;
-                    delete window.blazorPwaCallbacks.installPromptRef;
-                }
-            ");
+            try
+            {
+                await JSRuntime.InvokeVoidAsync("eval", @"
+                    if (window.blazorPwaCallbacks) {
+                        delete window.blazorPwaCallbacks.onInstallAvailable;
+                        delete window.blazorPwaCallbacks.onInstalled;
+                        delete window.blazorPwaCallbacks.installPromptRef;
+                    }
+                ");
+            }
+            catch
+            {
+                // Silently fail if JS is not available during disposal
+            }
             objRef.Dispose();
         }
     }

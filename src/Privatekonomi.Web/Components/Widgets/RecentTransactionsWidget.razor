@@ -1,0 +1,129 @@
+@using Privatekonomi.Core.Services
+@using Privatekonomi.Core.Models
+@inject ITransactionService TransactionService
+@inject ISnackbar Snackbar
+@inject NavigationManager Navigation
+
+<WidgetBase Title="Senaste Transaktioner" Configuration="@Configuration" ShowHeader="true">
+    <HeaderActions>
+        <MudIconButton Icon="@Icons.Material.Filled.Add" 
+                       Size="Size.Small" 
+                       Color="Color.Primary"
+                       OnClick="@(() => Navigation.NavigateTo("/transactions/new"))" />
+    </HeaderActions>
+    <ChildContent>
+        @if (_loading)
+        {
+            <div class="d-flex justify-center align-center" style="min-height: 150px;">
+                <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+            </div>
+        }
+        else if (_transactions.Any())
+        {
+            <MudList T="string" Dense="true">
+                @foreach (var transaction in _transactions.Take(10))
+                {
+                    <MudListItem T="string">
+                        <div class="transaction-item">
+                            <div class="transaction-main">
+                                <div>
+                                    <MudText Typo="Typo.body2">@transaction.Description</MudText>
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                        @transaction.Date.ToString("yyyy-MM-dd")
+                                    </MudText>
+                                </div>
+                                <MudText Typo="Typo.body2" Color="@(transaction.IsIncome ? Color.Success : Color.Error)">
+                                    @(transaction.IsIncome ? "+" : "-")@transaction.Amount.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))
+                                </MudText>
+                            </div>
+                            @if (transaction.TransactionCategories.Any())
+                            {
+                                <div class="transaction-categories">
+                                    @foreach (var tc in transaction.TransactionCategories.Take(2))
+                                    {
+                                        <MudChip T="string" 
+                                                Style="@($"background-color: {tc.Category.Color}; color: white;")" 
+                                                Size="Size.Small">
+                                            @tc.Category.Name
+                                        </MudChip>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </MudListItem>
+                }
+            </MudList>
+            <MudButton Variant="Variant.Text" 
+                       Color="Color.Primary" 
+                       FullWidth="true"
+                       OnClick="@(() => Navigation.NavigateTo("/transactions"))">
+                Visa alla transaktioner
+            </MudButton>
+        }
+        else
+        {
+            <div class="d-flex flex-column align-center justify-center" style="min-height: 150px;">
+                <MudIcon Icon="@Icons.Material.Filled.Receipt" Size="Size.Large" Color="Color.Secondary" />
+                <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-2">
+                    Inga transaktioner ännu
+                </MudText>
+                <MudButton Variant="Variant.Text" 
+                           Color="Color.Primary" 
+                           OnClick="@(() => Navigation.NavigateTo("/transactions/new"))"
+                           Class="mt-2">
+                    Skapa transaktion
+                </MudButton>
+            </div>
+        }
+    </ChildContent>
+</WidgetBase>
+
+@code {
+    [Parameter]
+    public WidgetConfiguration? Configuration { get; set; }
+
+    private bool _loading = true;
+    private IEnumerable<Transaction> _transactions = new List<Transaction>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        _loading = true;
+        try
+        {
+            _transactions = await TransactionService.GetAllTransactionsAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Kunde inte ladda transaktioner: {ex.Message}", Severity.Warning);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}
+
+<style>
+    .transaction-item {
+        width: 100%;
+    }
+    
+    .transaction-main {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 4px;
+    }
+    
+    .transaction-categories {
+        display: flex;
+        gap: 4px;
+        flex-wrap: wrap;
+        margin-top: 4px;
+    }
+</style>

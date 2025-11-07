@@ -1,0 +1,89 @@
+@using Privatekonomi.Core.Models
+
+@* Base widget component that all specific widgets inherit from *@
+
+<MudPaper Class="@GetWidgetClass()" Elevation="@Elevation" Style="@GetWidgetStyle()">
+    @if (ShowHeader)
+    {
+        <div class="widget-header">
+            <MudText Typo="Typo.h6">@Title</MudText>
+            @if (ShowActions)
+            {
+                <div class="widget-actions">
+                    @HeaderActions
+                </div>
+            }
+        </div>
+    }
+    <div class="widget-content">
+        @ChildContent
+    </div>
+</MudPaper>
+
+@code {
+    [Parameter]
+    public string Title { get; set; } = string.Empty;
+
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    [Parameter]
+    public RenderFragment? HeaderActions { get; set; }
+
+    [Parameter]
+    public bool ShowHeader { get; set; } = true;
+
+    [Parameter]
+    public bool ShowActions { get; set; } = false;
+
+    [Parameter]
+    public int Elevation { get; set; } = 2;
+
+    [Parameter]
+    public string AdditionalClass { get; set; } = string.Empty;
+
+    [Parameter]
+    public WidgetConfiguration? Configuration { get; set; }
+
+    private string GetWidgetClass()
+    {
+        return $"widget-container {AdditionalClass}".Trim();
+    }
+
+    private string GetWidgetStyle()
+    {
+        if (Configuration == null)
+            return string.Empty;
+
+        // Grid-based styling (could be used with CSS Grid)
+        return $"grid-column: span {Configuration.Width}; grid-row: span {Configuration.Height};";
+    }
+}
+
+<style>
+    .widget-container {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .widget-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px;
+        border-bottom: 1px solid var(--mud-palette-divider);
+    }
+
+    .widget-actions {
+        display: flex;
+        gap: 8px;
+    }
+
+    .widget-content {
+        flex: 1;
+        padding: 16px;
+        overflow: auto;
+    }
+</style>

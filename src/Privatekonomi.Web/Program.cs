@@ -139,10 +139,12 @@ builder.Services.AddScoped<IKonsumentverketComparisonService, KonsumentverketCom
 builder.Services.AddScoped<IKalpService, KalpService>();
 builder.Services.AddScoped<ThemeService>();
 builder.Services.AddScoped<DashboardPreferencesService>();
+builder.Services.AddScoped<IDashboardLayoutService, DashboardLayoutService>();
 builder.Services.AddScoped<ViewDensityService>();
 
 // Register background services
 builder.Services.AddHostedService<Privatekonomi.Web.Services.BudgetAlertBackgroundService>();
+builder.Services.AddHostedService<Privatekonomi.Web.Services.WeeklyBudgetDigestService>();
 
 // Swedish-specific services
 builder.Services.AddScoped<ISieExporter, SieExporter>();

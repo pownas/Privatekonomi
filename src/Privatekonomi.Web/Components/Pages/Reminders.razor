@@ -289,7 +289,7 @@
         var dialog = await DialogService.ShowAsync<ReminderDialog>("Ny Påminnelse", parameters, options);
         var result = await dialog.Result;
 
-        if (!result.Canceled)
+        if (result is not null && !result.Canceled)
         {
             await LoadReminders();
             Snackbar.Add("Påminnelse skapad", Severity.Success);
@@ -307,7 +307,7 @@
         var dialog = await DialogService.ShowAsync<ReminderDialog>("Redigera Påminnelse", parameters, options);
         var result = await dialog.Result;
 
-        if (!result.Canceled)
+        if (result is not null && !result.Canceled)
         {
             await LoadReminders();
             Snackbar.Add("Påminnelse uppdaterad", Severity.Success);
@@ -352,7 +352,7 @@
         var dialog = await DialogService.ShowAsync<CustomSnoozeDialog>("Anpassad Snooze", parameters, options);
         var result = await dialog.Result;
 
-        if (!result.Canceled && result.Data is int minutes)
+        if (result is not null && !result.Canceled && result.Data is int minutes)
         {
             await SnoozeReminder(reminder, minutes);
         }

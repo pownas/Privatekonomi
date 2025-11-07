@@ -6,6 +6,12 @@ En privatekonomi-applikation byggd med .NET 9, Blazor Server och MudBlazor för 
 
 - **Användarautentisering**: Komplett användarsystem med registrering, inloggning och dataisolering per användare
 - **Dashboard**: Översikt över totala inkomster, utgifter och nettoresultat
+- **Anpassad Dashboard med Widget-system**: ⭐ NYT!
+  - Skapa personliga dashboard-layouter med anpassningsbara widgets
+  - 6 olika widget-typer: Nettoförmögenhet, Kassaflöde, Sparmål, Budget, Transaktioner, Snabbåtgärder
+  - Flera layouter för olika användningsområden (Hem, Investeringar, Budget)
+  - Automatisk default layout för nya användare
+  - Se [Dashboard Widgets guide](docs/DASHBOARD_WIDGETS.md)
 - **Transaktionshantering**: Registrera, visa och ta bort transaktioner
 - **Budgethantering**: Skapa och följa upp budgetar med visualisering av planerat vs faktiskt utfall
   - **Svenska budgetmallar**: ⭐ NYTT!
@@ -172,6 +178,51 @@ Se [ASPIRE_GUIDE.md](docs/ASPIRE_GUIDE.md) för mer information.
 - [Node.js](https://nodejs.org/) (för Playwright-tester)
 
 ### Installation och körning
+
+#### 🍓 Raspberry Pi Installation (Automatisk)
+
+För Raspberry Pi-användare finns ett komplett installationsskript som automatiserar hela installationsprocessen:
+
+```bash
+# Automatisk installation på Raspberry Pi
+curl -sSL https://raw.githubusercontent.com/pownas/Privatekonomi/main/raspberry-pi-install.sh | bash
+
+# Efter installation
+cd ~/Privatekonomi
+./raspberry-pi-start.sh
+```
+
+**Installationsskriptet hanterar automatiskt:**
+- ✅ Installation av .NET 9 SDK
+- ✅ **Publicering för linux-arm64 med self-contained binärer (NYTT)**
+- ✅ Val av lagringsalternativ (SQLite/JsonFile)
+- ✅ Skapande av konfigurationsfiler
+- ✅ Byggning av applikationen
+- ✅ **Nginx reverse proxy-konfiguration (NYTT)**
+- ✅ **SSL/HTTPS med Let's Encrypt eller self-signed certifikat (NYTT)**
+- ✅ Valfri systemd-tjänst för automatisk start
+- ✅ Automatiska dagliga backuper med cron
+- ✅ Brandväggskonfiguration (UFW, inkluderar HTTP/HTTPS-portar)
+- ✅ Statisk IP-konfiguration
+- ✅ Swap-optimering för lågt minne
+
+**Kommandoradsalternativ:**
+```bash
+./raspberry-pi-install.sh --help              # Visa hjälp
+./raspberry-pi-install.sh --skip-interactive  # Automatisk installation
+./raspberry-pi-install.sh --no-service        # Hoppa över systemd-tjänst
+./raspberry-pi-install.sh --no-publish        # Hoppa över publicering (använd dotnet run)
+./raspberry-pi-install.sh --no-nginx          # Hoppa över Nginx reverse proxy
+./raspberry-pi-install.sh --no-ssl            # Hoppa över SSL/HTTPS
+./raspberry-pi-install.sh --configure-ssl     # Konfigurera endast SSL
+```
+
+**Nya funktioner:**
+- **Self-contained publish**: Optimerade ARM64-binärer med snabbare uppstart och lägre resursanvändning
+- **Nginx reverse proxy**: Enkel HTTPS-åtkomst via port 80/443 för alla tjänster
+- **SSL/HTTPS**: Automatisk Let's Encrypt-konfiguration eller self-signed certifikat
+
+Se [RASPBERRY_PI_första_installationen.md](docs/RASPBERRY_PI_första_installationen.md) för detaljerad information, [RASPBERRY_PI_NGINX_SSL.md](docs/RASPBERRY_PI_NGINX_SSL.md) för Nginx och SSL-guide, och [RASPBERRY_PI_GUIDE.md](docs/RASPBERRY_PI_GUIDE.md) för manuell installation.
 
 #### Snabbstart med startskript (Enklast för Codespaces)
 
