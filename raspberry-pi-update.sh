@@ -362,7 +362,6 @@ Environment=ASPNETCORE_ENVIRONMENT=Production
 Environment=PRIVATEKONOMI_ENVIRONMENT=RaspberryPi
 Environment=PRIVATEKONOMI_STORAGE_PROVIDER=Sqlite
 Environment=PRIVATEKONOMI_RASPBERRY_PI=true
-Environment=ASPNETCORE_URLS=http://0.0.0.0:17127
 Environment=DOTNET_DASHBOARD_URLS=http://0.0.0.0:17127
 Environment=DOTNET_ROOT=$HOME/.dotnet
 ExecStart=$INSTALL_DIR/publish/AppHost/Privatekonomi.AppHost

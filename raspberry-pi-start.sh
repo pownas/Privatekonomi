@@ -97,7 +97,7 @@ export PRIVATEKONOMI_ENVIRONMENT=RaspberryPi
 export PRIVATEKONOMI_STORAGE_PROVIDER=Sqlite
 
 # Konfigurera Aspire Dashboard för att lyssna på alla nätverksinterfaces
-export ASPNETCORE_URLS="http://0.0.0.0:17127"
+# OBS: Sätt inte ASPNETCORE_URLS här eftersom det ärvs av Web/API och skriver över deras portar
 export DOTNET_DASHBOARD_URLS="http://0.0.0.0:17127"
 
 # Check if using published binaries or source
@@ -139,7 +139,6 @@ echo "  PRIVATEKONOMI_RASPBERRY_PI: $PRIVATEKONOMI_RASPBERRY_PI"
 echo "  ASPNETCORE_ENVIRONMENT: $ASPNETCORE_ENVIRONMENT"
 echo "  PRIVATEKONOMI_ENVIRONMENT: $PRIVATEKONOMI_ENVIRONMENT"
 echo "  PRIVATEKONOMI_STORAGE_PROVIDER: $PRIVATEKONOMI_STORAGE_PROVIDER"
-echo "  ASPNETCORE_URLS: $ASPNETCORE_URLS"
 echo "  DOTNET_DASHBOARD_URLS: $DOTNET_DASHBOARD_URLS"
 echo ""
 

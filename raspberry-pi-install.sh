@@ -1060,7 +1060,6 @@ Environment=ASPNETCORE_ENVIRONMENT=Production
 Environment=PRIVATEKONOMI_ENVIRONMENT=RaspberryPi
 Environment=PRIVATEKONOMI_STORAGE_PROVIDER=Sqlite
 Environment=PRIVATEKONOMI_RASPBERRY_PI=true
-Environment=ASPNETCORE_URLS=http://0.0.0.0:$DEFAULT_PORT
 Environment=DOTNET_DASHBOARD_URLS=http://0.0.0.0:$DEFAULT_PORT
 Environment=DOTNET_ROOT=$HOME/.dotnet
 ExecStart=$exec_command
@@ -1317,7 +1316,7 @@ show_usage_info() {
     echo -e ""
     echo -e "  ${YELLOW}Eller direkt med dotnet:${NC}"
     echo -e "    cd $INSTALL_DIR/src/Privatekonomi.AppHost"
-    echo -e "    PRIVATEKONOMI_RASPBERRY_PI=true ASPNETCORE_URLS=http://0.0.0.0:$DEFAULT_PORT dotnet run"
+    echo -e "    PRIVATEKONOMI_RASPBERRY_PI=true DOTNET_DASHBOARD_URLS=http://0.0.0.0:$DEFAULT_PORT dotnet run"
     echo -e ""
     
     if systemctl is-enabled "$SERVICE_NAME" &>/dev/null; then
