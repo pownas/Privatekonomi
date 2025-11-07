@@ -76,6 +76,8 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+var isRaspberryPi = Environment.GetEnvironmentVariable("PRIVATEKONOMI_RASPBERRY_PI") == "true";
+
 // Initialize database
 using (var scope = app.Services.CreateScope())
 {
@@ -108,7 +110,10 @@ if (app.Environment.IsDevelopment())
 app.UseExceptionHandler();
 app.UseStatusCodePages();
 
-app.UseHttpsRedirection();
+if (!isRaspberryPi)
+{
+    app.UseHttpsRedirection();
+}
 app.UseCors("AllowBlazorWeb");
 app.UseAuthorization();
 

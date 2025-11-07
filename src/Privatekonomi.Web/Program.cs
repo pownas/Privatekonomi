@@ -177,6 +177,8 @@ builder.Services.AddHttpClient<IStockPriceService, YahooFinanceStockPriceService
 
 var app = builder.Build();
 
+var isRaspberryPi = Environment.GetEnvironmentVariable("PRIVATEKONOMI_RASPBERRY_PI") == "true";
+
 // Configure request localization for Swedish
 var supportedCultures = new[] { new CultureInfo("sv-SE") };
 app.UseRequestLocalization(new RequestLocalizationOptions
@@ -246,10 +248,16 @@ if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-    app.UseHsts();
+    if (!isRaspberryPi)
+    {
+        app.UseHsts();
+    }
 }
 
-app.UseHttpsRedirection();
+if (!isRaspberryPi)
+{
+    app.UseHttpsRedirection();
+}
 
 
 app.UseAntiforgery();

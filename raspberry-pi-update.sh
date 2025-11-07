@@ -244,9 +244,8 @@ publish_application() {
     
     # Check if published directory exists
     if [ ! -d "$INSTALL_DIR/publish" ]; then
-        log_info "Ingen publicerad version finns. Hoppar över publicering."
-        log_info "Om du vill använda publicerade binärer, kör: ./raspberry-pi-install.sh"
-        return 0
+        log_warning "Ingen tidigare publicerad version hittades. Skapar katalogstruktur."
+        mkdir -p "$INSTALL_DIR/publish"
     fi
     
     read -p "Vill du publicera om applikationen för bättre prestanda? (y/n): " -n 1 -r
@@ -259,14 +258,28 @@ publish_application() {
     cd "$INSTALL_DIR"
     
     local publish_dir="$INSTALL_DIR/publish"
+
+    # Säkerställ baskatalogen
+    if [ ! -d "$publish_dir" ]; then
+        log_info "Publiceringskatalog saknas, skapar $publish_dir"
+        mkdir -p "$publish_dir"
+    fi
     
     # Backup old published version
-    if [ -d "$publish_dir" ]; then
+    if [ -d "$publish_dir" ] && [ "$(ls -A "$publish_dir" 2>/dev/null)" ]; then
         log_info "Backup av befintlig publicerad version..."
         local backup_publish="$publish_dir.backup.$(date +%Y%m%d_%H%M%S)"
         mv "$publish_dir" "$backup_publish"
         log_info "Gammal version sparad i: $backup_publish"
+        mkdir -p "$publish_dir"
     fi
+
+    # Säkra katalogstrukturen innan publicering för att undvika fel
+    for subdir in AppHost Web Api; do
+        if [ ! -d "$publish_dir/$subdir" ]; then
+            mkdir -p "$publish_dir/$subdir"
+        fi
+    done
     
     log_info "Publicerar för linux-arm64 med self-contained..."
     

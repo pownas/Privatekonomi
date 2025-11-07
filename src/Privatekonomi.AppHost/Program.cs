@@ -24,9 +24,10 @@ var apiBuilder = builder.AddProject<Projects.Privatekonomi_Api>("api")
 
 if (isRaspberryPi)
 {
-    // On Raspberry Pi, explicitly set the HTTP endpoint port
-    // The actual binding to 0.0.0.0 is handled by appsettings.Production.json
-    apiBuilder = apiBuilder.WithHttpEndpoint(port: 5277, name: "http");
+    // On Raspberry Pi, explicitly set the HTTP endpoint port and bind to all interfaces
+    apiBuilder = apiBuilder
+        .WithHttpEndpoint(port: 5277, name: "http")
+        .WithEnvironment("DOTNET_URLS__0", "http://0.0.0.0:5277");
 }
 
 var api = apiBuilder;
@@ -42,9 +43,10 @@ var webBuilder = builder.AddProject<Projects.Privatekonomi_Web>("web")
 
 if (isRaspberryPi)
 {
-    // On Raspberry Pi, explicitly set the HTTP endpoint port
-    // The actual binding to 0.0.0.0 is handled by appsettings.Production.json
-    webBuilder = webBuilder.WithHttpEndpoint(port: 5274, name: "http");
+    // On Raspberry Pi, explicitly set the HTTP endpoint port and bind to all interfaces
+    webBuilder = webBuilder
+        .WithHttpEndpoint(port: 5274, name: "http")
+        .WithEnvironment("DOTNET_URLS__0", "http://0.0.0.0:5274");
 }
 
 var web = webBuilder;
