@@ -192,6 +192,12 @@ cd ~/Privatekonomi
 ./raspberry-pi-start.sh
 ```
 
+**Uppdatera befintlig installation:**
+```bash
+cd ~/Privatekonomi
+./raspberry-pi-update.sh
+```
+
 **Installationsskriptet hanterar automatiskt:**
 - ✅ Installation av .NET 9 SDK
 - ✅ **Publicering för linux-arm64 med self-contained binärer (NYTT)**
@@ -222,7 +228,12 @@ cd ~/Privatekonomi
 - **Nginx reverse proxy**: Enkel HTTPS-åtkomst via port 80/443 för alla tjänster
 - **SSL/HTTPS**: Automatisk Let's Encrypt-konfiguration eller self-signed certifikat
 
-Se [RASPBERRY_PI_första_installationen.md](docs/RASPBERRY_PI_första_installationen.md) för detaljerad information, [RASPBERRY_PI_NGINX_SSL.md](docs/RASPBERRY_PI_NGINX_SSL.md) för Nginx och SSL-guide, och [RASPBERRY_PI_GUIDE.md](docs/RASPBERRY_PI_GUIDE.md) för manuell installation.
+Se följande guider för Raspberry Pi:
+- **[RASPBERRY_PI_första_installationen.md](docs/RASPBERRY_PI_första_installationen.md)**: Snabbstart och översikt
+- **[RASPBERRY_PI_UPDATE_GUIDE.md](docs/RASPBERRY_PI_UPDATE_GUIDE.md)**: Uppdatera befintlig installation ⭐ NYTT!
+- **[RASPBERRY_PI_GUIDE.md](docs/RASPBERRY_PI_GUIDE.md)**: Detaljerad manuell installation
+- **[RASPBERRY_PI_NGINX_SSL.md](docs/RASPBERRY_PI_NGINX_SSL.md)**: Nginx och SSL-konfiguration (kommer snart)
+- **[RASPBERRY_PI_INSTALL_TEST.md](docs/RASPBERRY_PI_INSTALL_TEST.md)**: Testguide för installation
 
 #### Snabbstart med startskript (Enklast för Codespaces)
 
@@ -563,6 +574,7 @@ Se [STORAGE_GUIDE.md](docs/STORAGE_GUIDE.md) för detaljerad information om:
 
 - **[USER_AUTHENTICATION.md](docs/USER_AUTHENTICATION.md)**: Guide för användarregistrering, inloggning och datahantering
 - **[RASPBERRY_PI_GUIDE.md](docs/RASPBERRY_PI_GUIDE.md)**: ⭐ Komplett guide för installation på Raspberry Pi med lokal datalagring
+- **[RASPBERRY_PI_UPDATE_GUIDE.md](docs/RASPBERRY_PI_UPDATE_GUIDE.md)**: ⭐ NYTT! Guide för uppdatering av befintlig Raspberry Pi-installation
 - **[STORAGE_GUIDE.md](docs/STORAGE_GUIDE.md)**: Guide för olika lagringsalternativ och konfiguration
 - **[YEAR_EXPORT_GUIDE.md](docs/YEAR_EXPORT_GUIDE.md)**: Guide för export av ekonomisk data per år
 - **[CSV_IMPORT_GUIDE.md](docs/CSV_IMPORT_GUIDE.md)**: Guide för import av transaktioner från ICA-banken och Swedbank

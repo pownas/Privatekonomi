@@ -31,10 +31,10 @@ cd /workspaces/Privatekonomi
 
 ```bash
 # Ladda ner och kör skriptet
-curl -sSL https://raw.githubusercontent.com/pownas/Privatekonomi/feature/raspberry-pi-installer/raspberry-pi-install.sh | bash
+curl -sSL https://raw.githubusercontent.com/pownas/Privatekonomi/main/raspberry-pi-install.sh | bash
 
 # Eller ladda ner först, granska, sedan kör
-curl -sSL https://raw.githubusercontent.com/pownas/Privatekonomi/feature/raspberry-pi-installer/raspberry-pi-install.sh > raspberry-pi-install.sh
+curl -sSL https://raw.githubusercontent.com/pownas/Privatekonomi/main/raspberry-pi-install.sh > raspberry-pi-install.sh
 chmod +x raspberry-pi-install.sh
 ./raspberry-pi-install.sh
 ```
@@ -46,7 +46,7 @@ chmod +x raspberry-pi-install.sh
 ssh pi@<raspberry-pi-ip>
 
 # Kör installationsskriptet
-curl -sSL https://raw.githubusercontent.com/pownas/Privatekonomi/feature/raspberry-pi-installer/raspberry-pi-install.sh | bash
+curl -sSL https://raw.githubusercontent.com/pownas/Privatekonomi/main/raspberry-pi-install.sh | bash
 
 # Efter installation
 cd ~/Privatekonomi
