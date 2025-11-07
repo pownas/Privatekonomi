@@ -128,7 +128,7 @@ create_backup() {
     fi
     
     # Backup JSON files if exist
-    if [ -d "$DATA_DIR" ] && [ "$(ls -A $DATA_DIR/*.json 2>/dev/null)" ]; then
+    if [ -d "$DATA_DIR" ] && [ -n "$(find "$DATA_DIR" -maxdepth 1 -name '*.json' -print -quit 2>/dev/null)" ]; then
         log_info "Backup av JSON-filer..."
         tar -czf "$BACKUP_DIR/${backup_name}_json.tar.gz" -C "$DATA_DIR" . 2>/dev/null || true
         log_success "JSON backup: $BACKUP_DIR/${backup_name}_json.tar.gz"

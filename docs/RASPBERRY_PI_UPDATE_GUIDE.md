@@ -219,7 +219,7 @@ git log --oneline --decorate -10
 ### Hålla dig informerad
 1. Följ repository på GitHub: https://github.com/pownas/Privatekonomi
 2. Prenumerera på "Releases" för notifikationer
-3. Läs [CHANGELOG.md](../CHANGELOG.md) för ändringshistorik
+3. Läs GitHub Releases för ändringshistorik
 
 ## ⚙️ Uppdatera konfiguration
 
