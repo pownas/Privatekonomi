@@ -211,6 +211,8 @@ try
             context.Database.EnsureCreated();
         }
         
+        await ProdDataSeeder.SeedProductionDataAsync(context);
+
         // For JsonFile, load existing data
         if (storageSettings.Provider.Equals("JsonFile", StringComparison.OrdinalIgnoreCase))
         {

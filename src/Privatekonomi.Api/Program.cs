@@ -96,6 +96,8 @@ using (var scope = app.Services.CreateScope())
         context.Database.EnsureCreated();
     }
     
+    ProdDataSeeder.SeedProductionDataAsync(context).GetAwaiter().GetResult();
+
     logger.LogInformation("Database initialized with provider: {Provider}", storageSettings.Provider);
 }
 
