@@ -9,6 +9,9 @@ public class ApplicationUser : IdentityUser
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? LastLoginAt { get; set; }
     
+    // System-level admin flag for platform administration
+    public bool IsSystemAdmin { get; set; } = false;
+    
     // Link to household member (optional - user may not be part of any household)
     public int? HouseholdMemberId { get; set; }
     public HouseholdMember? HouseholdMember { get; set; }
