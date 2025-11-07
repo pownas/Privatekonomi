@@ -443,11 +443,22 @@
             for (int i = 0; i < _historicalMetrics.Count; i++)
             {
                 var snapshot = _historicalMetrics[i];
-                var metrics = System.Text.Json.JsonSerializer.Deserialize<AdminMetrics>(snapshot.MetricsJson);
-                if (metrics != null)
+                try
                 {
-                    mauData[i] = metrics.UserMetrics.MAU;
-                    transactionsData[i] = (double)metrics.EngagementMetrics.TransactionsPerUser;
+                    if (!string.IsNullOrWhiteSpace(snapshot.MetricsJson))
+                    {
+                        var metrics = System.Text.Json.JsonSerializer.Deserialize<AdminMetrics>(snapshot.MetricsJson);
+                        if (metrics != null)
+                        {
+                            mauData[i] = metrics.UserMetrics.MAU;
+                            transactionsData[i] = (double)metrics.EngagementMetrics.TransactionsPerUser;
+                        }
+                    }
+                }
+                catch (System.Text.Json.JsonException ex)
+                {
+                    // Log error and use default values (0) for this data point
+                    Snackbar.Add($"Fel vid parsing av historiska data: {ex.Message}", Severity.Warning);
                 }
             }
             

@@ -229,9 +229,16 @@
         UpdateCurrentPath(NavigationManager.Uri);
         EnsureGroupForCurrentRoute();
         NavigationManager.LocationChanged += OnLocationChanged;
+        AuthenticationStateProvider.AuthenticationStateChanged += OnAuthenticationStateChanged;
         
         // Check if user is system admin
         await CheckIfSystemAdminAsync();
+    }
+    
+    private async void OnAuthenticationStateChanged(Task<AuthenticationState> task)
+    {
+        await CheckIfSystemAdminAsync();
+        await InvokeAsync(StateHasChanged);
     }
     
     private async Task CheckIfSystemAdminAsync()
@@ -249,6 +256,10 @@
                     var appUser = await UserManager.FindByIdAsync(userId);
                     _isSystemAdmin = appUser?.IsSystemAdmin ?? false;
                 }
+            }
+            else
+            {
+                _isSystemAdmin = false;
             }
         }
         catch
@@ -421,5 +432,6 @@
     public void Dispose()
     {
         NavigationManager.LocationChanged -= OnLocationChanged;
+        AuthenticationStateProvider.AuthenticationStateChanged -= OnAuthenticationStateChanged;
     }
 }

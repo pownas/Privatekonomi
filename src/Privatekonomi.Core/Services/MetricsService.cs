@@ -167,11 +167,12 @@ public class MetricsService : IMetricsService
             u.LastLoginAt.Value >= startOfLastMonth && 
             u.LastLoginAt.Value < startOfMonth);
         
+        // Churned users are those active last month but not this month
         var churnedUsers = allUsers.Count(u => 
             u.LastLoginAt.HasValue && 
             u.LastLoginAt.Value >= startOfLastMonth && 
             u.LastLoginAt.Value < startOfMonth &&
-            (!u.LastLoginAt.HasValue || u.LastLoginAt.Value < startOfMonth));
+            (u.LastLoginAt.Value < startOfMonth)); // Not active this month
         
         var churnRate = activeLastMonth > 0 
             ? ((decimal)churnedUsers / activeLastMonth) * 100 
