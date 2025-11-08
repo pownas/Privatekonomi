@@ -325,6 +325,8 @@ sudo journalctl -u privatekonomi -f
 
 ## Åtkomst från Andra Enheter
 
+Privatekonomi är automatiskt konfigurerat för att vara tillgängligt från alla enheter på ditt lokala nätverk.
+
 ### 1. Hitta Raspberry Pi:s IP-adress
 
 ```bash
@@ -332,24 +334,58 @@ hostname -I
 # Exempel output: 192.168.1.100
 ```
 
-### 2. Åtkomst från webbläsare
+### 2. Åtkomst från olika enheter
 
-Öppna webbläsaren på en annan enhet i samma nätverk och navigera till:
+#### Desktop (Windows/Mac/Linux)
+Öppna webbläsaren och navigera till:
 
 ```
 http://192.168.1.100:5274
 ```
 
+#### Smartphone/Surfplatta (iOS/Android)
+1. Anslut till samma WiFi-nätverk som Raspberry Pi
+2. Öppna webbläsare (Safari/Chrome)
+3. Navigera till: `http://192.168.1.100:5274`
+4. **Rekommenderat:** Installera som PWA (Progressive Web App)
+   - iOS: Dela → "Lägg till på hemskärmen"
+   - Android: Meny → "Lägg till på startskärmen"
+
+#### Via Nginx Reverse Proxy (Rekommenderat)
+Om du har konfigurerat Nginx:
+
+```
+http://192.168.1.100          # HTTP
+https://192.168.1.100         # HTTPS (om SSL konfigurerat)
+```
+
+**Fördelar med Nginx:**
+- Enklare URL (ingen port behövs)
+- SSL/HTTPS-stöd
+- Bättre säkerhet
+- Enhetlig åtkomstpunkt
+
 ### 3. Statisk IP-adress (Rekommenderat)
 
-För att undvika att IP-adressen ändras, konfigurera en statisk IP:
+För att undvika att IP-adressen ändras:
 
+**Alternativ A: DHCP-reservation i router (Enklast)**
+1. Logga in på din router (vanligtvis `192.168.1.1`)
+2. Hitta DHCP-inställningar
+3. Skapa reservation för Raspberry Pi MAC-adress
+4. Tilldela önskad IP (t.ex. `192.168.1.100`)
+
+**Alternativ B: Statisk IP på Raspberry Pi**
 ```bash
+# Under installation
+./raspberry-pi-install.sh
+# Välj att konfigurera statisk IP
+
+# Eller manuellt
 sudo nano /etc/dhcpcd.conf
 ```
 
 Lägg till i slutet av filen:
-
 ```
 interface eth0
 static ip_address=192.168.1.100/24
@@ -358,18 +394,84 @@ static domain_name_servers=192.168.1.1 8.8.8.8
 ```
 
 Starta om nätverkstjänsten:
-
 ```bash
 sudo systemctl restart dhcpcd
 ```
 
 ### 4. DNS-namn (Valfritt)
 
-Du kan konfigurera ditt lokala DNS eller router för att använda ett eget namn istället för IP:
+**mDNS (fungerar automatiskt på Mac/Linux):**
+```
+http://raspberrypi.local:5274
+```
 
+**Anpassat hostname:**
+```bash
+sudo raspi-config
+# System Options → Hostname → "privatekonomi"
+sudo reboot
+```
+
+Sedan:
 ```
 http://privatekonomi.local:5274
 ```
+
+**Router DNS-konfiguration:**
+Konfigurera i din router för att använda eget namn:
+```
+http://privatekonomi:5274
+```
+
+### 5. Nginx Reverse Proxy (Rekommenderat för produktion)
+
+För bästa användarupplevelse, konfigurera Nginx:
+
+```bash
+./raspberry-pi-install.sh
+# Välj att installera och konfigurera Nginx
+```
+
+**Åtkomst efter Nginx-konfiguration:**
+```
+http://192.168.1.100       # Web App
+http://192.168.1.100/api/  # API
+```
+
+**Med SSL:**
+```
+https://192.168.1.100
+```
+
+Se [Nginx & SSL Guide](RASPBERRY_PI_NGINX_SSL.md) för detaljerad konfiguration.
+
+### 6. Felsökning Nätverksåtkomst
+
+Om du inte kan nå applikationen från andra enheter:
+
+**Snabbdiagnostik:**
+```bash
+cd ~/Privatekonomi
+./raspberry-pi-debug.sh
+```
+
+**Vanliga problem:**
+- ❌ Portar lyssnar på `127.0.0.1` istället för `0.0.0.0`
+  - Lösning: Kör om installation med `./raspberry-pi-install.sh`
+  
+- ❌ Brandväggen blockerar
+  - Lösning: `sudo ufw allow 5274/tcp`
+  
+- ❌ WiFi-isolering aktiverad på router
+  - Lösning: Inaktivera AP/WiFi-isolering i router-inställningar
+  
+- ❌ Enheter på olika nätverk
+  - Lösning: Anslut alla enheter till samma WiFi
+
+**Omfattande felsökningsguider:**
+- [Network Troubleshooting Guide](RASPBERRY_PI_NETWORK_TROUBLESHOOTING.md) - Detaljerad felsökning
+- [Device Testing Guide](RASPBERRY_PI_DEVICE_TESTING.md) - Testa från olika enheter
+- [Network Access Guide](RASPBERRY_PI_NETWORK_ACCESS.md) - Nätverkskonfiguration
 
 ## Backup och Återställning
 
