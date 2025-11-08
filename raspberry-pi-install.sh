@@ -286,6 +286,27 @@ publish_application() {
         /p:PublishTrimmed=false \
         /p:PublishSingleFile=false
     
+    # Ensure all publish directories exist before copying files
+    log_info "Kontrollerar publicerade kataloger..."
+    
+    local all_dirs_exist=true
+    for dir in "AppHost" "Web" "Api"; do
+        if [ ! -d "$publish_dir/$dir" ]; then
+            log_warning "Katalog saknas: $publish_dir/$dir"
+            log_info "Skapar saknad katalog: $publish_dir/$dir"
+            mkdir -p "$publish_dir/$dir"
+            if [ ! -d "$publish_dir/$dir" ]; then
+                log_error "Kunde inte skapa katalog: $publish_dir/$dir"
+                all_dirs_exist=false
+            fi
+        fi
+    done
+    
+    if [ "$all_dirs_exist" = false ]; then
+        log_error "Publicering misslyckades: En eller flera kataloger kunde inte skapas"
+        return 1
+    fi
+    
     # Copy appsettings to publish directories
     log_info "Kopierar konfigurationsfiler..."
     
