@@ -48,4 +48,18 @@ public interface IHouseholdService
     Task<bool> DeleteTaskAsync(int taskId);
     Task<bool> MarkTaskCompleteAsync(int taskId, int? completedByMemberId = null);
     Task<bool> MarkTaskIncompleteAsync(int taskId);
+    
+    // Shared Budget operations
+    Task<Budget> CreateSharedBudgetAsync(Budget budget, Dictionary<int, decimal> memberContributions);
+    Task<Budget> UpdateSharedBudgetAsync(Budget budget, Dictionary<int, decimal>? memberContributions = null);
+    Task<IEnumerable<Budget>> GetHouseholdBudgetsAsync(int householdId);
+    Task<Dictionary<int, decimal>> GetBudgetContributionsAsync(int budgetId);
+    
+    // Debt Settlement operations
+    Task<DebtSettlement> CreateDebtAsync(int householdId, int debtorMemberId, int creditorMemberId, decimal amount, string? description = null);
+    Task<bool> SettleDebtAsync(int debtSettlementId, string? settlementNote = null);
+    Task<bool> CancelDebtAsync(int debtSettlementId);
+    Task<IEnumerable<DebtSettlement>> GetHouseholdDebtsAsync(int householdId, DebtSettlementStatus? status = null);
+    Task<Dictionary<int, decimal>> GetMemberDebtBalanceAsync(int householdId);
+    Task<IEnumerable<DebtSettlement>> CalculateOptimalSettlementAsync(int householdId);
 }

@@ -24,6 +24,7 @@ public class Budget : ITemporalEntity
     
     public Household? Household { get; set; }
     public ICollection<BudgetCategory> BudgetCategories { get; set; } = new List<BudgetCategory>();
+    public ICollection<HouseholdBudgetShare> HouseholdBudgetShares { get; set; } = new List<HouseholdBudgetShare>();
 }
 
 public enum BudgetPeriod
