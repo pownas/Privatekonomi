@@ -478,9 +478,24 @@ public class HouseholdService : IHouseholdService
         _context.Budgets.Add(budget);
         await _context.SaveChangesAsync();
         
+        // Validate that all members belong to the household
+        var householdMemberIds = await _context.HouseholdMembers
+            .Where(m => m.HouseholdId == budget.HouseholdId.Value && m.IsActive)
+            .Select(m => m.HouseholdMemberId)
+            .ToListAsync();
+        
+        foreach (var memberId in memberContributions.Keys)
+        {
+            if (!householdMemberIds.Contains(memberId))
+                throw new InvalidOperationException($"Member {memberId} does not belong to household {budget.HouseholdId}");
+        }
+        
         // Create budget shares
         foreach (var (memberId, percentage) in memberContributions)
         {
+            if (percentage < 0 || percentage > 100)
+                throw new InvalidOperationException("Percentage must be between 0 and 100");
+            
             _context.HouseholdBudgetShares.Add(new HouseholdBudgetShare
             {
                 BudgetId = budget.BudgetId,
@@ -555,6 +570,18 @@ public class HouseholdService : IHouseholdService
         
         if (amount <= 0)
             throw new InvalidOperationException("Amount must be greater than zero");
+        
+        // Validate that both members belong to the household
+        var householdMemberIds = await _context.HouseholdMembers
+            .Where(m => m.HouseholdId == householdId && m.IsActive)
+            .Select(m => m.HouseholdMemberId)
+            .ToListAsync();
+        
+        if (!householdMemberIds.Contains(debtorMemberId))
+            throw new InvalidOperationException($"Debtor member {debtorMemberId} does not belong to household {householdId}");
+        
+        if (!householdMemberIds.Contains(creditorMemberId))
+            throw new InvalidOperationException($"Creditor member {creditorMemberId} does not belong to household {householdId}");
         
         var debt = new DebtSettlement
         {
