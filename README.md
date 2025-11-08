@@ -229,10 +229,13 @@ cd ~/Privatekonomi
 - **SSL/HTTPS**: Automatisk Let's Encrypt-konfiguration eller self-signed certifikat
 
 Se följande guider för Raspberry Pi:
-- **[RASPBERRY_PI_första_installationen.md](docs/RASPBERRY_PI_första_installationen.md)**: Snabbstart och översikt
-- **[RASPBERRY_PI_UPDATE_GUIDE.md](docs/RASPBERRY_PI_UPDATE_GUIDE.md)**: Uppdatera befintlig installation ⭐ NYTT!
-- **[RASPBERRY_PI_GUIDE.md](docs/RASPBERRY_PI_GUIDE.md)**: Detaljerad manuell installation
-- **[RASPBERRY_PI_NGINX_SSL.md](docs/RASPBERRY_PI_NGINX_SSL.md)**: Nginx och SSL-konfiguration (kommer snart)
+- **[RASPBERRY_PI_QUICKSTART.md](docs/RASPBERRY_PI_QUICKSTART.md)**: ⭐ Snabbstart (5 minuter) - Börja här!
+- **[RASPBERRY_PI_GUIDE.md](docs/RASPBERRY_PI_GUIDE.md)**: Detaljerad installationsguide
+- **[RASPBERRY_PI_NETWORK_TROUBLESHOOTING.md](docs/RASPBERRY_PI_NETWORK_TROUBLESHOOTING.md)**: Felsökning nätverksproblem
+- **[RASPBERRY_PI_DEVICE_TESTING.md](docs/RASPBERRY_PI_DEVICE_TESTING.md)**: Testa från olika enheter (mobil, desktop, etc.)
+- **[RASPBERRY_PI_NETWORK_ACCESS.md](docs/RASPBERRY_PI_NETWORK_ACCESS.md)**: Nätverkskonfiguration
+- **[RASPBERRY_PI_NGINX_SSL.md](docs/RASPBERRY_PI_NGINX_SSL.md)**: Nginx reverse proxy och SSL
+- **[RASPBERRY_PI_UPDATE_GUIDE.md](docs/RASPBERRY_PI_UPDATE_GUIDE.md)**: Uppdatera befintlig installation
 - **[RASPBERRY_PI_INSTALL_TEST.md](docs/RASPBERRY_PI_INSTALL_TEST.md)**: Testguide för installation
 
 #### Snabbstart med startskript (Enklast för Codespaces)

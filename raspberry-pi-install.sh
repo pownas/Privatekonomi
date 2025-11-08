@@ -1299,6 +1299,116 @@ verify_installation() {
     fi
 }
 
+# Validate network configuration
+validate_network_config() {
+    log_section "Validerar nätverkskonfiguration"
+    
+    local validation_passed=true
+    
+    # Check appsettings.Production.json files exist and have correct Urls
+    local web_config="$INSTALL_DIR/src/Privatekonomi.Web/appsettings.Production.json"
+    local api_config="$INSTALL_DIR/src/Privatekonomi.Api/appsettings.Production.json"
+    local apphost_config="$INSTALL_DIR/src/Privatekonomi.AppHost/appsettings.Production.json"
+    
+    # Validate Web config
+    if [ -f "$web_config" ]; then
+        if grep -q '"Urls".*"http://0.0.0.0:5274"' "$web_config"; then
+            log_success "Web konfiguration: Korrekt (lyssnar på 0.0.0.0:5274)"
+        else
+            log_warning "Web konfiguration: Kontrollera Urls-inställning"
+            validation_passed=false
+        fi
+    else
+        log_warning "Web konfiguration: Fil saknas"
+        validation_passed=false
+    fi
+    
+    # Validate API config
+    if [ -f "$api_config" ]; then
+        if grep -q '"Urls".*"http://0.0.0.0:5277"' "$api_config"; then
+            log_success "API konfiguration: Korrekt (lyssnar på 0.0.0.0:5277)"
+        else
+            log_warning "API konfiguration: Kontrollera Urls-inställning"
+            validation_passed=false
+        fi
+    else
+        log_warning "API konfiguration: Fil saknas"
+        validation_passed=false
+    fi
+    
+    # Validate AppHost config
+    if [ -f "$apphost_config" ]; then
+        if grep -q '"Url".*"http://0.0.0.0:17127"' "$apphost_config"; then
+            log_success "AppHost konfiguration: Korrekt (lyssnar på 0.0.0.0:17127)"
+        else
+            log_warning "AppHost konfiguration: Kontrollera Kestrel-inställning"
+            validation_passed=false
+        fi
+    else
+        log_warning "AppHost konfiguration: Fil saknas"
+        validation_passed=false
+    fi
+    
+    # Check network information
+    local pi_ip=$(hostname -I | awk '{print $1}')
+    if [ -n "$pi_ip" ]; then
+        log_success "Raspberry Pi IP-adress: $pi_ip"
+        echo ""
+        echo -e "${BLUE}Åtkomst från andra enheter på nätverket:${NC}"
+        echo -e "  ${YELLOW}Direktåtkomst:${NC}"
+        echo -e "    http://$pi_ip:17127  (Aspire Dashboard)"
+        echo -e "    http://$pi_ip:5274   (Web App)"
+        echo -e "    http://$pi_ip:5277   (API)"
+        
+        if command -v nginx &> /dev/null && systemctl is-active --quiet nginx 2>/dev/null; then
+            echo -e ""
+            echo -e "  ${YELLOW}Via Nginx Proxy:${NC}"
+            echo -e "    http://$pi_ip        (Web App)"
+            
+            if ss -lntp 2>/dev/null | grep -q ":443 "; then
+                echo -e "    https://$pi_ip       (Web App med SSL)"
+            fi
+        fi
+        echo ""
+    else
+        log_warning "Kunde inte fastställa IP-adress"
+        validation_passed=false
+    fi
+    
+    # Check firewall if active
+    if command -v ufw &> /dev/null && sudo ufw status 2>/dev/null | grep -q "Status: active"; then
+        log_info "Kontrollerar brandväggsinställningar..."
+        local firewall_ok=true
+        
+        for port in 17127 5274 5277; do
+            if sudo ufw status | grep -q "$port"; then
+                log_success "Port $port är öppen i brandväggen"
+            else
+                log_warning "Port $port är INTE öppen i brandväggen"
+                firewall_ok=false
+            fi
+        done
+        
+        if [ "$firewall_ok" = false ]; then
+            echo ""
+            echo -e "${YELLOW}Öppna portar med:${NC}"
+            echo "  sudo ufw allow 17127/tcp comment 'Privatekonomi Aspire'"
+            echo "  sudo ufw allow 5274/tcp comment 'Privatekonomi Web'"
+            echo "  sudo ufw allow 5277/tcp comment 'Privatekonomi API'"
+            echo "  sudo ufw reload"
+            validation_passed=false
+        fi
+    fi
+    
+    echo ""
+    if [ "$validation_passed" = true ]; then
+        log_success "Nätverkskonfiguration är korrekt"
+    else
+        log_warning "Vissa nätverksinställningar kan behöva justeras"
+        log_info "Kör './raspberry-pi-debug.sh' efter första starten för fullständig diagnos"
+    fi
+}
+
 # Show usage information
 show_usage_info() {
     log_section "Installation klar - Användningsinformation"
@@ -1400,11 +1510,19 @@ main() {
     setup_backup
     configure_static_ip
     verify_installation
+    validate_network_config
     show_usage_info
     
     log_success "Installation slutförd framgångsrikt!"
     echo -e ""
     echo -e "${GREEN}Starta applikationen med: ${YELLOW}cd $INSTALL_DIR && ./raspberry-pi-start.sh${NC}"
+    echo -e ""
+    echo -e "${BLUE}Efter första starten, kör diagnostik:${NC}"
+    echo -e "${YELLOW}  ./raspberry-pi-debug.sh${NC}"
+    echo -e ""
+    echo -e "${BLUE}Felsökningsguider:${NC}"
+    echo -e "  docs/RASPBERRY_PI_NETWORK_TROUBLESHOOTING.md"
+    echo -e "  docs/RASPBERRY_PI_DEVICE_TESTING.md"
 }
 
 # Handle script arguments
