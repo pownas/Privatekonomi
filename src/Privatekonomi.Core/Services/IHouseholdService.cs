@@ -33,4 +33,19 @@ public interface IHouseholdService
     // Reporting
     Task<Dictionary<int, decimal>> GetMemberTotalSharesAsync(int householdId, DateTime? startDate = null, DateTime? endDate = null);
     Task<IEnumerable<ExpenseShare>> GetMemberExpenseSharesAsync(int memberId, DateTime? startDate = null, DateTime? endDate = null);
+
+    // Activity (Timeline) operations
+    Task<IEnumerable<HouseholdActivity>> GetActivitiesAsync(int householdId, DateTime? startDate = null, DateTime? endDate = null);
+    Task<HouseholdActivity> CreateActivityAsync(HouseholdActivity activity);
+    Task<HouseholdActivity> UpdateActivityAsync(HouseholdActivity activity);
+    Task<bool> DeleteActivityAsync(int activityId);
+
+    // Task (To-Do) operations
+    Task<IEnumerable<HouseholdTask>> GetTasksAsync(int householdId, bool? includeCompleted = null);
+    Task<IEnumerable<HouseholdTask>> SearchTasksAsync(int householdId, string searchTerm);
+    Task<HouseholdTask> CreateTaskAsync(HouseholdTask task);
+    Task<HouseholdTask> UpdateTaskAsync(HouseholdTask task);
+    Task<bool> DeleteTaskAsync(int taskId);
+    Task<bool> MarkTaskCompleteAsync(int taskId, int? completedByMemberId = null);
+    Task<bool> MarkTaskIncompleteAsync(int taskId);
 }

@@ -10,4 +10,6 @@ public class Household
     
     public ICollection<HouseholdMember> Members { get; set; } = new List<HouseholdMember>();
     public ICollection<SharedExpense> SharedExpenses { get; set; } = new List<SharedExpense>();
+    public ICollection<HouseholdActivity> Activities { get; set; } = new List<HouseholdActivity>();
+    public ICollection<HouseholdTask> Tasks { get; set; } = new List<HouseholdTask>();
 }
