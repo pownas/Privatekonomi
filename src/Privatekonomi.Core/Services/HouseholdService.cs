@@ -303,4 +303,158 @@ public class HouseholdService : IHouseholdService
             .OrderByDescending(es => es.SharedExpense!.ExpenseDate)
             .ToListAsync();
     }
+
+    // Activity (Timeline) operations
+    public async Task<IEnumerable<HouseholdActivity>> GetActivitiesAsync(int householdId, DateTime? startDate = null, DateTime? endDate = null)
+    {
+        var query = _context.HouseholdActivities
+            .Include(a => a.CompletedByMember)
+            .Where(a => a.HouseholdId == householdId);
+
+        if (startDate.HasValue)
+            query = query.Where(a => a.CompletedDate >= startDate.Value);
+
+        if (endDate.HasValue)
+            query = query.Where(a => a.CompletedDate <= endDate.Value);
+
+        return await query
+            .OrderByDescending(a => a.CompletedDate)
+            .ToListAsync();
+    }
+
+    public async Task<HouseholdActivity> CreateActivityAsync(HouseholdActivity activity)
+    {
+        activity.CreatedDate = DateTime.Now;
+        if (activity.CompletedDate == default)
+            activity.CompletedDate = DateTime.Now;
+        
+        _context.HouseholdActivities.Add(activity);
+        await _context.SaveChangesAsync();
+        return activity;
+    }
+
+    public async Task<HouseholdActivity> UpdateActivityAsync(HouseholdActivity activity)
+    {
+        _context.HouseholdActivities.Update(activity);
+        await _context.SaveChangesAsync();
+        return activity;
+    }
+
+    public async Task<bool> DeleteActivityAsync(int activityId)
+    {
+        var activity = await _context.HouseholdActivities.FindAsync(activityId);
+        if (activity == null)
+            return false;
+
+        _context.HouseholdActivities.Remove(activity);
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
+    // Task (To-Do) operations
+    public async Task<IEnumerable<HouseholdTask>> GetTasksAsync(int householdId, bool? includeCompleted = null)
+    {
+        var query = _context.HouseholdTasks
+            .Include(t => t.AssignedToMember)
+            .Include(t => t.CompletedByMember)
+            .Where(t => t.HouseholdId == householdId);
+
+        if (includeCompleted.HasValue)
+        {
+            if (includeCompleted.Value)
+            {
+                // Include all tasks
+            }
+            else
+            {
+                // Only include incomplete tasks
+                query = query.Where(t => !t.IsCompleted);
+            }
+        }
+
+        return await query
+            .OrderBy(t => t.IsCompleted)
+            .ThenByDescending(t => t.Priority)
+            .ThenBy(t => t.DueDate)
+            .ToListAsync();
+    }
+
+    public async Task<IEnumerable<HouseholdTask>> SearchTasksAsync(int householdId, string searchTerm)
+    {
+        if (string.IsNullOrWhiteSpace(searchTerm))
+            return await GetTasksAsync(householdId);
+
+        var query = _context.HouseholdTasks
+            .Include(t => t.AssignedToMember)
+            .Include(t => t.CompletedByMember)
+            .Where(t => t.HouseholdId == householdId);
+
+        var lowerSearchTerm = searchTerm.ToLower();
+        query = query.Where(t => 
+            t.Title.ToLower().Contains(lowerSearchTerm) || 
+            (t.Description != null && t.Description.ToLower().Contains(lowerSearchTerm)));
+
+        return await query
+            .OrderBy(t => t.IsCompleted)
+            .ThenByDescending(t => t.Priority)
+            .ThenBy(t => t.DueDate)
+            .ToListAsync();
+    }
+
+    public async Task<HouseholdTask> CreateTaskAsync(HouseholdTask task)
+    {
+        task.CreatedDate = DateTime.Now;
+        task.IsCompleted = false;
+        task.CompletedDate = null;
+        
+        _context.HouseholdTasks.Add(task);
+        await _context.SaveChangesAsync();
+        return task;
+    }
+
+    public async Task<HouseholdTask> UpdateTaskAsync(HouseholdTask task)
+    {
+        _context.HouseholdTasks.Update(task);
+        await _context.SaveChangesAsync();
+        return task;
+    }
+
+    public async Task<bool> DeleteTaskAsync(int taskId)
+    {
+        var task = await _context.HouseholdTasks.FindAsync(taskId);
+        if (task == null)
+            return false;
+
+        _context.HouseholdTasks.Remove(task);
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<bool> MarkTaskCompleteAsync(int taskId, int? completedByMemberId = null)
+    {
+        var task = await _context.HouseholdTasks.FindAsync(taskId);
+        if (task == null)
+            return false;
+
+        task.IsCompleted = true;
+        task.CompletedDate = DateTime.Now;
+        task.CompletedByMemberId = completedByMemberId;
+        
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<bool> MarkTaskIncompleteAsync(int taskId)
+    {
+        var task = await _context.HouseholdTasks.FindAsync(taskId);
+        if (task == null)
+            return false;
+
+        task.IsCompleted = false;
+        task.CompletedDate = null;
+        task.CompletedByMemberId = null;
+        
+        await _context.SaveChangesAsync();
+        return true;
+    }
 }
