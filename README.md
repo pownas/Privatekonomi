@@ -53,6 +53,14 @@ En privatekonomi-applikation byggd med .NET 9, Blazor Server och MudBlazor för 
   - Rekommendation att hämta data från minpension.se
   - Se [Investeringar & Pension guide](docs/INVESTMENT_PENSION_GUIDE.md)
 - **Automatisk kursuppdatering**: Uppdatera aktiekurser via Yahoo Finance API med ett knapptryck
+- **Kontohantering**: ⭐ NYTT!
+  - Hantera alla dina konton på ett och samma ställe
+  - Stöd för lönekonton, sparkonton, kreditkort, investeringskonton, lån, pensionskonton och kontanter
+  - Registrera kontonummer (inkl. clearingnummer för svenska banker)
+  - Koppla konton till BAS-kontoplan för redovisningsintegration
+  - Grupperad visning per kontotyp med ikoner
+  - Automatisk saldoberäkning baserad på transaktioner
+  - Se [Kontohantering guide](docs/ACCOUNT_MANAGEMENT_GUIDE.md)
 - **Kategorisystem**: Förkonfigurerade kategorier med färgkodning och hierarkisk struktur
   - **BAS 2025-baserad kontoplan**: Kontonummer inspirerade av svensk BAS-standard för strukturerad bokföring
   - Redigerbar kontoplan med stöd för egna konton och underkategorier
