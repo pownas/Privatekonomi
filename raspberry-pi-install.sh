@@ -238,6 +238,8 @@ publish_application() {
     log_section "Publicerar applikation för produktion"
     
     local publish_dir="$INSTALL_DIR/publish"
+    # Define the list of components to publish - used for both publishing and validation
+    local publish_components=("AppHost" "Web" "Api")
     
     # Check if already published
     if [ -d "$publish_dir" ]; then
@@ -258,39 +260,48 @@ publish_application() {
     
     # Publish AppHost (Aspire orchestrator)
     log_info "Publicerar Privatekonomi.AppHost..."
-    dotnet publish src/Privatekonomi.AppHost/Privatekonomi.AppHost.csproj \
+    if ! dotnet publish src/Privatekonomi.AppHost/Privatekonomi.AppHost.csproj \
         --runtime linux-arm64 \
         --self-contained \
         --configuration Release \
         -o "$publish_dir/AppHost" \
         /p:PublishTrimmed=false \
-        /p:PublishSingleFile=false
+        /p:PublishSingleFile=false; then
+        log_error "Misslyckades att publicera Privatekonomi.AppHost"
+        return 1
+    fi
     
     # Publish Web
     log_info "Publicerar Privatekonomi.Web..."
-    dotnet publish src/Privatekonomi.Web/Privatekonomi.Web.csproj \
+    if ! dotnet publish src/Privatekonomi.Web/Privatekonomi.Web.csproj \
         --runtime linux-arm64 \
         --self-contained \
         --configuration Release \
         -o "$publish_dir/Web" \
         /p:PublishTrimmed=false \
-        /p:PublishSingleFile=false
+        /p:PublishSingleFile=false; then
+        log_error "Misslyckades att publicera Privatekonomi.Web"
+        return 1
+    fi
     
     # Publish API
     log_info "Publicerar Privatekonomi.Api..."
-    dotnet publish src/Privatekonomi.Api/Privatekonomi.Api.csproj \
+    if ! dotnet publish src/Privatekonomi.Api/Privatekonomi.Api.csproj \
         --runtime linux-arm64 \
         --self-contained \
         --configuration Release \
         -o "$publish_dir/Api" \
         /p:PublishTrimmed=false \
-        /p:PublishSingleFile=false
+        /p:PublishSingleFile=false; then
+        log_error "Misslyckades att publicera Privatekonomi.Api"
+        return 1
+    fi
     
     # Ensure all publish directories exist before copying files
     log_info "Kontrollerar publicerade kataloger..."
     
     local all_dirs_exist=true
-    for dir in "AppHost" "Web" "Api"; do
+    for dir in "${publish_components[@]}"; do
         if [ ! -d "$publish_dir/$dir" ]; then
             log_warning "Katalog saknas: $publish_dir/$dir"
             log_info "Skapar saknad katalog: $publish_dir/$dir"
