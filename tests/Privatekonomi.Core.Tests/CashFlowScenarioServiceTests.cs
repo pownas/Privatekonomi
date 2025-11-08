@@ -1,0 +1,264 @@
+using Moq;
+using Privatekonomi.Core.Models;
+using Privatekonomi.Core.Services;
+using Xunit;
+
+namespace Privatekonomi.Core.Tests;
+
+public class CashFlowScenarioServiceTests
+{
+    private readonly Mock<ITransactionService> _transactionServiceMock;
+    private readonly Mock<IGoalService> _goalServiceMock;
+    private readonly Mock<ICurrentUserService> _currentUserServiceMock;
+    private readonly CashFlowScenarioService _service;
+
+    public CashFlowScenarioServiceTests()
+    {
+        _transactionServiceMock = new Mock<ITransactionService>();
+        _goalServiceMock = new Mock<IGoalService>();
+        _currentUserServiceMock = new Mock<ICurrentUserService>();
+        
+        _service = new CashFlowScenarioService(
+            _transactionServiceMock.Object,
+            _goalServiceMock.Object,
+            _currentUserServiceMock.Object);
+    }
+
+    [Fact]
+    public async Task CalculateScenarioAsync_SimpleScenario_CalculatesCorrectly()
+    {
+        // Arrange
+        var scenario = new CashFlowScenario
+        {
+            Name = "Test",
+            InitialAmount = 10000m,
+            MonthlySavings = 1000m,
+            AnnualInterestRate = 12m, // 1% per month for easy calculation
+            Years = 1
+        };
+
+        // Act
+        var result = await _service.CalculateScenarioAsync(scenario);
+
+        // Assert
+        Assert.Equal("Test", result.ScenarioName);
+        Assert.Equal(13, result.MonthlyData.Count); // 0 + 12 months
+        Assert.True(result.FinalAmount > 22000m); // Initial + contributions + interest
+        Assert.Equal(22000m, result.TotalContributions); // Initial + 12 * 1000
+        Assert.True(result.TotalInterest > 0);
+    }
+
+    [Fact]
+    public async Task CalculateScenarioAsync_WithZeroInterest_ReturnsOnlyContributions()
+    {
+        // Arrange
+        var scenario = new CashFlowScenario
+        {
+            Name = "No Interest",
+            InitialAmount = 10000m,
+            MonthlySavings = 1000m,
+            AnnualInterestRate = 0m,
+            Years = 1
+        };
+
+        // Act
+        var result = await _service.CalculateScenarioAsync(scenario);
+
+        // Assert
+        Assert.Equal(22000m, result.FinalAmount); // 10000 + 12*1000
+        Assert.Equal(22000m, result.TotalContributions);
+        Assert.Equal(0m, result.TotalInterest);
+    }
+
+    [Fact]
+    public async Task CalculateScenarioAsync_WithExtraContribution_AddsExtraCorrectly()
+    {
+        // Arrange
+        var scenario = new CashFlowScenario
+        {
+            Name = "Extra",
+            InitialAmount = 10000m,
+            MonthlySavings = 1000m,
+            AnnualInterestRate = 0m,
+            Years = 1,
+            ExtraContribution = 5000m,
+            ExtraContributionMonth = 6
+        };
+
+        // Act
+        var result = await _service.CalculateScenarioAsync(scenario);
+
+        // Assert
+        Assert.Equal(27000m, result.FinalAmount); // 10000 + 12*1000 + 5000
+        Assert.Equal(27000m, result.TotalContributions);
+        
+        // Check that month 6 has the extra contribution
+        var month6 = result.MonthlyData.First(m => m.Month == 6);
+        Assert.Equal(6000m, month6.MonthlyContribution); // 1000 + 5000
+    }
+
+    [Fact]
+    public async Task CalculateScenarioAsync_WithInflation_CalculatesRealValue()
+    {
+        // Arrange
+        var scenario = new CashFlowScenario
+        {
+            Name = "Inflation",
+            InitialAmount = 10000m,
+            MonthlySavings = 1000m,
+            AnnualInterestRate = 0m,
+            Years = 1,
+            InflationRate = 12m // 1% per month
+        };
+
+        // Act
+        var result = await _service.CalculateScenarioAsync(scenario);
+
+        // Assert
+        Assert.NotNull(result.RealValue);
+        Assert.True(result.RealValue < result.FinalAmount); // Real value should be less due to inflation
+    }
+
+    [Fact]
+    public async Task CalculateScenarioAsync_WithAnnualSavingsIncrease_IncreasesContributions()
+    {
+        // Arrange
+        var scenario = new CashFlowScenario
+        {
+            Name = "Increase",
+            InitialAmount = 0m,
+            MonthlySavings = 1000m,
+            AnnualInterestRate = 0m,
+            Years = 2,
+            AnnualSavingsIncrease = 10m // 10% increase per year
+        };
+
+        // Act
+        var result = await _service.CalculateScenarioAsync(scenario);
+
+        // Assert
+        // First year: 12 * 1000 = 12000
+        // Second year: 12 * 1100 = 13200
+        // Total: 25200
+        Assert.Equal(25200m, result.FinalAmount);
+        
+        // Check that month 13 has increased contribution
+        var month13 = result.MonthlyData.First(m => m.Month == 13);
+        Assert.Equal(1100m, month13.MonthlyContribution);
+    }
+
+    [Fact]
+    public async Task GetUserBasedDefaultsAsync_WithNoUser_ReturnsGuestDefaults()
+    {
+        // Arrange
+        _currentUserServiceMock.Setup(x => x.UserId)
+            .Returns((string?)null);
+        _currentUserServiceMock.Setup(x => x.IsAuthenticated)
+            .Returns(false);
+
+        // Act
+        var result = await _service.GetUserBasedDefaultsAsync();
+
+        // Assert
+        Assert.Equal("Exempel scenario", result.Name);
+        Assert.Equal(50000m, result.InitialAmount);
+        Assert.Equal(3000m, result.MonthlySavings);
+    }
+
+    [Fact]
+    public async Task GetUserBasedDefaultsAsync_WithUser_CalculatesFromTransactions()
+    {
+        // Arrange
+        _currentUserServiceMock.Setup(x => x.UserId)
+            .Returns("user123");
+        _currentUserServiceMock.Setup(x => x.IsAuthenticated)
+            .Returns(true);
+
+        var threeMonthsAgo = DateTime.Today.AddMonths(-3);
+        var transactions = new List<Transaction>
+        {
+            // Month 1
+            new Transaction { Amount = 30000m, IsIncome = true, Date = threeMonthsAgo.AddDays(5) },
+            new Transaction { Amount = 20000m, IsIncome = false, Date = threeMonthsAgo.AddDays(10) },
+            // Month 2
+            new Transaction { Amount = 32000m, IsIncome = true, Date = threeMonthsAgo.AddMonths(1).AddDays(5) },
+            new Transaction { Amount = 18000m, IsIncome = false, Date = threeMonthsAgo.AddMonths(1).AddDays(10) },
+            // Month 3
+            new Transaction { Amount = 31000m, IsIncome = true, Date = threeMonthsAgo.AddMonths(2).AddDays(5) },
+            new Transaction { Amount = 19000m, IsIncome = false, Date = threeMonthsAgo.AddMonths(2).AddDays(10) },
+        };
+
+        _transactionServiceMock.Setup(x => x.GetTransactionsByDateRangeAsync(
+            It.IsAny<DateTime>(), It.IsAny<DateTime>()))
+            .ReturnsAsync(transactions);
+
+        var goals = new List<Goal>
+        {
+            new Goal { CurrentAmount = 10000m },
+            new Goal { CurrentAmount = 15000m }
+        };
+
+        _goalServiceMock.Setup(x => x.GetActiveGoalsAsync())
+            .ReturnsAsync(goals);
+
+        // Act
+        var result = await _service.GetUserBasedDefaultsAsync();
+
+        // Assert
+        Assert.Equal("Mitt scenario", result.Name);
+        Assert.Equal(25000m, result.InitialAmount); // 10000 + 15000
+        // Average income: (30000+32000+31000)/3 = 31000
+        // Average expenses: (20000+18000+19000)/3 = 19000
+        // Average savings: 31000 - 19000 = 12000
+        Assert.Equal(12000m, result.MonthlySavings);
+    }
+
+    [Fact]
+    public void GetGuestDefaults_ReturnsExpectedDefaults()
+    {
+        // Act
+        var result = _service.GetGuestDefaults();
+
+        // Assert
+        Assert.Equal("Exempel scenario", result.Name);
+        Assert.Equal(50000m, result.InitialAmount);
+        Assert.Equal(3000m, result.MonthlySavings);
+        Assert.Equal(3.0m, result.AnnualInterestRate);
+        Assert.Equal(10, result.Years);
+        Assert.Equal(2.0m, result.InflationRate);
+    }
+
+    [Fact]
+    public async Task CompareMultipleScenariosAsync_ReturnsMultipleProjections()
+    {
+        // Arrange
+        var scenarios = new List<CashFlowScenario>
+        {
+            new CashFlowScenario
+            {
+                Name = "Scenario 1",
+                InitialAmount = 10000m,
+                MonthlySavings = 1000m,
+                AnnualInterestRate = 3m,
+                Years = 5
+            },
+            new CashFlowScenario
+            {
+                Name = "Scenario 2",
+                InitialAmount = 10000m,
+                MonthlySavings = 2000m,
+                AnnualInterestRate = 3m,
+                Years = 5
+            }
+        };
+
+        // Act
+        var result = await _service.CompareMultipleScenariosAsync(scenarios);
+
+        // Assert
+        Assert.Equal(2, result.Count);
+        Assert.Equal("Scenario 1", result[0].ScenarioName);
+        Assert.Equal("Scenario 2", result[1].ScenarioName);
+        Assert.True(result[1].FinalAmount > result[0].FinalAmount); // Scenario 2 should have more
+    }
+}
