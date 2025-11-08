@@ -16,7 +16,7 @@ echo -e "${BLUE}╚════════════════════�
 echo ""
 
 # 1. Kontrollera IP-adresser
-echo -e "${BLUE}[1/8]${NC} Kontrollerar IP-adresser..."
+echo -e "${BLUE}[1/11]${NC} Kontrollerar IP-adresser..."
 echo "Din Raspberry Pi IP-adress(er):"
 hostname -I
 MY_IP=$(hostname -I | awk '{print $1}')
@@ -24,7 +24,7 @@ echo -e "${GREEN}Primär IP: $MY_IP${NC}"
 echo ""
 
 # 2. Kontrollera om tjänster körs
-echo -e "${BLUE}[2/8]${NC} Kontrollerar om .NET-tjänster körs..."
+echo -e "${BLUE}[2/11]${NC} Kontrollerar om .NET-tjänster körs..."
 if pgrep -f "dotnet" > /dev/null; then
     echo -e "${GREEN}✓ .NET-processer körs${NC}"
     ps aux | grep -E "[d]otnet" | head -5
@@ -35,7 +35,7 @@ fi
 echo ""
 
 # 3. Kontrollera vilka portar som lyssnar
-echo -e "${BLUE}[3/8]${NC} Kontrollerar vilka portar som lyssnar..."
+echo -e "${BLUE}[3/11]${NC} Kontrollerar vilka portar som lyssnar..."
 echo "Portar som applikationen ska använda: 17127, 5274, 5277"
 echo ""
 
@@ -58,7 +58,7 @@ done
 echo ""
 
 # 4. Kontrollera miljövariabler
-echo -e "${BLUE}[4/8]${NC} Kontrollerar miljövariabler..."
+echo -e "${BLUE}[4/11]${NC} Kontrollerar miljövariabler..."
 if pgrep -f "dotnet" > /dev/null; then
     PID=$(pgrep -f "Privatekonomi.AppHost" | head -1)
     if [ -n "$PID" ]; then
@@ -71,7 +71,7 @@ fi
 echo ""
 
 # 5. Kontrollera brandvägg (UFW)
-echo -e "${BLUE}[5/8]${NC} Kontrollerar brandvägg (UFW)..."
+echo -e "${BLUE}[5/11]${NC} Kontrollerar brandvägg (UFW)..."
 if command -v ufw &> /dev/null; then
     if sudo ufw status 2>/dev/null | grep -q "Status: active"; then
         echo -e "${YELLOW}⚠ UFW brandvägg är aktiverad${NC}"
@@ -96,7 +96,7 @@ fi
 echo ""
 
 # 6. Kontrollera appsettings.Production.json
-echo -e "${BLUE}[6/8]${NC} Kontrollerar konfigurationsfiler..."
+echo -e "${BLUE}[6/11]${NC} Kontrollerar konfigurationsfiler..."
 
 # Kontrollera Web appsettings
 WEB_CONFIG="$HOME/Privatekonomi/src/Privatekonomi.Web/appsettings.Production.json"
@@ -119,7 +119,7 @@ fi
 echo ""
 
 # 7. Testa lokal åtkomst
-echo -e "${BLUE}[7/8]${NC} Testar lokal åtkomst..."
+echo -e "${BLUE}[7/11]${NC} Testar lokal åtkomst..."
 for port in 17127 5274 5277; do
     if curl -s -o /dev/null -w "%{http_code}" --connect-timeout 2 "http://localhost:$port" > /dev/null 2>&1; then
         echo -e "${GREEN}✓ Port $port svarar lokalt${NC}"
