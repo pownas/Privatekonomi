@@ -24,9 +24,16 @@ else
         <MudText Typo="Typo.body1" Color="Color.Secondary" Class="mb-4">@household.Description</MudText>
     }
 
-    <MudButton Variant="Variant.Filled" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.ChildCare" OnClick="@(() => NavigationManager.NavigateTo($"/family/households/{HouseholdId}/allowances"))" Class="mb-4">
-        Barnkonton & Veckopeng
-    </MudButton>
+    <MudStack Row="true" Class="mb-4">
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.AccountBalance" 
+                   OnClick="@(() => NavigationManager.NavigateTo($"/family/households/{HouseholdId}/economy"))">
+            Delad Ekonomi
+        </MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.ChildCare" 
+                   OnClick="@(() => NavigationManager.NavigateTo($"/family/households/{HouseholdId}/allowances"))">
+            Barnkonton & Veckopeng
+        </MudButton>
+    </MudStack>
 
     <MudTabs Elevation="2" Rounded="true" Color="Color.Primary" Class="mt-4">
         <MudTabPanel Text="Medlemmar" Icon="@Icons.Material.Filled.People">
