@@ -1,0 +1,772 @@
+@page "/savings/scenario-analysis"
+@page "/scenario-analysis"
+@rendermode InteractiveServer
+@inject ICashFlowScenarioService ScenarioService
+@inject ISnackbar Snackbar
+@inject IJSRuntime JSRuntime
+@using System.Globalization
+
+<PageTitle>Scenarioanalys & Ränta-på-ränta - Privatekonomi</PageTitle>
+
+<div class="d-flex flex-column flex-md-row justify-space-between align-start align-md-center mb-4 gap-2">
+    <div>
+        <MudText Typo="Typo.h4">
+            <MudIcon Icon="@Icons.Material.Filled.TrendingUp" Color="Color.Primary" Class="mr-2" aria-hidden="true" />
+            Scenarioanalys & Ränta-på-ränta kalkylator
+        </MudText>
+        <MudText Typo="Typo.body2" Color="Color.Secondary">
+            Analysera hur ditt sparande växer över tid med olika scenarier
+        </MudText>
+    </div>
+</div>
+
+@if (_loading)
+{
+    <div class="d-flex flex-column align-center pa-6">
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Large" />
+        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-4">Laddar scenariodata...</MudText>
+    </div>
+}
+else
+{
+    <!-- Scenario Configuration -->
+    <MudPaper Class="pa-4 mb-4" Elevation="2">
+        <MudText Typo="Typo.h6" Class="mb-4">
+            <MudIcon Icon="@Icons.Material.Filled.Settings" Class="mr-2" />
+            Scenarioinställningar
+        </MudText>
+        
+        <MudGrid Spacing="3">
+            <MudItem xs="12" md="6">
+                <MudNumericField @bind-Value="_scenario.InitialAmount"
+                                 Label="Startkapital (kr)"
+                                 Variant="Variant.Outlined"
+                                 Min="0"
+                                 Format="N0"
+                                 Culture="@SwedishCulture"
+                                 Adornment="Adornment.Start"
+                                 AdornmentIcon="@Icons.Material.Filled.AccountBalance"
+                                 OnBlur="@(async () => await CalculateProjectionAsync())" />
+                <MudSlider T="int" Value="_initialAmountSlider"
+                           Min="0"
+                           Max="500000"
+                           Step="10000"
+                           Color="Color.Primary"
+                           ValueLabel="true"
+                           Class="mt-2"
+                           ValueChanged="@(async (int val) => { _scenario.InitialAmount = val; _initialAmountSlider = val; await CalculateProjectionAsync(); })" />
+            </MudItem>
+
+            <MudItem xs="12" md="6">
+                <MudNumericField @bind-Value="_scenario.MonthlySavings"
+                                 Label="Månadssparande (kr)"
+                                 Variant="Variant.Outlined"
+                                 Min="0"
+                                 Format="N0"
+                                 Culture="@SwedishCulture"
+                                 Adornment="Adornment.Start"
+                                 AdornmentIcon="@Icons.Material.Filled.Savings"
+                                 OnBlur="@(async () => await CalculateProjectionAsync())" />
+                <MudSlider T="int" Value="_monthlySavingsSlider"
+                           Min="0"
+                           Max="20000"
+                           Step="500"
+                           Color="Color.Primary"
+                           ValueLabel="true"
+                           Class="mt-2"
+                           ValueChanged="@(async (int val) => { _scenario.MonthlySavings = val; _monthlySavingsSlider = val; await CalculateProjectionAsync(); })" />
+            </MudItem>
+
+            <MudItem xs="12" md="6">
+                <MudNumericField @bind-Value="_scenario.AnnualInterestRate"
+                                 Label="Årlig ränta (%)"
+                                 Variant="Variant.Outlined"
+                                 Min="0"
+                                 Max="20"
+                                 Format="N2"
+                                 Culture="@SwedishCulture"
+                                 Adornment="Adornment.Start"
+                                 AdornmentIcon="@Icons.Material.Filled.Percent"
+                                 OnBlur="@(async () => await CalculateProjectionAsync())" />
+                <MudSlider T="decimal" Value="_annualInterestRateSlider"
+                           Min="0"
+                           Max="15"
+                           Step="0.25m"
+                           Color="Color.Primary"
+                           ValueLabel="true"
+                           Class="mt-2"
+                           ValueChanged="@(async (decimal val) => { _scenario.AnnualInterestRate = val; _annualInterestRateSlider = val; await CalculateProjectionAsync(); })" />
+            </MudItem>
+
+            <MudItem xs="12" md="6">
+                <MudNumericField @bind-Value="_scenario.Years"
+                                 Label="Antal år"
+                                 Variant="Variant.Outlined"
+                                 Min="1"
+                                 Max="50"
+                                 Adornment="Adornment.Start"
+                                 AdornmentIcon="@Icons.Material.Filled.CalendarMonth"
+                                 OnBlur="@(async () => await CalculateProjectionAsync())" />
+                <MudSlider T="int" Value="_yearsSlider"
+                           Min="1"
+                           Max="40"
+                           Step="1"
+                           Color="Color.Primary"
+                           ValueLabel="true"
+                           Class="mt-2"
+                           ValueChanged="@(async (int val) => { _scenario.Years = val; _yearsSlider = val; await CalculateProjectionAsync(); })" />
+            </MudItem>
+        </MudGrid>
+
+        <MudExpansionPanels Class="mt-4">
+            <MudExpansionPanel Text="Avancerade inställningar">
+                <MudGrid Spacing="3">
+                    <MudItem xs="12" md="6">
+                        <MudNumericField @bind-Value="_scenario.InflationRate"
+                                         Label="Årlig inflation (%) - valfritt"
+                                         Variant="Variant.Outlined"
+                                         Min="0"
+                                         Max="20"
+                                         Format="N2"
+                                         Culture="@SwedishCulture"
+                                         Clearable="true"
+                                         Adornment="Adornment.Start"
+                                         AdornmentIcon="@Icons.Material.Filled.TrendingDown"
+                                         OnBlur="@(async () => await CalculateProjectionAsync())"
+                                         HelperText="Visar reellt värde justerat för inflation" />
+                    </MudItem>
+
+                    <MudItem xs="12" md="6">
+                        <MudNumericField @bind-Value="_scenario.AnnualSavingsIncrease"
+                                         Label="Årlig ökning i månadssparande (%) - valfritt"
+                                         Variant="Variant.Outlined"
+                                         Min="0"
+                                         Max="50"
+                                         Format="N2"
+                                         Culture="@SwedishCulture"
+                                         Clearable="true"
+                                         Adornment="Adornment.Start"
+                                         AdornmentIcon="@Icons.Material.Filled.TrendingUp"
+                                         OnBlur="@(async () => await CalculateProjectionAsync())"
+                                         HelperText="T.ex. årliga löneökningar" />
+                    </MudItem>
+
+                    <MudItem xs="12" md="6">
+                        <MudNumericField @bind-Value="_scenario.ExtraContribution"
+                                         Label="Engångsinsättning (kr) - valfritt"
+                                         Variant="Variant.Outlined"
+                                         Min="0"
+                                         Format="N0"
+                                         Culture="@SwedishCulture"
+                                         Clearable="true"
+                                         Adornment="Adornment.Start"
+                                         AdornmentIcon="@Icons.Material.Filled.AttachMoney"
+                                         OnBlur="@(async () => await CalculateProjectionAsync())"
+                                         HelperText="Bonus, arv eller annan engångsinsättning" />
+                    </MudItem>
+
+                    <MudItem xs="12" md="6">
+                        <MudNumericField @bind-Value="_scenario.ExtraContributionMonth"
+                                         Label="Månad för engångsinsättning"
+                                         Variant="Variant.Outlined"
+                                         Min="1"
+                                         Max="@(_scenario.Years * 12)"
+                                         Clearable="true"
+                                         Disabled="@(!_scenario.ExtraContribution.HasValue)"
+                                         Adornment="Adornment.Start"
+                                         AdornmentIcon="@Icons.Material.Filled.Event"
+                                         OnBlur="@(async () => await CalculateProjectionAsync())"
+                                         HelperText="Vilken månad (1-12) engångsinsättningen görs" />
+                    </MudItem>
+                </MudGrid>
+            </MudExpansionPanel>
+        </MudExpansionPanels>
+    </MudPaper>
+
+    <!-- Summary Cards -->
+    @if (_projection != null)
+    {
+        <MudGrid Class="mb-4">
+            <MudItem xs="12" sm="6" md="3">
+                <MudCard Elevation="2" Class="pa-4">
+                    <MudCardContent>
+                        <MudText Typo="Typo.h6" Color="Color.Success">
+                            <MudIcon Icon="@Icons.Material.Filled.AccountBalance" Size="Size.Small" Class="mr-1" />
+                            Slutkapital
+                        </MudText>
+                        <MudText Typo="Typo.h4">
+                            @_projection.FinalAmount.ToString("C0", SwedishCulture)
+                        </MudText>
+                        @if (_projection.RealValue.HasValue)
+                        {
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                Reellt värde: @_projection.RealValue.Value.ToString("C0", SwedishCulture)
+                            </MudText>
+                        }
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+            <MudItem xs="12" sm="6" md="3">
+                <MudCard Elevation="2" Class="pa-4">
+                    <MudCardContent>
+                        <MudText Typo="Typo.h6" Color="Color.Info">
+                            <MudIcon Icon="@Icons.Material.Filled.TrendingUp" Size="Size.Small" Class="mr-1" />
+                            Total Ränta
+                        </MudText>
+                        <MudText Typo="Typo.h4" Color="Color.Success">
+                            @_projection.TotalInterest.ToString("C0", SwedishCulture)
+                        </MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">
+                            @(((_projection.TotalInterest / _projection.TotalContributions) * 100).ToString("F1"))% av insättningar
+                        </MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+            <MudItem xs="12" sm="6" md="3">
+                <MudCard Elevation="2" Class="pa-4">
+                    <MudCardContent>
+                        <MudText Typo="Typo.h6" Color="Color.Primary">
+                            <MudIcon Icon="@Icons.Material.Filled.Savings" Size="Size.Small" Class="mr-1" />
+                            Totalt Sparat
+                        </MudText>
+                        <MudText Typo="Typo.h4">
+                            @_projection.TotalContributions.ToString("C0", SwedishCulture)
+                        </MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">
+                            Alla insättningar
+                        </MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+            <MudItem xs="12" sm="6" md="3">
+                <MudCard Elevation="2" Class="pa-4">
+                    <MudCardContent>
+                        <MudText Typo="Typo.h6" Color="Color.Warning">
+                            <MudIcon Icon="@Icons.Material.Filled.Calculate" Size="Size.Small" Class="mr-1" />
+                            Totalavkastning
+                        </MudText>
+                        <MudText Typo="Typo.h4">
+                            @(((_projection.FinalAmount - _projection.TotalContributions) / _projection.TotalContributions * 100).ToString("F1"))%
+                        </MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">
+                            På insatta pengar
+                        </MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+
+        <!-- Chart -->
+        <MudPaper Class="pa-4 mb-4" Elevation="2">
+            <div class="d-flex justify-space-between align-center mb-4">
+                <MudText Typo="Typo.h6">
+                    <MudIcon Icon="@Icons.Material.Filled.ShowChart" Class="mr-2" />
+                    Kapitalutveckling över tid
+                </MudText>
+                <MudButtonGroup Variant="Variant.Outlined" Size="Size.Small">
+                    <MudButton StartIcon="@Icons.Material.Filled.FileDownload"
+                               OnClick="ExportToCSV"
+                               Color="Color.Primary">
+                        Exportera CSV
+                    </MudButton>
+                </MudButtonGroup>
+            </div>
+
+            <div role="img" aria-label="Graf som visar kapitalutveckling över tid">
+                <MudChart ChartType="ChartType.Line"
+                          ChartSeries="@_chartSeries"
+                          XAxisLabels="@_xAxisLabels"
+                          Width="100%"
+                          Height="450px"
+                          ChartOptions="@_chartOptions" />
+            </div>
+
+            <p class="visually-hidden">
+                Grafen visar hur ditt kapital växer från @_projection.MonthlyData.First().Balance.ToString("C0", SwedishCulture)
+                till @_projection.FinalAmount.ToString("C0", SwedishCulture) över @_scenario.Years år.
+                Total ränta är @_projection.TotalInterest.ToString("C0", SwedishCulture).
+            </p>
+        </MudPaper>
+
+        <!-- Comparison Tool -->
+        <MudPaper Class="pa-4 mb-4" Elevation="2">
+            <MudText Typo="Typo.h6" Class="mb-4">
+                <MudIcon Icon="@Icons.Material.Filled.CompareArrows" Class="mr-2" />
+                Jämför scenarier: "Vad händer om...?"
+            </MudText>
+
+            <MudGrid Spacing="3">
+                <MudItem xs="12" md="6">
+                    <MudCard Outlined="true">
+                        <MudCardContent>
+                            <MudText Typo="Typo.subtitle1" Class="mb-2">+ 1000 kr mer per månad</MudText>
+                            <MudButton Variant="Variant.Filled"
+                                       Color="Color.Primary"
+                                       Size="Size.Small"
+                                       OnClick="@(async () => await CompareExtraMonthlySavings(1000))">
+                                Beräkna scenario
+                            </MudButton>
+                        </MudCardContent>
+                    </MudCard>
+                </MudItem>
+
+                <MudItem xs="12" md="6">
+                    <MudCard Outlined="true">
+                        <MudCardContent>
+                            <MudText Typo="Typo.subtitle1" Class="mb-2">+ 1% högre ränta</MudText>
+                            <MudButton Variant="Variant.Filled"
+                                       Color="Color.Primary"
+                                       Size="Size.Small"
+                                       OnClick="@(async () => await CompareHigherInterest(1.0m))">
+                                Beräkna scenario
+                            </MudButton>
+                        </MudCardContent>
+                    </MudCard>
+                </MudItem>
+
+                <MudItem xs="12" md="6">
+                    <MudCard Outlined="true">
+                        <MudCardContent>
+                            <MudText Typo="Typo.subtitle1" Class="mb-2">Dubblerat månadssparande</MudText>
+                            <MudButton Variant="Variant.Filled"
+                                       Color="Color.Primary"
+                                       Size="Size.Small"
+                                       OnClick="@(async () => await CompareDoubleSavings())">
+                                Beräkna scenario
+                            </MudButton>
+                        </MudCardContent>
+                    </MudCard>
+                </MudItem>
+
+                <MudItem xs="12" md="6">
+                    <MudCard Outlined="true">
+                        <MudCardContent>
+                            <MudText Typo="Typo.subtitle1" Class="mb-2">+ 5 år längre sparande</MudText>
+                            <MudButton Variant="Variant.Filled"
+                                       Color="Color.Primary"
+                                       Size="Size.Small"
+                                       OnClick="@(async () => await CompareLongerPeriod(5))">
+                                Beräkna scenario
+                            </MudButton>
+                        </MudCardContent>
+                    </MudCard>
+                </MudItem>
+            </MudGrid>
+
+            @if (_comparisonScenarios.Any())
+            {
+                <MudDivider Class="my-4" />
+                
+                <MudText Typo="Typo.h6" Class="mb-3">Scenariojämförelse</MudText>
+                
+                <MudChart ChartType="ChartType.Line"
+                          ChartSeries="@_comparisonChartSeries"
+                          XAxisLabels="@_comparisonXAxisLabels"
+                          Width="100%"
+                          Height="400px"
+                          ChartOptions="@_chartOptions"
+                          Class="mb-4" />
+
+                <MudSimpleTable Dense="true" Hover="true" Bordered="true">
+                    <thead>
+                        <tr>
+                            <th>Scenario</th>
+                            <th style="text-align: right">Slutkapital</th>
+                            <th style="text-align: right">Total Ränta</th>
+                            <th style="text-align: right">Skillnad mot nuvarande</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var comp in _comparisonScenarios)
+                        {
+                            var diff = comp.FinalAmount - _projection.FinalAmount;
+                            <tr>
+                                <td>@comp.ScenarioName</td>
+                                <td style="text-align: right">@comp.FinalAmount.ToString("C0", SwedishCulture)</td>
+                                <td style="text-align: right">@comp.TotalInterest.ToString("C0", SwedishCulture)</td>
+                                <td style="text-align: right">
+                                    <MudText Color="@(diff >= 0 ? Color.Success : Color.Error)">
+                                        @(diff >= 0 ? "+" : "")@diff.ToString("C0", SwedishCulture)
+                                    </MudText>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </MudSimpleTable>
+
+                <MudButton Variant="Variant.Text"
+                           Color="Color.Error"
+                           Size="Size.Small"
+                           StartIcon="@Icons.Material.Filled.Clear"
+                           OnClick="ClearComparisons"
+                           Class="mt-3">
+                    Rensa jämförelser
+                </MudButton>
+            }
+        </MudPaper>
+
+        <!-- Detailed Monthly Breakdown -->
+        <MudPaper Class="pa-4" Elevation="2">
+            <MudText Typo="Typo.h6" Class="mb-4">
+                <MudIcon Icon="@Icons.Material.Filled.List" Class="mr-2" />
+                Detaljerad uppdelning (visar varje år)
+            </MudText>
+
+            <MudTable Items="@_yearlyBreakdown" Dense="true" Hover="true" Bordered="true" Striped="true">
+                <HeaderContent>
+                    <MudTh>År</MudTh>
+                    <MudTh Style="text-align: right">Saldo</MudTh>
+                    <MudTh Style="text-align: right">Insättningar</MudTh>
+                    <MudTh Style="text-align: right">Ränta</MudTh>
+                    <MudTh Style="text-align: right">Total ränta hittills</MudTh>
+                    @if (_scenario.InflationRate.HasValue)
+                    {
+                        <MudTh Style="text-align: right">Reellt värde</MudTh>
+                    }
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="År">@context.Year</MudTd>
+                    <MudTd DataLabel="Saldo" Style="text-align: right">
+                        <strong>@context.Balance.ToString("C0", SwedishCulture)</strong>
+                    </MudTd>
+                    <MudTd DataLabel="Insättningar" Style="text-align: right">
+                        @context.Contributions.ToString("C0", SwedishCulture)
+                    </MudTd>
+                    <MudTd DataLabel="Ränta" Style="text-align: right">
+                        <MudText Color="Color.Success">@context.Interest.ToString("C0", SwedishCulture)</MudText>
+                    </MudTd>
+                    <MudTd DataLabel="Total ränta" Style="text-align: right">
+                        @context.CumulativeInterest.ToString("C0", SwedishCulture)
+                    </MudTd>
+                    @if (_scenario.InflationRate.HasValue)
+                    {
+                        <MudTd DataLabel="Reellt värde" Style="text-align: right">
+                            @context.RealValue?.ToString("C0", SwedishCulture)
+                        </MudTd>
+                    }
+                </RowTemplate>
+            </MudTable>
+        </MudPaper>
+    }
+}
+
+@code {
+    private bool _loading = true;
+    private CashFlowScenario _scenario = new();
+    private ScenarioProjection? _projection;
+    private List<ScenarioProjection> _comparisonScenarios = new();
+
+    // Sliders bound to scenario values
+    private int _initialAmountSlider;
+    private int _monthlySavingsSlider;
+    private decimal _annualInterestRateSlider;
+    private int _yearsSlider;
+
+    // Chart data
+    private List<ChartSeries> _chartSeries = new();
+    private string[] _xAxisLabels = Array.Empty<string>();
+    private List<ChartSeries> _comparisonChartSeries = new();
+    private string[] _comparisonXAxisLabels = Array.Empty<string>();
+    
+    private ChartOptions _chartOptions = new ChartOptions
+    {
+        YAxisFormat = "C0",
+        InterpolationOption = InterpolationOption.NaturalSpline,
+        LineStrokeWidth = 2,
+        MaxNumYAxisTicks = 10
+    };
+
+    private List<YearlyBreakdown> _yearlyBreakdown = new();
+
+    private static readonly CultureInfo SwedishCulture = new CultureInfo("sv-SE");
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            // Get defaults based on user's financial data or guest defaults
+            _scenario = await ScenarioService.GetUserBasedDefaultsAsync();
+            
+            // Initialize sliders
+            _initialAmountSlider = (int)_scenario.InitialAmount;
+            _monthlySavingsSlider = (int)_scenario.MonthlySavings;
+            _annualInterestRateSlider = _scenario.AnnualInterestRate;
+            _yearsSlider = _scenario.Years;
+
+            await CalculateProjectionAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Fel vid laddning av scenariodata: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task CalculateProjectionAsync()
+    {
+        try
+        {
+            _projection = await ScenarioService.CalculateScenarioAsync(_scenario);
+            UpdateChartData();
+            UpdateYearlyBreakdown();
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Fel vid beräkning: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void UpdateChartData()
+    {
+        if (_projection == null) return;
+
+        // Sample data every month for smaller datasets, every 3 months for larger
+        var sampleRate = _projection.MonthlyData.Count > 120 ? 3 : 1;
+        var sampledData = _projection.MonthlyData
+            .Where((data, index) => index % sampleRate == 0 || index == _projection.MonthlyData.Count - 1)
+            .ToList();
+
+        _xAxisLabels = sampledData
+            .Select(d => d.Date.ToString("MMM yyyy", SwedishCulture))
+            .ToArray();
+
+        _chartSeries = new List<ChartSeries>
+        {
+            new ChartSeries
+            {
+                Name = "Totalt saldo",
+                Data = sampledData.Select(d => (double)d.Balance).ToArray()
+            },
+            new ChartSeries
+            {
+                Name = "Insättningar",
+                Data = sampledData.Select(d => (double)d.CumulativeContributions).ToArray()
+            },
+            new ChartSeries
+            {
+                Name = "Ränta",
+                Data = sampledData.Select(d => (double)d.CumulativeInterest).ToArray()
+            }
+        };
+
+        if (_scenario.InflationRate.HasValue && sampledData.All(d => d.RealValue.HasValue))
+        {
+            _chartSeries.Add(new ChartSeries
+            {
+                Name = "Reellt värde",
+                Data = sampledData.Select(d => (double)d.RealValue!.Value).ToArray()
+            });
+        }
+    }
+
+    private void UpdateYearlyBreakdown()
+    {
+        if (_projection == null) return;
+
+        _yearlyBreakdown = new List<YearlyBreakdown>();
+
+        // Add starting point (year 0)
+        var start = _projection.MonthlyData.First();
+        _yearlyBreakdown.Add(new YearlyBreakdown
+        {
+            Year = 0,
+            Balance = start.Balance,
+            Contributions = start.CumulativeContributions,
+            Interest = 0,
+            CumulativeInterest = 0,
+            RealValue = start.RealValue
+        });
+
+        // Add yearly snapshots
+        for (int year = 1; year <= _scenario.Years; year++)
+        {
+            var monthIndex = year * 12;
+            if (monthIndex < _projection.MonthlyData.Count)
+            {
+                var data = _projection.MonthlyData[monthIndex];
+                var prevYearData = _projection.MonthlyData[(year - 1) * 12];
+                
+                _yearlyBreakdown.Add(new YearlyBreakdown
+                {
+                    Year = year,
+                    Balance = data.Balance,
+                    Contributions = data.CumulativeContributions - prevYearData.CumulativeContributions,
+                    Interest = data.CumulativeInterest - prevYearData.CumulativeInterest,
+                    CumulativeInterest = data.CumulativeInterest,
+                    RealValue = data.RealValue
+                });
+            }
+        }
+    }
+
+    private async Task CompareExtraMonthlySavings(decimal extraAmount)
+    {
+        var compareScenario = CloneScenario();
+        compareScenario.MonthlySavings += extraAmount;
+        compareScenario.Name = $"+ {extraAmount:N0} kr/mån";
+        await AddComparisonScenario(compareScenario);
+    }
+
+    private async Task CompareHigherInterest(decimal extraRate)
+    {
+        var compareScenario = CloneScenario();
+        compareScenario.AnnualInterestRate += extraRate;
+        compareScenario.Name = $"+ {extraRate:F1}% ränta";
+        await AddComparisonScenario(compareScenario);
+    }
+
+    private async Task CompareDoubleSavings()
+    {
+        var compareScenario = CloneScenario();
+        compareScenario.MonthlySavings *= 2;
+        compareScenario.Name = "Dubbelt månadssparande";
+        await AddComparisonScenario(compareScenario);
+    }
+
+    private async Task CompareLongerPeriod(int extraYears)
+    {
+        var compareScenario = CloneScenario();
+        compareScenario.Years += extraYears;
+        compareScenario.Name = $"+ {extraYears} år";
+        await AddComparisonScenario(compareScenario);
+    }
+
+    private async Task AddComparisonScenario(CashFlowScenario scenario)
+    {
+        try
+        {
+            var projection = await ScenarioService.CalculateScenarioAsync(scenario);
+            _comparisonScenarios.Add(projection);
+            UpdateComparisonChart();
+            Snackbar.Add($"Scenario '{scenario.Name}' tillagt för jämförelse", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Fel vid scenarioberäkning: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void UpdateComparisonChart()
+    {
+        if (!_comparisonScenarios.Any() || _projection == null) return;
+
+        // Find the maximum time period among all scenarios
+        var maxMonths = Math.Max(
+            _projection.MonthlyData.Count,
+            _comparisonScenarios.Max(s => s.MonthlyData.Count)
+        );
+
+        var sampleRate = maxMonths > 120 ? 3 : 1;
+
+        // Create labels based on the longest scenario
+        var longestScenario = _comparisonScenarios
+            .OrderByDescending(s => s.MonthlyData.Count)
+            .FirstOrDefault();
+        
+        var dataSource = longestScenario?.MonthlyData.Count > _projection.MonthlyData.Count 
+            ? longestScenario.MonthlyData 
+            : _projection.MonthlyData;
+
+        var sampledIndices = Enumerable.Range(0, dataSource.Count)
+            .Where(i => i % sampleRate == 0 || i == dataSource.Count - 1)
+            .ToList();
+
+        _comparisonXAxisLabels = sampledIndices
+            .Select(i => dataSource[i].Date.ToString("MMM yyyy", SwedishCulture))
+            .ToArray();
+
+        _comparisonChartSeries = new List<ChartSeries>
+        {
+            new ChartSeries
+            {
+                Name = "Nuvarande scenario",
+                Data = sampledIndices
+                    .Select(i => i < _projection.MonthlyData.Count 
+                        ? (double)_projection.MonthlyData[i].Balance 
+                        : 0.0)
+                    .ToArray()
+            }
+        };
+
+        foreach (var comp in _comparisonScenarios)
+        {
+            _comparisonChartSeries.Add(new ChartSeries
+            {
+                Name = comp.ScenarioName,
+                Data = sampledIndices
+                    .Select(i => i < comp.MonthlyData.Count 
+                        ? (double)comp.MonthlyData[i].Balance 
+                        : 0.0)
+                    .ToArray()
+            });
+        }
+    }
+
+    private void ClearComparisons()
+    {
+        _comparisonScenarios.Clear();
+        _comparisonChartSeries.Clear();
+        Snackbar.Add("Jämförelser rensade", Severity.Info);
+    }
+
+    private CashFlowScenario CloneScenario()
+    {
+        return new CashFlowScenario
+        {
+            InitialAmount = _scenario.InitialAmount,
+            MonthlySavings = _scenario.MonthlySavings,
+            AnnualInterestRate = _scenario.AnnualInterestRate,
+            Years = _scenario.Years,
+            InflationRate = _scenario.InflationRate,
+            ExtraContribution = _scenario.ExtraContribution,
+            ExtraContributionMonth = _scenario.ExtraContributionMonth,
+            AnnualSavingsIncrease = _scenario.AnnualSavingsIncrease
+        };
+    }
+
+    private async Task ExportToCSV()
+    {
+        if (_projection == null) return;
+
+        try
+        {
+            var csv = new System.Text.StringBuilder();
+            csv.AppendLine("Månad,Datum,Saldo,Insättningar,Ränta,Reellt värde");
+
+            foreach (var data in _projection.MonthlyData)
+            {
+                csv.AppendLine($"{data.Month},{data.Date:yyyy-MM-dd},{data.Balance:F2},{data.CumulativeContributions:F2},{data.CumulativeInterest:F2},{data.RealValue:F2}");
+            }
+
+            var bytes = System.Text.Encoding.UTF8.GetBytes(csv.ToString());
+            var base64 = Convert.ToBase64String(bytes);
+            var dataUrl = $"data:text/csv;base64,{base64}";
+            
+            await JSRuntime.InvokeVoidAsync("eval", 
+                $"(function(){{var link=document.createElement('a');link.download='scenarioanalys_{DateTime.Now:yyyyMMdd}.csv';link.href='{dataUrl}';link.click();}})()");
+            
+            Snackbar.Add("CSV-fil exporterad", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Fel vid export: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private class YearlyBreakdown
+    {
+        public int Year { get; set; }
+        public decimal Balance { get; set; }
+        public decimal Contributions { get; set; }
+        public decimal Interest { get; set; }
+        public decimal CumulativeInterest { get; set; }
+        public decimal? RealValue { get; set; }
+    }
+}

@@ -137,6 +137,7 @@ builder.Services.AddScoped<ILifeTimelinePlannerService, LifeTimelinePlannerServi
 builder.Services.AddScoped<ISavingsChallengeService, SavingsChallengeService>();
 builder.Services.AddScoped<IKonsumentverketComparisonService, KonsumentverketComparisonService>();
 builder.Services.AddScoped<IKalpService, KalpService>();
+builder.Services.AddScoped<ICashFlowScenarioService, CashFlowScenarioService>();
 builder.Services.AddScoped<ThemeService>();
 builder.Services.AddScoped<DashboardPreferencesService>();
 builder.Services.AddScoped<IDashboardLayoutService, DashboardLayoutService>();
