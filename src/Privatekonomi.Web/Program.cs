@@ -125,6 +125,7 @@ builder.Services.AddScoped<IHeatmapAnalysisService, HeatmapAnalysisService>();
 builder.Services.AddScoped<ISalaryHistoryService, SalaryHistoryService>();
 builder.Services.AddScoped<ICurrencyAccountService, CurrencyAccountService>();
 builder.Services.AddScoped<IReceiptService, ReceiptService>();
+builder.Services.AddScoped<IOcrService, TesseractOcrService>();
 builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
 builder.Services.AddScoped<IBillService, BillService>();
 builder.Services.AddScoped<IPensionService, PensionService>();

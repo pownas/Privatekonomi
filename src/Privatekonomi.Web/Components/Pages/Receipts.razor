@@ -17,9 +17,14 @@
         <MudIcon Icon="@Icons.Material.Filled.Receipt" Color="Color.Primary" Class="mr-2" aria-hidden="true" />
         Kvitton
     </MudText>
-    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="ToggleCreateForm">
-        Nytt Kvitto
-    </MudButton>
+    <div class="d-flex gap-2">
+        <MudButton Variant="Variant.Outlined" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Scanner" OnClick="OpenOcrScanDialog">
+            Skanna kvitto (OCR)
+        </MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="ToggleCreateForm">
+            Nytt Kvitto
+        </MudButton>
+    </div>
 </div>
 
 @if (_showCreateForm)
@@ -674,6 +679,52 @@ else
             {
                 Snackbar.Add($"Fel: {ex.Message}", Severity.Error);
             }
+        }
+    }
+
+    private async Task OpenOcrScanDialog()
+    {
+        var options = new DialogOptions
+        {
+            MaxWidth = MaxWidth.Large,
+            FullWidth = true,
+            CloseButton = true,
+            CloseOnEscapeKey = true
+        };
+
+        var dialog = await DialogService.ShowAsync<OcrScanDialog>("Skanna kvitto med OCR", options);
+        var result = await dialog.Result;
+
+        if (result is not null && !result.Canceled && result.Data is OcrReceiptData ocrData)
+        {
+            // Populate the form with OCR data
+            _formReceipt = new Receipt
+            {
+                UserId = _userId,
+                Merchant = ocrData.Merchant ?? string.Empty,
+                TotalAmount = ocrData.TotalAmount ?? 0,
+                ReceiptDate = ocrData.Date ?? DateTime.Today,
+                ReceiptNumber = ocrData.ReceiptNumber,
+                PaymentMethod = ocrData.PaymentMethod,
+                ReceiptType = "Scanned",
+                Currency = "SEK"
+            };
+            _formReceiptDate = _formReceipt.ReceiptDate;
+
+            // Convert OCR line items to receipt line items
+            _formLineItems = ocrData.LineItems.Select(li => new ReceiptLineItem
+            {
+                Description = li.Description,
+                Quantity = li.Quantity ?? 1,
+                UnitPrice = li.UnitPrice ?? 0,
+                TotalPrice = li.TotalPrice ?? 0
+            }).ToList();
+
+            _selectedReceiptImage = null;
+            _editingReceipt = null;
+            _showCreateForm = true;
+
+            Snackbar.Add("OCR-data inläst! Granska och spara kvittot.", Severity.Success);
         }
     }
 }
