@@ -298,7 +298,11 @@ publish_application() {
     fi
     
     # Ensure all publish directories exist before copying files
-    # This serves as a safety net and provides clear diagnostics if publish didn't create directories
+    # While dotnet publish with -o should create directories, this validation serves as:
+    # 1. Safety net for edge cases (filesystem issues, permissions, disk space)
+    # 2. Clear diagnostics if directories are missing
+    # 3. Automatic recovery by creating missing directories
+    # This addresses reported issue where AppHost folder was missing during publish
     log_info "Kontrollerar publicerade kataloger..."
     
     for dir in "${publish_components[@]}"; do
