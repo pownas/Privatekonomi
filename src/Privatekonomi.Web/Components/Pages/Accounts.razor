@@ -1,0 +1,274 @@
+@page "/settings/accounts"
+@page "/accounts"
+@rendermode InteractiveServer
+@inject IBankSourceService BankSourceService
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@using Privatekonomi.Core.Models
+@using Privatekonomi.Core.Services
+
+<PageTitle>Konton - Privatekonomi</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-4">
+    <MudIcon Icon="@Icons.Material.Filled.AccountBalance" Color="Color.Primary" Class="mr-2" aria-hidden="true" />
+    Mina Konton
+</MudText>
+
+<MudText Typo="Typo.body1" Class="mb-4">
+    Hantera dina bankkonton, kreditkort, sparkonton, investeringskonton, lån och pensioner. 
+    Ge varje konto ett beskrivande namn och koppla det till kontoplan för redovisning.
+</MudText>
+
+@if (_loading)
+{
+    <MudProgressCircular Indeterminate="true" />
+}
+else
+{
+    <MudPaper Class="pa-4 mb-4">
+        <div class="d-flex justify-space-between align-center mb-4">
+            <MudText Typo="Typo.h6">Kontoöversikt</MudText>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" 
+                       StartIcon="@Icons.Material.Filled.Add" OnClick="ShowAddAccountDialog">
+                Lägg till konto
+            </MudButton>
+        </div>
+
+        @if (_accounts == null || !_accounts.Any())
+        {
+            <MudAlert Severity="Severity.Info" Class="mb-4">
+                Du har inga konton registrerade. Klicka på "Lägg till konto" för att komma igång.
+            </MudAlert>
+        }
+        else
+        {
+            <!-- Group accounts by type -->
+            @foreach (var group in _accountsByType)
+            {
+                <MudText Typo="Typo.h6" Class="mt-4 mb-2">@GetAccountTypeDisplayName(group.Key)</MudText>
+                <MudTable Items="group.Value" Hover="true" Striped="true" Dense="true">
+                    <HeaderContent>
+                        <MudTh>Namn</MudTh>
+                        <MudTh>Kontonummer</MudTh>
+                        <MudTh>Institution</MudTh>
+                        <MudTh>Valuta</MudTh>
+                        <MudTh>Saldo</MudTh>
+                        <MudTh>Kontoplan</MudTh>
+                        <MudTh>Status</MudTh>
+                        <MudTh>Åtgärder</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="Namn">
+                            <div class="d-flex align-center">
+                                <MudIcon Icon="@GetAccountTypeIcon(context.AccountType)" Size="Size.Small" Class="mr-2" />
+                                <strong>@context.Name</strong>
+                            </div>
+                        </MudTd>
+                        <MudTd DataLabel="Kontonummer">
+                            @if (!string.IsNullOrEmpty(context.ClearingNumber) && !string.IsNullOrEmpty(context.AccountNumber))
+                            {
+                                <span>@context.ClearingNumber-@context.AccountNumber</span>
+                            }
+                            else if (!string.IsNullOrEmpty(context.AccountNumber))
+                            {
+                                <span>@context.AccountNumber</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">-</span>
+                            }
+                        </MudTd>
+                        <MudTd DataLabel="Institution">@(context.Institution ?? "-")</MudTd>
+                        <MudTd DataLabel="Valuta">@context.Currency</MudTd>
+                        <MudTd DataLabel="Saldo">
+                            <span style="@(context.CurrentBalance >= 0 ? "color: green;" : "color: red;")">
+                                @context.CurrentBalance.ToString("C", new System.Globalization.CultureInfo("sv-SE"))
+                            </span>
+                        </MudTd>
+                        <MudTd DataLabel="Kontoplan">
+                            @if (!string.IsNullOrEmpty(context.ChartOfAccountsCode))
+                            {
+                                <MudChip T="string" Size="Size.Small">@context.ChartOfAccountsCode</MudChip>
+                            }
+                            else
+                            {
+                                <span class="text-muted">-</span>
+                            }
+                        </MudTd>
+                        <MudTd DataLabel="Status">
+                            @if (context.ClosedDate == null)
+                            {
+                                <MudChip T="string" Color="Color.Success" Size="Size.Small">Aktiv</MudChip>
+                            }
+                            else
+                            {
+                                <MudChip T="string" Color="Color.Default" Size="Size.Small">Stängd</MudChip>
+                            }
+                        </MudTd>
+                        <MudTd DataLabel="Åtgärder">
+                            <MudIconButton Icon="@Icons.Material.Filled.Edit" 
+                                          Color="Color.Primary" 
+                                          Size="Size.Small"
+                                          OnClick="@(() => EditAccount(context))"
+                                          title="Redigera" />
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" 
+                                          Color="Color.Error" 
+                                          Size="Size.Small"
+                                          OnClick="@(() => DeleteAccount(context))"
+                                          title="Ta bort" />
+                        </MudTd>
+                    </RowTemplate>
+                </MudTable>
+            }
+        }
+    </MudPaper>
+
+    <MudPaper Class="pa-4">
+        <MudText Typo="Typo.h6" Class="mb-2">Information om kontotyper</MudText>
+        <MudText Typo="Typo.body2" Class="mb-2">
+            <strong>Lönekonto (checking):</strong> Ditt huvudsakliga bankkonto för löner och vardagliga transaktioner.<br/>
+            <strong>Sparkonto (savings):</strong> Konton för sparande med högre ränta.<br/>
+            <strong>Kreditkort (credit_card):</strong> Kreditkortskonton som visar negativa saldon som skulder.<br/>
+            <strong>Investering (investment):</strong> Investeringskonton som ISK, AF, kapitalförsäkring.<br/>
+            <strong>Lån (loan):</strong> Lånekonton som bolån, billån, studielån.<br/>
+            <strong>Pension (pension):</strong> Pensionskonton som tjänstepension och privat pensionssparande.<br/>
+            <strong>Kontanter (cash):</strong> Kontanta medel i hushållet.
+        </MudText>
+        <MudAlert Severity="Severity.Info" Class="mt-2">
+            <strong>Tips:</strong> Använd "Kontoplan"-fältet för att koppla dina konton till BAS-kontoplanen (t.ex. 1930 för Företagskonto). 
+            Detta gör det enkelt att visualisera kontona i resultat- och balansräkningen.
+        </MudAlert>
+    </MudPaper>
+}
+
+@code {
+    private bool _loading = true;
+    private List<BankSource>? _accounts;
+    private Dictionary<string, List<BankSource>> _accountsByType = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAccounts();
+    }
+
+    private async Task LoadAccounts()
+    {
+        _loading = true;
+        try
+        {
+            var accounts = await BankSourceService.GetAllBankSourcesAsync();
+            _accounts = accounts.ToList();
+            
+            // Group by account type
+            _accountsByType = _accounts
+                .GroupBy(a => a.AccountType)
+                .OrderBy(g => GetAccountTypeOrder(g.Key))
+                .ToDictionary(g => g.Key, g => g.OrderBy(a => a.Name).ToList());
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Fel vid laddning av konton: {ex.Message}", Severity.Error);
+            _accounts = new List<BankSource>();
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task ShowAddAccountDialog()
+    {
+        var dialog = await DialogService.ShowAsync<AddAccountDialog>("Lägg till konto", new DialogOptions 
+        { 
+            MaxWidth = MaxWidth.Medium, 
+            FullWidth = true 
+        });
+        
+        var result = await dialog.Result;
+        
+        if (result is not null && !result.Canceled)
+        {
+            await LoadAccounts();
+        }
+    }
+
+    private async Task EditAccount(BankSource account)
+    {
+        var parameters = new DialogParameters<EditAccountDialog>
+        {
+            { x => x.Account, account }
+        };
+
+        var dialog = await DialogService.ShowAsync<EditAccountDialog>("Redigera konto", parameters, new DialogOptions 
+        { 
+            MaxWidth = MaxWidth.Medium, 
+            FullWidth = true 
+        });
+        
+        var result = await dialog.Result;
+        
+        if (result is not null && !result.Canceled)
+        {
+            await LoadAccounts();
+        }
+    }
+
+    private async Task DeleteAccount(BankSource account)
+    {
+        var result = await DialogService.ShowMessageBox(
+            "Bekräfta borttagning",
+            $"Är du säker på att du vill ta bort kontot '{account.Name}'? Alla transaktioner kommer att behållas men kopplingen till kontot tas bort.",
+            yesText: "Ta bort", 
+            cancelText: "Avbryt");
+
+        if (result == true)
+        {
+            try
+            {
+                await BankSourceService.DeleteBankSourceAsync(account.BankSourceId);
+                Snackbar.Add("Konto borttaget", Severity.Success);
+                await LoadAccounts();
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Fel vid borttagning: {ex.Message}", Severity.Error);
+            }
+        }
+    }
+
+    private string GetAccountTypeDisplayName(string type) => type switch
+    {
+        "checking" => "Lönekonton",
+        "savings" => "Sparkonton",
+        "credit_card" => "Kreditkort",
+        "investment" => "Investeringskonton",
+        "loan" => "Lån",
+        "pension" => "Pensionskonton",
+        "cash" => "Kontanter",
+        _ => "Övriga konton"
+    };
+
+    private string GetAccountTypeIcon(string type) => type switch
+    {
+        "checking" => Icons.Material.Filled.AccountBalance,
+        "savings" => Icons.Material.Filled.Savings,
+        "credit_card" => Icons.Material.Filled.CreditCard,
+        "investment" => Icons.Material.Filled.TrendingUp,
+        "loan" => Icons.Material.Filled.CreditScore,
+        "pension" => Icons.Material.Filled.Elderly,
+        "cash" => Icons.Material.Filled.AttachMoney,
+        _ => Icons.Material.Filled.AccountBalanceWallet
+    };
+
+    private int GetAccountTypeOrder(string type) => type switch
+    {
+        "checking" => 1,
+        "savings" => 2,
+        "credit_card" => 3,
+        "investment" => 4,
+        "loan" => 5,
+        "pension" => 6,
+        "cash" => 7,
+        _ => 99
+    };
+}
