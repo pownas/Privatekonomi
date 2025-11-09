@@ -642,6 +642,22 @@ Se [STORAGE_GUIDE.md](docs/STORAGE_GUIDE.md) för detaljerad information om:
 - ⚠️ BankID (planerad)
 - ⚠️ Fortnox/Visma integration (planerad)
 
+### Deployment och Driftsättning
+
+- **[DEPLOYMENT_GUIDE.md](docs/DEPLOYMENT_GUIDE.md)**: ⭐ NYTT! Komplett guide för automatiserad deployment till webbhotell via SFTP
+- **[RELEASE_PIPELINE_QUICKSTART.md](docs/RELEASE_PIPELINE_QUICKSTART.md)**: ⭐ NYTT! Snabbreferens för release pipeline
+- **[SYSTEMD_SERVICE_GUIDE.md](docs/SYSTEMD_SERVICE_GUIDE.md)**: ⭐ NYTT! Guide för konfiguration av systemd-service på Linux
+
+**Funktioner:**
+- ✅ Automatisk GitHub Actions release pipeline
+- ✅ SFTP/FTPS deployment till webbhotell
+- ✅ Semantic versioning med Git tags
+- ✅ Automatisk build, test och publicering
+- ✅ GitHub Release creation med installationspaket
+- ✅ Systemd service-konfiguration för produktion
+- ✅ Health checks och monitoring
+- ✅ Backup och rollback-strategier
+
 ### Teknisk dokumentation
 
 - **[ProgramSpecifikation.md](docs/ProgramSpecifikation.md)**: Övergripande programspecifikation

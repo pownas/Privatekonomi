@@ -1,0 +1,178 @@
+name: Release and Deploy to Web Hosting
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # Trigger on version tags like v1.0.0, v2.1.0, etc.
+  workflow_dispatch:  # Allow manual triggering for testing
+
+env:
+  DOTNET_VERSION: '9.0.x'
+  PROJECT_PATH: 'src/Privatekonomi.Web/Privatekonomi.Web.csproj'
+  PUBLISH_DIR: 'publish'
+
+jobs:
+  build:
+    name: Build and Package Application
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Full history for versioning
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+    
+    - name: Restore dependencies
+      run: dotnet restore
+    
+    - name: Build solution
+      run: dotnet build --configuration Release --no-restore
+    
+    - name: Run tests
+      run: dotnet test --configuration Release --no-build --verbosity normal
+    
+    - name: Publish Web Application
+      run: |
+        dotnet publish ${{ env.PROJECT_PATH }} \
+          --configuration Release \
+          --output ${{ env.PUBLISH_DIR }} \
+          --self-contained false \
+          --runtime linux-x64 \
+          /p:PublishSingleFile=false \
+          /p:PublishTrimmed=false
+    
+    - name: Create deployment package info
+      run: |
+        echo "Build Date: $(date)" > ${{ env.PUBLISH_DIR }}/DEPLOYMENT_INFO.txt
+        echo "Git Tag: ${GITHUB_REF#refs/tags/}" >> ${{ env.PUBLISH_DIR }}/DEPLOYMENT_INFO.txt
+        echo "Git Commit: $GITHUB_SHA" >> ${{ env.PUBLISH_DIR }}/DEPLOYMENT_INFO.txt
+        echo "Build Number: $GITHUB_RUN_NUMBER" >> ${{ env.PUBLISH_DIR }}/DEPLOYMENT_INFO.txt
+    
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: privatekonomi-release-${{ github.ref_name }}
+        path: ${{ env.PUBLISH_DIR }}
+        retention-days: 30
+  
+  deploy:
+    name: Deploy to Web Hosting via SFTP
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+    environment:
+      name: production
+      url: ${{ secrets.PRODUCTION_URL }}
+    
+    steps:
+    - name: Download build artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: privatekonomi-release-${{ github.ref_name }}
+        path: ${{ env.PUBLISH_DIR }}
+    
+    - name: Display structure of downloaded files
+      run: ls -R ${{ env.PUBLISH_DIR }}
+    
+    - name: Deploy to Web Hosting via SFTP
+      uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+      with:
+        server: ${{ secrets.SFTP_HOST }}
+        username: ${{ secrets.SFTP_USERNAME }}
+        password: ${{ secrets.SFTP_PASSWORD }}
+        port: ${{ secrets.SFTP_PORT }}
+        protocol: ftps
+        local-dir: ./${{ env.PUBLISH_DIR }}/
+        server-dir: ${{ secrets.SFTP_REMOTE_DIR }}
+        dangerous-clean-slate: false
+        exclude: |
+          **/.git*
+          **/.git*/**
+          **/node_modules/**
+          **/.DS_Store
+    
+    - name: Verify deployment
+      run: |
+        echo "Deployment completed successfully!"
+        echo "Version: ${GITHUB_REF#refs/tags/}"
+        echo "Build artifacts deployed to: ${{ secrets.SFTP_HOST }}"
+  
+  create-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: [build, deploy]
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+    permissions:
+      contents: write
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Download build artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: privatekonomi-release-${{ github.ref_name }}
+        path: ${{ env.PUBLISH_DIR }}
+    
+    - name: Create Release Archive
+      run: |
+        cd ${{ env.PUBLISH_DIR }}
+        tar -czf ../privatekonomi-${{ github.ref_name }}-linux-x64.tar.gz .
+        cd ..
+    
+    - name: Generate Release Notes
+      id: release_notes
+      run: |
+        VERSION=${GITHUB_REF#refs/tags/}
+        echo "## Privatekonomi $VERSION" > release_notes.md
+        echo "" >> release_notes.md
+        echo "### Vad är nytt?" >> release_notes.md
+        echo "" >> release_notes.md
+        echo "Se [CHANGELOG](https://github.com/${{ github.repository }}/compare/$(git describe --tags --abbrev=0 HEAD^)...${{ github.ref_name }}) för fullständig lista över ändringar." >> release_notes.md
+        echo "" >> release_notes.md
+        echo "### Installation" >> release_notes.md
+        echo "" >> release_notes.md
+        echo "#### Webbhotell (SFTP)" >> release_notes.md
+        echo "Denna version har automatiskt deployats till produktionsmiljön." >> release_notes.md
+        echo "" >> release_notes.md
+        echo "#### Manuell installation" >> release_notes.md
+        echo "1. Ladda ner \`privatekonomi-$VERSION-linux-x64.tar.gz\`" >> release_notes.md
+        echo "2. Extrahera arkivet: \`tar -xzf privatekonomi-$VERSION-linux-x64.tar.gz\`" >> release_notes.md
+        echo "3. Konfigurera \`appsettings.json\` för din miljö" >> release_notes.md
+        echo "4. Kör applikationen: \`./Privatekonomi.Web\`" >> release_notes.md
+        echo "" >> release_notes.md
+        echo "### Systemkrav" >> release_notes.md
+        echo "- .NET 9.0 Runtime (eller använd self-contained build)" >> release_notes.md
+        echo "- Linux x64 (eller motsvarande för din plattform)" >> release_notes.md
+        echo "- SQLite eller annan databas (se dokumentation)" >> release_notes.md
+        echo "" >> release_notes.md
+        echo "### Dokumentation" >> release_notes.md
+        echo "- [README](https://github.com/${{ github.repository }}/blob/${{ github.ref_name }}/README.md)" >> release_notes.md
+        echo "- [Deployment Guide](https://github.com/${{ github.repository }}/blob/${{ github.ref_name }}/docs/DEPLOYMENT_GUIDE.md)" >> release_notes.md
+        echo "" >> release_notes.md
+        echo "---" >> release_notes.md
+        echo "" >> release_notes.md
+        echo "**Build Information:**" >> release_notes.md
+        echo "- Git Commit: \`$GITHUB_SHA\`" >> release_notes.md
+        echo "- Build Date: $(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> release_notes.md
+        echo "- Build Number: $GITHUB_RUN_NUMBER" >> release_notes.md
+    
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        body_path: release_notes.md
+        files: |
+          privatekonomi-${{ github.ref_name }}-linux-x64.tar.gz
+        draft: false
+        prerelease: false
+        token: ${{ secrets.GITHUB_TOKEN }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
