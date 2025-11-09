@@ -1,0 +1,249 @@
+@page "/landing"
+@rendermode InteractiveServer
+@using MudBlazor
+
+<PageTitle>Ekonomiappen - Kom snart</PageTitle>
+
+<link rel="stylesheet" href="css/landing.css" />
+
+<div class="landing-page">
+    <!-- Hero Section -->
+    <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="hero-section">
+        <div class="hero-content">
+            <div class="hero-text">
+                <MudText Typo="Typo.h2" Class="hero-title" GutterBottom="true">
+                    <MudIcon Icon="@Icons.Material.Filled.AccountBalance" Size="Size.Large" Class="hero-icon" />
+                    Ekonomiappen
+                </MudText>
+                <MudText Typo="Typo.h5" Color="Color.Secondary" Class="hero-subtitle">
+                    Din kompletta privatekonomi i en app
+                </MudText>
+                <MudText Typo="Typo.body1" Class="hero-description">
+                    En kraftfull privatekonomi-applikation byggd med modern teknik för att hjälpa dig få koll och kontroll över din ekonomi.
+                </MudText>
+                
+                <MudChip T="string" Icon="@Icons.Material.Filled.Info" Color="Color.Primary" Size="Size.Large" Class="beta-chip">
+                    BETA - Kommer snart
+                </MudChip>
+            </div>
+        </div>
+    </MudContainer>
+
+    <!-- Features Section -->
+    <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="features-section">
+        <MudText Typo="Typo.h4" Align="Align.Center" GutterBottom="true" Class="section-title">
+            Funktioner
+        </MudText>
+        <MudText Typo="Typo.body1" Align="Align.Center" Color="Color.Secondary" Class="section-subtitle">
+            Allt du behöver för att hantera din privatekonomi
+        </MudText>
+
+        <MudGrid Spacing="4" Class="features-grid">
+            <!-- Dashboard -->
+            <MudItem xs="12" sm="6" md="4">
+                <MudCard Elevation="2" Class="feature-card">
+                    <MudCardContent>
+                        <div class="feature-icon">
+                            <MudIcon Icon="@Icons.Material.Filled.Dashboard" Size="Size.Large" Color="Color.Primary" />
+                        </div>
+                        <MudText Typo="Typo.h6" GutterBottom="true">Dashboard</MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">
+                            Översikt över totala inkomster, utgifter och nettoresultat med anpassningsbara widgets
+                        </MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+            <!-- Transaktioner -->
+            <MudItem xs="12" sm="6" md="4">
+                <MudCard Elevation="2" Class="feature-card">
+                    <MudCardContent>
+                        <div class="feature-icon">
+                            <MudIcon Icon="@Icons.Material.Filled.Receipt" Size="Size.Large" Color="Color.Primary" />
+                        </div>
+                        <MudText Typo="Typo.h6" GutterBottom="true">Transaktionshantering</MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">
+                            Registrera, visa och kategorisera dina transaktioner med automatisk kategorisering
+                        </MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+            <!-- Budget -->
+            <MudItem xs="12" sm="6" md="4">
+                <MudCard Elevation="2" Class="feature-card">
+                    <MudCardContent>
+                        <div class="feature-icon">
+                            <MudIcon Icon="@Icons.Material.Filled.PieChart" Size="Size.Large" Color="Color.Primary" />
+                        </div>
+                        <MudText Typo="Typo.h6" GutterBottom="true">Budgethantering</MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">
+                            Skapa och följa upp budgetar med svenska mallar och visualisering
+                        </MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+            <!-- Sparmål -->
+            <MudItem xs="12" sm="6" md="4">
+                <MudCard Elevation="2" Class="feature-card">
+                    <MudCardContent>
+                        <div class="feature-icon">
+                            <MudIcon Icon="@Icons.Material.Filled.Savings" Size="Size.Large" Color="Color.Primary" />
+                        </div>
+                        <MudText Typo="Typo.h6" GutterBottom="true">Sparmål</MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">
+                            Sätt upp och följ sparmål med målstolpar och gemensamma sparmål
+                        </MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+            <!-- Investeringar -->
+            <MudItem xs="12" sm="6" md="4">
+                <MudCard Elevation="2" Class="feature-card">
+                    <MudCardContent>
+                        <div class="feature-icon">
+                            <MudIcon Icon="@Icons.Material.Filled.TrendingUp" Size="Size.Large" Color="Color.Primary" />
+                        </div>
+                        <MudText Typo="Typo.h6" GutterBottom="true">Investeringar & Pension</MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">
+                            Hantera aktier, fonder, ETF och pensioner med automatisk kursuppdatering
+                        </MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+            <!-- Kontohantering -->
+            <MudItem xs="12" sm="6" md="4">
+                <MudCard Elevation="2" Class="feature-card">
+                    <MudCardContent>
+                        <div class="feature-icon">
+                            <MudIcon Icon="@Icons.Material.Filled.AccountBalance" Size="Size.Large" Color="Color.Primary" />
+                        </div>
+                        <MudText Typo="Typo.h6" GutterBottom="true">Kontohantering</MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">
+                            Hantera alla dina konton med stöd för BAS-kontoplan
+                        </MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+    </MudContainer>
+
+    <!-- Sweden Specific Features Section -->
+    <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="sweden-section">
+        <MudText Typo="Typo.h4" Align="Align.Center" GutterBottom="true" Class="section-title">
+            Sverige-specifika funktioner
+        </MudText>
+        
+        <MudGrid Spacing="3" Class="sweden-features">
+            <MudItem xs="12" sm="6" md="3">
+                <MudCard Elevation="1" Class="sweden-feature-card">
+                    <MudCardContent>
+                        <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Size="Size.Medium" />
+                        <MudText Typo="Typo.body2">ROT/RUT-avdrag</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudCard Elevation="1" Class="sweden-feature-card">
+                    <MudCardContent>
+                        <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Size="Size.Medium" />
+                        <MudText Typo="Typo.body2">K4 Kapitalvinstrapport</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudCard Elevation="1" Class="sweden-feature-card">
+                    <MudCardContent>
+                        <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Size="Size.Medium" />
+                        <MudText Typo="Typo.body2">ISK/KF Schablonbeskattning</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudCard Elevation="1" Class="sweden-feature-card">
+                    <MudCardContent>
+                        <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Size="Size.Medium" />
+                        <MudText Typo="Typo.body2">SIE-export för bokföring</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+    </MudContainer>
+
+    <!-- Tech Stack Section -->
+    <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="tech-section">
+        <MudText Typo="Typo.h4" Align="Align.Center" GutterBottom="true" Class="section-title">
+            Modern teknologi
+        </MudText>
+        <MudText Typo="Typo.body1" Align="Align.Center" Color="Color.Secondary" Class="section-subtitle">
+            Byggd med senaste tekniken för bästa prestanda och säkerhet
+        </MudText>
+
+        <MudGrid Spacing="3" Class="tech-stack">
+            <MudItem xs="6" sm="4" md="2">
+                <MudChip T="string" Icon="@Icons.Material.Filled.Code" Color="Color.Default" Size="Size.Medium">.NET 9</MudChip>
+            </MudItem>
+            <MudItem xs="6" sm="4" md="2">
+                <MudChip T="string" Icon="@Icons.Material.Filled.Code" Color="Color.Default" Size="Size.Medium">Blazor Server</MudChip>
+            </MudItem>
+            <MudItem xs="6" sm="4" md="2">
+                <MudChip T="string" Icon="@Icons.Material.Filled.Code" Color="Color.Default" Size="Size.Medium">MudBlazor</MudChip>
+            </MudItem>
+            <MudItem xs="6" sm="4" md="2">
+                <MudChip T="string" Icon="@Icons.Material.Filled.Code" Color="Color.Default" Size="Size.Medium">Entity Framework</MudChip>
+            </MudItem>
+            <MudItem xs="6" sm="4" md="2">
+                <MudChip T="string" Icon="@Icons.Material.Filled.Code" Color="Color.Default" Size="Size.Medium">.NET Aspire</MudChip>
+            </MudItem>
+            <MudItem xs="6" sm="4" md="2">
+                <MudChip T="string" Icon="@Icons.Material.Filled.Code" Color="Color.Default" Size="Size.Medium">PWA</MudChip>
+            </MudItem>
+        </MudGrid>
+    </MudContainer>
+
+    <!-- CTA Section -->
+    <MudContainer MaxWidth="MaxWidth.Medium" Class="cta-section">
+        <MudPaper Elevation="3" Class="cta-paper">
+            <MudText Typo="Typo.h4" Align="Align.Center" GutterBottom="true">
+                Redo att börja?
+            </MudText>
+            <MudText Typo="Typo.body1" Align="Align.Center" Color="Color.Secondary" Class="mb-4">
+                Applikationen är för närvarande i beta och kommer snart att vara tillgänglig.
+                Håll utkik för uppdateringar!
+            </MudText>
+            <div class="cta-buttons">
+                <MudButton Variant="Variant.Filled" 
+                          Color="Color.Primary" 
+                          Size="Size.Large"
+                          StartIcon="@Icons.Material.Filled.Notifications"
+                          Disabled="true">
+                    Anmäl intresse
+                </MudButton>
+                <MudButton Variant="Variant.Outlined" 
+                          Color="Color.Primary" 
+                          Size="Size.Large"
+                          StartIcon="@Icons.Material.Filled.Info"
+                          Href="https://github.com/pownas/Privatekonomi"
+                          Target="_blank">
+                    Läs mer på GitHub
+                </MudButton>
+            </div>
+        </MudPaper>
+    </MudContainer>
+
+    <!-- Footer -->
+    <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="footer-section">
+        <MudDivider Class="mb-4" />
+        <MudText Typo="Typo.body2" Align="Align.Center" Color="Color.Secondary">
+            © 2025 Ekonomiappen - En privatekonomi-applikation byggd med .NET och Blazor
+        </MudText>
+    </MudContainer>
+</div>
+
+@code {
+    // No code needed for static landing page
+}
+
