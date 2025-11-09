@@ -6,7 +6,7 @@ namespace Privatekonomi.Core.Configuration;
 public class StorageSettings
 {
     /// <summary>
-    /// Storage provider type (InMemory, Sqlite, SqlServer, JsonFile)
+    /// Storage provider type (InMemory, Sqlite, SqlServer, MySQL, MariaDB, JsonFile)
     /// </summary>
     public string Provider { get; set; } = "InMemory";
     
