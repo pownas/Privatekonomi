@@ -430,3 +430,6 @@ tests/playwright/.cache/
 
 # Uploaded files
 src/Privatekonomi.Web/wwwroot/uploads/
+
+# Tesseract OCR language data files (download via setup-tesseract.sh)
+src/Privatekonomi.Web/tessdata/

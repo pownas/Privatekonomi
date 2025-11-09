@@ -159,12 +159,13 @@ Detta dokument analyserar Privatekonomi-applikationen mot en omfattande kravspec
 
 ### ❌ Saknas
 
-**1. Kvittohantering** ⭐⭐
-- ❌ Fotografera och spara kvitton
-- ❌ Koppla kvitton till transaktioner
-- ❌ OCR-scanning av kvitton
-- **Åtgärd:** Implementera `TransactionAttachment` modell
-- **Prioritet:** Medel - Viktigt för dokumentation
+**1. Kvittohantering** ⭐⭐ (Partiellt implementerat)
+- ✅ Kvittonhantering med metadata
+- ✅ Koppla kvitton till transaktioner
+- ✅ OCR-scanning av kvitton (Tesseract med svenskt språkstöd)
+- ❌ Kamera-integration direkt i webbläsaren
+- **Åtgärd:** Utöka med kamera-stöd för webb och mobil
+- **Prioritet:** Medel - Grundläggande funktionalitet implementerad
 
 **2. Återkommande Transaktioner** ⭐⭐
 - ❌ Registrera återkommande inkomster/utgifter
@@ -555,11 +556,12 @@ Detta dokument analyserar Privatekonomi-applikationen mot en omfattande kravspec
 
 ### ❌ Saknas
 
-**1. Kvittohantering** ⭐⭐
-- ❌ Fotografera kvitton
-- ❌ OCR-scanning
-- ❌ Koppla till transaktioner
-- **Prioritet:** Medel
+**1. Kvittohantering** ⭐⭐ (Partiellt implementerat)
+- ✅ Kvittonhantering med metadata
+- ✅ OCR-scanning (Tesseract med svenskt språkstöd)
+- ✅ Koppla till transaktioner
+- ❌ Fotografera kvitton direkt i webbläsaren
+- **Prioritet:** Medel - Grundfunktionalitet implementerad
 
 **2. Försäkringsöversikt** ⭐
 - ❌ Sammanställning av försäkringar
