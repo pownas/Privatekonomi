@@ -8,8 +8,10 @@ on:
 
 env:
   DOTNET_VERSION: '9.0.x'
-  PROJECT_PATH: 'src/Privatekonomi.Web/Privatekonomi.Web.csproj'
-  PUBLISH_DIR: 'publish'
+  WEB_PROJECT_PATH: 'src/Privatekonomi.Web/Privatekonomi.Web.csproj'
+  API_PROJECT_PATH: 'src/Privatekonomi.Api/Privatekonomi.Api.csproj'
+  WEB_PUBLISH_DIR: 'publish-web'
+  API_PUBLISH_DIR: 'publish-api'
 
 jobs:
   build:
@@ -40,30 +42,56 @@ jobs:
 
       - name: Publish Web Application
         run: |
-          dotnet publish ${{ env.PROJECT_PATH }} \
+          dotnet publish ${{ env.WEB_PROJECT_PATH }} \
             --configuration Release \
-            --output ${{ env.PUBLISH_DIR }} \
+            --output ${{ env.WEB_PUBLISH_DIR }} \
             --self-contained false \
             --runtime linux-x64 \
             /p:PublishSingleFile=false \
             /p:PublishTrimmed=false
 
-      - name: Create deployment package info
+      - name: Publish API Application
         run: |
-          echo "Build Date: $(date)" > ${{ env.PUBLISH_DIR }}/DEPLOYMENT_INFO.txt
-          echo "Git Tag: ${GITHUB_REF#refs/tags/}" >> ${{ env.PUBLISH_DIR }}/DEPLOYMENT_INFO.txt
-          echo "Git Commit: $GITHUB_SHA" >> ${{ env.PUBLISH_DIR }}/DEPLOYMENT_INFO.txt
-          echo "Build Number: $GITHUB_RUN_NUMBER" >> ${{ env.PUBLISH_DIR }}/DEPLOYMENT_INFO.txt
+          dotnet publish ${{ env.API_PROJECT_PATH }} \
+            --configuration Release \
+            --output ${{ env.API_PUBLISH_DIR }} \
+            --self-contained false \
+            --runtime linux-x64 \
+            /p:PublishSingleFile=false \
+            /p:PublishTrimmed=false
 
-      - name: Upload build artifacts
+      - name: Create deployment package info for Web
+        run: |
+          echo "Application: Web" > ${{ env.WEB_PUBLISH_DIR }}/DEPLOYMENT_INFO.txt
+          echo "Build Date: $(date)" >> ${{ env.WEB_PUBLISH_DIR }}/DEPLOYMENT_INFO.txt
+          echo "Git Tag: ${GITHUB_REF#refs/tags/}" >> ${{ env.WEB_PUBLISH_DIR }}/DEPLOYMENT_INFO.txt
+          echo "Git Commit: $GITHUB_SHA" >> ${{ env.WEB_PUBLISH_DIR }}/DEPLOYMENT_INFO.txt
+          echo "Build Number: $GITHUB_RUN_NUMBER" >> ${{ env.WEB_PUBLISH_DIR }}/DEPLOYMENT_INFO.txt
+
+      - name: Create deployment package info for API
+        run: |
+          echo "Application: API" > ${{ env.API_PUBLISH_DIR }}/DEPLOYMENT_INFO.txt
+          echo "Build Date: $(date)" >> ${{ env.API_PUBLISH_DIR }}/DEPLOYMENT_INFO.txt
+          echo "Git Tag: ${GITHUB_REF#refs/tags/}" >> ${{ env.API_PUBLISH_DIR }}/DEPLOYMENT_INFO.txt
+          echo "Git Commit: $GITHUB_SHA" >> ${{ env.API_PUBLISH_DIR }}/DEPLOYMENT_INFO.txt
+          echo "Build Number: $GITHUB_RUN_NUMBER" >> ${{ env.API_PUBLISH_DIR }}/DEPLOYMENT_INFO.txt
+
+      - name: Upload Web build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: privatekonomi-release-${{ github.ref_name }}
-          path: ${{ env.PUBLISH_DIR }}
+          name: privatekonomi-web-release-${{ github.ref_name }}
+          path: ${{ env.WEB_PUBLISH_DIR }}
           retention-days: 30
 
-  deploy:
-    name: Deploy to Web Hosting via SFTP
+      - name: Upload API build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: privatekonomi-api-release-${{ github.ref_name }}
+          path: ${{ env.API_PUBLISH_DIR }}
+          retention-days: 30
+
+  deploy-web:
+    name: Deploy Web to Hosting via SFTP
     runs-on: ubuntu-latest
     needs: build
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
@@ -74,16 +102,34 @@ jobs:
       url: ${{ secrets.PRODUCTION_URL }}
 
     steps:
-      - name: Download build artifacts
+      - name: Download Web build artifacts
         uses: actions/download-artifact@v4
         with:
-          name: privatekonomi-release-${{ github.ref_name }}
-          path: ${{ env.PUBLISH_DIR }}
+          name: privatekonomi-web-release-${{ github.ref_name }}
+          path: ${{ env.WEB_PUBLISH_DIR }}
 
-      - name: Display structure of downloaded files
-        run: ls -R ${{ env.PUBLISH_DIR }}
+      - name: Create appsettings.Production.json for Web
+        run: |
+          cat > ${{ env.WEB_PUBLISH_DIR }}/appsettings.Production.json << EOF
+          {
+            "Storage": {
+              "Provider": "MySQL",
+              "ConnectionString": "${{ secrets.MYSQL_CONNECTION_STRING }}",
+              "SeedTestData": false
+            },
+            "Logging": {
+              "LogLevel": {
+                "Default": "Information",
+                "Microsoft.AspNetCore": "Warning"
+              }
+            }
+          }
+          EOF
 
-      - name: Deploy to Web Hosting via SFTP
+      - name: Display structure of Web files
+        run: ls -R ${{ env.WEB_PUBLISH_DIR }}
+
+      - name: Deploy Web to Hosting via SFTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.SFTP_HOST }}
@@ -91,8 +137,8 @@ jobs:
           password: ${{ secrets.SFTP_PASSWORD }}
           port: ${{ secrets.SFTP_PORT }}
           protocol: ftps
-          local-dir: ./${{ env.PUBLISH_DIR }}/
-          server-dir: ${{ secrets.SFTP_REMOTE_DIR }}
+          local-dir: ./${{ env.WEB_PUBLISH_DIR }}/
+          server-dir: ${{ secrets.SFTP_WEB_DIR }}
           dangerous-clean-slate: false
           exclude: |
             **/.git*
@@ -100,16 +146,77 @@ jobs:
             **/node_modules/**
             **/.DS_Store
 
-      - name: Verify deployment
+      - name: Verify Web deployment
         run: |
-          echo "Deployment completed successfully!"
+          echo "Web deployment completed successfully!"
           echo "Version: ${GITHUB_REF#refs/tags/}"
-          echo "Build artifacts deployed to: ${{ secrets.SFTP_HOST }}"
+          echo "Deployed to: ${{ secrets.SFTP_HOST }}${{ secrets.SFTP_WEB_DIR }}"
+
+  deploy-api:
+    name: Deploy API to Hosting via SFTP
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+    permissions:
+      contents: read
+    environment:
+      name: production
+
+    steps:
+      - name: Download API build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: privatekonomi-api-release-${{ github.ref_name }}
+          path: ${{ env.API_PUBLISH_DIR }}
+
+      - name: Create appsettings.Production.json for API
+        run: |
+          cat > ${{ env.API_PUBLISH_DIR }}/appsettings.Production.json << EOF
+          {
+            "Storage": {
+              "Provider": "MySQL",
+              "ConnectionString": "${{ secrets.MYSQL_CONNECTION_STRING }}",
+              "SeedTestData": false
+            },
+            "Logging": {
+              "LogLevel": {
+                "Default": "Information",
+                "Microsoft.AspNetCore": "Warning"
+              }
+            }
+          }
+          EOF
+
+      - name: Display structure of API files
+        run: ls -R ${{ env.API_PUBLISH_DIR }}
+
+      - name: Deploy API to Hosting via SFTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.SFTP_HOST }}
+          username: ${{ secrets.SFTP_USERNAME }}
+          password: ${{ secrets.SFTP_PASSWORD }}
+          port: ${{ secrets.SFTP_PORT }}
+          protocol: ftps
+          local-dir: ./${{ env.API_PUBLISH_DIR }}/
+          server-dir: ${{ secrets.SFTP_API_DIR }}
+          dangerous-clean-slate: false
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/node_modules/**
+            **/.DS_Store
+
+      - name: Verify API deployment
+        run: |
+          echo "API deployment completed successfully!"
+          echo "Version: ${GITHUB_REF#refs/tags/}"
+          echo "Deployed to: ${{ secrets.SFTP_HOST }}${{ secrets.SFTP_API_DIR }}"
 
   create-release:
     name: Create GitHub Release
     runs-on: ubuntu-latest
-    needs: [build, deploy]
+    needs: [build, deploy-web, deploy-api]
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
     permissions:
       contents: write
@@ -120,16 +227,28 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Download build artifacts
+      - name: Download Web build artifacts
         uses: actions/download-artifact@v4
         with:
-          name: privatekonomi-release-${{ github.ref_name }}
-          path: ${{ env.PUBLISH_DIR }}
+          name: privatekonomi-web-release-${{ github.ref_name }}
+          path: ${{ env.WEB_PUBLISH_DIR }}
 
-      - name: Create Release Archive
+      - name: Download API build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: privatekonomi-api-release-${{ github.ref_name }}
+          path: ${{ env.API_PUBLISH_DIR }}
+
+      - name: Create Release Archives
         run: |
-          cd ${{ env.PUBLISH_DIR }}
-          tar -czf ../privatekonomi-${{ github.ref_name }}-linux-x64.tar.gz .
+          # Create Web archive
+          cd ${{ env.WEB_PUBLISH_DIR }}
+          tar -czf ../privatekonomi-web-${{ github.ref_name }}-linux-x64.tar.gz .
+          cd ..
+          
+          # Create API archive
+          cd ${{ env.API_PUBLISH_DIR }}
+          tar -czf ../privatekonomi-api-${{ github.ref_name }}-linux-x64.tar.gz .
           cd ..
 
       - name: Generate Release Notes
@@ -142,21 +261,46 @@ jobs:
           echo "" >> release_notes.md
           echo "Se [CHANGELOG](https://github.com/${{ github.repository }}/compare/$(git describe --tags --abbrev=0 HEAD^)...${{ github.ref_name }}) för fullständig lista över ändringar." >> release_notes.md
           echo "" >> release_notes.md
+          echo "### Paket" >> release_notes.md
+          echo "" >> release_notes.md
+          echo "Denna release innehåller två separata distributioner:" >> release_notes.md
+          echo "" >> release_notes.md
+          echo "- **privatekonomi-web-$VERSION-linux-x64.tar.gz** - Blazor Server webbapplikation" >> release_notes.md
+          echo "- **privatekonomi-api-$VERSION-linux-x64.tar.gz** - ASP.NET Core Web API" >> release_notes.md
+          echo "" >> release_notes.md
           echo "### Installation" >> release_notes.md
           echo "" >> release_notes.md
           echo "#### Webbhotell (SFTP)" >> release_notes.md
-          echo "Denna version har automatiskt deployats till produktionsmiljön." >> release_notes.md
+          echo "Denna version har automatiskt deployats till produktionsmiljön med MySQL databas." >> release_notes.md
           echo "" >> release_notes.md
           echo "#### Manuell installation" >> release_notes.md
-          echo "1. Ladda ner \`privatekonomi-$VERSION-linux-x64.tar.gz\`" >> release_notes.md
-          echo "2. Extrahera arkivet: \`tar -xzf privatekonomi-$VERSION-linux-x64.tar.gz\`" >> release_notes.md
-          echo "3. Konfigurera \`appsettings.json\` för din miljö" >> release_notes.md
+          echo "" >> release_notes.md
+          echo "**Webbapplikation:**" >> release_notes.md
+          echo "1. Ladda ner \`privatekonomi-web-$VERSION-linux-x64.tar.gz\`" >> release_notes.md
+          echo "2. Extrahera arkivet: \`tar -xzf privatekonomi-web-$VERSION-linux-x64.tar.gz\`" >> release_notes.md
+          echo "3. Konfigurera \`appsettings.json\` för din miljö (se dokumentation för MySQL-konfiguration)" >> release_notes.md
           echo "4. Kör applikationen: \`./Privatekonomi.Web\`" >> release_notes.md
+          echo "" >> release_notes.md
+          echo "**API:**" >> release_notes.md
+          echo "1. Ladda ner \`privatekonomi-api-$VERSION-linux-x64.tar.gz\`" >> release_notes.md
+          echo "2. Extrahera arkivet: \`tar -xzf privatekonomi-api-$VERSION-linux-x64.tar.gz\`" >> release_notes.md
+          echo "3. Konfigurera \`appsettings.json\` för din miljö" >> release_notes.md
+          echo "4. Kör API: \`./Privatekonomi.Api\`" >> release_notes.md
           echo "" >> release_notes.md
           echo "### Systemkrav" >> release_notes.md
           echo "- .NET 9.0 Runtime (eller använd self-contained build)" >> release_notes.md
           echo "- Linux x64 (eller motsvarande för din plattform)" >> release_notes.md
-          echo "- SQLite eller annan databas (se dokumentation)" >> release_notes.md
+          echo "- MySQL/MariaDB 5.7+ eller SQLite (se dokumentation)" >> release_notes.md
+          echo "" >> release_notes.md
+          echo "### Databaskonfiguration" >> release_notes.md
+          echo "" >> release_notes.md
+          echo "Projektet stödjer nu följande databaser:" >> release_notes.md
+          echo "- **MySQL/MariaDB** - Rekommenderas för webbhotell" >> release_notes.md
+          echo "- **SQLite** - För lokal utveckling och Raspberry Pi" >> release_notes.md
+          echo "- **SQL Server** - För enterprise-miljöer" >> release_notes.md
+          echo "- **InMemory** - För tester och utveckling" >> release_notes.md
+          echo "" >> release_notes.md
+          echo "Se [\`appsettings.MySql.example.json\`](https://github.com/${{ github.repository }}/blob/${{ github.ref_name }}/src/Privatekonomi.Web/appsettings.MySql.example.json) för exempel på MySQL-konfiguration." >> release_notes.md
           echo "" >> release_notes.md
           echo "### Dokumentation" >> release_notes.md
           echo "- [README](https://github.com/${{ github.repository }}/blob/${{ github.ref_name }}/README.md)" >> release_notes.md
@@ -174,7 +318,8 @@ jobs:
         with:
           body_path: release_notes.md
           files: |
-            privatekonomi-${{ github.ref_name }}-linux-x64.tar.gz
+            privatekonomi-web-${{ github.ref_name }}-linux-x64.tar.gz
+            privatekonomi-api-${{ github.ref_name }}-linux-x64.tar.gz
           draft: false
           prerelease: false
           token: ${{ secrets.GITHUB_TOKEN }}

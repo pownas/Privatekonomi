@@ -91,10 +91,10 @@ En privatekonomi-applikation byggd med .NET 9, Blazor Server och MudBlazor för 
   - Systemet föreslår också kategorier baserat på tidigare transaktioner
 - **Responsiv design**: Fungerar på desktop och mobila enheter
 - **Flexibel datalagring**: 
-  - Stöd för InMemory (utveckling), SQLite (produktion), SQL Server (storskalig produktion) och JsonFile (backup/portabilitet)
+  - Stöd för InMemory (utveckling), SQLite (produktion), **MySQL/MariaDB** ⭐ **(webbhotell)**, SQL Server (storskalig produktion) och JsonFile (backup/portabilitet)
   - Konfigurerbart via appsettings.json
-  - Lämpligt för lokal användning, Raspberry Pi, NAS och molnbaserad hosting
-  - Se [lagringsguide](docs/STORAGE_GUIDE.md) för mer information
+  - Lämpligt för lokal användning, Raspberry Pi, NAS, webbhotell och molnbaserad hosting
+  - Se [lagringsguide](docs/STORAGE_GUIDE.md) och [MySQL deployment guide](docs/MYSQL_DEPLOYMENT_GUIDE.md) för mer information
 - **Data Persistens & Backup**:
   - Automatisk sparning var 5:e minut (för JsonFile provider)
   - Fullständig backup/export till JSON
@@ -563,6 +563,17 @@ Applikationen stödjer flera lagringsmetoder som enkelt kan konfigureras via `ap
 }
 ```
 
+#### Webbhotell (MySQL/MariaDB) ⭐ **NYTT**
+```json
+{
+  "Storage": {
+    "Provider": "MySQL",
+    "ConnectionString": "Server=mysql.example.com;Port=3306;Database=privatekonomi;User=privkonomi_user;Password=YourPassword;",
+    "SeedTestData": false
+  }
+}
+```
+
 #### Raspberry Pi / NAS (SQLite på delad lagring)
 ```json
 {
@@ -597,7 +608,7 @@ Applikationen stödjer flera lagringsmetoder som enkelt kan konfigureras via `ap
 ```
 
 Se [STORAGE_GUIDE.md](docs/STORAGE_GUIDE.md) för detaljerad information om:
-- Olika lagringsalternativ (InMemory, SQLite, SQL Server, JsonFile)
+- Olika lagringsalternativ (InMemory, SQLite, **MySQL/MariaDB**, SQL Server, JsonFile)
 - Nätverksåtkomst och delad lagring
 - Backup och återställning
 - Migration mellan lagringsmetoder
@@ -644,12 +655,15 @@ Se [STORAGE_GUIDE.md](docs/STORAGE_GUIDE.md) för detaljerad information om:
 
 ### Deployment och Driftsättning
 
-- **[DEPLOYMENT_GUIDE.md](docs/DEPLOYMENT_GUIDE.md)**: ⭐ NYTT! Komplett guide för automatiserad deployment till webbhotell via SFTP
-- **[RELEASE_PIPELINE_QUICKSTART.md](docs/RELEASE_PIPELINE_QUICKSTART.md)**: ⭐ NYTT! Snabbreferens för release pipeline
-- **[SYSTEMD_SERVICE_GUIDE.md](docs/SYSTEMD_SERVICE_GUIDE.md)**: ⭐ NYTT! Guide för konfiguration av systemd-service på Linux
+- **[DEPLOYMENT_GUIDE.md](docs/DEPLOYMENT_GUIDE.md)**: Komplett guide för automatiserad deployment till webbhotell via SFTP
+- **[MYSQL_DEPLOYMENT_GUIDE.md](docs/MYSQL_DEPLOYMENT_GUIDE.md)**: ⭐ **NYTT!** Detaljerad guide för MySQL/MariaDB-deployment på webbhotell
+- **[RELEASE_PIPELINE_QUICKSTART.md](docs/RELEASE_PIPELINE_QUICKSTART.md)**: Snabbreferens för release pipeline
+- **[SYSTEMD_SERVICE_GUIDE.md](docs/SYSTEMD_SERVICE_GUIDE.md)**: Guide för konfiguration av systemd-service på Linux
 
 **Funktioner:**
 - ✅ Automatisk GitHub Actions release pipeline
+- ✅ **Dual deployment: Web och API separat** ⭐ **NYTT!**
+- ✅ **MySQL/MariaDB databas-support** ⭐ **NYTT!**
 - ✅ SFTP/FTPS deployment till webbhotell
 - ✅ Semantic versioning med Git tags
 - ✅ Automatisk build, test och publicering

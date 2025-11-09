@@ -50,6 +50,21 @@ public static class StorageExtensions
                 });
                 break;
                 
+            case "mysql":
+            case "mariadb":
+                if (string.IsNullOrEmpty(storageSettings.ConnectionString))
+                {
+                    throw new InvalidOperationException(
+                        "ConnectionString is required for MySQL/MariaDB provider. " +
+                        "Please specify a connection string in Storage:ConnectionString configuration.");
+                }
+                services.AddDbContext<PrivatekonomyContext>(options =>
+                {
+                    var serverVersion = ServerVersion.AutoDetect(storageSettings.ConnectionString);
+                    options.UseMySql(storageSettings.ConnectionString, serverVersion);
+                });
+                break;
+                
             case "jsonfile":
                 // JsonFile uses InMemory with persistence layer
                 services.AddDbContext<PrivatekonomyContext>(options =>
