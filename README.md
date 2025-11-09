@@ -88,6 +88,13 @@ En privatekonomi-applikation byggd med .NET 9, Blazor Server och MudBlazor för 
 - **CSV-import**: 
   - Import av transaktioner från ICA-banken och Swedbank
   - Import av investeringar från Avanza Bank med dubbletthantering
+- **OCR Kvittoskanning**: ⭐ NYTT!
+  - Skanna papperskvitton med OCR (Optical Character Recognition)
+  - Automatisk extraktion av belopp, datum, butik och radposter
+  - Tesseract OCR-motor med svenskt språkstöd
+  - Bildförbehandling för bättre noggrannhet
+  - Granska och redigera extraherad data innan sparning
+  - Se [OCR Kvittoskanning guide](docs/OCR_RECEIPT_SCANNING_GUIDE.md)
 - **Automatisk bankimport via PSD2-API**:
   - Stöd för Swedbank, Avanza Bank och ICA Banken
   - OAuth2-baserad autentisering med BankID
