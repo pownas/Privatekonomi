@@ -41,6 +41,14 @@ En privatekonomi-applikation byggd med .NET 9, Blazor Server och MudBlazor för 
   - Transaktionshistorik och notifieringar
   - Rollbaserad åtkomstkontroll (Owner/Participant)
   - Se [detaljerad dokumentation](docs/README_Gemensamma_Sparmal.md)
+- **Delad Ekonomi (Hushållsapp MVP)**: ⭐ NYTT!
+  - **Gemensamma budgetar**: Skapa och dela budgetar mellan hushållsmedlemmar med procentuell fördelning
+  - **Skuldbalansering**: Registrera och hantera skulder mellan medlemmar
+  - **"Settle Up"**: Markera skulder som betalda och håll koll på vem som är skyldig vem
+  - **Optimal balansering**: Automatisk algoritm för att minimera antalet transaktioner vid uppgörelse
+  - **Medlemsbalanser**: Realtidsöversikt över varje medlems saldo (röd/grön färgkodning)
+  - Perfekt för par, samboende, kollektiv och familjer
+  - Se [Delad Ekonomi guide](docs/DELAD_EKONOMI_GUIDE.md)
 - **Investeringshantering**: Hantera aktier, fonder, ETF, certifikat, krypto och P2P-lån med översikt över värde och avkastning
   - Stöd för ISK, KF, AF och Depå
   - Aggregering per kontotyp och investeringstyp

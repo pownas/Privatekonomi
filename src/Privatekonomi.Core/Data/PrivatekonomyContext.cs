@@ -30,6 +30,8 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
     public DbSet<ExpenseShare> ExpenseShares { get; set; }
     public DbSet<HouseholdActivity> HouseholdActivities { get; set; }
     public DbSet<HouseholdTask> HouseholdTasks { get; set; }
+    public DbSet<HouseholdBudgetShare> HouseholdBudgetShares { get; set; }
+    public DbSet<DebtSettlement> DebtSettlements { get; set; }
     public DbSet<ChildAllowance> ChildAllowances { get; set; }
     public DbSet<AllowanceTransaction> AllowanceTransactions { get; set; }
     public DbSet<AllowanceTask> AllowanceTasks { get; set; }
