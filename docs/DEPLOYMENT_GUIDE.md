@@ -2,6 +2,8 @@
 
 Denna guide beskriver hur du använder den automatiserade release-pipelinen för att driftsätta Privatekonomi till ett webbhotell via SFTP.
 
+> **📚 Nytt! MySQL/MariaDB-support:** Se [MYSQL_DEPLOYMENT_GUIDE.md](./MYSQL_DEPLOYMENT_GUIDE.md) för detaljerad guide om MySQL-deployment.
+
 ## Innehållsförteckning
 
 1. [Översikt](#översikt)
@@ -17,17 +19,18 @@ Denna guide beskriver hur du använder den automatiserade release-pipelinen för
 ## Översikt
 
 Release-pipelinen automatiserar följande steg:
-1. Bygger applikationen i Release-läge
+1. Bygger både Web och API-applikationen i Release-läge
 2. Kör enhetstester för att säkerställa kvalitet
-3. Publicerar en optimerad version för Linux
-4. Deployas automatiskt till webbhotell via SFTP/FTPS
-5. Skapar en GitHub Release med installationspaket
+3. Publicerar optimerade versioner för Linux
+4. Deployar automatiskt Web och API till webbhotell via SFTP/FTPS
+5. Skapar en GitHub Release med separata installationspaket
 
 ### Teknisk Stack
 
 - **CI/CD:** GitHub Actions
 - **Build:** .NET 9 SDK
-- **Deployment:** SFTP/FTPS
+- **Deployment:** SFTP/FTPS med separata kataloger för Web och API
+- **Database:** MySQL/MariaDB, SQLite, SQL Server
 - **Trigger:** Git tags (v1.0.0, v2.1.0, etc.)
 
 ## Förutsättningar
@@ -39,15 +42,17 @@ Release-pipelinen automatiserar följande steg:
    - Port (vanligtvis 21 för FTP/FTPS, 22 för SFTP)
    - Användarnamn
    - Lösenord eller SSH-nyckel
+   - Två separata kataloger (en för Web, en för API)
 
 2. **Server-miljö**
    - Linux server (rekommenderat)
    - .NET 9 Runtime installerad (eller använd self-contained deployment)
-   - Skrivbehörighet i deployment-katalogen
-   - Minst 500 MB ledigt diskutrymme
+   - Skrivbehörighet i deployment-katalogerna
+   - Minst 1 GB ledigt diskutrymme
 
 3. **Databashantering**
-   - SQLite-stöd (rekommenderat för små installationer)
+   - **MySQL/MariaDB** - ⭐ **Rekommenderat för webbhotell**
+   - SQLite - För utveckling och små installationer
    - Eller SQL Server / PostgreSQL för större installationer
    - Backup-strategi för databas
 
@@ -71,6 +76,12 @@ Följ dessa steg för att konfigurera dina deployment-credentials:
 
 Klicka på **New repository secret** för varje av följande:
 
+#### MYSQL_CONNECTION_STRING ⭐ **Nytt**
+- **Namn:** `MYSQL_CONNECTION_STRING`
+- **Värde:** Din MySQL connection string
+- **Exempel:** `Server=mysql.example.com;Port=3306;Database=privatekonomi;User=privkonomi_user;Password=YourSecurePassword123!;`
+- **Se:** [MYSQL_DEPLOYMENT_GUIDE.md](./MYSQL_DEPLOYMENT_GUIDE.md) för detaljerad setup
+
 #### SFTP_HOST
 - **Namn:** `SFTP_HOST`
 - **Värde:** Din SFTP-server hostname eller IP-adress
@@ -91,15 +102,21 @@ Klicka på **New repository secret** för varje av följande:
 - **Värde:** SFTP-portnummer
 - **Exempel:** `21` (FTPS) eller `22` (SFTP)
 
-#### SFTP_REMOTE_DIR
-- **Namn:** `SFTP_REMOTE_DIR`
-- **Värde:** Målkatalog på servern där filerna ska deployeras
-- **Exempel:** `/var/www/privatekonomi/` eller `/home/user/public_html/`
+#### SFTP_WEB_DIR ⭐ **Uppdaterat**
+- **Namn:** `SFTP_WEB_DIR`
+- **Värde:** Målkatalog på servern för webbapplikationen
+- **Exempel:** `/var/www/privatekonomi-web/` eller `/home/user/public_html/web/`
+- **OBS:** Måste sluta med `/`
+
+#### SFTP_API_DIR ⭐ **Nytt**
+- **Namn:** `SFTP_API_DIR`
+- **Värde:** Målkatalog på servern för API
+- **Exempel:** `/var/www/privatekonomi-api/` eller `/home/user/public_html/api/`
 - **OBS:** Måste sluta med `/`
 
 #### PRODUCTION_URL (Valfritt)
 - **Namn:** `PRODUCTION_URL`
-- **Värde:** URL till din produktionsmiljö
+- **Värde:** URL till din webbapplikation
 - **Exempel:** `https://privatekonomi.example.com`
 
 ### Steg 3: Verifiera Secrets
