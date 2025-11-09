@@ -122,4 +122,86 @@ public class DebtStrategyController : ControllerBase
         var debtFreeDate = await _debtStrategyService.CalculateDebtFreeDate();
         return Ok(new { DebtFreeDate = debtFreeDate });
     }
+    
+    /// <summary>
+    /// Export amortization schedule to CSV
+    /// </summary>
+    /// <param name="loanId">Loan ID</param>
+    /// <param name="extraMonthlyPayment">Extra monthly payment amount</param>
+    [HttpGet("export-amortization-schedule/{loanId}")]
+    public async Task<IActionResult> ExportAmortizationSchedule(
+        int loanId,
+        [FromQuery] decimal extraMonthlyPayment = 0)
+    {
+        var loan = await _loanService.GetLoanByIdAsync(loanId);
+        if (loan == null)
+        {
+            return NotFound("Loan not found");
+        }
+
+        var csv = _debtStrategyService.ExportAmortizationScheduleToCsv(loan, extraMonthlyPayment);
+        var fileName = $"amorteringsplan_{loan.Name.Replace(" ", "_")}_{DateTime.Now:yyyyMMdd}.csv";
+        
+        return File(csv, "text/csv", fileName);
+    }
+    
+    /// <summary>
+    /// Export debt payoff strategy to CSV
+    /// </summary>
+    /// <param name="strategyType">Strategy type: "snowball" or "avalanche"</param>
+    /// <param name="availableMonthlyPayment">Total available monthly payment amount</param>
+    [HttpGet("export-strategy")]
+    public async Task<IActionResult> ExportStrategy(
+        [FromQuery] string strategyType,
+        [FromQuery] decimal availableMonthlyPayment)
+    {
+        if (availableMonthlyPayment <= 0)
+        {
+            return BadRequest("Available monthly payment must be greater than 0");
+        }
+
+        DebtPayoffStrategy strategy;
+        if (strategyType.ToLower() == "snowball")
+        {
+            strategy = await _debtStrategyService.CalculateSnowballStrategy(availableMonthlyPayment);
+        }
+        else if (strategyType.ToLower() == "avalanche")
+        {
+            strategy = await _debtStrategyService.CalculateAvalancheStrategy(availableMonthlyPayment);
+        }
+        else
+        {
+            return BadRequest("Invalid strategy type. Use 'snowball' or 'avalanche'");
+        }
+
+        var loans = (await _loanService.GetAllLoansAsync()).ToList();
+        var csv = _debtStrategyService.ExportStrategyToCsv(strategy, loans);
+        var fileName = $"avbetalningsstrategi_{strategyType}_{DateTime.Now:yyyyMMdd}.csv";
+        
+        return File(csv, "text/csv", fileName);
+    }
+    
+    /// <summary>
+    /// Get detailed debt payoff strategy with month-by-month breakdown
+    /// </summary>
+    /// <param name="strategyType">Strategy type: "snowball" or "avalanche"</param>
+    /// <param name="availableMonthlyPayment">Total available monthly payment amount</param>
+    [HttpGet("detailed-strategy")]
+    public async Task<ActionResult<DetailedDebtPayoffStrategy>> GetDetailedStrategy(
+        [FromQuery] string strategyType,
+        [FromQuery] decimal availableMonthlyPayment)
+    {
+        if (availableMonthlyPayment <= 0)
+        {
+            return BadRequest("Available monthly payment must be greater than 0");
+        }
+
+        if (strategyType.ToLower() != "snowball" && strategyType.ToLower() != "avalanche")
+        {
+            return BadRequest("Invalid strategy type. Use 'snowball' or 'avalanche'");
+        }
+
+        var strategy = await _debtStrategyService.GenerateDetailedStrategy(strategyType, availableMonthlyPayment);
+        return Ok(strategy);
+    }
 }
