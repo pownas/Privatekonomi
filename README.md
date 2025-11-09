@@ -2,6 +2,15 @@
 
 En privatekonomi-applikation byggd med .NET 9, Blazor Server och MudBlazor för att hjälpa användare att få koll och kontroll över sin ekonomi.
 
+## 🌐 Landningssida (Beta)
+
+- **Landningssida för ekonomiappen.se**: ⭐ NYTT!
+  - Modern och professionell landningssida tillgänglig på `/landing`
+  - Visar översikt av applikationens funktioner
+  - "Kommer snart"-meddelande för betafasen
+  - Fullständig responsiv design för alla enheter
+  - Se [Landningssida guide](docs/LANDING_PAGE_GUIDE.md)
+
 ## 🎯 Funktioner
 
 - **Användarautentisering**: Komplett användarsystem med registrering, inloggning och dataisolering per användare
