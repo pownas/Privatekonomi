@@ -104,6 +104,7 @@ builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<ICategoryRuleService, CategoryRuleService>();
 builder.Services.AddScoped<ILoanService, LoanService>();
 builder.Services.AddScoped<IDebtStrategyService, DebtStrategyService>();
+builder.Services.AddScoped<IMortgageAnalysisService, MortgageAnalysisService>();
 builder.Services.AddScoped<IInvestmentService, InvestmentService>();
 builder.Services.AddScoped<IAssetService, AssetService>();
 builder.Services.AddScoped<IBudgetService, BudgetService>();
