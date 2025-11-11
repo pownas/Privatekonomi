@@ -274,10 +274,12 @@ Privatekonomi uppfyller alla PWA-krav och får 90+ poäng på Lighthouse PWA-aud
 - [MDN: Progressive Web Apps](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps)
 - [web.dev: PWA](https://web.dev/progressive-web-apps/)
 - [Service Workers: an Introduction](https://developers.google.com/web/fundamentals/primers/service-workers)
+- [PWA Next Steps](PWA_NEXT_STEPS.md) - Deployment och produktionsförberedelser
 
 ## ❓ Support
 
 Om du har frågor eller problem med PWA-funktioner:
 1. Kontrollera denna guide
 2. Läs Felsökning-sektionen
-3. Kontakta support via GitHub Issues
+3. För deployment och produktion, se [PWA_NEXT_STEPS.md](PWA_NEXT_STEPS.md)
+4. Kontakta support via GitHub Issues
