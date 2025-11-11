@@ -461,23 +461,105 @@ EOF
 install_ef_tools() {
     log_section "Installerar Entity Framework-verktyg"
     
-    log_info "Installerar dotnet-ef globalt..."
-    dotnet tool install --global dotnet-ef || dotnet tool update --global dotnet-ef
-    
-    # Add tools to PATH
+    # Add tools to PATH first
     local tools_path="$HOME/.dotnet/tools"
     if [ -d "$tools_path" ] && ! echo "$PATH" | grep -q "$tools_path"; then
         export PATH="$PATH:$tools_path"
-        
-        if ! grep -q ".dotnet/tools" ~/.bashrc; then
-            echo "" >> ~/.bashrc
-            echo "# Add .NET Core SDK tools" >> ~/.bashrc
-            echo 'export PATH="$PATH:$HOME/.dotnet/tools"' >> ~/.bashrc
-            log_info "EF-verktyg har lagts till i PATH"
+    fi
+    
+    # Check if dotnet-ef is already installed and working
+    if command -v dotnet-ef &> /dev/null; then
+        local ef_version=$(dotnet-ef --version 2>&1 | head -n1 || echo "")
+        if [ -n "$ef_version" ] && [[ ! "$ef_version" =~ "error" ]] && [[ ! "$ef_version" =~ "failed" ]]; then
+            log_success "Entity Framework-verktyg är redan installerat: $ef_version"
+            return 0
+        else
+            log_warning "Entity Framework-verktyg är installerat men verkar ha problem"
         fi
     fi
     
-    log_success "Entity Framework-verktyg installerade"
+    # Ensure NuGet source is properly configured before tool installation
+    log_info "Konfigurerar NuGet-källor..."
+    
+    # Add and enable nuget.org source explicitly (Solution 2 from issue)
+    if ! dotnet nuget list source | grep -q "nuget.org"; then
+        log_info "Lägger till nuget.org som paketkälla..."
+        dotnet nuget add source https://api.nuget.org/v3/index.json -n nuget.org 2>/dev/null || true
+    fi
+    
+    # Ensure the source is enabled
+    log_info "Aktiverar nuget.org paketkälla..."
+    dotnet nuget enable source nuget.org 2>/dev/null || true
+    
+    log_info "Installerar dotnet-ef globalt..."
+    
+    # Try to install, if it fails due to cache corruption, clear cache and retry
+    if ! dotnet tool install --global dotnet-ef 2>&1; then
+        log_warning "Installation misslyckades, försöker uppdatera befintligt verktyg..."
+        
+        if ! dotnet tool update --global dotnet-ef 2>&1; then
+            log_warning "Uppdatering misslyckades, rensar NuGet cache och försöker igen..."
+            
+            # Clear the NuGet cache to resolve potential corruption
+            dotnet nuget locals all --clear
+            
+            # Uninstall if partially installed
+            dotnet tool uninstall --global dotnet-ef 2>/dev/null || true
+            
+            # Try fresh install after cache clear
+            log_info "Försöker installera igen efter cache-rensning..."
+            if ! dotnet tool install --global dotnet-ef; then
+                # If still failing, try with explicit version matching .NET SDK
+                log_warning "Installation utan version misslyckades, försöker med specifik version..."
+                local dotnet_version=$(dotnet --version | cut -d'.' -f1)
+                if ! dotnet tool install --global dotnet-ef --version ${dotnet_version}.0.0; then
+                    # Last resort: try with --ignore-failed-sources flag (Solution 3 from issue)
+                    log_warning "Försöker med --ignore-failed-sources som sista utväg..."
+                    if ! dotnet tool install --global dotnet-ef --ignore-failed-sources; then
+                        log_error "Misslyckades att installera Entity Framework-verktyg efter alla försök"
+                        log_error ""
+                        log_error "Manuella lösningar att prova:"
+                        log_error "  1. Skapa NuGet.Config manuellt:"
+                        log_error "     mkdir -p ~/.nuget/NuGet"
+                        log_error "     cat > ~/.nuget/NuGet/NuGet.Config << 'EOFCONFIG'"
+                        log_error "     <?xml version=\"1.0\" encoding=\"utf-8\"?>"
+                        log_error "     <configuration>"
+                        log_error "       <packageSources>"
+                        log_error "         <add key=\"nuget.org\" value=\"https://api.nuget.org/v3/index.json\" />"
+                        log_error "       </packageSources>"
+                        log_error "     </configuration>"
+                        log_error "     EOFCONFIG"
+                        log_error ""
+                        log_error "  2. Lägg till och aktivera källan manuellt:"
+                        log_error "     dotnet nuget add source https://api.nuget.org/v3/index.json -n nuget.org"
+                        log_error "     dotnet nuget enable source nuget.org"
+                        log_error ""
+                        log_error "  3. Installera med --ignore-failed-sources:"
+                        log_error "     dotnet tool install --global dotnet-ef --ignore-failed-sources"
+                        log_error ""
+                        return 1
+                    fi
+                fi
+            fi
+        fi
+    fi
+    
+    # Verify installation
+    if command -v dotnet-ef &> /dev/null || [ -f "$tools_path/dotnet-ef" ]; then
+        local ef_version=$(dotnet-ef --version 2>&1 | head -n1 || "$tools_path/dotnet-ef" --version 2>&1 | head -n1)
+        log_success "Entity Framework-verktyg installerade: $ef_version"
+    else
+        log_error "Entity Framework-verktyg kunde inte verifieras"
+        return 1
+    fi
+    
+    # Add tools to PATH in bashrc if not already there
+    if ! grep -q ".dotnet/tools" ~/.bashrc; then
+        echo "" >> ~/.bashrc
+        echo "# Add .NET Core SDK tools" >> ~/.bashrc
+        echo 'export PATH="$PATH:$HOME/.dotnet/tools"' >> ~/.bashrc
+        log_info "EF-verktyg har lagts till i PATH"
+    fi
 }
 
 # Configure development certificates

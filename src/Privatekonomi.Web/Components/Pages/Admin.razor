@@ -1,0 +1,524 @@
+@page "/admin/metrics"
+@using Privatekonomi.Core.Models
+@using Privatekonomi.Core.Services
+@using Microsoft.AspNetCore.Identity
+@inject IMetricsService MetricsService
+@inject UserManager<ApplicationUser> UserManager
+@inject ISnackbar Snackbar
+@attribute [Authorize]
+
+<PageTitle>Admin Dashboard - Mätetal & Success Metrics</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraExtraLarge" Class="mt-4">
+    @if (_loading)
+    {
+        <MudProgressLinear Indeterminate="true" />
+    }
+    else if (!_isAuthorized)
+    {
+        <MudAlert Severity="Severity.Error" Class="my-4">
+            <MudText Typo="Typo.h6">Åtkomst nekad</MudText>
+            <MudText>Du måste vara systemadministratör för att se denna sida.</MudText>
+        </MudAlert>
+    }
+    else
+    {
+        <MudText Typo="Typo.h3" Class="mb-4">
+            <MudIcon Icon="@Icons.Material.Filled.Dashboard" Class="mr-2" />
+            Admin Dashboard - Mätetal & Success Metrics
+        </MudText>
+
+        <MudGrid>
+            <!-- Time Period Filter -->
+            <MudItem xs="12">
+                <MudPaper Class="pa-4 mb-4">
+                    <MudGrid>
+                        <MudItem xs="12" md="4">
+                            <MudSelect T="MetricsPeriodType" Label="Tidsperiod" @bind-Value="_selectedPeriodType" 
+                                       Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter">
+                                <MudSelectItem Value="MetricsPeriodType.Daily">Daglig</MudSelectItem>
+                                <MudSelectItem Value="MetricsPeriodType.Weekly">Veckovis</MudSelectItem>
+                                <MudSelectItem Value="MetricsPeriodType.Monthly">Månadsvis</MudSelectItem>
+                                <MudSelectItem Value="MetricsPeriodType.Quarterly">Kvartalsvis</MudSelectItem>
+                                <MudSelectItem Value="MetricsPeriodType.Yearly">Årlig</MudSelectItem>
+                            </MudSelect>
+                        </MudItem>
+                        <MudItem xs="12" md="4">
+                            <MudSelect T="int" Label="Antal perioder" @bind-Value="_periodCount" 
+                                       Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter">
+                                <MudSelectItem Value="6">6</MudSelectItem>
+                                <MudSelectItem Value="12">12</MudSelectItem>
+                                <MudSelectItem Value="24">24</MudSelectItem>
+                            </MudSelect>
+                        </MudItem>
+                        <MudItem xs="12" md="4" Class="d-flex align-center">
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" 
+                                       OnClick="LoadHistoricalMetrics" StartIcon="@Icons.Material.Filled.Refresh">
+                                Uppdatera
+                            </MudButton>
+                        </MudItem>
+                    </MudGrid>
+                </MudPaper>
+            </MudItem>
+
+            <!-- Current Metrics Summary -->
+            <MudItem xs="12">
+                <MudText Typo="Typo.h5" Class="mb-3">Nuläge (beräknat @_metrics?.CalculatedAt.ToString("yyyy-MM-dd HH:mm"))</MudText>
+            </MudItem>
+
+            <!-- User Metrics Section -->
+            <MudItem xs="12">
+                <MudText Typo="Typo.h6" Class="mb-2">
+                    <MudIcon Icon="@Icons.Material.Filled.People" Class="mr-2" />
+                    Användarstatistik
+                </MudText>
+            </MudItem>
+
+            <MudItem xs="12" sm="6" md="3">
+                <MudCard>
+                    <MudCardContent>
+                        <MudText Typo="Typo.h4" Color="Color.Primary">@_metrics?.UserMetrics.MAU</MudText>
+                        <MudText Typo="Typo.body2">MAU (Monthly Active Users)</MudText>
+                        <MudText Typo="Typo.caption" Color="@GetMetricColor(_metrics?.UserMetrics.MAUGrowthPercent ?? 0, 20)">
+                            @GetChangeText(_metrics?.UserMetrics.MAUGrowthPercent ?? 0)% vs föregående månad
+                        </MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Default">
+                            Mål: +20% per kvartal
+                        </MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+            <MudItem xs="12" sm="6" md="3">
+                <MudCard>
+                    <MudCardContent>
+                        <MudText Typo="Typo.h4" Color="Color.Primary">@_metrics?.UserMetrics.DAU</MudText>
+                        <MudText Typo="Typo.body2">DAU (Daily Active Users)</MudText>
+                        <MudText Typo="Typo.caption" Color="@GetMetricColor(_metrics?.UserMetrics.DAUMAURatio ?? 0, 40)">
+                            DAU/MAU Ratio: @_metrics?.UserMetrics.DAUMAURatio.ToString("F1")%
+                        </MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Default">
+                            Mål: >40%
+                        </MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+            <MudItem xs="12" sm="6" md="3">
+                <MudCard>
+                    <MudCardContent>
+                        <MudText Typo="Typo.h4" Color="Color.Primary">@_metrics?.UserMetrics.RetentionRate30Day.ToString("F1")%</MudText>
+                        <MudText Typo="Typo.body2">30-dagars Retention Rate</MudText>
+                        <MudText Typo="Typo.caption" Color="@GetMetricColor(_metrics?.UserMetrics.RetentionRate30Day ?? 0, 60)">
+                            @GetStatusText(_metrics?.UserMetrics.RetentionRate30Day ?? 0, 60)
+                        </MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Default">
+                            Mål: >60%
+                        </MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+            <MudItem xs="12" sm="6" md="3">
+                <MudCard>
+                    <MudCardContent>
+                        <MudText Typo="Typo.h4" Color="Color.Primary">@_metrics?.UserMetrics.MonthlyChurnRate.ToString("F1")%</MudText>
+                        <MudText Typo="Typo.body2">Monthly Churn Rate</MudText>
+                        <MudText Typo="Typo.caption" Color="@GetMetricColor(5 - (_metrics?.UserMetrics.MonthlyChurnRate ?? 0), 0)">
+                            @GetStatusText(5 - (_metrics?.UserMetrics.MonthlyChurnRate ?? 0), 0)
+                        </MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Default">
+                            Mål: &lt;5% per månad
+                        </MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+            <!-- Engagement Metrics Section -->
+            <MudItem xs="12" Class="mt-4">
+                <MudText Typo="Typo.h6" Class="mb-2">
+                    <MudIcon Icon="@Icons.Material.Filled.TouchApp" Class="mr-2" />
+                    Engagement
+                </MudText>
+            </MudItem>
+
+            <MudItem xs="12" sm="6" md="3">
+                <MudCard>
+                    <MudCardContent>
+                        <MudText Typo="Typo.h4" Color="Color.Secondary">@_metrics?.EngagementMetrics.TransactionsPerUser.ToString("F1")</MudText>
+                        <MudText Typo="Typo.body2">Transaktioner per användare</MudText>
+                        <MudText Typo="Typo.caption" Color="@GetMetricColor(_metrics?.EngagementMetrics.TransactionsPerUser ?? 0, 30)">
+                            @GetStatusText(_metrics?.EngagementMetrics.TransactionsPerUser ?? 0, 30)
+                        </MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Default">
+                            Mål: >30 per månad
+                        </MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+            <MudItem xs="12" sm="6" md="3">
+                <MudCard>
+                    <MudCardContent>
+                        <MudText Typo="Typo.h4" Color="Color.Secondary">@TimeSpan.FromSeconds(_metrics?.EngagementMetrics.AverageSessionDuration ?? 0).ToString(@"mm\:ss")</MudText>
+                        <MudText Typo="Typo.body2">Genomsnittlig sessionstid</MudText>
+                        <MudText Typo="Typo.caption" Color="@GetMetricColor((decimal)((_metrics?.EngagementMetrics.AverageSessionDuration ?? 0) / 60), 5)">
+                            @GetStatusText((decimal)((_metrics?.EngagementMetrics.AverageSessionDuration ?? 0) / 60), 5)
+                        </MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Default">
+                            Mål: >5 minuter
+                        </MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+            <MudItem xs="12" sm="6" md="3">
+                <MudCard>
+                    <MudCardContent>
+                        <MudText Typo="Typo.h4" Color="Color.Secondary">@_metrics?.EngagementMetrics.FeatureAdoptionRate.ToString("F1")%</MudText>
+                        <MudText Typo="Typo.body2">Feature Adoption Rate</MudText>
+                        <MudText Typo="Typo.caption" Color="@GetMetricColor(_metrics?.EngagementMetrics.FeatureAdoptionRate ?? 0, 50)">
+                            @GetStatusText(_metrics?.EngagementMetrics.FeatureAdoptionRate ?? 0, 50)
+                        </MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Default">
+                            Mål: >50% för nya features
+                        </MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+            <MudItem xs="12" sm="6" md="3">
+                <MudCard>
+                    <MudCardContent>
+                        <MudText Typo="Typo.h4" Color="Color.Secondary">@_metrics?.EngagementMetrics.NPS.ToString("F0")</MudText>
+                        <MudText Typo="Typo.body2">Net Promoter Score (NPS)</MudText>
+                        <MudText Typo="Typo.caption" Color="@GetMetricColor(_metrics?.EngagementMetrics.NPS ?? 0, 50)">
+                            @GetStatusText(_metrics?.EngagementMetrics.NPS ?? 0, 50)
+                        </MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Default">
+                            Mål: >50
+                        </MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+            <!-- Performance Metrics Section -->
+            <MudItem xs="12" Class="mt-4">
+                <MudText Typo="Typo.h6" Class="mb-2">
+                    <MudIcon Icon="@Icons.Material.Filled.Speed" Class="mr-2" />
+                    Prestanda
+                </MudText>
+            </MudItem>
+
+            <MudItem xs="12" sm="6" md="3">
+                <MudCard>
+                    <MudCardContent>
+                        <MudText Typo="Typo.h4" Color="Color.Success">@_metrics?.PerformanceMetrics.UptimePercent.ToString("F2")%</MudText>
+                        <MudText Typo="Typo.body2">Uptime</MudText>
+                        <MudText Typo="Typo.caption" Color="@GetMetricColor(_metrics?.PerformanceMetrics.UptimePercent ?? 0, 99.9m)">
+                            @GetStatusText(_metrics?.PerformanceMetrics.UptimePercent ?? 0, 99.9m)
+                        </MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Default">
+                            Mål: 99.9%
+                        </MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+            <MudItem xs="12" sm="6" md="3">
+                <MudCard>
+                    <MudCardContent>
+                        <MudText Typo="Typo.h4" Color="Color.Success">@_metrics?.PerformanceMetrics.AveragePageLoadTime.ToString("F2")s</MudText>
+                        <MudText Typo="Typo.body2">Genomsnittlig laddningstid</MudText>
+                        <MudText Typo="Typo.caption" Color="@GetMetricColor((decimal)(3 - (_metrics?.PerformanceMetrics.AveragePageLoadTime ?? 0)), 1)">
+                            @GetStatusText((decimal)(3 - (_metrics?.PerformanceMetrics.AveragePageLoadTime ?? 0)), 1)
+                        </MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Default">
+                            Mål: &lt;2s (Desktop), &lt;3s (Mobile)
+                        </MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+            <MudItem xs="12" sm="6" md="3">
+                <MudCard>
+                    <MudCardContent>
+                        <MudText Typo="Typo.h4" Color="Color.Success">@_metrics?.PerformanceMetrics.LighthouseScore</MudText>
+                        <MudText Typo="Typo.body2">Lighthouse Score</MudText>
+                        <MudText Typo="Typo.caption" Color="@GetMetricColor(_metrics?.PerformanceMetrics.LighthouseScore ?? 0, 90)">
+                            @GetStatusText(_metrics?.PerformanceMetrics.LighthouseScore ?? 0, 90)
+                        </MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Default">
+                            Mål: >90
+                        </MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+            <MudItem xs="12" sm="6" md="3">
+                <MudCard>
+                    <MudCardContent>
+                        <MudText Typo="Typo.h4" Color="Color.Success">@_metrics?.PerformanceMetrics.CrashRate.ToString("F2")%</MudText>
+                        <MudText Typo="Typo.body2">Crash Rate</MudText>
+                        <MudText Typo="Typo.caption" Color="@GetMetricColor(0.1m - (_metrics?.PerformanceMetrics.CrashRate ?? 0), 0)">
+                            @GetStatusText(0.1m - (_metrics?.PerformanceMetrics.CrashRate ?? 0), 0)
+                        </MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Default">
+                            Mål: &lt;0.1%
+                        </MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+            <!-- Security Metrics Section -->
+            <MudItem xs="12" Class="mt-4">
+                <MudText Typo="Typo.h6" Class="mb-2">
+                    <MudIcon Icon="@Icons.Material.Filled.Security" Class="mr-2" />
+                    Säkerhet
+                </MudText>
+            </MudItem>
+
+            <MudItem xs="12" sm="6" md="3">
+                <MudCard>
+                    <MudCardContent>
+                        <MudText Typo="Typo.h4" Color="Color.Warning">@_metrics?.SecurityMetrics.TwoFactorAdoptionRate.ToString("F1")%</MudText>
+                        <MudText Typo="Typo.body2">2FA Adoption</MudText>
+                        <MudText Typo="Typo.caption" Color="@GetMetricColor(_metrics?.SecurityMetrics.TwoFactorAdoptionRate ?? 0, 70)">
+                            @GetStatusText(_metrics?.SecurityMetrics.TwoFactorAdoptionRate ?? 0, 70)
+                        </MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Default">
+                            Mål: >70%
+                        </MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+            <MudItem xs="12" sm="6" md="3">
+                <MudCard>
+                    <MudCardContent>
+                        <MudText Typo="Typo.h4" Color="Color.Warning">@_metrics?.SecurityMetrics.FailedLoginAttemptsPercent.ToString("F2")%</MudText>
+                        <MudText Typo="Typo.body2">Failed Login Attempts</MudText>
+                        <MudText Typo="Typo.caption" Color="@GetMetricColor(1 - (_metrics?.SecurityMetrics.FailedLoginAttemptsPercent ?? 0), 0)">
+                            @GetStatusText(1 - (_metrics?.SecurityMetrics.FailedLoginAttemptsPercent ?? 0), 0)
+                        </MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Default">
+                            Mål: &lt;1% av totala
+                        </MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+            <MudItem xs="12" sm="6" md="3">
+                <MudCard>
+                    <MudCardContent>
+                        <MudText Typo="Typo.h4" Color="Color.Warning">@_metrics?.SecurityMetrics.SecurityIncidentsCount</MudText>
+                        <MudText Typo="Typo.body2">Security Incidents</MudText>
+                        <MudText Typo="Typo.caption" Color="@GetMetricColor(0 - (_metrics?.SecurityMetrics.SecurityIncidentsCount ?? 0), 0)">
+                            @GetStatusText(0 - (_metrics?.SecurityMetrics.SecurityIncidentsCount ?? 0), 0)
+                        </MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Default">
+                            Mål: 0
+                        </MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+            <MudItem xs="12" sm="6" md="3">
+                <MudCard>
+                    <MudCardContent>
+                        <MudText Typo="Typo.h4" Color="Color.Warning">@_metrics?.SecurityMetrics.GDPRCompliancePercent.ToString("F0")%</MudText>
+                        <MudText Typo="Typo.body2">GDPR Compliance</MudText>
+                        <MudText Typo="Typo.caption" Color="@GetMetricColor(_metrics?.SecurityMetrics.GDPRCompliancePercent ?? 0, 100)">
+                            @GetStatusText(_metrics?.SecurityMetrics.GDPRCompliancePercent ?? 0, 100)
+                        </MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Default">
+                            Mål: 100%
+                        </MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+            <!-- Historical Charts Section -->
+            @if (_historicalMetrics.Any())
+            {
+                <MudItem xs="12" Class="mt-4">
+                    <MudText Typo="Typo.h5" Class="mb-3">Historisk översikt</MudText>
+                </MudItem>
+
+                <MudItem xs="12" md="6">
+                    <MudPaper Class="pa-4">
+                        <MudText Typo="Typo.h6" Class="mb-2">MAU Trend</MudText>
+                        <MudChart ChartType="ChartType.Line" 
+                                  ChartSeries="@_mauChartSeries" 
+                                  XAxisLabels="@_chartLabels" 
+                                  Width="100%" 
+                                  Height="300px">
+                        </MudChart>
+                    </MudPaper>
+                </MudItem>
+
+                <MudItem xs="12" md="6">
+                    <MudPaper Class="pa-4">
+                        <MudText Typo="Typo.h6" Class="mb-2">Transaktioner per användare</MudText>
+                        <MudChart ChartType="ChartType.Line" 
+                                  ChartSeries="@_transactionsChartSeries" 
+                                  XAxisLabels="@_chartLabels" 
+                                  Width="100%" 
+                                  Height="300px">
+                        </MudChart>
+                    </MudPaper>
+                </MudItem>
+            }
+        </MudGrid>
+    }
+</MudContainer>
+
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthenticationStateTask { get; set; }
+
+    private bool _loading = true;
+    private bool _isAuthorized = false;
+    private AdminMetrics? _metrics;
+    private List<MetricsSnapshot> _historicalMetrics = new();
+    private MetricsPeriodType _selectedPeriodType = MetricsPeriodType.Monthly;
+    private int _periodCount = 12;
+
+    private List<ChartSeries> _mauChartSeries = new();
+    private List<ChartSeries> _transactionsChartSeries = new();
+    private string[] _chartLabels = Array.Empty<string>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            // Check if user is system admin
+            var authState = await AuthenticationStateTask!;
+            var user = authState.User;
+            
+            if (user.Identity?.IsAuthenticated == true)
+            {
+                var userId = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                if (userId != null)
+                {
+                    var appUser = await UserManager.FindByIdAsync(userId);
+                    _isAuthorized = appUser?.IsSystemAdmin ?? false;
+                }
+            }
+
+            if (_isAuthorized)
+            {
+                await LoadMetricsAsync();
+                await LoadHistoricalMetrics();
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Fel vid laddning av metrics: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task LoadMetricsAsync()
+    {
+        _metrics = await MetricsService.GetCurrentMetricsAsync();
+    }
+
+    private async Task LoadHistoricalMetrics()
+    {
+        _loading = true;
+        try
+        {
+            _historicalMetrics = await MetricsService.GetHistoricalMetricsAsync(_selectedPeriodType, _periodCount);
+            
+            // Prepare chart data
+            _chartLabels = _historicalMetrics.Select(m => FormatPeriodLabel(m.PeriodStart, _selectedPeriodType)).ToArray();
+            
+            var mauData = new double[_historicalMetrics.Count];
+            var transactionsData = new double[_historicalMetrics.Count];
+            
+            for (int i = 0; i < _historicalMetrics.Count; i++)
+            {
+                var snapshot = _historicalMetrics[i];
+                try
+                {
+                    if (!string.IsNullOrWhiteSpace(snapshot.MetricsJson))
+                    {
+                        var metrics = System.Text.Json.JsonSerializer.Deserialize<AdminMetrics>(snapshot.MetricsJson);
+                        if (metrics != null)
+                        {
+                            mauData[i] = metrics.UserMetrics.MAU;
+                            transactionsData[i] = (double)metrics.EngagementMetrics.TransactionsPerUser;
+                        }
+                    }
+                }
+                catch (System.Text.Json.JsonException ex)
+                {
+                    // Log error and use default values (0) for this data point
+                    Snackbar.Add($"Fel vid parsing av historiska data: {ex.Message}", Severity.Warning);
+                }
+            }
+            
+            _mauChartSeries = new List<ChartSeries>
+            {
+                new ChartSeries { Name = "MAU", Data = mauData }
+            };
+            
+            _transactionsChartSeries = new List<ChartSeries>
+            {
+                new ChartSeries { Name = "Transaktioner/användare", Data = transactionsData }
+            };
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Fel vid laddning av historiska metrics: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private string FormatPeriodLabel(DateTime date, MetricsPeriodType periodType)
+    {
+        return periodType switch
+        {
+            MetricsPeriodType.Daily => date.ToString("MM-dd"),
+            MetricsPeriodType.Weekly => $"V{GetWeekNumber(date)}",
+            MetricsPeriodType.Monthly => date.ToString("MMM yy"),
+            MetricsPeriodType.Quarterly => $"Q{((date.Month - 1) / 3) + 1} {date.Year}",
+            MetricsPeriodType.Yearly => date.ToString("yyyy"),
+            _ => date.ToString("yyyy-MM")
+        };
+    }
+
+    private int GetWeekNumber(DateTime date)
+    {
+        var culture = System.Globalization.CultureInfo.CurrentCulture;
+        return culture.Calendar.GetWeekOfYear(date, 
+            System.Globalization.CalendarWeekRule.FirstDay, DayOfWeek.Monday);
+    }
+
+    private Color GetMetricColor(decimal value, decimal target)
+    {
+        if (target == 0) return value >= 0 ? Color.Success : Color.Error;
+        var percentage = (value / target) * 100;
+        if (percentage >= 100) return Color.Success;
+        if (percentage >= 80) return Color.Warning;
+        return Color.Error;
+    }
+
+    private string GetStatusText(decimal value, decimal target)
+    {
+        if (target == 0) return value >= 0 ? "Mål uppnått" : "Under mål";
+        return value >= target ? "Mål uppnått" : "Under mål";
+    }
+
+    private string GetChangeText(decimal value)
+    {
+        return value >= 0 ? $"+{value:F1}" : value.ToString("F1");
+    }
+}

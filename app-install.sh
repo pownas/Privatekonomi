@@ -116,9 +116,28 @@ install_ef_tools() {
     log_info "Checking if Entity Framework tools are already installed..."
     if dotnet tool list --global | grep -q "dotnet-ef"; then
         log_success "Entity Framework tools are already installed"
-    else
-        log_info "Installing Entity Framework global tools..."
-        dotnet tool install --global dotnet-ef
+        # Verify it's working
+        if dotnet ef --version &> /dev/null; then
+            return 0
+        else
+            log_warning "dotnet-ef is installed but not working, attempting to reinstall..."
+            dotnet tool uninstall --global dotnet-ef 2>/dev/null || true
+        fi
+    fi
+    
+    log_info "Installing Entity Framework global tools..."
+    if ! dotnet tool install --global dotnet-ef; then
+        log_warning "Installation failed, clearing NuGet cache and retrying..."
+        dotnet nuget locals all --clear
+        
+        # Try with explicit version matching .NET SDK
+        local dotnet_version=$(dotnet --version | cut -d'.' -f1)
+        log_info "Attempting installation with version ${dotnet_version}.0.0..."
+        if ! dotnet tool install --global dotnet-ef --version ${dotnet_version}.0.0; then
+            log_error "Failed to install Entity Framework tools after cache clear"
+            log_error "Try manually: dotnet tool install --global dotnet-ef --version ${dotnet_version}.0.0"
+            return 1
+        fi
     fi
     
     log_info "Verifying Entity Framework tools installation..."

@@ -51,7 +51,8 @@ public static class TestDataSeeder
             FirstName = "Test",
             LastName = "Användare",
             EmailConfirmed = true,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
+            IsSystemAdmin = true // Mark test user as system admin for testing admin dashboard
         };
 
         var existingUser = await userManager.FindByEmailAsync(testUser.Email);
@@ -59,6 +60,12 @@ public static class TestDataSeeder
         {
             await userManager.CreateAsync(testUser, "Test123!");
             existingUser = testUser;
+        }
+        else
+        {
+            // Update existing user to be system admin
+            existingUser.IsSystemAdmin = true;
+            await userManager.UpdateAsync(existingUser);
         }
 
         return existingUser.Id;

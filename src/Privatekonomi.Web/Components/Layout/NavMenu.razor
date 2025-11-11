@@ -1,10 +1,19 @@
 ﻿@inject NavigationManager NavigationManager
+@inject Microsoft.AspNetCore.Identity.UserManager<Privatekonomi.Core.Models.ApplicationUser> UserManager
+@inject Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider AuthenticationStateProvider
 @implements IDisposable
 
 <MudNavMenu Class="nav-menu">
     <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Dashboard">Dashboard</MudNavLink>
     <MudNavLink Href="/dashboard/custom" Icon="@Icons.Material.Filled.ViewModule">Anpassad Dashboard</MudNavLink>
   
+    @if (_isSystemAdmin)
+    {
+        <MudNavLink Href="/admin/metrics" Icon="@Icons.Material.Filled.AdminPanelSettings" Style="color: #ff6b6b;">
+            Admin Dashboard
+        </MudNavLink>
+    }
+
     <MudNavGroup Title="Ekonomi" Icon="@Icons.Material.Filled.AccountBalance" Class="@GetGroupClass(EconomyKey)" Expanded="@IsGroupExpanded(EconomyKey)" ExpandedChanged="@(expanded => OnGroupExpandedChanged(EconomyKey, expanded))">
         <MudNavLink Href="/economy/transactions" Icon="@Icons.Material.Filled.List">Transaktioner</MudNavLink>
         <MudNavLink Href="/economy/transactions/calendar" Icon="@Icons.Material.Filled.CalendarMonth">Kalendervy</MudNavLink>
@@ -75,6 +84,8 @@
 </MudNavMenu>
 
 @code {
+    private bool _isSystemAdmin = false;
+    
     private const string EconomyKey = "economy";
     private const string SavingsKey = "savings";
     private const string SocialKey = "social";
@@ -217,11 +228,59 @@
 
     private string currentPath = string.Empty;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         UpdateCurrentPath(NavigationManager.Uri);
         EnsureGroupForCurrentRoute();
         NavigationManager.LocationChanged += OnLocationChanged;
+        AuthenticationStateProvider.AuthenticationStateChanged += OnAuthenticationStateChanged;
+        
+        // Check if user is system admin
+        await CheckIfSystemAdminAsync();
+    }
+    
+    private void OnAuthenticationStateChanged(Task<AuthenticationState> task)
+    {
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await CheckIfSystemAdminAsync();
+                await InvokeAsync(StateHasChanged);
+            }
+            catch (Exception)
+            {
+                // Silently handle exceptions during auth state change
+                // to prevent unhandled exceptions in event handlers
+            }
+        });
+    }
+    
+    private async Task CheckIfSystemAdminAsync()
+    {
+        try
+        {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+            
+            if (user.Identity?.IsAuthenticated == true)
+            {
+                var userId = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                if (userId != null)
+                {
+                    var appUser = await UserManager.FindByIdAsync(userId);
+                    _isSystemAdmin = appUser?.IsSystemAdmin ?? false;
+                }
+            }
+            else
+            {
+                _isSystemAdmin = false;
+            }
+        }
+        catch
+        {
+            _isSystemAdmin = false;
+        }
     }
 
     private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
@@ -388,5 +447,6 @@
     public void Dispose()
     {
         NavigationManager.LocationChanged -= OnLocationChanged;
+        AuthenticationStateProvider.AuthenticationStateChanged -= OnAuthenticationStateChanged;
     }
 }
