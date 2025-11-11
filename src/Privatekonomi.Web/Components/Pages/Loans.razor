@@ -3,6 +3,7 @@
 @rendermode InteractiveServer
 @inject ILoanService LoanService
 @inject IDebtStrategyService DebtStrategyService
+@inject IMortgageAnalysisService MortgageAnalysisService
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
 @inject NavigationManager NavigationManager
@@ -110,6 +111,56 @@
                              Format="N2"
                              Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
                              Class="mb-3" />
+        }
+
+        @if (_formLoan.Type == "Bolån")
+        {
+            <MudDivider Class="mb-3 mt-3" />
+            <MudText Typo="Typo.subtitle2" Class="mb-2">Bolånespecifik information</MudText>
+            
+            <MudTextField @bind-Value="_formLoan.PropertyAddress" 
+                          Label="Fastighetsadress (valfritt)" 
+                          Variant="Variant.Outlined"
+                          MaxLength="200"
+                          Class="mb-3" />
+            
+            <MudNumericField @bind-Value="_formLoan.PropertyValue" 
+                             Label="Fastighetsvärde (kr)" 
+                             Variant="Variant.Outlined"
+                             Min="0"
+                             Format="N0"
+                             Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                             HelperText="Används för att beräkna belåningsgrad (LTV)"
+                             Class="mb-3" />
+            
+            <MudTextField @bind-Value="_formLoan.LoanProvider" 
+                          Label="Bank/Långivare (valfritt)" 
+                          Variant="Variant.Outlined"
+                          MaxLength="100"
+                          Class="mb-3" />
+            
+            <MudSwitch @bind-Value="_formLoan.IsFixedRate" 
+                       Label="Bunden ränta" 
+                       Color="Color.Primary"
+                       Class="mb-3" />
+            
+            @if (_formLoan.IsFixedRate)
+            {
+                <MudNumericField @bind-Value="_formLoan.BindingPeriodMonths" 
+                                 Label="Bindningsperiod (månader)" 
+                                 Variant="Variant.Outlined"
+                                 Min="1"
+                                 Max="180"
+                                 HelperText="T.ex. 12, 24, 36, 60 månader"
+                                 Class="mb-3" />
+                
+                <MudDatePicker @bind-Date="_formLoan.RateResetDate" 
+                               Label="Datum när bindning löper ut" 
+                               Variant="Variant.Outlined"
+                               DateFormat="yyyy-MM-dd"
+                               Editable="true"
+                               Class="mb-3" />
+            }
         }
 
         <div class="d-flex gap-2">
@@ -498,6 +549,165 @@ else
                 <MudText>Kör en simulering i fliken "Avbetalningsstrategier" för att se detaljerad månatlig plan.</MudText>
             }
         </MudTabPanel>
+        
+        <MudTabPanel Text="Bolåneanalys" Icon="@Icons.Material.Filled.HomeWork">
+            @if (_mortgages.Any())
+            {
+                <MudText Typo="Typo.h6" Class="mb-4">Analys av bolån enligt svenska regler</MudText>
+                
+                <MudAlert Severity="Severity.Info" Class="mb-4" Dense="true">
+                    <strong>Svenska amorteringskrav:</strong><br/>
+                    • Belåningsgrad över 70%: 2% årlig amortering av ursprungligt lånebelopp<br/>
+                    • Belåningsgrad 50-70%: 1% årlig amortering av ursprungligt lånebelopp<br/>
+                    • Belåningsgrad under 50%: Inget amorteringskrav
+                </MudAlert>
+                
+                @foreach (var mortgage in _mortgages)
+                {
+                    var amortRequirement = MortgageAnalysisService.CalculateAmortizationRequirement(mortgage);
+                    var riskAnalysis = MortgageAnalysisService.AnalyzeInterestRateRisk(mortgage, new[] { 0m, 1m, 2m, 3m });
+                    
+                    <MudCard Elevation="2" Class="mb-4">
+                        <MudCardHeader>
+                            <CardHeaderContent>
+                                <MudText Typo="Typo.h6">@mortgage.Name</MudText>
+                                @if (!string.IsNullOrEmpty(mortgage.PropertyAddress))
+                                {
+                                    <MudText Typo="Typo.body2" Color="Color.Secondary">@mortgage.PropertyAddress</MudText>
+                                }
+                            </CardHeaderContent>
+                            <CardHeaderActions>
+                                <MudChip T="string" Size="Size.Small" Color="@GetRiskLevelColor(riskAnalysis.RiskLevel)">
+                                    @GetRiskLevelText(riskAnalysis.RiskLevel)
+                                </MudChip>
+                            </CardHeaderActions>
+                        </MudCardHeader>
+                        <MudCardContent>
+                            <MudGrid>
+                                <!-- Loan details -->
+                                <MudItem xs="12" md="6">
+                                    <MudText Typo="Typo.subtitle2" Class="mb-2">📊 Låneuppgifter</MudText>
+                                    <MudText><strong>Lånebelopp:</strong> @mortgage.Amount.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))</MudText>
+                                    @if (mortgage.PropertyValue.HasValue)
+                                    {
+                                        <MudText><strong>Fastighetsvärde:</strong> @mortgage.PropertyValue.Value.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))</MudText>
+                                        <MudText><strong>Belåningsgrad (LTV):</strong> @amortRequirement.LoanToValueRatio.ToString("F1")%</MudText>
+                                    }
+                                    <MudText><strong>Aktuell ränta:</strong> @mortgage.InterestRate.ToString("F2")%</MudText>
+                                    @if (!string.IsNullOrEmpty(mortgage.LoanProvider))
+                                    {
+                                        <MudText><strong>Bank:</strong> @mortgage.LoanProvider</MudText>
+                                    }
+                                </MudItem>
+                                
+                                <!-- Interest rate binding -->
+                                <MudItem xs="12" md="6">
+                                    <MudText Typo="Typo.subtitle2" Class="mb-2">🔒 Räntebindning</MudText>
+                                    <MudText><strong>Typ:</strong> @(mortgage.IsFixedRate ? "Bunden ränta" : "Rörlig ränta")</MudText>
+                                    @if (mortgage.IsFixedRate && mortgage.RateResetDate.HasValue)
+                                    {
+                                        <MudText><strong>Bindning löper ut:</strong> @mortgage.RateResetDate.Value.ToString("yyyy-MM-dd")</MudText>
+                                        @if (riskAnalysis.MonthsUntilRateReset.HasValue)
+                                        {
+                                            <MudText><strong>Månader kvar:</strong> @riskAnalysis.MonthsUntilRateReset månader</MudText>
+                                        }
+                                        @if (mortgage.BindingPeriodMonths.HasValue)
+                                        {
+                                            <MudText><strong>Bindningsperiod:</strong> @mortgage.BindingPeriodMonths månader</MudText>
+                                        }
+                                    }
+                                    else if (!mortgage.IsFixedRate)
+                                    {
+                                        <MudAlert Severity="Severity.Warning" Dense="true" Class="mt-2">
+                                            Rörlig ränta innebär högre ränterisk. Överväg att binda räntan.
+                                        </MudAlert>
+                                    }
+                                </MudItem>
+                                
+                                <!-- Amortization requirement -->
+                                <MudItem xs="12" md="6">
+                                    <MudText Typo="Typo.subtitle2" Class="mb-2">💰 Amorteringskrav</MudText>
+                                    <MudText Class="mb-2">@amortRequirement.RuleDescription</MudText>
+                                    <MudText><strong>Krävs per månad:</strong> @amortRequirement.RequiredMonthlyAmortization.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))</MudText>
+                                    <MudText><strong>Du amorterar:</strong> @amortRequirement.CurrentMonthlyAmortization.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))</MudText>
+                                    
+                                    @if (!amortRequirement.MeetsRequirement)
+                                    {
+                                        <MudAlert Severity="Severity.Error" Dense="true" Class="mt-2">
+                                            ⚠️ Du amorterar <strong>@amortRequirement.MonthlyShortage.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))</strong> mindre per månad än kravet!
+                                        </MudAlert>
+                                    }
+                                    else if (amortRequirement.RequiredMonthlyAmortization > 0)
+                                    {
+                                        <MudAlert Severity="Severity.Success" Dense="true" Class="mt-2">
+                                            ✓ Du uppfyller amorteringskravet
+                                        </MudAlert>
+                                    }
+                                    
+                                    @if (amortRequirement.YearsToPayoff.HasValue)
+                                    {
+                                        <MudText Class="mt-2"><strong>Beräknad återbetalningstid:</strong> @amortRequirement.YearsToPayoff år</MudText>
+                                    }
+                                </MudItem>
+                                
+                                <!-- Interest rate risk -->
+                                <MudItem xs="12" md="6">
+                                    <MudText Typo="Typo.subtitle2" Class="mb-2">⚠️ Ränterisk</MudText>
+                                    <MudText Class="mb-2">@riskAnalysis.RiskDescription</MudText>
+                                    <MudText Typo="Typo.body2" Class="mb-2"><strong>Räntescenarier:</strong></MudText>
+                                    <MudSimpleTable Dense="true" Hover="true" Class="mt-2">
+                                        <thead>
+                                            <tr>
+                                                <th>Scenario</th>
+                                                <th style="text-align: right">Ränta</th>
+                                                <th style="text-align: right">Månadskostnad</th>
+                                                <th style="text-align: right">Ökning</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var scenario in riskAnalysis.Scenarios)
+                                            {
+                                                <tr>
+                                                    <td>@scenario.ScenarioName</td>
+                                                    <td style="text-align: right">@scenario.InterestRate.ToString("F2")%</td>
+                                                    <td style="text-align: right">@scenario.MonthlyCost.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))</td>
+                                                    <td style="text-align: right">
+                                                        @if (scenario.MonthlyIncrease > 0)
+                                                        {
+                                                            <span style="color: var(--mud-palette-error)">+@scenario.MonthlyIncrease.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))</span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span>-</span>
+                                                        }
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </MudSimpleTable>
+                                </MudItem>
+                            </MudGrid>
+                        </MudCardContent>
+                    </MudCard>
+                }
+                
+                <!-- Upcoming rate resets -->
+                @if (_upcomingRateResets.Any())
+                {
+                    <MudAlert Severity="Severity.Warning" Class="mt-4">
+                        <MudText Typo="Typo.h6" Class="mb-2">⏰ Kommande räntebindningar som löper ut</MudText>
+                        @foreach (var loan in _upcomingRateResets)
+                        {
+                            <MudText>• <strong>@loan.Name</strong> - Bindning löper ut @loan.RateResetDate?.ToString("yyyy-MM-dd")</MudText>
+                        }
+                    </MudAlert>
+                }
+            }
+            else
+            {
+                <MudText>Inga bolån registrerade. Lägg till ett bolån för att se analys.</MudText>
+            }
+        </MudTabPanel>
     </MudTabs>
 }
 
@@ -505,6 +715,8 @@ else
     private bool _loading = true;
     private bool _showCreateForm = false;
     private IEnumerable<Loan> _loans = new List<Loan>();
+    private IEnumerable<Loan> _mortgages = new List<Loan>();
+    private IEnumerable<Loan> _upcomingRateResets = new List<Loan>();
     private decimal _totalDebt = 0;
     private decimal _totalMonthlyCost = 0;
     private DateTime? _debtFreeDate = null;
@@ -537,6 +749,10 @@ else
         _loans = await LoanService.GetAllLoansAsync();
         _totalDebt = _loans.Sum(l => l.Amount);
         _totalMonthlyCost = _loans.Sum(l => CalculateMonthlyCost(l));
+        
+        // Load mortgages and upcoming rate resets
+        _mortgages = _loans.Where(l => l.Type == "Bolån").ToList();
+        _upcomingRateResets = await MortgageAnalysisService.GetUpcomingRateResetsAsync(6);
         
         // Calculate debt-free date
         _debtFreeDate = await DebtStrategyService.CalculateDebtFreeDate();
@@ -620,7 +836,14 @@ else
             MinimumPayment = loan.MinimumPayment,
             InstallmentMonths = loan.InstallmentMonths,
             InstallmentFee = loan.InstallmentFee,
-            Priority = loan.Priority
+            Priority = loan.Priority,
+            // Mortgage-specific fields
+            PropertyAddress = loan.PropertyAddress,
+            PropertyValue = loan.PropertyValue,
+            LoanProvider = loan.LoanProvider,
+            IsFixedRate = loan.IsFixedRate,
+            RateResetDate = loan.RateResetDate,
+            BindingPeriodMonths = loan.BindingPeriodMonths
         };
         _showCreateForm = true;
     }
@@ -757,5 +980,28 @@ else
         {
             _loading = false;
         }
+    }
+    
+    // Helper methods for mortgage analysis UI
+    private Color GetRiskLevelColor(RiskLevel riskLevel)
+    {
+        return riskLevel switch
+        {
+            RiskLevel.Low => Color.Success,
+            RiskLevel.Medium => Color.Warning,
+            RiskLevel.High => Color.Error,
+            _ => Color.Default
+        };
+    }
+    
+    private string GetRiskLevelText(RiskLevel riskLevel)
+    {
+        return riskLevel switch
+        {
+            RiskLevel.Low => "Låg risk",
+            RiskLevel.Medium => "Måttlig risk",
+            RiskLevel.High => "Hög risk",
+            _ => "Okänd risk"
+        };
     }
 }

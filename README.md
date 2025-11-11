@@ -163,6 +163,17 @@ En privatekonomi-applikation byggd med .NET 9, Blazor Server och MudBlazor för 
   - Beräkna genomsnittslön och lönetillväxt
   - Dokumentera jobbbyten och löneförhöjningar
   - Hantera befattning, arbetsgivare och anställningstyp
+- **Bolåneanalys**: ⭐ NYTT!
+  - **Svenska amorteringskrav**: Automatisk kontroll enligt Finansinspektionens regler
+    - LTV > 70%: 2% årlig amortering
+    - 50% < LTV ≤ 70%: 1% årlig amortering
+    - LTV ≤ 50%: Inget amorteringskrav
+  - **Ränteriskanalys**: Simulera olika räntescenarier (+1%, +2%, +3%)
+  - **Räntebindningsövervakning**: Få varningar innan bindningsperioden löper ut
+  - **Detaljerad bolånehantering**: Fastighetsvärde, belåningsgrad, långivare
+  - Färgkodad riskbedömning (grön/gul/röd)
+  - Beräkning av återbetalningstid och månadskostnader
+  - Se [Bolåneanalys guide](docs/MORTGAGE_ANALYSIS_GUIDE.md) och [Teknisk implementering](docs/MORTGAGE_ANALYSIS_IMPLEMENTATION.md)
 - **Smart Notifikationssystem**: ⭐ NYTT!
   - Multi-kanal notifikationer (In-app, Email, SMS, Push, Slack, Teams)
   - Konfigurerbart per notifikationstyp
