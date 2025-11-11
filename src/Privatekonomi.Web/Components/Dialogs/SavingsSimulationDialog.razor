@@ -1,0 +1,224 @@
+@using Privatekonomi.Core.Models
+@using Privatekonomi.Core.Services
+@using MudBlazor
+@inject IGoalService GoalService
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.Calculate" Class="mr-2" />
+            Simulera Sparande för @Goal.Name
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudPaper Class="pa-4 mb-4" Elevation="0" Style="background-color: var(--mud-palette-info-lighten);">
+            <MudText Typo="Typo.subtitle2" Class="mb-2">
+                <MudIcon Icon="@Icons.Material.Filled.Info" Size="Size.Small" Class="mr-1" />
+                Aktuell information
+            </MudText>
+            <MudGrid>
+                <MudItem xs="6">
+                    <MudText Typo="Typo.body2">Målbelopp:</MudText>
+                    <MudText Typo="Typo.body1"><strong>@Goal.TargetAmount.ToString("N0", SwedishCulture) kr</strong></MudText>
+                </MudItem>
+                <MudItem xs="6">
+                    <MudText Typo="Typo.body2">Sparat hittills:</MudText>
+                    <MudText Typo="Typo.body1"><strong>@Goal.CurrentAmount.ToString("N0", SwedishCulture) kr</strong></MudText>
+                </MudItem>
+                <MudItem xs="6">
+                    <MudText Typo="Typo.body2">Återstår:</MudText>
+                    <MudText Typo="Typo.body1" Color="Color.Primary">
+                        <strong>@((Goal.TargetAmount - Goal.CurrentAmount).ToString("N0", SwedishCulture)) kr</strong>
+                    </MudText>
+                </MudItem>
+                <MudItem xs="6">
+                    <MudText Typo="Typo.body2">Nuvarande månadsbelopp:</MudText>
+                    <MudText Typo="Typo.body1"><strong>@Goal.MonthlyAutoSavingsAmount.ToString("N0", SwedishCulture) kr</strong></MudText>
+                </MudItem>
+            </MudGrid>
+        </MudPaper>
+
+        @if (_currentCompletionDate.HasValue)
+        {
+            <MudPaper Class="pa-4 mb-4" Elevation="0" Style="background-color: var(--mud-palette-surface);">
+                <MudText Typo="Typo.subtitle2" Class="mb-2">
+                    <MudIcon Icon="@Icons.Material.Filled.EventAvailable" Size="Size.Small" Class="mr-1" />
+                    Nuvarande prognos
+                </MudText>
+                <MudText Typo="Typo.body1" Class="mb-1">
+                    Klart om: <strong>@_currentMonthsToCompletion månader</strong>
+                </MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                    Beräknad klardatum: @_currentCompletionDate.Value.ToString("yyyy-MM-dd")
+                </MudText>
+            </MudPaper>
+        }
+        else if (Goal.MonthlyAutoSavingsAmount <= 0)
+        {
+            <MudAlert Severity="Severity.Warning" Class="mb-4">
+                Inget månadsbelopp angivet. Ange ett månatligt sparande nedan för att se beräkningen.
+            </MudAlert>
+        }
+
+        <MudDivider Class="my-4" />
+
+        <MudText Typo="Typo.h6" Class="mb-3">Simulera nytt sparande</MudText>
+        
+        <MudNumericField @bind-Value="_newMonthlySavings" 
+                         Label="Nytt månadsbelopp (kr)" 
+                         Variant="Variant.Outlined"
+                         Min="0"
+                         Format="N0"
+                         Culture="@SwedishCulture"
+                         Adornment="Adornment.End"
+                         AdornmentText="kr/mån"
+                         HelperText="Ändra det månatliga sparbeloppet för att se påverkan"
+                         Class="mb-4"
+                         Immediate="true"
+                         OnBlur="CalculateSimulation" />
+
+        @if (_simulationResult != null && _newMonthlySavings > 0)
+        {
+            <MudPaper Class="pa-4" Elevation="2" Style="@GetResultBackgroundStyle()">
+                <MudGrid>
+                    <MudItem xs="12" md="6">
+                        <MudText Typo="Typo.subtitle2" Class="mb-2">
+                            <MudIcon Icon="@Icons.Material.Filled.TrendingUp" Size="Size.Small" Class="mr-1" />
+                            Ny prognos
+                        </MudText>
+                        <MudText Typo="Typo.body1" Class="mb-1">
+                            Klart om: <strong>@_simulationResult.NewMonthsToCompletion månader</strong>
+                        </MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">
+                            Nytt klardatum: @_simulationResult.NewCompletionDate?.ToString("yyyy-MM-dd")
+                        </MudText>
+                    </MudItem>
+                    
+                    <MudItem xs="12" md="6">
+                        <MudText Typo="Typo.subtitle2" Class="mb-2">
+                            <MudIcon Icon="@GetDifferenceIcon()" Size="Size.Small" Color="@GetDifferenceColor()" Class="mr-1" />
+                            Skillnad
+                        </MudText>
+                        @if (_simulationResult.MonthsDifference > 0)
+                        {
+                            <MudText Typo="Typo.h6" Color="Color.Success">
+                                <strong>@Math.Abs(_simulationResult.MonthsDifference) månader tidigare</strong>
+                            </MudText>
+                            <MudText Typo="Typo.caption" Color="Color.Success">
+                                Du når målet snabbare! 🎉
+                            </MudText>
+                        }
+                        else if (_simulationResult.MonthsDifference < 0)
+                        {
+                            <MudText Typo="Typo.h6" Color="Color.Warning">
+                                <strong>@Math.Abs(_simulationResult.MonthsDifference) månader senare</strong>
+                            </MudText>
+                            <MudText Typo="Typo.caption" Color="Color.Warning">
+                                Målet tar längre tid att nå
+                            </MudText>
+                        }
+                        else
+                        {
+                            <MudText Typo="Typo.h6">
+                                <strong>Ingen förändring</strong>
+                            </MudText>
+                        }
+                    </MudItem>
+                </MudGrid>
+            </MudPaper>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel" Variant="Variant.Text">Stäng</MudButton>
+        @if (_simulationResult != null && _newMonthlySavings != Goal.MonthlyAutoSavingsAmount)
+        {
+            <MudButton OnClick="ApplyChanges" Variant="Variant.Filled" Color="Color.Primary">
+                Tillämpa nytt sparande
+            </MudButton>
+        }
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] public required IMudDialogInstance MudDialog { get; set; }
+    [Parameter] public Goal Goal { get; set; } = null!;
+
+    private static readonly System.Globalization.CultureInfo SwedishCulture = new System.Globalization.CultureInfo("sv-SE");
+
+    private decimal _newMonthlySavings;
+    private SavingsSimulationResult? _simulationResult;
+    private int _currentMonthsToCompletion;
+    private DateTime? _currentCompletionDate;
+
+    protected override void OnInitialized()
+    {
+        _newMonthlySavings = Goal.MonthlyAutoSavingsAmount;
+        
+        if (Goal.MonthlyAutoSavingsAmount > 0)
+        {
+            _currentMonthsToCompletion = GoalService.CalculateMonthsToCompletion(Goal, Goal.MonthlyAutoSavingsAmount);
+            _currentCompletionDate = GoalService.CalculateCompletionDate(Goal, Goal.MonthlyAutoSavingsAmount);
+        }
+        
+        CalculateSimulation();
+    }
+
+    private void CalculateSimulation()
+    {
+        if (_newMonthlySavings > 0)
+        {
+            _simulationResult = GoalService.SimulateSavingsChange(Goal, _newMonthlySavings);
+        }
+        else
+        {
+            _simulationResult = null;
+        }
+        StateHasChanged();
+    }
+
+    private string GetResultBackgroundStyle()
+    {
+        if (_simulationResult == null) return "";
+        
+        if (_simulationResult.MonthsDifference > 0)
+            return "background-color: rgba(76, 175, 80, 0.08);"; // Success green
+        else if (_simulationResult.MonthsDifference < 0)
+            return "background-color: rgba(255, 152, 0, 0.08);"; // Warning orange
+        
+        return "";
+    }
+
+    private string GetDifferenceIcon()
+    {
+        if (_simulationResult == null) return Icons.Material.Filled.Remove;
+        
+        if (_simulationResult.MonthsDifference > 0)
+            return Icons.Material.Filled.TrendingDown; // Earlier = down (better)
+        else if (_simulationResult.MonthsDifference < 0)
+            return Icons.Material.Filled.TrendingUp; // Later = up (worse)
+        
+        return Icons.Material.Filled.Remove;
+    }
+
+    private Color GetDifferenceColor()
+    {
+        if (_simulationResult == null) return Color.Default;
+        
+        if (_simulationResult.MonthsDifference > 0)
+            return Color.Success;
+        else if (_simulationResult.MonthsDifference < 0)
+            return Color.Warning;
+        
+        return Color.Default;
+    }
+
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+
+    private void ApplyChanges()
+    {
+        MudDialog.Close(DialogResult.Ok(_newMonthlySavings));
+    }
+}

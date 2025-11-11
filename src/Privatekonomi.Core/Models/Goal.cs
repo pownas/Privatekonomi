@@ -1,5 +1,15 @@
 namespace Privatekonomi.Core.Models;
 
+/// <summary>
+/// Type of automatic savings for a goal
+/// </summary>
+public enum AutoSavingsType
+{
+    None,
+    RoundUp,
+    FixedAmount
+}
+
 public class Goal : ITemporalEntity
 {
     public int GoalId { get; set; }
@@ -12,6 +22,10 @@ public class Goal : ITemporalEntity
     public int? FundedFromBankSourceId { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
+    
+    // Auto-savings configuration
+    public AutoSavingsType AutoSavingsType { get; set; } = AutoSavingsType.None;
+    public decimal MonthlyAutoSavingsAmount { get; set; } = 0m;
     
     // Temporal tracking
     public DateTime ValidFrom { get; set; }
