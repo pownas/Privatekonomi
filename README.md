@@ -13,6 +13,12 @@ En privatekonomi-applikation byggd med .NET 9, Blazor Server och MudBlazor för 
 
 ## 🎯 Funktioner
 
+- **Onboarding-flöde**: ⭐ NYTT!
+  - Guidat flöde för nya användare med 6 steg
+  - Bankkoppling, transaktionsimport och budgetförslag
+  - Baserat på 50/30/20-regeln med justerbara kategorier
+  - Information om dataskydd och GDPR
+  - Se [Onboarding guide](docs/ONBOARDING_GUIDE.md)
 - **Användarautentisering**: Komplett användarsystem med registrering, inloggning och dataisolering per användare
 - **Dashboard**: Översikt över totala inkomster, utgifter och nettoresultat
 - **Anpassad Dashboard med Widget-system**: ⭐ NYT!
