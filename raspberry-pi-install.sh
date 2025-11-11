@@ -662,9 +662,9 @@ upstream privatekonomi_dashboard {
 
 # Main server block (HTTP - change to 443 with SSL)
 server {
-    listen 80;
-    listen [::]:80;
-    server_name $server_name;
+    listen 80 default_server;
+    listen [::]:80 default_server;
+    server_name $server_name _;
     
     # Security headers
     add_header X-Frame-Options "SAMEORIGIN" always;
@@ -950,17 +950,17 @@ upstream privatekonomi_dashboard {
 
 # Redirect HTTP to HTTPS
 server {
-    listen 80;
-    listen [::]:80;
-    server_name $server_ip;
+    listen 80 default_server;
+    listen [::]:80 default_server;
+    server_name $server_ip _;
     return 301 https://\$host\$request_uri;
 }
 
 # HTTPS server block
 server {
-    listen 443 ssl http2;
-    listen [::]:443 ssl http2;
-    server_name $server_ip;
+    listen 443 ssl http2 default_server;
+    listen [::]:443 ssl http2 default_server;
+    server_name $server_ip _;
     
     # SSL Configuration
     ssl_certificate $cert_dir/privatekonomi.crt;
