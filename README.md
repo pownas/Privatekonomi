@@ -230,6 +230,8 @@ Se [ASPIRE_GUIDE.md](docs/ASPIRE_GUIDE.md) för mer information.
 
 #### 🍓 Raspberry Pi Installation (Automatisk)
 
+> **🎯 Nyligen Åtgärdat (November 2025):** Nätverksåtkomstproblem där tjänster lyssnade på 127.0.0.1 istället för 0.0.0.0 är nu löst. Se [Network Fix Dokumentation](docs/RASPBERRY_PI_NETWORK_FIX_2025_11.md) för detaljer.
+
 För Raspberry Pi-användare finns ett komplett installationsskript som automatiserar hela installationsprocessen:
 
 ```bash

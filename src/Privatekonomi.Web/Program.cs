@@ -19,6 +19,16 @@ if (builder.Environment.IsDevelopment() || string.Equals(builder.Environment.Env
     builder.Configuration.AddUserSecrets(typeof(Program).Assembly, optional: true);
 }
 
+// Raspberry Pi configuration - ensure we listen on all network interfaces
+var isRaspberryPi = Environment.GetEnvironmentVariable("PRIVATEKONOMI_RASPBERRY_PI") == "true";
+if (isRaspberryPi)
+{
+    // Explicitly configure Kestrel to listen on 0.0.0.0 for network access
+    // This overrides any localhost-only bindings from Aspire
+    var port = Environment.GetEnvironmentVariable("PORT") ?? "5274";
+    builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
+}
+
 // Configure Swedish culture as default
 var swedishCulture = new CultureInfo("sv-SE");
 CultureInfo.DefaultThreadCurrentCulture = swedishCulture;

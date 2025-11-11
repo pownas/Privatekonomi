@@ -2,6 +2,27 @@
 
 Denna guide hjälper dig att lösa vanliga problem med nätverksåtkomst och proxy-konfiguration för Privatekonomi på Raspberry Pi.
 
+## 🎯 Nyligen Åtgärdat (November 2025)
+
+**Problem:** Applikationen lyssnade på `127.0.0.1` istället för `0.0.0.0`, vilket gjorde den onåbar från andra nätverksenheter.
+
+**Lösning:** 
+- Uppdaterade Program.cs-filer för att explicit använda `0.0.0.0` när `PRIVATEKONOMI_RASPBERRY_PI=true`
+- Förbättrade systemd-tjänsten med korrekta miljövariabler
+- Uppdaterade Nginx-konfiguration med upstream-block för bättre felhantering
+
+**För att få den senaste versionen:**
+```bash
+cd ~/Privatekonomi
+git pull origin main
+dotnet build --configuration Release
+
+# Kör om installationen för att uppdatera konfigurationsfiler
+./raspberry-pi-install.sh
+```
+
+Efter uppdatering bör alla tjänster automatiskt lyssna på rätt adress (0.0.0.0) och vara tillgängliga från nätverket.
+
 ## Snabb Diagnostik
 
 Kör diagnostikskriptet först:
