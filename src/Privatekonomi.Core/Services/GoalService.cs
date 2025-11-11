@@ -143,4 +143,66 @@ public class GoalService : IGoalService
             .OrderBy(g => g.TargetDate)
             .ToListAsync();
     }
+
+    public async Task<bool> UpdateGoalPrioritiesAsync(Dictionary<int, int> goalPriorities)
+    {
+        foreach (var (goalId, priority) in goalPriorities)
+        {
+            var goal = await _context.Goals.FindAsync(goalId);
+            if (goal != null)
+            {
+                goal.Priority = priority;
+                goal.UpdatedAt = DateTime.UtcNow;
+            }
+        }
+        
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
+    public DateTime? CalculateCompletionDate(Goal goal, decimal monthlySavings)
+    {
+        if (monthlySavings <= 0)
+            return null;
+
+        var remainingAmount = goal.TargetAmount - goal.CurrentAmount;
+        if (remainingAmount <= 0)
+            return DateTime.UtcNow; // Already completed
+
+        var monthsToCompletion = (int)Math.Ceiling(remainingAmount / monthlySavings);
+        return DateTime.UtcNow.AddMonths(monthsToCompletion);
+    }
+
+    public int CalculateMonthsToCompletion(Goal goal, decimal monthlySavings)
+    {
+        if (monthlySavings <= 0)
+            return int.MaxValue;
+
+        var remainingAmount = goal.TargetAmount - goal.CurrentAmount;
+        if (remainingAmount <= 0)
+            return 0; // Already completed
+
+        return (int)Math.Ceiling(remainingAmount / monthlySavings);
+    }
+
+    public SavingsSimulationResult SimulateSavingsChange(Goal goal, decimal newMonthlySavings)
+    {
+        var currentMonthlySavings = goal.MonthlyAutoSavingsAmount;
+        var remainingAmount = goal.TargetAmount - goal.CurrentAmount;
+
+        var currentMonthsToCompletion = CalculateMonthsToCompletion(goal, currentMonthlySavings);
+        var newMonthsToCompletion = CalculateMonthsToCompletion(goal, newMonthlySavings);
+        
+        return new SavingsSimulationResult
+        {
+            CurrentMonthsToCompletion = currentMonthsToCompletion,
+            NewMonthsToCompletion = newMonthsToCompletion,
+            MonthsDifference = currentMonthsToCompletion - newMonthsToCompletion,
+            CurrentCompletionDate = CalculateCompletionDate(goal, currentMonthlySavings),
+            NewCompletionDate = CalculateCompletionDate(goal, newMonthlySavings),
+            CurrentMonthlySavings = currentMonthlySavings,
+            NewMonthlySavings = newMonthlySavings,
+            RemainingAmount = remainingAmount
+        };
+    }
 }
