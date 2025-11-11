@@ -175,14 +175,40 @@ function Install-EFTools {
     $globalTools = dotnet tool list --global | Out-String
     if ($globalTools -match "dotnet-ef") {
         Write-LogSuccess "Entity Framework tools are already installed"
-    }
-    else {
-        Write-LogInfo "Installing Entity Framework global tools..."
+        # Verify it's working
         try {
-            dotnet tool install --global dotnet-ef
+            dotnet ef --version | Out-Null
+            return
         }
         catch {
-            Write-LogError "Failed to install Entity Framework tools: $($_.Exception.Message)"
+            Write-LogWarning "dotnet-ef is installed but not working, attempting to reinstall..."
+            dotnet tool uninstall --global dotnet-ef 2>$null
+        }
+    }
+    
+    Write-LogInfo "Installing Entity Framework global tools..."
+    try {
+        dotnet tool install --global dotnet-ef 2>&1 | Out-Null
+        if ($LASTEXITCODE -ne 0) {
+            throw "Installation failed"
+        }
+    }
+    catch {
+        Write-LogWarning "Installation failed, clearing NuGet cache and retrying..."
+        dotnet nuget locals all --clear | Out-Null
+        
+        # Try with explicit version matching .NET SDK
+        $dotnetVersion = (dotnet --version).Split('.')[0]
+        Write-LogInfo "Attempting installation with version $dotnetVersion.0.0..."
+        try {
+            dotnet tool install --global dotnet-ef --version "$dotnetVersion.0.0"
+            if ($LASTEXITCODE -ne 0) {
+                throw "Installation failed after cache clear"
+            }
+        }
+        catch {
+            Write-LogError "Failed to install Entity Framework tools after cache clear"
+            Write-LogError "Try manually: dotnet tool install --global dotnet-ef --version $dotnetVersion.0.0"
             throw
         }
     }

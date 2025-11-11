@@ -461,23 +461,69 @@ EOF
 install_ef_tools() {
     log_section "Installerar Entity Framework-verktyg"
     
-    log_info "Installerar dotnet-ef globalt..."
-    dotnet tool install --global dotnet-ef || dotnet tool update --global dotnet-ef
-    
-    # Add tools to PATH
+    # Add tools to PATH first
     local tools_path="$HOME/.dotnet/tools"
     if [ -d "$tools_path" ] && ! echo "$PATH" | grep -q "$tools_path"; then
         export PATH="$PATH:$tools_path"
-        
-        if ! grep -q ".dotnet/tools" ~/.bashrc; then
-            echo "" >> ~/.bashrc
-            echo "# Add .NET Core SDK tools" >> ~/.bashrc
-            echo 'export PATH="$PATH:$HOME/.dotnet/tools"' >> ~/.bashrc
-            log_info "EF-verktyg har lagts till i PATH"
+    fi
+    
+    # Check if dotnet-ef is already installed and working
+    if command -v dotnet-ef &> /dev/null; then
+        local ef_version=$(dotnet-ef --version 2>&1 | head -n1 || echo "")
+        if [ -n "$ef_version" ] && [[ ! "$ef_version" =~ "error" ]] && [[ ! "$ef_version" =~ "failed" ]]; then
+            log_success "Entity Framework-verktyg är redan installerat: $ef_version"
+            return 0
+        else
+            log_warning "Entity Framework-verktyg är installerat men verkar ha problem"
         fi
     fi
     
-    log_success "Entity Framework-verktyg installerade"
+    log_info "Installerar dotnet-ef globalt..."
+    
+    # Try to install, if it fails due to cache corruption, clear cache and retry
+    if ! dotnet tool install --global dotnet-ef 2>&1; then
+        log_warning "Installation misslyckades, försöker uppdatera befintligt verktyg..."
+        
+        if ! dotnet tool update --global dotnet-ef 2>&1; then
+            log_warning "Uppdatering misslyckades, rensar NuGet cache och försöker igen..."
+            
+            # Clear the NuGet cache to resolve potential corruption
+            dotnet nuget locals all --clear
+            
+            # Uninstall if partially installed
+            dotnet tool uninstall --global dotnet-ef 2>/dev/null || true
+            
+            # Try fresh install after cache clear
+            log_info "Försöker installera igen efter cache-rensning..."
+            if ! dotnet tool install --global dotnet-ef; then
+                # If still failing, try with explicit version matching .NET SDK
+                log_warning "Installation utan version misslyckades, försöker med specifik version..."
+                local dotnet_version=$(dotnet --version | cut -d'.' -f1)
+                if ! dotnet tool install --global dotnet-ef --version ${dotnet_version}.0.0; then
+                    log_error "Misslyckades att installera Entity Framework-verktyg efter cache-rensning"
+                    log_error "Försök köra manuellt: dotnet tool install --global dotnet-ef --version ${dotnet_version}.0.0"
+                    return 1
+                fi
+            fi
+        fi
+    fi
+    
+    # Verify installation
+    if command -v dotnet-ef &> /dev/null || [ -f "$tools_path/dotnet-ef" ]; then
+        local ef_version=$(dotnet-ef --version 2>&1 | head -n1 || "$tools_path/dotnet-ef" --version 2>&1 | head -n1)
+        log_success "Entity Framework-verktyg installerade: $ef_version"
+    else
+        log_error "Entity Framework-verktyg kunde inte verifieras"
+        return 1
+    fi
+    
+    # Add tools to PATH in bashrc if not already there
+    if ! grep -q ".dotnet/tools" ~/.bashrc; then
+        echo "" >> ~/.bashrc
+        echo "# Add .NET Core SDK tools" >> ~/.bashrc
+        echo 'export PATH="$PATH:$HOME/.dotnet/tools"' >> ~/.bashrc
+        log_info "EF-verktyg har lagts till i PATH"
+    fi
 }
 
 # Configure development certificates
