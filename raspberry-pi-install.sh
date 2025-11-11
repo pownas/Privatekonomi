@@ -636,6 +636,22 @@ configure_nginx() {
 # Privatekonomi Nginx Reverse Proxy Configuration
 # Created by raspberry-pi-install.sh
 
+# Define upstream servers for better error handling
+upstream privatekonomi_web {
+    server localhost:$WEB_PORT;
+    keepalive 32;
+}
+
+upstream privatekonomi_api {
+    server localhost:$API_PORT;
+    keepalive 32;
+}
+
+upstream privatekonomi_dashboard {
+    server localhost:$DEFAULT_PORT;
+    keepalive 32;
+}
+
 # Redirect HTTP to HTTPS (uncomment after SSL is configured)
 # server {
 #     listen 80;
@@ -658,9 +674,14 @@ server {
     # Increase body size for file uploads
     client_max_body_size 20M;
     
+    # Connection timeouts
+    proxy_connect_timeout 60s;
+    proxy_send_timeout 60s;
+    proxy_read_timeout 60s;
+    
     # Web Application (Main Site)
     location / {
-        proxy_pass http://localhost:$WEB_PORT;
+        proxy_pass http://privatekonomi_web;
         proxy_http_version 1.1;
         proxy_set_header Upgrade \$http_upgrade;
         proxy_set_header Connection keep-alive;
@@ -673,11 +694,15 @@ server {
         # Blazor SignalR specific settings
         proxy_buffering off;
         proxy_read_timeout 100s;
+        
+        # Better error handling
+        proxy_intercept_errors on;
+        error_page 502 503 504 /50x.html;
     }
     
     # API Endpoints
     location /api/ {
-        proxy_pass http://localhost:$API_PORT/;
+        proxy_pass http://privatekonomi_api/;
         proxy_http_version 1.1;
         proxy_set_header Upgrade \$http_upgrade;
         proxy_set_header Connection keep-alive;
@@ -686,11 +711,15 @@ server {
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto \$scheme;
         proxy_set_header X-Real-IP \$remote_addr;
+        
+        # Better error handling
+        proxy_intercept_errors on;
+        error_page 502 503 504 /50x.html;
     }
     
     # Aspire Dashboard (optional - comment out in production)
     location /aspire/ {
-        proxy_pass http://localhost:$DEFAULT_PORT/;
+        proxy_pass http://privatekonomi_dashboard/;
         proxy_http_version 1.1;
         proxy_set_header Upgrade \$http_upgrade;
         proxy_set_header Connection keep-alive;
@@ -698,6 +727,16 @@ server {
         proxy_cache_bypass \$http_upgrade;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto \$scheme;
+        
+        # Better error handling
+        proxy_intercept_errors on;
+        error_page 502 503 504 /50x.html;
+    }
+    
+    # Error page
+    location = /50x.html {
+        root /usr/share/nginx/html;
+        internal;
     }
     
     # Health check endpoint
@@ -878,6 +917,22 @@ configure_selfsigned() {
 # Privatekonomi Nginx Reverse Proxy Configuration with Self-Signed SSL
 # Created by raspberry-pi-install.sh
 
+# Define upstream servers for better error handling
+upstream privatekonomi_web {
+    server localhost:$WEB_PORT;
+    keepalive 32;
+}
+
+upstream privatekonomi_api {
+    server localhost:$API_PORT;
+    keepalive 32;
+}
+
+upstream privatekonomi_dashboard {
+    server localhost:$DEFAULT_PORT;
+    keepalive 32;
+}
+
 # Redirect HTTP to HTTPS
 server {
     listen 80;
@@ -909,9 +964,14 @@ server {
     # Increase body size for file uploads
     client_max_body_size 20M;
     
+    # Connection timeouts
+    proxy_connect_timeout 60s;
+    proxy_send_timeout 60s;
+    proxy_read_timeout 60s;
+    
     # Web Application (Main Site)
     location / {
-        proxy_pass http://localhost:$WEB_PORT;
+        proxy_pass http://privatekonomi_web;
         proxy_http_version 1.1;
         proxy_set_header Upgrade \$http_upgrade;
         proxy_set_header Connection keep-alive;
@@ -924,11 +984,15 @@ server {
         # Blazor SignalR specific settings
         proxy_buffering off;
         proxy_read_timeout 100s;
+        
+        # Better error handling
+        proxy_intercept_errors on;
+        error_page 502 503 504 /50x.html;
     }
     
     # API Endpoints
     location /api/ {
-        proxy_pass http://localhost:$API_PORT/;
+        proxy_pass http://privatekonomi_api/;
         proxy_http_version 1.1;
         proxy_set_header Upgrade \$http_upgrade;
         proxy_set_header Connection keep-alive;
@@ -937,11 +1001,15 @@ server {
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto \$scheme;
         proxy_set_header X-Real-IP \$remote_addr;
+        
+        # Better error handling
+        proxy_intercept_errors on;
+        error_page 502 503 504 /50x.html;
     }
     
     # Aspire Dashboard (optional - comment out in production)
     location /aspire/ {
-        proxy_pass http://localhost:$DEFAULT_PORT/;
+        proxy_pass http://privatekonomi_dashboard/;
         proxy_http_version 1.1;
         proxy_set_header Upgrade \$http_upgrade;
         proxy_set_header Connection keep-alive;
@@ -949,6 +1017,16 @@ server {
         proxy_cache_bypass \$http_upgrade;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto \$scheme;
+        
+        # Better error handling
+        proxy_intercept_errors on;
+        error_page 502 503 504 /50x.html;
+    }
+    
+    # Error page
+    location = /50x.html {
+        root /usr/share/nginx/html;
+        internal;
     }
     
     # Health check endpoint
@@ -1142,6 +1220,7 @@ create_systemd_service() {
     fi
     
     local user=$(whoami)
+    local home_dir="$HOME"
     local working_dir
     local exec_command
     
@@ -1152,7 +1231,7 @@ create_systemd_service() {
         log_info "Använder publicerade binärer för systemd-tjänst"
     else
         working_dir="$INSTALL_DIR/src/Privatekonomi.AppHost"
-        exec_command="$HOME/.dotnet/dotnet run --configuration Release"
+        exec_command="$home_dir/.dotnet/dotnet run --configuration Release"
         log_info "Använder dotnet run för systemd-tjänst"
     fi
     
@@ -1173,7 +1252,8 @@ Environment=PRIVATEKONOMI_ENVIRONMENT=RaspberryPi
 Environment=PRIVATEKONOMI_STORAGE_PROVIDER=Sqlite
 Environment=PRIVATEKONOMI_RASPBERRY_PI=true
 Environment=DOTNET_DASHBOARD_URLS=http://0.0.0.0:$DEFAULT_PORT
-Environment=DOTNET_ROOT=$HOME/.dotnet
+Environment=DOTNET_ROOT=$home_dir/.dotnet
+Environment=PATH=$home_dir/.dotnet:$home_dir/.dotnet/tools:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 ExecStart=$exec_command
 Restart=always
 RestartSec=10
