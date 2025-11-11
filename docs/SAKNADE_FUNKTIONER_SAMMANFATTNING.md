@@ -245,7 +245,7 @@ Privatekonomi är ett **mycket omfattande system** med:
 
 ### Övrigt
 - ❌ Multi-språkstöd (i18n)
-- ❌ OCR för kvittoscanning
+- ✅ OCR för kvittoscanning (Tesseract med svenskt språkstöd)
 - ❌ Transaktionsversionering
 - ❌ Försäkringsöversikt
 - ❌ Multi-currency med konvertering

@@ -1,0 +1,178 @@
+.landing-page {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 0;
+}
+
+.hero-section {
+    padding: 4rem 1rem;
+    text-align: center;
+}
+
+.hero-content {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.hero-title {
+    color: white !important;
+    font-weight: 700 !important;
+    font-size: 3.5rem !important;
+    margin-bottom: 1rem !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+}
+
+.hero-icon {
+    font-size: 4rem !important;
+}
+
+.hero-subtitle {
+    color: rgba(255, 255, 255, 0.95) !important;
+    font-size: 1.75rem !important;
+    margin-bottom: 1.5rem !important;
+    font-weight: 400 !important;
+}
+
+.hero-description {
+    color: rgba(255, 255, 255, 0.85) !important;
+    font-size: 1.125rem !important;
+    margin-bottom: 2rem !important;
+    line-height: 1.6 !important;
+}
+
+.beta-chip {
+    font-size: 1rem !important;
+    padding: 1.5rem 2rem !important;
+    background: rgba(255, 255, 255, 0.2) !important;
+    color: white !important;
+    border: 2px solid white !important;
+    backdrop-filter: blur(10px);
+}
+
+.features-section,
+.sweden-section,
+.tech-section {
+    background: white;
+    padding: 4rem 1rem;
+}
+
+.section-title {
+    font-weight: 700 !important;
+    margin-bottom: 0.5rem !important;
+}
+
+.section-subtitle {
+    font-size: 1.125rem !important;
+    margin-bottom: 3rem !important;
+}
+
+.features-grid {
+    margin-top: 2rem;
+}
+
+.feature-card {
+    height: 100%;
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.feature-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.feature-icon {
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+.sweden-feature-card {
+    text-align: center;
+    padding: 0.5rem;
+    transition: transform 0.2s ease-in-out;
+}
+
+.sweden-feature-card:hover {
+    transform: scale(1.05);
+}
+
+.tech-stack {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 2rem;
+}
+
+.cta-section {
+    background: white;
+    padding: 4rem 1rem;
+}
+
+.cta-paper {
+    padding: 3rem 2rem;
+    text-align: center;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.cta-paper .mud-typography {
+    color: white !important;
+}
+
+.cta-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 2rem;
+}
+
+.footer-section {
+    background: white;
+    padding: 2rem 1rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .hero-title {
+        font-size: 2.5rem !important;
+        flex-direction: column;
+    }
+
+    .hero-subtitle {
+        font-size: 1.25rem !important;
+    }
+
+    .hero-description {
+        font-size: 1rem !important;
+    }
+
+    .features-section,
+    .sweden-section,
+    .tech-section,
+    .cta-section {
+        padding: 3rem 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .hero-section {
+        padding: 2rem 1rem;
+    }
+
+    .hero-title {
+        font-size: 2rem !important;
+    }
+
+    .cta-buttons {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .cta-buttons button {
+        width: 100%;
+    }
+}

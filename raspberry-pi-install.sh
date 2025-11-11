@@ -238,6 +238,8 @@ publish_application() {
     log_section "Publicerar applikation för produktion"
     
     local publish_dir="$INSTALL_DIR/publish"
+    # Define the list of components to publish - used for both publishing and validation
+    local publish_components=("AppHost" "Web" "Api")
     
     # Check if already published
     if [ -d "$publish_dir" ]; then
@@ -258,33 +260,61 @@ publish_application() {
     
     # Publish AppHost (Aspire orchestrator)
     log_info "Publicerar Privatekonomi.AppHost..."
-    dotnet publish src/Privatekonomi.AppHost/Privatekonomi.AppHost.csproj \
+    if ! dotnet publish src/Privatekonomi.AppHost/Privatekonomi.AppHost.csproj \
         --runtime linux-arm64 \
         --self-contained \
         --configuration Release \
         -o "$publish_dir/AppHost" \
         /p:PublishTrimmed=false \
-        /p:PublishSingleFile=false
+        /p:PublishSingleFile=false; then
+        log_error "Misslyckades att publicera Privatekonomi.AppHost"
+        return 1
+    fi
     
     # Publish Web
     log_info "Publicerar Privatekonomi.Web..."
-    dotnet publish src/Privatekonomi.Web/Privatekonomi.Web.csproj \
+    if ! dotnet publish src/Privatekonomi.Web/Privatekonomi.Web.csproj \
         --runtime linux-arm64 \
         --self-contained \
         --configuration Release \
         -o "$publish_dir/Web" \
         /p:PublishTrimmed=false \
-        /p:PublishSingleFile=false
+        /p:PublishSingleFile=false; then
+        log_error "Misslyckades att publicera Privatekonomi.Web"
+        return 1
+    fi
     
     # Publish API
     log_info "Publicerar Privatekonomi.Api..."
-    dotnet publish src/Privatekonomi.Api/Privatekonomi.Api.csproj \
+    if ! dotnet publish src/Privatekonomi.Api/Privatekonomi.Api.csproj \
         --runtime linux-arm64 \
         --self-contained \
         --configuration Release \
         -o "$publish_dir/Api" \
         /p:PublishTrimmed=false \
-        /p:PublishSingleFile=false
+        /p:PublishSingleFile=false; then
+        log_error "Misslyckades att publicera Privatekonomi.Api"
+        return 1
+    fi
+    
+    # Ensure all publish directories exist before copying files
+    # While dotnet publish with -o should create directories, this validation serves as:
+    # 1. Safety net for edge cases (filesystem issues, permissions, disk space)
+    # 2. Clear diagnostics if directories are missing
+    # 3. Automatic recovery by creating missing directories
+    # This addresses reported issue where AppHost folder was missing during publish
+    log_info "Kontrollerar publicerade kataloger..."
+    
+    for dir in "${publish_components[@]}"; do
+        if [ ! -d "$publish_dir/$dir" ]; then
+            log_warning "Katalog saknas: $publish_dir/$dir"
+            log_info "Skapar saknad katalog: $publish_dir/$dir"
+            if ! mkdir -p "$publish_dir/$dir"; then
+                log_error "Kunde inte skapa katalog: $publish_dir/$dir"
+                return 1
+            fi
+        fi
+    done
     
     # Copy appsettings to publish directories
     log_info "Kopierar konfigurationsfiler..."
@@ -431,23 +461,69 @@ EOF
 install_ef_tools() {
     log_section "Installerar Entity Framework-verktyg"
     
-    log_info "Installerar dotnet-ef globalt..."
-    dotnet tool install --global dotnet-ef || dotnet tool update --global dotnet-ef
-    
-    # Add tools to PATH
+    # Add tools to PATH first
     local tools_path="$HOME/.dotnet/tools"
     if [ -d "$tools_path" ] && ! echo "$PATH" | grep -q "$tools_path"; then
         export PATH="$PATH:$tools_path"
-        
-        if ! grep -q ".dotnet/tools" ~/.bashrc; then
-            echo "" >> ~/.bashrc
-            echo "# Add .NET Core SDK tools" >> ~/.bashrc
-            echo 'export PATH="$PATH:$HOME/.dotnet/tools"' >> ~/.bashrc
-            log_info "EF-verktyg har lagts till i PATH"
+    fi
+    
+    # Check if dotnet-ef is already installed and working
+    if command -v dotnet-ef &> /dev/null; then
+        local ef_version=$(dotnet-ef --version 2>&1 | head -n1 || echo "")
+        if [ -n "$ef_version" ] && [[ ! "$ef_version" =~ "error" ]] && [[ ! "$ef_version" =~ "failed" ]]; then
+            log_success "Entity Framework-verktyg är redan installerat: $ef_version"
+            return 0
+        else
+            log_warning "Entity Framework-verktyg är installerat men verkar ha problem"
         fi
     fi
     
-    log_success "Entity Framework-verktyg installerade"
+    log_info "Installerar dotnet-ef globalt..."
+    
+    # Try to install, if it fails due to cache corruption, clear cache and retry
+    if ! dotnet tool install --global dotnet-ef 2>&1; then
+        log_warning "Installation misslyckades, försöker uppdatera befintligt verktyg..."
+        
+        if ! dotnet tool update --global dotnet-ef 2>&1; then
+            log_warning "Uppdatering misslyckades, rensar NuGet cache och försöker igen..."
+            
+            # Clear the NuGet cache to resolve potential corruption
+            dotnet nuget locals all --clear
+            
+            # Uninstall if partially installed
+            dotnet tool uninstall --global dotnet-ef 2>/dev/null || true
+            
+            # Try fresh install after cache clear
+            log_info "Försöker installera igen efter cache-rensning..."
+            if ! dotnet tool install --global dotnet-ef; then
+                # If still failing, try with explicit version matching .NET SDK
+                log_warning "Installation utan version misslyckades, försöker med specifik version..."
+                local dotnet_version=$(dotnet --version | cut -d'.' -f1)
+                if ! dotnet tool install --global dotnet-ef --version ${dotnet_version}.0.0; then
+                    log_error "Misslyckades att installera Entity Framework-verktyg efter cache-rensning"
+                    log_error "Försök köra manuellt: dotnet tool install --global dotnet-ef --version ${dotnet_version}.0.0"
+                    return 1
+                fi
+            fi
+        fi
+    fi
+    
+    # Verify installation
+    if command -v dotnet-ef &> /dev/null || [ -f "$tools_path/dotnet-ef" ]; then
+        local ef_version=$(dotnet-ef --version 2>&1 | head -n1 || "$tools_path/dotnet-ef" --version 2>&1 | head -n1)
+        log_success "Entity Framework-verktyg installerade: $ef_version"
+    else
+        log_error "Entity Framework-verktyg kunde inte verifieras"
+        return 1
+    fi
+    
+    # Add tools to PATH in bashrc if not already there
+    if ! grep -q ".dotnet/tools" ~/.bashrc; then
+        echo "" >> ~/.bashrc
+        echo "# Add .NET Core SDK tools" >> ~/.bashrc
+        echo 'export PATH="$PATH:$HOME/.dotnet/tools"' >> ~/.bashrc
+        log_info "EF-verktyg har lagts till i PATH"
+    fi
 }
 
 # Configure development certificates
@@ -1299,6 +1375,116 @@ verify_installation() {
     fi
 }
 
+# Validate network configuration
+validate_network_config() {
+    log_section "Validerar nätverkskonfiguration"
+    
+    local validation_passed=true
+    
+    # Check appsettings.Production.json files exist and have correct Urls
+    local web_config="$INSTALL_DIR/src/Privatekonomi.Web/appsettings.Production.json"
+    local api_config="$INSTALL_DIR/src/Privatekonomi.Api/appsettings.Production.json"
+    local apphost_config="$INSTALL_DIR/src/Privatekonomi.AppHost/appsettings.Production.json"
+    
+    # Validate Web config
+    if [ -f "$web_config" ]; then
+        if grep -q '"Urls".*"http://0.0.0.0:5274"' "$web_config"; then
+            log_success "Web konfiguration: Korrekt (lyssnar på 0.0.0.0:5274)"
+        else
+            log_warning "Web konfiguration: Kontrollera Urls-inställning"
+            validation_passed=false
+        fi
+    else
+        log_warning "Web konfiguration: Fil saknas"
+        validation_passed=false
+    fi
+    
+    # Validate API config
+    if [ -f "$api_config" ]; then
+        if grep -q '"Urls".*"http://0.0.0.0:5277"' "$api_config"; then
+            log_success "API konfiguration: Korrekt (lyssnar på 0.0.0.0:5277)"
+        else
+            log_warning "API konfiguration: Kontrollera Urls-inställning"
+            validation_passed=false
+        fi
+    else
+        log_warning "API konfiguration: Fil saknas"
+        validation_passed=false
+    fi
+    
+    # Validate AppHost config
+    if [ -f "$apphost_config" ]; then
+        if grep -q '"Url".*"http://0.0.0.0:17127"' "$apphost_config"; then
+            log_success "AppHost konfiguration: Korrekt (lyssnar på 0.0.0.0:17127)"
+        else
+            log_warning "AppHost konfiguration: Kontrollera Kestrel-inställning"
+            validation_passed=false
+        fi
+    else
+        log_warning "AppHost konfiguration: Fil saknas"
+        validation_passed=false
+    fi
+    
+    # Check network information
+    local pi_ip=$(hostname -I | awk '{print $1}')
+    if [ -n "$pi_ip" ]; then
+        log_success "Raspberry Pi IP-adress: $pi_ip"
+        echo ""
+        echo -e "${BLUE}Åtkomst från andra enheter på nätverket:${NC}"
+        echo -e "  ${YELLOW}Direktåtkomst:${NC}"
+        echo -e "    http://$pi_ip:17127  (Aspire Dashboard)"
+        echo -e "    http://$pi_ip:5274   (Web App)"
+        echo -e "    http://$pi_ip:5277   (API)"
+        
+        if command -v nginx &> /dev/null && systemctl is-active --quiet nginx 2>/dev/null; then
+            echo -e ""
+            echo -e "  ${YELLOW}Via Nginx Proxy:${NC}"
+            echo -e "    http://$pi_ip        (Web App)"
+            
+            if ss -lntp 2>/dev/null | grep -q ":443 "; then
+                echo -e "    https://$pi_ip       (Web App med SSL)"
+            fi
+        fi
+        echo ""
+    else
+        log_warning "Kunde inte fastställa IP-adress"
+        validation_passed=false
+    fi
+    
+    # Check firewall if active
+    if command -v ufw &> /dev/null && sudo ufw status 2>/dev/null | grep -q "Status: active"; then
+        log_info "Kontrollerar brandväggsinställningar..."
+        local firewall_ok=true
+        
+        for port in 17127 5274 5277; do
+            if sudo ufw status | grep -q "$port"; then
+                log_success "Port $port är öppen i brandväggen"
+            else
+                log_warning "Port $port är INTE öppen i brandväggen"
+                firewall_ok=false
+            fi
+        done
+        
+        if [ "$firewall_ok" = false ]; then
+            echo ""
+            echo -e "${YELLOW}Öppna portar med:${NC}"
+            echo "  sudo ufw allow 17127/tcp comment 'Privatekonomi Aspire'"
+            echo "  sudo ufw allow 5274/tcp comment 'Privatekonomi Web'"
+            echo "  sudo ufw allow 5277/tcp comment 'Privatekonomi API'"
+            echo "  sudo ufw reload"
+            validation_passed=false
+        fi
+    fi
+    
+    echo ""
+    if [ "$validation_passed" = true ]; then
+        log_success "Nätverkskonfiguration är korrekt"
+    else
+        log_warning "Vissa nätverksinställningar kan behöva justeras"
+        log_info "Kör './raspberry-pi-debug.sh' efter första starten för fullständig diagnos"
+    fi
+}
+
 # Show usage information
 show_usage_info() {
     log_section "Installation klar - Användningsinformation"
@@ -1400,11 +1586,19 @@ main() {
     setup_backup
     configure_static_ip
     verify_installation
+    validate_network_config
     show_usage_info
     
     log_success "Installation slutförd framgångsrikt!"
     echo -e ""
     echo -e "${GREEN}Starta applikationen med: ${YELLOW}cd $INSTALL_DIR && ./raspberry-pi-start.sh${NC}"
+    echo -e ""
+    echo -e "${BLUE}Efter första starten, kör diagnostik:${NC}"
+    echo -e "${YELLOW}  ./raspberry-pi-debug.sh${NC}"
+    echo -e ""
+    echo -e "${BLUE}Felsökningsguider:${NC}"
+    echo -e "  docs/RASPBERRY_PI_NETWORK_TROUBLESHOOTING.md"
+    echo -e "  docs/RASPBERRY_PI_DEVICE_TESTING.md"
 }
 
 # Handle script arguments

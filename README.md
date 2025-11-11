@@ -2,6 +2,15 @@
 
 En privatekonomi-applikation byggd med .NET 9, Blazor Server och MudBlazor för att hjälpa användare att få koll och kontroll över sin ekonomi.
 
+## 🌐 Landningssida (Beta)
+
+- **Landningssida för ekonomiappen.se**: ⭐ NYTT!
+  - Modern och professionell landningssida tillgänglig på `/landing`
+  - Visar översikt av applikationens funktioner
+  - "Kommer snart"-meddelande för betafasen
+  - Fullständig responsiv design för alla enheter
+  - Se [Landningssida guide](docs/LANDING_PAGE_GUIDE.md)
+
 ## 🎯 Funktioner
 
 - **Användarautentisering**: Komplett användarsystem med registrering, inloggning och dataisolering per användare
@@ -41,6 +50,14 @@ En privatekonomi-applikation byggd med .NET 9, Blazor Server och MudBlazor för 
   - Transaktionshistorik och notifieringar
   - Rollbaserad åtkomstkontroll (Owner/Participant)
   - Se [detaljerad dokumentation](docs/README_Gemensamma_Sparmal.md)
+- **Delad Ekonomi (Hushållsapp MVP)**: ⭐ NYTT!
+  - **Gemensamma budgetar**: Skapa och dela budgetar mellan hushållsmedlemmar med procentuell fördelning
+  - **Skuldbalansering**: Registrera och hantera skulder mellan medlemmar
+  - **"Settle Up"**: Markera skulder som betalda och håll koll på vem som är skyldig vem
+  - **Optimal balansering**: Automatisk algoritm för att minimera antalet transaktioner vid uppgörelse
+  - **Medlemsbalanser**: Realtidsöversikt över varje medlems saldo (röd/grön färgkodning)
+  - Perfekt för par, samboende, kollektiv och familjer
+  - Se [Delad Ekonomi guide](docs/DELAD_EKONOMI_GUIDE.md)
 - **Investeringshantering**: Hantera aktier, fonder, ETF, certifikat, krypto och P2P-lån med översikt över värde och avkastning
   - Stöd för ISK, KF, AF och Depå
   - Aggregering per kontotyp och investeringstyp
@@ -53,6 +70,14 @@ En privatekonomi-applikation byggd med .NET 9, Blazor Server och MudBlazor för 
   - Rekommendation att hämta data från minpension.se
   - Se [Investeringar & Pension guide](docs/INVESTMENT_PENSION_GUIDE.md)
 - **Automatisk kursuppdatering**: Uppdatera aktiekurser via Yahoo Finance API med ett knapptryck
+- **Kontohantering**: ⭐ NYTT!
+  - Hantera alla dina konton på ett och samma ställe
+  - Stöd för lönekonton, sparkonton, kreditkort, investeringskonton, lån, pensionskonton och kontanter
+  - Registrera kontonummer (inkl. clearingnummer för svenska banker)
+  - Koppla konton till BAS-kontoplan för redovisningsintegration
+  - Grupperad visning per kontotyp med ikoner
+  - Automatisk saldoberäkning baserad på transaktioner
+  - Se [Kontohantering guide](docs/ACCOUNT_MANAGEMENT_GUIDE.md)
 - **Kategorisystem**: Förkonfigurerade kategorier med färgkodning och hierarkisk struktur
   - **BAS 2025-baserad kontoplan**: Kontonummer inspirerade av svensk BAS-standard för strukturerad bokföring
   - Redigerbar kontoplan med stöd för egna konton och underkategorier
@@ -66,10 +91,10 @@ En privatekonomi-applikation byggd med .NET 9, Blazor Server och MudBlazor för 
   - Systemet föreslår också kategorier baserat på tidigare transaktioner
 - **Responsiv design**: Fungerar på desktop och mobila enheter
 - **Flexibel datalagring**: 
-  - Stöd för InMemory (utveckling), SQLite (produktion), SQL Server (storskalig produktion) och JsonFile (backup/portabilitet)
+  - Stöd för InMemory (utveckling), SQLite (produktion), **MySQL/MariaDB** ⭐ **(webbhotell)**, SQL Server (storskalig produktion) och JsonFile (backup/portabilitet)
   - Konfigurerbart via appsettings.json
-  - Lämpligt för lokal användning, Raspberry Pi, NAS och molnbaserad hosting
-  - Se [lagringsguide](docs/STORAGE_GUIDE.md) för mer information
+  - Lämpligt för lokal användning, Raspberry Pi, NAS, webbhotell och molnbaserad hosting
+  - Se [lagringsguide](docs/STORAGE_GUIDE.md) och [MySQL deployment guide](docs/MYSQL_DEPLOYMENT_GUIDE.md) för mer information
 - **Data Persistens & Backup**:
   - Automatisk sparning var 5:e minut (för JsonFile provider)
   - Fullständig backup/export till JSON
@@ -80,6 +105,13 @@ En privatekonomi-applikation byggd med .NET 9, Blazor Server och MudBlazor för 
 - **CSV-import**: 
   - Import av transaktioner från ICA-banken och Swedbank
   - Import av investeringar från Avanza Bank med dubbletthantering
+- **OCR Kvittoskanning**: ⭐ NYTT!
+  - Skanna papperskvitton med OCR (Optical Character Recognition)
+  - Automatisk extraktion av belopp, datum, butik och radposter
+  - Tesseract OCR-motor med svenskt språkstöd
+  - Bildförbehandling för bättre noggrannhet
+  - Granska och redigera extraherad data innan sparning
+  - Se [OCR Kvittoskanning guide](docs/OCR_RECEIPT_SCANNING_GUIDE.md)
 - **Automatisk bankimport via PSD2-API**:
   - Stöd för Swedbank, Avanza Bank och ICA Banken
   - OAuth2-baserad autentisering med BankID
@@ -131,6 +163,17 @@ En privatekonomi-applikation byggd med .NET 9, Blazor Server och MudBlazor för 
   - Beräkna genomsnittslön och lönetillväxt
   - Dokumentera jobbbyten och löneförhöjningar
   - Hantera befattning, arbetsgivare och anställningstyp
+- **Bolåneanalys**: ⭐ NYTT!
+  - **Svenska amorteringskrav**: Automatisk kontroll enligt Finansinspektionens regler
+    - LTV > 70%: 2% årlig amortering
+    - 50% < LTV ≤ 70%: 1% årlig amortering
+    - LTV ≤ 50%: Inget amorteringskrav
+  - **Ränteriskanalys**: Simulera olika räntescenarier (+1%, +2%, +3%)
+  - **Räntebindningsövervakning**: Få varningar innan bindningsperioden löper ut
+  - **Detaljerad bolånehantering**: Fastighetsvärde, belåningsgrad, långivare
+  - Färgkodad riskbedömning (grön/gul/röd)
+  - Beräkning av återbetalningstid och månadskostnader
+  - Se [Bolåneanalys guide](docs/MORTGAGE_ANALYSIS_GUIDE.md) och [Teknisk implementering](docs/MORTGAGE_ANALYSIS_IMPLEMENTATION.md)
 - **Smart Notifikationssystem**: ⭐ NYTT!
   - Multi-kanal notifikationer (In-app, Email, SMS, Push, Slack, Teams)
   - Konfigurerbart per notifikationstyp
@@ -229,10 +272,13 @@ cd ~/Privatekonomi
 - **SSL/HTTPS**: Automatisk Let's Encrypt-konfiguration eller self-signed certifikat
 
 Se följande guider för Raspberry Pi:
-- **[RASPBERRY_PI_första_installationen.md](docs/RASPBERRY_PI_första_installationen.md)**: Snabbstart och översikt
-- **[RASPBERRY_PI_UPDATE_GUIDE.md](docs/RASPBERRY_PI_UPDATE_GUIDE.md)**: Uppdatera befintlig installation ⭐ NYTT!
-- **[RASPBERRY_PI_GUIDE.md](docs/RASPBERRY_PI_GUIDE.md)**: Detaljerad manuell installation
-- **[RASPBERRY_PI_NGINX_SSL.md](docs/RASPBERRY_PI_NGINX_SSL.md)**: Nginx och SSL-konfiguration (kommer snart)
+- **[RASPBERRY_PI_QUICKSTART.md](docs/RASPBERRY_PI_QUICKSTART.md)**: ⭐ Snabbstart (5 minuter) - Börja här!
+- **[RASPBERRY_PI_GUIDE.md](docs/RASPBERRY_PI_GUIDE.md)**: Detaljerad installationsguide
+- **[RASPBERRY_PI_NETWORK_TROUBLESHOOTING.md](docs/RASPBERRY_PI_NETWORK_TROUBLESHOOTING.md)**: Felsökning nätverksproblem
+- **[RASPBERRY_PI_DEVICE_TESTING.md](docs/RASPBERRY_PI_DEVICE_TESTING.md)**: Testa från olika enheter (mobil, desktop, etc.)
+- **[RASPBERRY_PI_NETWORK_ACCESS.md](docs/RASPBERRY_PI_NETWORK_ACCESS.md)**: Nätverkskonfiguration
+- **[RASPBERRY_PI_NGINX_SSL.md](docs/RASPBERRY_PI_NGINX_SSL.md)**: Nginx reverse proxy och SSL
+- **[RASPBERRY_PI_UPDATE_GUIDE.md](docs/RASPBERRY_PI_UPDATE_GUIDE.md)**: Uppdatera befintlig installation
 - **[RASPBERRY_PI_INSTALL_TEST.md](docs/RASPBERRY_PI_INSTALL_TEST.md)**: Testguide för installation
 
 #### Snabbstart med startskript (Enklast för Codespaces)
@@ -528,6 +574,17 @@ Applikationen stödjer flera lagringsmetoder som enkelt kan konfigureras via `ap
 }
 ```
 
+#### Webbhotell (MySQL/MariaDB) ⭐ **NYTT**
+```json
+{
+  "Storage": {
+    "Provider": "MySQL",
+    "ConnectionString": "Server=mysql.example.com;Port=3306;Database=privatekonomi;User=privkonomi_user;Password=YourPassword;",
+    "SeedTestData": false
+  }
+}
+```
+
 #### Raspberry Pi / NAS (SQLite på delad lagring)
 ```json
 {
@@ -562,7 +619,7 @@ Applikationen stödjer flera lagringsmetoder som enkelt kan konfigureras via `ap
 ```
 
 Se [STORAGE_GUIDE.md](docs/STORAGE_GUIDE.md) för detaljerad information om:
-- Olika lagringsalternativ (InMemory, SQLite, SQL Server, JsonFile)
+- Olika lagringsalternativ (InMemory, SQLite, **MySQL/MariaDB**, SQL Server, JsonFile)
 - Nätverksåtkomst och delad lagring
 - Backup och återställning
 - Migration mellan lagringsmetoder
@@ -606,6 +663,25 @@ Se [STORAGE_GUIDE.md](docs/STORAGE_GUIDE.md) för detaljerad information om:
 - ✅ Reseavdrag
 - ⚠️ BankID (planerad)
 - ⚠️ Fortnox/Visma integration (planerad)
+
+### Deployment och Driftsättning
+
+- **[DEPLOYMENT_GUIDE.md](docs/DEPLOYMENT_GUIDE.md)**: Komplett guide för automatiserad deployment till webbhotell via SFTP
+- **[MYSQL_DEPLOYMENT_GUIDE.md](docs/MYSQL_DEPLOYMENT_GUIDE.md)**: ⭐ **NYTT!** Detaljerad guide för MySQL/MariaDB-deployment på webbhotell
+- **[RELEASE_PIPELINE_QUICKSTART.md](docs/RELEASE_PIPELINE_QUICKSTART.md)**: Snabbreferens för release pipeline
+- **[SYSTEMD_SERVICE_GUIDE.md](docs/SYSTEMD_SERVICE_GUIDE.md)**: Guide för konfiguration av systemd-service på Linux
+
+**Funktioner:**
+- ✅ Automatisk GitHub Actions release pipeline
+- ✅ **Dual deployment: Web och API separat** ⭐ **NYTT!**
+- ✅ **MySQL/MariaDB databas-support** ⭐ **NYTT!**
+- ✅ SFTP/FTPS deployment till webbhotell
+- ✅ Semantic versioning med Git tags
+- ✅ Automatisk build, test och publicering
+- ✅ GitHub Release creation med installationspaket
+- ✅ Systemd service-konfiguration för produktion
+- ✅ Health checks och monitoring
+- ✅ Backup och rollback-strategier
 
 ### Teknisk dokumentation
 

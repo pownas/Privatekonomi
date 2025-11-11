@@ -628,10 +628,196 @@ public static class TestDataSeeder
             }
         }
 
+        // Create household activities (timeline items)
+        var activities = new List<HouseholdActivity>
+        {
+            new HouseholdActivity
+            {
+                HouseholdActivityId = 1,
+                HouseholdId = 1,
+                Title = "Städade hela lägenheten",
+                Description = "Genomförde storstädning i alla rum, dammade och moppade",
+                Type = HouseholdActivityType.Cleaning,
+                CompletedDate = DateTime.UtcNow.AddDays(-2),
+                CreatedDate = DateTime.UtcNow.AddDays(-2),
+                CompletedByMemberId = 1
+            },
+            new HouseholdActivity
+            {
+                HouseholdActivityId = 2,
+                HouseholdId = 1,
+                Title = "Handlade mat för veckan",
+                Description = "Veckohandling på ICA Maxi - totalt 2450 kr",
+                Type = HouseholdActivityType.Shopping,
+                CompletedDate = DateTime.UtcNow.AddDays(-5),
+                CreatedDate = DateTime.UtcNow.AddDays(-5),
+                CompletedByMemberId = 2
+            },
+            new HouseholdActivity
+            {
+                HouseholdActivityId = 3,
+                HouseholdId = 1,
+                Title = "Lagade diskbänkskranen",
+                Description = "Bytte ut packningsring som läckte",
+                Type = HouseholdActivityType.Repair,
+                CompletedDate = DateTime.UtcNow.AddDays(-7),
+                CreatedDate = DateTime.UtcNow.AddDays(-7),
+                CompletedByMemberId = 2
+            },
+            new HouseholdActivity
+            {
+                HouseholdActivityId = 4,
+                HouseholdId = 1,
+                Title = "Lagade söndagsmiddag",
+                Description = "Bjöd familjen på husmanskost med köttbullar och potatismos",
+                Type = HouseholdActivityType.Cooking,
+                CompletedDate = DateTime.UtcNow.AddDays(-3),
+                CreatedDate = DateTime.UtcNow.AddDays(-3),
+                CompletedByMemberId = 1
+            },
+            new HouseholdActivity
+            {
+                HouseholdActivityId = 5,
+                HouseholdId = 1,
+                Title = "Klippte gräsmattan",
+                Description = "Gräsklippning och trädgårdsarbete",
+                Type = HouseholdActivityType.Maintenance,
+                CompletedDate = DateTime.UtcNow.AddDays(-10),
+                CreatedDate = DateTime.UtcNow.AddDays(-10),
+                CompletedByMemberId = 3
+            }
+        };
+
+        // Create household tasks (to-do items)
+        var tasks = new List<HouseholdTask>
+        {
+            new HouseholdTask
+            {
+                HouseholdTaskId = 1,
+                HouseholdId = 1,
+                Title = "Boka lägenhetssyn",
+                Description = "Ring värden och boka tid för årlig besiktning",
+                Category = HouseholdActivityType.General,
+                Priority = HouseholdTaskPriority.High,
+                DueDate = DateTime.UtcNow.AddDays(5),
+                CreatedDate = DateTime.UtcNow.AddDays(-3),
+                IsCompleted = false,
+                AssignedToMemberId = 2
+            },
+            new HouseholdTask
+            {
+                HouseholdTaskId = 2,
+                HouseholdId = 1,
+                Title = "Tvätta fönster",
+                Description = "Invändigt och utvändigt på alla fönster",
+                Category = HouseholdActivityType.Cleaning,
+                Priority = HouseholdTaskPriority.Normal,
+                DueDate = DateTime.UtcNow.AddDays(14),
+                CreatedDate = DateTime.UtcNow.AddDays(-5),
+                IsCompleted = false,
+                AssignedToMemberId = 1
+            },
+            new HouseholdTask
+            {
+                HouseholdTaskId = 3,
+                HouseholdId = 1,
+                Title = "Handla julklappar",
+                Description = "Köpa presenter till släkten",
+                Category = HouseholdActivityType.Shopping,
+                Priority = HouseholdTaskPriority.High,
+                DueDate = DateTime.UtcNow.AddDays(30),
+                CreatedDate = DateTime.UtcNow.AddDays(-2),
+                IsCompleted = false,
+                AssignedToMemberId = 3
+            },
+            new HouseholdTask
+            {
+                HouseholdTaskId = 4,
+                HouseholdId = 1,
+                Title = "Beställa ny diskmaskin",
+                Description = "Nuvarande diskmaskin är trasig, måste beställa ny",
+                Category = HouseholdActivityType.Maintenance,
+                Priority = HouseholdTaskPriority.High,
+                DueDate = DateTime.UtcNow.AddDays(7),
+                CreatedDate = DateTime.UtcNow.AddDays(-1),
+                IsCompleted = false,
+                AssignedToMemberId = 2
+            },
+            new HouseholdTask
+            {
+                HouseholdTaskId = 5,
+                HouseholdId = 1,
+                Title = "Sortera garderoben",
+                Description = "Gå igenom kläder och skänka det vi inte använder",
+                Category = HouseholdActivityType.General,
+                Priority = HouseholdTaskPriority.Low,
+                DueDate = null,
+                CreatedDate = DateTime.UtcNow.AddDays(-7),
+                IsCompleted = false,
+                AssignedToMemberId = 1
+            },
+            new HouseholdTask
+            {
+                HouseholdTaskId = 6,
+                HouseholdId = 1,
+                Title = "Dammsög bilen",
+                Description = "Invändig rengöring av familjebilen",
+                Category = HouseholdActivityType.Cleaning,
+                Priority = HouseholdTaskPriority.Low,
+                DueDate = DateTime.UtcNow.AddDays(20),
+                CreatedDate = DateTime.UtcNow.AddDays(-4),
+                IsCompleted = false
+            },
+            new HouseholdTask
+            {
+                HouseholdTaskId = 7,
+                HouseholdId = 1,
+                Title = "Byt glödlampor i hallen",
+                Description = "Tre lampor är trasiga i hallen",
+                Category = HouseholdActivityType.Maintenance,
+                Priority = HouseholdTaskPriority.Normal,
+                DueDate = DateTime.UtcNow.AddDays(3),
+                CreatedDate = DateTime.UtcNow.AddDays(-2),
+                IsCompleted = false,
+                AssignedToMemberId = 2
+            },
+            // Some completed tasks
+            new HouseholdTask
+            {
+                HouseholdTaskId = 8,
+                HouseholdId = 1,
+                Title = "Tömma soporna",
+                Description = "Ta ut sopor och återvinning",
+                Category = HouseholdActivityType.General,
+                Priority = HouseholdTaskPriority.Normal,
+                DueDate = DateTime.UtcNow.AddDays(-1),
+                CreatedDate = DateTime.UtcNow.AddDays(-8),
+                IsCompleted = true,
+                CompletedDate = DateTime.UtcNow.AddDays(-1),
+                CompletedByMemberId = 3
+            },
+            new HouseholdTask
+            {
+                HouseholdTaskId = 9,
+                HouseholdId = 1,
+                Title = "Köpa mjölk och bröd",
+                Description = "Snabbhandling på vägen hem",
+                Category = HouseholdActivityType.Shopping,
+                Priority = HouseholdTaskPriority.High,
+                DueDate = DateTime.UtcNow.AddDays(-2),
+                CreatedDate = DateTime.UtcNow.AddDays(-3),
+                IsCompleted = true,
+                CompletedDate = DateTime.UtcNow.AddDays(-2),
+                CompletedByMemberId = 1
+            }
+        };
+
         context.Households.Add(household);
         context.HouseholdMembers.AddRange(members);
         context.SharedExpenses.AddRange(sharedExpenses);
         context.ExpenseShares.AddRange(expenseShares);
+        context.HouseholdActivities.AddRange(activities);
+        context.HouseholdTasks.AddRange(tasks);
         context.SaveChanges();
     }
 

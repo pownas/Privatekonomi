@@ -435,7 +435,35 @@ sudo reboot
 - **Installation**: [RASPBERRY_PI_GUIDE.md](RASPBERRY_PI_GUIDE.md)
 - **Uppdatering**: [RASPBERRY_PI_UPDATE_GUIDE.md](RASPBERRY_PI_UPDATE_GUIDE.md)
 - **Nginx & SSL**: [RASPBERRY_PI_NGINX_SSL.md](RASPBERRY_PI_NGINX_SSL.md)
-- **PWA-guide**: [PWA_GUIDE.md](PWA_GUIDE.md)
+- **Felsökning Nätverk**: [RASPBERRY_PI_NETWORK_TROUBLESHOOTING.md](RASPBERRY_PI_NETWORK_TROUBLESHOOTING.md)
+- **Testa från Olika Enheter**: [RASPBERRY_PI_DEVICE_TESTING.md](RASPBERRY_PI_DEVICE_TESTING.md)
+- **PWA-guide**: [PWA_GUIDE.md](PWA_GUIDE.md) (om tillgänglig)
+
+## 🔧 Felsökning
+
+Om du stöter på problem med nätverksåtkomst:
+
+1. **Kör diagnostikskript:**
+   ```bash
+   cd ~/Privatekonomi
+   ./raspberry-pi-debug.sh
+   ```
+
+2. **Se omfattande felsökningsguide:**
+   - [RASPBERRY_PI_NETWORK_TROUBLESHOOTING.md](RASPBERRY_PI_NETWORK_TROUBLESHOOTING.md) - Detaljerade lösningar för alla vanliga problem
+
+3. **Testa från olika enheter:**
+   - [RASPBERRY_PI_DEVICE_TESTING.md](RASPBERRY_PI_DEVICE_TESTING.md) - Steg-för-steg testinstruktioner
+
+**Vanliga problem och snabba lösningar:**
+
+| Problem | Lösning |
+|---------|---------|
+| Tjänster lyssnar på `127.0.0.1` | `./raspberry-pi-install.sh` |
+| Brandväggen blockerar | `sudo ufw allow 5274/tcp && sudo ufw allow 5277/tcp` |
+| WiFi-isolering aktiverad | Inaktivera i router-inställningar |
+| Nginx svarar inte | `sudo systemctl start nginx` |
+| SSL-certifikat saknas | `./raspberry-pi-install.sh --configure-ssl` |
 
 ## ✅ Checklista för lokal åtkomst
 
