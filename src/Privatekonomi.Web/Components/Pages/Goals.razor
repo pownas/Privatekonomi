@@ -1,6 +1,7 @@
 @page "/savings/goals"
 @page "/goals"
 @rendermode InteractiveServer
+@using Privatekonomi.Core.Models
 @inject IGoalService GoalService
 @inject IGoalMilestoneService GoalMilestoneService
 @inject IBankSourceService BankSourceService
@@ -78,6 +79,40 @@
             }
         </MudSelect>
 
+        <MudDivider Class="my-4" />
+        
+        <MudText Typo="Typo.h6" Class="mb-3">Automatiskt sparande</MudText>
+        
+        <MudSelect @bind-Value="_formGoal.AutoSavingsType" 
+                   Label="Typ av automatiskt sparande" 
+                   Variant="Variant.Outlined" 
+                   Class="mb-3">
+            <MudSelectItem Value="@AutoSavingsType.None">Inget automatiskt sparande</MudSelectItem>
+            <MudSelectItem Value="@AutoSavingsType.FixedAmount">Fast belopp per månad</MudSelectItem>
+            <MudSelectItem Value="@AutoSavingsType.RoundUp">Avrundning (Round-up)</MudSelectItem>
+        </MudSelect>
+
+        @if (_formGoal.AutoSavingsType == AutoSavingsType.FixedAmount)
+        {
+            <MudNumericField @bind-Value="_formGoal.MonthlyAutoSavingsAmount" 
+                             Label="Månadsbelopp (kr)" 
+                             Variant="Variant.Outlined"
+                             Min="0"
+                             Format="N2"
+                             Culture="@(SwedishCulture)"
+                             Adornment="Adornment.End"
+                             AdornmentText="kr/mån"
+                             HelperText="Det belopp som automatiskt sparas varje månad"
+                             Class="mb-3" />
+        }
+        else if (_formGoal.AutoSavingsType == AutoSavingsType.RoundUp)
+        {
+            <MudAlert Severity="Severity.Info" Class="mb-3">
+                Round-up sparande avrunda dina transaktioner till närmaste krona och sparar skillnaden.
+                Konfigurera detta under "Round-up Sparande" i menyn.
+            </MudAlert>
+        }
+
         <div class="d-flex gap-2">
             <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveGoal">
                 @(_editingGoal != null ? "Uppdatera" : "Lägg till")
@@ -127,7 +162,8 @@ else
 
     <MudTable Items="@_goals" Hover="true" Striped="true" Dense="false">
         <HeaderContent>
-            <MudTh></MudTh>
+            <MudTh Style="width: 50px;"></MudTh>
+            <MudTh Style="width: 50px;"></MudTh>
             <MudTh>Namn</MudTh>
             <MudTh>Beskrivning</MudTh>
             <MudTh>Målbelopp</MudTh>
@@ -140,6 +176,11 @@ else
             <MudTh>Åtgärder</MudTh>
         </HeaderContent>
         <RowTemplate>
+            <MudTd>
+                <MudIcon Icon="@Icons.Material.Filled.DragIndicator" 
+                         Style="cursor: move; color: var(--mud-palette-text-secondary);" 
+                         Title="Dra för att ändra prioritet" />
+            </MudTd>
             <MudTd>
                 @if (_goalMilestones.ContainsKey(context.GoalId) && _goalMilestones[context.GoalId].Any())
                 {
@@ -198,9 +239,25 @@ else
                 }
             </MudTd>
             <MudTd DataLabel="Prioritet">
-                <MudChip T="string" Color="@GetPriorityColor(context.Priority)" Size="Size.Small">
-                    Prioritet @context.Priority
-                </MudChip>
+                <div class="d-flex align-center gap-2">
+                    <div class="d-flex flex-column">
+                        <MudIconButton Icon="@Icons.Material.Filled.KeyboardArrowUp" 
+                                       Size="Size.Small" 
+                                       OnClick="@(() => MovePriorityUp(context))"
+                                       Disabled="@(context.Priority <= 1)"
+                                       Title="Öka prioritet"
+                                       Style="height: 20px; padding: 0;" />
+                        <MudIconButton Icon="@Icons.Material.Filled.KeyboardArrowDown" 
+                                       Size="Size.Small" 
+                                       OnClick="@(() => MovePriorityDown(context))"
+                                       Disabled="@(context.Priority >= 5)"
+                                       Title="Minska prioritet"
+                                       Style="height: 20px; padding: 0;" />
+                    </div>
+                    <MudChip T="string" Color="@GetPriorityColor(context.Priority)" Size="Size.Small">
+                        Prioritet @context.Priority
+                    </MudChip>
+                </div>
             </MudTd>
             <MudTd DataLabel="Sparkonto">
                 @if (context.FundedFromBankSource != null)
@@ -215,8 +272,24 @@ else
                 }
             </MudTd>
             <MudTd DataLabel="Åtgärder">
-                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" OnClick="@(() => EditGoal(context))" Color="Color.Primary" aria-label="Redigera sparmål" />
-                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" OnClick="@(() => DeleteGoal(context.GoalId))" Color="Color.Error" aria-label="Ta bort sparmål" />
+                <div class="d-flex gap-1">
+                    <MudIconButton Icon="@Icons.Material.Filled.Calculate" 
+                                   Size="Size.Small" 
+                                   OnClick="@(() => OpenSimulationDialog(context))" 
+                                   Color="Color.Info" 
+                                   Title="Simulera sparande"
+                                   aria-label="Simulera sparande" />
+                    <MudIconButton Icon="@Icons.Material.Filled.Edit" 
+                                   Size="Size.Small" 
+                                   OnClick="@(() => EditGoal(context))" 
+                                   Color="Color.Primary" 
+                                   aria-label="Redigera sparmål" />
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete" 
+                                   Size="Size.Small" 
+                                   OnClick="@(() => DeleteGoal(context.GoalId))" 
+                                   Color="Color.Error" 
+                                   aria-label="Ta bort sparmål" />
+                </div>
             </MudTd>
         </RowTemplate>
         <ChildRowContent>
@@ -365,10 +438,39 @@ else
             TargetAmount = goal.TargetAmount,
             CurrentAmount = goal.CurrentAmount,
             Priority = goal.Priority,
-            FundedFromBankSourceId = goal.FundedFromBankSourceId
+            FundedFromBankSourceId = goal.FundedFromBankSourceId,
+            AutoSavingsType = goal.AutoSavingsType,
+            MonthlyAutoSavingsAmount = goal.MonthlyAutoSavingsAmount
         };
         _formGoalTargetDate = goal.TargetDate;
         _showCreateForm = true;
+    }
+
+    private async Task OpenSimulationDialog(Goal goal)
+    {
+        var parameters = new DialogParameters<SavingsSimulationDialog>
+        {
+            { x => x.Goal, goal }
+        };
+
+        var options = new DialogOptions 
+        { 
+            MaxWidth = MaxWidth.Medium, 
+            FullWidth = true,
+            CloseButton = true 
+        };
+
+        var dialog = await DialogService.ShowAsync<SavingsSimulationDialog>("Simulera Sparande", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled && result.Data is decimal newMonthlySavings)
+        {
+            goal.MonthlyAutoSavingsAmount = newMonthlySavings;
+            goal.AutoSavingsType = AutoSavingsType.FixedAmount;
+            await GoalService.UpdateGoalAsync(goal);
+            Snackbar.Add("Månatligt sparande har uppdaterats!", Severity.Success);
+            await LoadGoals();
+        }
     }
 
     private async Task SaveGoal()
@@ -419,6 +521,28 @@ else
             Snackbar.Add("Sparmålet har tagits bort", Severity.Info);
             await LoadGoals();
             await LoadMilestones();
+        }
+    }
+
+    private async Task MovePriorityUp(Goal goal)
+    {
+        if (goal.Priority > 1)
+        {
+            goal.Priority--;
+            await GoalService.UpdateGoalAsync(goal);
+            await LoadGoals();
+            Snackbar.Add($"Prioriteten för {goal.Name} har ökats!", Severity.Success);
+        }
+    }
+
+    private async Task MovePriorityDown(Goal goal)
+    {
+        if (goal.Priority < 5)
+        {
+            goal.Priority++;
+            await GoalService.UpdateGoalAsync(goal);
+            await LoadGoals();
+            Snackbar.Add($"Prioriteten för {goal.Name} har minskats!", Severity.Info);
         }
     }
 
