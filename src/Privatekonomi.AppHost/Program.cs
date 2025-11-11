@@ -1,5 +1,19 @@
 var builder = DistributedApplication.CreateBuilder(args);
 
+// Raspberry Pi configuration - listen on all network interfaces
+var isRaspberryPi = Environment.GetEnvironmentVariable("PRIVATEKONOMI_RASPBERRY_PI") == "true";
+
+// Configure Aspire Dashboard to listen on all network interfaces when on Raspberry Pi
+if (isRaspberryPi)
+{
+    // Ensure DOTNET_DASHBOARD_URLS is set to listen on 0.0.0.0 for network access
+    var dashboardUrl = Environment.GetEnvironmentVariable("DOTNET_DASHBOARD_URLS");
+    if (string.IsNullOrEmpty(dashboardUrl) || dashboardUrl.Contains("localhost") || dashboardUrl.Contains("127.0.0.1"))
+    {
+        Environment.SetEnvironmentVariable("DOTNET_DASHBOARD_URLS", "http://0.0.0.0:17127");
+    }
+}
+
 var aspnetEnvironment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")
     ?? builder.Environment.EnvironmentName;
 
@@ -11,9 +25,6 @@ var privatekonomiEnvironment = Environment.GetEnvironmentVariable("PRIVATEKONOMI
 
 var storageProvider = Environment.GetEnvironmentVariable("PRIVATEKONOMI_STORAGE_PROVIDER") ?? "Unknown";
 
-// Raspberry Pi configuration - listen on all network interfaces
-var isRaspberryPi = Environment.GetEnvironmentVariable("PRIVATEKONOMI_RASPBERRY_PI") == "true";
-
 // Add the API project
 var apiBuilder = builder.AddProject<Projects.Privatekonomi_Api>("api")
     .WithExternalHttpEndpoints()
@@ -24,9 +35,11 @@ var apiBuilder = builder.AddProject<Projects.Privatekonomi_Api>("api")
 
 if (isRaspberryPi)
 {
-    // On Raspberry Pi, explicitly set the HTTP endpoint port
-    // The actual binding to 0.0.0.0 is handled by appsettings.Production.json
-    apiBuilder = apiBuilder.WithHttpEndpoint(port: 5277, name: "http");
+    // On Raspberry Pi, explicitly set the HTTP endpoint port and pass the flag
+    // The actual binding to 0.0.0.0 is handled by Program.cs based on this flag
+    apiBuilder = apiBuilder
+        .WithHttpEndpoint(port: 5277, name: "http")
+        .WithEnvironment("PRIVATEKONOMI_RASPBERRY_PI", "true");
 }
 
 var api = apiBuilder;
@@ -42,9 +55,11 @@ var webBuilder = builder.AddProject<Projects.Privatekonomi_Web>("web")
 
 if (isRaspberryPi)
 {
-    // On Raspberry Pi, explicitly set the HTTP endpoint port
-    // The actual binding to 0.0.0.0 is handled by appsettings.Production.json
-    webBuilder = webBuilder.WithHttpEndpoint(port: 5274, name: "http");
+    // On Raspberry Pi, explicitly set the HTTP endpoint port and pass the flag
+    // The actual binding to 0.0.0.0 is handled by Program.cs based on this flag
+    webBuilder = webBuilder
+        .WithHttpEndpoint(port: 5274, name: "http")
+        .WithEnvironment("PRIVATEKONOMI_RASPBERRY_PI", "true");
 }
 
 var web = webBuilder;
