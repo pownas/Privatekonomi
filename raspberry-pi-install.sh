@@ -752,6 +752,13 @@ EOF
     log_info "Aktiverar Privatekonomi-sajt..."
     sudo ln -sf /etc/nginx/sites-available/privatekonomi /etc/nginx/sites-enabled/
     
+    # Disable default Nginx site to prevent welcome page from showing
+    if [ -f "/etc/nginx/sites-enabled/default" ] || [ -L "/etc/nginx/sites-enabled/default" ]; then
+        log_info "Inaktiverar Nginx standardsida..."
+        sudo rm -f /etc/nginx/sites-enabled/default
+        log_success "Nginx standardsida inaktiverad"
+    fi
+    
     # Test configuration
     if sudo nginx -t; then
         log_success "Nginx-konfiguration är giltig"
@@ -867,6 +874,14 @@ configure_letsencrypt() {
     sudo certbot --nginx -d "$domain_name" --non-interactive --agree-tos --email "$email" --redirect
     
     if [ $? -eq 0 ]; then
+        # Disable default Nginx site to prevent welcome page from showing
+        if [ -f "/etc/nginx/sites-enabled/default" ] || [ -L "/etc/nginx/sites-enabled/default" ]; then
+            log_info "Inaktiverar Nginx standardsida..."
+            sudo rm -f /etc/nginx/sites-enabled/default
+            sudo systemctl reload nginx
+            log_success "Nginx standardsida inaktiverad"
+        fi
+        
         log_success "Let's Encrypt SSL konfigurerat framgångsrikt"
         
         # Setup auto-renewal
@@ -1037,6 +1052,13 @@ server {
     }
 }
 EOF
+    
+    # Disable default Nginx site to prevent welcome page from showing
+    if [ -f "/etc/nginx/sites-enabled/default" ] || [ -L "/etc/nginx/sites-enabled/default" ]; then
+        log_info "Inaktiverar Nginx standardsida..."
+        sudo rm -f /etc/nginx/sites-enabled/default
+        log_success "Nginx standardsida inaktiverad"
+    fi
     
     # Test and reload Nginx
     if sudo nginx -t; then
