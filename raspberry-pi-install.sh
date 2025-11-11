@@ -478,6 +478,19 @@ install_ef_tools() {
         fi
     fi
     
+    # Ensure NuGet source is properly configured before tool installation
+    log_info "Konfigurerar NuGet-källor..."
+    
+    # Add and enable nuget.org source explicitly (Solution 2 from issue)
+    if ! dotnet nuget list source | grep -q "nuget.org"; then
+        log_info "Lägger till nuget.org som paketkälla..."
+        dotnet nuget add source https://api.nuget.org/v3/index.json -n nuget.org 2>/dev/null || true
+    fi
+    
+    # Ensure the source is enabled
+    log_info "Aktiverar nuget.org paketkälla..."
+    dotnet nuget enable source nuget.org 2>/dev/null || true
+    
     log_info "Installerar dotnet-ef globalt..."
     
     # Try to install, if it fails due to cache corruption, clear cache and retry
@@ -500,9 +513,32 @@ install_ef_tools() {
                 log_warning "Installation utan version misslyckades, försöker med specifik version..."
                 local dotnet_version=$(dotnet --version | cut -d'.' -f1)
                 if ! dotnet tool install --global dotnet-ef --version ${dotnet_version}.0.0; then
-                    log_error "Misslyckades att installera Entity Framework-verktyg efter cache-rensning"
-                    log_error "Försök köra manuellt: dotnet tool install --global dotnet-ef --version ${dotnet_version}.0.0"
-                    return 1
+                    # Last resort: try with --ignore-failed-sources flag (Solution 3 from issue)
+                    log_warning "Försöker med --ignore-failed-sources som sista utväg..."
+                    if ! dotnet tool install --global dotnet-ef --ignore-failed-sources; then
+                        log_error "Misslyckades att installera Entity Framework-verktyg efter alla försök"
+                        log_error ""
+                        log_error "Manuella lösningar att prova:"
+                        log_error "  1. Skapa NuGet.Config manuellt:"
+                        log_error "     mkdir -p ~/.nuget/NuGet"
+                        log_error "     cat > ~/.nuget/NuGet/NuGet.Config << 'EOFCONFIG'"
+                        log_error "     <?xml version=\"1.0\" encoding=\"utf-8\"?>"
+                        log_error "     <configuration>"
+                        log_error "       <packageSources>"
+                        log_error "         <add key=\"nuget.org\" value=\"https://api.nuget.org/v3/index.json\" />"
+                        log_error "       </packageSources>"
+                        log_error "     </configuration>"
+                        log_error "     EOFCONFIG"
+                        log_error ""
+                        log_error "  2. Lägg till och aktivera källan manuellt:"
+                        log_error "     dotnet nuget add source https://api.nuget.org/v3/index.json -n nuget.org"
+                        log_error "     dotnet nuget enable source nuget.org"
+                        log_error ""
+                        log_error "  3. Installera med --ignore-failed-sources:"
+                        log_error "     dotnet tool install --global dotnet-ef --ignore-failed-sources"
+                        log_error ""
+                        return 1
+                    fi
                 fi
             fi
         fi
