@@ -141,6 +141,7 @@ builder.Services.AddScoped<IKonsumentverketComparisonService, KonsumentverketCom
 builder.Services.AddScoped<IKalpService, KalpService>();
 builder.Services.AddScoped<IMetricsService, MetricsService>();
 builder.Services.AddScoped<ICashFlowScenarioService, CashFlowScenarioService>();
+builder.Services.AddScoped<IOnboardingService, OnboardingService>();
 builder.Services.AddScoped<ThemeService>();
 builder.Services.AddScoped<DashboardPreferencesService>();
 builder.Services.AddScoped<IDashboardLayoutService, DashboardLayoutService>();

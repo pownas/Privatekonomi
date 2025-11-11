@@ -9,6 +9,10 @@ public class ApplicationUser : IdentityUser
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? LastLoginAt { get; set; }
     
+    // Onboarding tracking
+    public bool OnboardingCompleted { get; set; } = false;
+    public DateTime? OnboardingCompletedAt { get; set; }
+    
     // System-level admin flag for platform administration
     public bool IsSystemAdmin { get; set; } = false;
     

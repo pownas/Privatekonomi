@@ -1,0 +1,68 @@
+@using MudBlazor
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class="onboarding-step">
+    <MudPaper Elevation="3" Class="pa-8 text-center">
+        <div class="mb-6">
+            <MudIcon Icon="@Icons.Material.Filled.Savings" 
+                     Color="Color.Primary" 
+                     Size="Size.Large" 
+                     Style="font-size: 120px;" />
+        </div>
+        
+        <MudText Typo="Typo.h3" GutterBottom="true" Class="mb-4">
+            Välkommen till Privatekonomi!
+        </MudText>
+        
+        <MudText Typo="Typo.h6" Color="Color.Secondary" Class="mb-6">
+            Vi hjälper dig att få full koll på din ekonomi
+        </MudText>
+        
+        <MudDivider Class="mb-6" />
+        
+        <MudText Typo="Typo.body1" Class="mb-4 text-left">
+            För att komma igång snabbt kommer vi att:
+        </MudText>
+        
+        <MudList T="string" Dense="true" Class="text-left mb-6">
+            <MudListItem Icon="@Icons.Material.Filled.AccountBalance">
+                <MudText>Koppla dina bankkonton för automatisk transaktionsimport</MudText>
+            </MudListItem>
+            <MudListItem Icon="@Icons.Material.Filled.History">
+                <MudText>Importera dina transaktioner (12-18 månader)</MudText>
+            </MudListItem>
+            <MudListItem Icon="@Icons.Material.Filled.Category">
+                <MudText>Kategorisera dina utgifter automatiskt</MudText>
+            </MudListItem>
+            <MudListItem Icon="@Icons.Material.Filled.PieChart">
+                <MudText>Föreslå en budget baserad på 50/30/20-regeln</MudText>
+            </MudListItem>
+            <MudListItem Icon="@Icons.Material.Filled.Dashboard">
+                <MudText>Visa din ekonomiska översikt</MudText>
+            </MudListItem>
+        </MudList>
+        
+        <MudAlert Severity="Severity.Info" Class="mb-6 text-left">
+            <MudText Typo="Typo.body2">
+                <strong>Din integritet är viktig för oss.</strong> All data lagras säkert och krypterat. 
+                Du har full kontroll över dina uppgifter.
+            </MudText>
+        </MudAlert>
+        
+        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-6">
+            Detta tar ungefär 5 minuter att slutföra.
+        </MudText>
+        
+        <MudButton Variant="Variant.Filled" 
+                   Color="Color.Primary" 
+                   Size="Size.Large"
+                   OnClick="@(() => OnNext.InvokeAsync())"
+                   FullWidth="true">
+            Kom igång
+        </MudButton>
+    </MudPaper>
+</MudContainer>
+
+@code {
+    [Parameter]
+    public EventCallback OnNext { get; set; }
+}

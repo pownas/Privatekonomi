@@ -12,6 +12,9 @@
 @inject IDialogService DialogService
 @inject DashboardPreferencesService PreferencesService
 @inject IJSRuntime JSRuntime
+@inject IOnboardingService OnboardingService
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthenticationStateProvider
 @implements IDisposable
 
 <PageTitle>Dashboard - Privatekonomi</PageTitle>
@@ -531,6 +534,24 @@ else
 
     protected override async Task OnInitializedAsync()
     {
+        // Check if user has completed onboarding
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        
+        if (user.Identity?.IsAuthenticated ?? false)
+        {
+            var userId = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (!string.IsNullOrEmpty(userId))
+            {
+                var hasCompleted = await OnboardingService.HasCompletedOnboardingAsync(userId);
+                if (!hasCompleted)
+                {
+                    Navigation.NavigateTo("/onboarding");
+                    return;
+                }
+            }
+        }
+        
         // Load preferences from localStorage
         try
         {
