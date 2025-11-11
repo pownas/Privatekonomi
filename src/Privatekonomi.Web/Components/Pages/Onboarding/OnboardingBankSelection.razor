@@ -1,0 +1,138 @@
+@using MudBlazor
+@inject IBankSourceService BankSourceService
+@inject ISnackbar Snackbar
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class="onboarding-step">
+    <MudPaper Elevation="3" Class="pa-8">
+        <MudText Typo="Typo.h4" GutterBottom="true" Class="mb-2">
+            <MudIcon Icon="@Icons.Material.Filled.AccountBalance" Color="Color.Primary" Class="mr-2" />
+            Välj din bank
+        </MudText>
+        
+        <MudText Typo="Typo.body1" Color="Color.Secondary" Class="mb-6">
+            Anslut dina bankkonton för automatisk transaktionsimport via PSD2-API
+        </MudText>
+        
+        <MudDivider Class="mb-6" />
+        
+        @if (_loading)
+        {
+            <div class="d-flex justify-center pa-6">
+                <MudProgressCircular Indeterminate="true" />
+            </div>
+        }
+        else
+        {
+            <MudTextField @bind-Value="_searchText" 
+                          Label="Sök bank" 
+                          Variant="Variant.Outlined"
+                          Adornment="Adornment.Start"
+                          AdornmentIcon="@Icons.Material.Filled.Search"
+                          Class="mb-4" />
+            
+            <MudGrid Spacing="3" Class="mb-6">
+                @foreach (var bank in FilteredBanks)
+                {
+                    <MudItem xs="12" sm="6" md="4">
+                        <MudCard Elevation="2" 
+                                 Class="bank-card" 
+                                 Style="cursor: pointer; height: 100%;"
+                                 @onclick="@(() => SelectBank(bank))">
+                            <MudCardContent Class="text-center pa-4">
+                                <MudIcon Icon="@Icons.Material.Filled.AccountBalance" 
+                                         Color="Color.Primary" 
+                                         Size="Size.Large" 
+                                         Class="mb-2" />
+                                <MudText Typo="Typo.h6">@bank.Name</MudText>
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                    @(bank.AccountType ?? "Bank")
+                                </MudText>
+                            </MudCardContent>
+                        </MudCard>
+                    </MudItem>
+                }
+            </MudGrid>
+            
+            @if (!FilteredBanks.Any())
+            {
+                <MudAlert Severity="Severity.Info" Class="mb-4">
+                    Inga banker hittades. Prova ett annat sökord.
+                </MudAlert>
+            }
+        }
+        
+        <MudDivider Class="mb-4" />
+        
+        <MudAlert Severity="Severity.Info" Class="mb-4">
+            <MudText Typo="Typo.body2">
+                <strong>Kom snart:</strong> Vi arbetar på stöd för fler svenska banker. 
+                Du kan hoppa över detta steg och lägga till dina transaktioner manuellt.
+            </MudText>
+        </MudAlert>
+        
+        <div class="d-flex justify-space-between">
+            <MudButton Variant="Variant.Text" 
+                       Color="Color.Default"
+                       OnClick="@(() => OnSkip.InvokeAsync())">
+                Hoppa över
+            </MudButton>
+            <MudButton Variant="Variant.Filled" 
+                       Color="Color.Primary"
+                       OnClick="@(() => OnNext.InvokeAsync())"
+                       Disabled="@(!_selectedBank.HasValue)">
+                Fortsätt
+            </MudButton>
+        </div>
+    </MudPaper>
+</MudContainer>
+
+@code {
+    [Parameter]
+    public EventCallback OnNext { get; set; }
+    
+    [Parameter]
+    public EventCallback OnSkip { get; set; }
+
+    private bool _loading = true;
+    private List<Privatekonomi.Core.Models.BankSource> _banks = new();
+    private string _searchText = "";
+    private int? _selectedBank;
+
+    private IEnumerable<Privatekonomi.Core.Models.BankSource> FilteredBanks
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(_searchText))
+                return _banks;
+            
+            return _banks.Where(b => 
+                b.Name.Contains(_searchText, StringComparison.OrdinalIgnoreCase) ||
+                (b.AccountType?.Contains(_searchText, StringComparison.OrdinalIgnoreCase) ?? false));
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _banks = (await BankSourceService.GetAllBankSourcesAsync()).ToList();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Kunde inte ladda banker: {ex.Message}", MudBlazor.Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void SelectBank(Privatekonomi.Core.Models.BankSource bank)
+    {
+        _selectedBank = bank.BankSourceId;
+        Snackbar.Add($"Du har valt {bank.Name}. Detta kommer snart att öppna bankkopplingen.", MudBlazor.Severity.Info);
+        
+        // In the future, this would trigger OAuth flow
+        // For now, we just continue to the next step
+    }
+}

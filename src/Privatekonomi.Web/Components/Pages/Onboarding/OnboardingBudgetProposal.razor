@@ -1,0 +1,233 @@
+@using MudBlazor
+@inject IBudgetService BudgetService
+@inject ICategoryService CategoryService
+@inject ISnackbar Snackbar
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class="onboarding-step">
+    <MudPaper Elevation="3" Class="pa-8">
+        <MudText Typo="Typo.h4" GutterBottom="true" Class="mb-2">
+            <MudIcon Icon="@Icons.Material.Filled.PieChart" Color="Color.Primary" Class="mr-2" />
+            Ditt budgetförslag
+        </MudText>
+        
+        <MudText Typo="Typo.body1" Color="Color.Secondary" Class="mb-6">
+            Baserat på 50/30/20-regeln har vi skapat ett budgetförslag åt dig
+        </MudText>
+        
+        <MudDivider Class="mb-6" />
+        
+        @if (_loading)
+        {
+            <div class="d-flex justify-center pa-6">
+                <MudProgressCircular Indeterminate="true" />
+            </div>
+        }
+        else
+        {
+            <MudAlert Severity="Severity.Info" Class="mb-4">
+                <MudText Typo="Typo.body2">
+                    <strong>50/30/20-regeln:</strong> 50% Behov (boende, mat, transport), 
+                    30% Önskemål (nöje, shopping), 20% Sparande
+                </MudText>
+            </MudAlert>
+            
+            <MudPaper Elevation="0" Class="pa-4 mb-4" Style="background-color: var(--mud-palette-background-grey);">
+                <MudText Typo="Typo.h6" GutterBottom="true" Class="mb-3">
+                    Månadsinkomst: @_monthlyIncome.ToString("C", new System.Globalization.CultureInfo("sv-SE"))
+                </MudText>
+                
+                <MudGrid Spacing="2" Class="mb-4">
+                    <MudItem xs="12" md="4">
+                        <MudCard Elevation="0" Style="background-color: #e3f2fd;">
+                            <MudCardContent Class="pa-3">
+                                <MudText Typo="Typo.body2" Color="Color.Primary">
+                                    <strong>Behov (50%)</strong>
+                                </MudText>
+                                <MudText Typo="Typo.h6">
+                                    @(_monthlyIncome * 0.50m).ToString("C", new System.Globalization.CultureInfo("sv-SE"))
+                                </MudText>
+                            </MudCardContent>
+                        </MudCard>
+                    </MudItem>
+                    <MudItem xs="12" md="4">
+                        <MudCard Elevation="0" Style="background-color: #fff3e0;">
+                            <MudCardContent Class="pa-3">
+                                <MudText Typo="Typo.body2" Color="Color.Warning">
+                                    <strong>Önskemål (30%)</strong>
+                                </MudText>
+                                <MudText Typo="Typo.h6">
+                                    @(_monthlyIncome * 0.30m).ToString("C", new System.Globalization.CultureInfo("sv-SE"))
+                                </MudText>
+                            </MudCardContent>
+                        </MudCard>
+                    </MudItem>
+                    <MudItem xs="12" md="4">
+                        <MudCard Elevation="0" Style="background-color: #e8f5e9;">
+                            <MudCardContent Class="pa-3">
+                                <MudText Typo="Typo.body2" Color="Color.Success">
+                                    <strong>Sparande (20%)</strong>
+                                </MudText>
+                                <MudText Typo="Typo.h6">
+                                    @(_monthlyIncome * 0.20m).ToString("C", new System.Globalization.CultureInfo("sv-SE"))
+                                </MudText>
+                            </MudCardContent>
+                        </MudCard>
+                    </MudItem>
+                </MudGrid>
+            </MudPaper>
+            
+            <MudText Typo="Typo.h6" GutterBottom="true" Class="mb-3">
+                Detaljerad budgetfördelning
+            </MudText>
+            
+            <MudSimpleTable Dense="true" Hover="true" Class="mb-4">
+                <thead>
+                    <tr>
+                        <th>Kategori</th>
+                        <th style="text-align: right;">Förslag</th>
+                        <th style="text-align: center;">Justera</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var category in _budgetCategories)
+                    {
+                        <tr>
+                            <td>
+                                <MudIcon Icon="@GetCategoryIcon(category.Name)" Size="Size.Small" Class="mr-2" />
+                                @category.Name
+                            </td>
+                            <td style="text-align: right;">
+                                @category.Amount.ToString("C", new System.Globalization.CultureInfo("sv-SE"))
+                            </td>
+                            <td style="text-align: center;">
+                                <MudSlider T="decimal" 
+                                           @bind-Value="category.Amount" 
+                                           Min="0" 
+                                           Max="@(_monthlyIncome * 0.5m)"
+                                           Step="100"
+                                           ValueLabel="true"
+                                           Size="Size.Small"
+                                           Style="width: 150px;" />
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </MudSimpleTable>
+            
+            <MudCheckBox @bind-Value="_enableBudgetAlerts" Color="Color.Primary" Class="mb-4">
+                <MudText Typo="Typo.body2">
+                    Aktivera budgetvarningar när jag närmar mig gränsen för en kategori
+                </MudText>
+            </MudCheckBox>
+            
+            <MudAlert Severity="Severity.Warning" Class="mb-4">
+                <MudText Typo="Typo.body2">
+                    <strong>Viktigt:</strong> Detta är ett förslag baserat på 50/30/20-regeln. 
+                    Du kan justera beloppen ovan eller ändra dem senare under Budget-sektionen.
+                </MudText>
+            </MudAlert>
+            
+            <div class="d-flex justify-space-between">
+                <MudButton Variant="Variant.Text" 
+                           Color="Color.Default"
+                           OnClick="SkipBudget">
+                    Hoppa över, konfigurera senare
+                </MudButton>
+                <MudButton Variant="Variant.Filled" 
+                           Color="Color.Primary"
+                           OnClick="SaveBudget">
+                    Spara och aktivera budget
+                </MudButton>
+            </div>
+        }
+    </MudPaper>
+</MudContainer>
+
+@code {
+    [Parameter]
+    public EventCallback OnNext { get; set; }
+
+    private bool _loading = true;
+    private decimal _monthlyIncome = 30000m; // Simulated from imported transactions
+    private List<BudgetCategoryItem> _budgetCategories = new();
+    private bool _enableBudgetAlerts = true;
+
+    private class BudgetCategoryItem
+    {
+        public string Name { get; set; } = "";
+        public decimal Amount { get; set; }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Simulate loading
+        await Task.Delay(500);
+        
+        // In a real implementation, this would:
+        // 1. Calculate average monthly income from imported transactions
+        // 2. Apply BudgetTemplateService.ApplyFiftyThirtyTwentyTemplate()
+        // 3. Get actual categories from CategoryService
+        
+        // For demo purposes, create sample budget
+        _budgetCategories = new List<BudgetCategoryItem>
+        {
+            // Needs (50%)
+            new BudgetCategoryItem { Name = "Boende", Amount = _monthlyIncome * 0.50m * 0.40m },
+            new BudgetCategoryItem { Name = "Mat & Livsmedel", Amount = _monthlyIncome * 0.50m * 0.35m },
+            new BudgetCategoryItem { Name = "Transport", Amount = _monthlyIncome * 0.50m * 0.15m },
+            new BudgetCategoryItem { Name = "Försäkringar", Amount = _monthlyIncome * 0.50m * 0.10m },
+            
+            // Wants (30%)
+            new BudgetCategoryItem { Name = "Nöje & Underhållning", Amount = _monthlyIncome * 0.30m * 0.50m },
+            new BudgetCategoryItem { Name = "Shopping", Amount = _monthlyIncome * 0.30m * 0.30m },
+            new BudgetCategoryItem { Name = "Restaurang & Café", Amount = _monthlyIncome * 0.30m * 0.20m },
+            
+            // Savings (20%)
+            new BudgetCategoryItem { Name = "Sparande", Amount = _monthlyIncome * 0.20m }
+        };
+        
+        _loading = false;
+    }
+
+    private string GetCategoryIcon(string categoryName)
+    {
+        return categoryName.ToLower() switch
+        {
+            var s when s.Contains("boende") => Icons.Material.Filled.Home,
+            var s when s.Contains("mat") => Icons.Material.Filled.Restaurant,
+            var s when s.Contains("transport") => Icons.Material.Filled.DirectionsCar,
+            var s when s.Contains("försäkring") => Icons.Material.Filled.Security,
+            var s when s.Contains("nöje") => Icons.Material.Filled.Celebration,
+            var s when s.Contains("shopping") => Icons.Material.Filled.ShoppingBag,
+            var s when s.Contains("restaurang") => Icons.Material.Filled.Restaurant,
+            var s when s.Contains("sparande") => Icons.Material.Filled.Savings,
+            _ => Icons.Material.Filled.Category
+        };
+    }
+
+    private async Task SaveBudget()
+    {
+        try
+        {
+            // In a real implementation, this would:
+            // 1. Create a new Budget entity
+            // 2. Add BudgetCategory entries for each category
+            // 3. Enable budget alerts if selected
+            // 4. Call BudgetService.CreateBudgetAsync()
+            
+            Snackbar.Add("Budget sparad! Du kan justera den senare under Budget.", MudBlazor.Severity.Success);
+            await Task.Delay(500);
+            await OnNext.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Ett fel uppstod: {ex.Message}", MudBlazor.Severity.Error);
+        }
+    }
+
+    private void SkipBudget()
+    {
+        Snackbar.Add("Budget överhoppad. Du kan skapa en senare.", MudBlazor.Severity.Info);
+        OnNext.InvokeAsync();
+    }
+}
