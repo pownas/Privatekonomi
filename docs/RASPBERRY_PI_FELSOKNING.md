@@ -91,6 +91,51 @@ Detta dokument beskriver hur du felsoker en Raspberry Pi-installation av Private
   ```
 * Om lokalt OK men andra enheter misslyckas: kontrollera router-brandvagg eller VLAN. Se "Firewall and network" i Microsoft IoT-guiden nedan.
 
+### dotnet-ef installationsfel: "Settings file 'DotnetToolSettings.xml' was not found"
+
+Om du far felmeddelandet:
+```
+Tool 'dotnet-ef' failed to update due to the following: The settings file in the tool's NuGet package is invalid: Settings file 'DotnetToolSettings.xml' was not found in the package.
+```
+
+Detta beror vanligtvis pa korrupt NuGet-cache eller saknade paketkallor. `raspberry-pi-install.sh` hanterar nu detta automatiskt, men om problemet kvarhaller:
+
+**Losning 1: Skapa NuGet.Config manuellt**
+```bash
+mkdir -p ~/.nuget/NuGet
+cat > ~/.nuget/NuGet/NuGet.Config << 'EOF'
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+  <packageSources>
+    <add key="nuget.org" value="https://api.nuget.org/v3/index.json" />
+  </packageSources>
+</configuration>
+EOF
+```
+
+**Losning 2: Lagg till och aktivera kallor manuellt**
+```bash
+dotnet nuget add source https://api.nuget.org/v3/index.json -n nuget.org
+dotnet nuget enable source nuget.org
+```
+
+**Losning 3: Installera med --ignore-failed-sources**
+```bash
+dotnet tool install --global dotnet-ef --ignore-failed-sources
+```
+
+**Losning 4: Rensa cache och forsok igen**
+```bash
+dotnet nuget locals all --clear
+dotnet tool uninstall --global dotnet-ef
+dotnet tool install --global dotnet-ef
+```
+
+**Verifiera installation:**
+```bash
+dotnet-ef --version
+```
+
 ## Djupdiagnostik
 
 ### Kontrollera applikationsprocesser
