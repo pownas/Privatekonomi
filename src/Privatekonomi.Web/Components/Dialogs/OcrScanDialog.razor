@@ -31,14 +31,14 @@
 
                     <MudGrid>
                         <MudItem xs="12" md="6">
-                            <MudTextField @bind-Value="_parsedData.Merchant"
+                            <MudTextField @bind-Value="_parsedData!.Merchant"
                                         Label="Butik/Återförsäljare"
                                         Variant="Variant.Outlined"
                                         Required="true"
                                         Class="mb-3" />
                         </MudItem>
                         <MudItem xs="12" md="6">
-                            <MudNumericField @bind-Value="_parsedData.TotalAmount"
+                            <MudNumericField @bind-Value="_parsedData!.TotalAmount"
                                            Label="Totalt belopp (kr)"
                                            Variant="Variant.Outlined"
                                            Min="0"
@@ -47,26 +47,26 @@
                                            Class="mb-3" />
                         </MudItem>
                         <MudItem xs="12" md="6">
-                            <MudDatePicker @bind-Date="_parsedData.Date"
+                            <MudDatePicker @bind-Date="_parsedData!.Date"
                                          Label="Kvittodatum"
                                          Variant="Variant.Outlined"
                                          Class="mb-3" />
                         </MudItem>
                         <MudItem xs="12" md="6">
-                            <MudTextField @bind-Value="_parsedData.ReceiptNumber"
+                            <MudTextField @bind-Value="_parsedData!.ReceiptNumber"
                                         Label="Kvittonummer (valfritt)"
                                         Variant="Variant.Outlined"
                                         Class="mb-3" />
                         </MudItem>
                         <MudItem xs="12" md="6">
-                            <MudTextField @bind-Value="_parsedData.PaymentMethod"
+                            <MudTextField @bind-Value="_parsedData!.PaymentMethod"
                                         Label="Betalningsmetod (valfritt)"
                                         Variant="Variant.Outlined"
                                         Class="mb-3" />
                         </MudItem>
                     </MudGrid>
 
-                    @if (_parsedData.LineItems != null && _parsedData.LineItems.Any())
+                    @if (_parsedData!.LineItems != null && _parsedData.LineItems.Any())
                     {
                         <MudText Typo="Typo.h6" Class="mt-4 mb-3">Radposter (@_parsedData.LineItems.Count st)</MudText>
                         <MudSimpleTable Dense="true" Hover="true" Class="mb-4">

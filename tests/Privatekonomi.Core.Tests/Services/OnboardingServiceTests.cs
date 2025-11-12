@@ -17,7 +17,7 @@ public class OnboardingServiceTests
         // Setup UserManager mock
         var store = new Mock<IUserStore<ApplicationUser>>();
         _mockUserManager = new Mock<UserManager<ApplicationUser>>(
-            store.Object, null, null, null, null, null, null, null, null);
+            store.Object, null!, null!, null!, null!, null!, null!, null!, null!);
         
         _mockCurrentUserService = new Mock<ICurrentUserService>();
         
