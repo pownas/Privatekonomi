@@ -1265,7 +1265,7 @@ Description=Privatekonomi Personal Finance Application
 After=network.target
 
 [Service]
-Type=notify
+Type=simple
 User=$user
 Group=$user
 WorkingDirectory=$working_dir
@@ -1279,6 +1279,8 @@ Environment=PATH=$home_dir/.dotnet:$home_dir/.dotnet/tools:/usr/local/sbin:/usr/
 ExecStart=$exec_command
 Restart=always
 RestartSec=10
+TimeoutStartSec=300
+TimeoutStopSec=30
 SyslogIdentifier=$SERVICE_NAME
 
 [Install]
