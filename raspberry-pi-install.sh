@@ -238,8 +238,8 @@ publish_application() {
     log_section "Publicerar applikation för produktion"
     
     local publish_dir="$INSTALL_DIR/publish"
-    # Define the list of components to publish - used for both publishing and validation
-    local publish_components=("AppHost" "Web" "Api")
+    # Only publish Web and API - no Aspire AppHost needed for production on Raspberry Pi
+    local publish_components=("Web" "Api")
     
     # Check if already published
     if [ -d "$publish_dir" ]; then
@@ -257,19 +257,6 @@ publish_application() {
     log_info "Publicerar för linux-arm64 med self-contained..."
     
     cd "$INSTALL_DIR"
-    
-    # Publish AppHost (Aspire orchestrator)
-    log_info "Publicerar Privatekonomi.AppHost..."
-    if ! dotnet publish src/Privatekonomi.AppHost/Privatekonomi.AppHost.csproj \
-        --runtime linux-arm64 \
-        --self-contained \
-        --configuration Release \
-        -o "$publish_dir/AppHost" \
-        /p:PublishTrimmed=false \
-        /p:PublishSingleFile=false; then
-        log_error "Misslyckades att publicera Privatekonomi.AppHost"
-        return 1
-    fi
     
     # Publish Web
     log_info "Publicerar Privatekonomi.Web..."
@@ -297,12 +284,7 @@ publish_application() {
         return 1
     fi
     
-    # Ensure all publish directories exist before copying files
-    # While dotnet publish with -o should create directories, this validation serves as:
-    # 1. Safety net for edge cases (filesystem issues, permissions, disk space)
-    # 2. Clear diagnostics if directories are missing
-    # 3. Automatic recovery by creating missing directories
-    # This addresses reported issue where AppHost folder was missing during publish
+    # Ensure all publish directories exist
     log_info "Kontrollerar publicerade kataloger..."
     
     for dir in "${publish_components[@]}"; do
@@ -319,10 +301,6 @@ publish_application() {
     # Copy appsettings to publish directories
     log_info "Kopierar konfigurationsfiler..."
     
-    if [ -f "src/Privatekonomi.AppHost/appsettings.Production.json" ]; then
-        cp "src/Privatekonomi.AppHost/appsettings.Production.json" "$publish_dir/AppHost/"
-    fi
-    
     if [ -f "src/Privatekonomi.Web/appsettings.Production.json" ]; then
         cp "src/Privatekonomi.Web/appsettings.Production.json" "$publish_dir/Web/"
     fi
@@ -333,6 +311,7 @@ publish_application() {
     
     log_success "Applikation publicerad till: $publish_dir"
     log_info "Publicerade binärer är optimerade för ARM64 och inkluderar alla beroenden"
+    log_info "Web och API körs som separata tjänster utan Aspire-orkestrering"
 }
 
 # Create data directory and configuration
@@ -647,11 +626,6 @@ upstream privatekonomi_api {
     keepalive 32;
 }
 
-upstream privatekonomi_dashboard {
-    server localhost:$DEFAULT_PORT;
-    keepalive 32;
-}
-
 # Redirect HTTP to HTTPS (uncomment after SSL is configured)
 # server {
 #     listen 80;
@@ -711,22 +685,6 @@ server {
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto \$scheme;
         proxy_set_header X-Real-IP \$remote_addr;
-        
-        # Better error handling
-        proxy_intercept_errors on;
-        error_page 502 503 504 /50x.html;
-    }
-    
-    # Aspire Dashboard (optional - comment out in production)
-    location /aspire/ {
-        proxy_pass http://privatekonomi_dashboard/;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade \$http_upgrade;
-        proxy_set_header Connection keep-alive;
-        proxy_set_header Host \$host;
-        proxy_cache_bypass \$http_upgrade;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
         
         # Better error handling
         proxy_intercept_errors on;
@@ -1151,17 +1109,16 @@ configure_firewall() {
     
     # Check if UFW is already configured with our ports
     local ufw_status=$(sudo ufw status 2>/dev/null || echo "inactive")
-    local has_dashboard=$(echo "$ufw_status" | grep -q "$DEFAULT_PORT" && echo "yes" || echo "no")
     local has_web=$(echo "$ufw_status" | grep -q "$WEB_PORT" && echo "yes" || echo "no")
     local has_api=$(echo "$ufw_status" | grep -q "$API_PORT" && echo "yes" || echo "no")
     
-    if [ "$has_dashboard" = "yes" ] && [ "$has_web" = "yes" ] && [ "$has_api" = "yes" ]; then
+    if [ "$has_web" = "yes" ] && [ "$has_api" = "yes" ]; then
         log_success "UFW är redan konfigurerat med alla Privatekonomi-portar"
-        sudo ufw status | grep -E "$DEFAULT_PORT|$WEB_PORT|$API_PORT"
+        sudo ufw status | grep -E "$WEB_PORT|$API_PORT"
         return 0
     fi
     
-    if [ "$has_dashboard" = "yes" ] || [ "$has_web" = "yes" ] || [ "$has_api" = "yes" ]; then
+    if [ "$has_web" = "yes" ] || [ "$has_api" = "yes" ]; then
         log_info "UFW är delvis konfigurerat. Saknade portar kommer att läggas till."
     fi
     
@@ -1175,12 +1132,6 @@ configure_firewall() {
     
     # Allow SSH first to avoid lockout
     sudo ufw allow ssh
-    
-    # Allow Aspire Dashboard
-    if [ "$has_dashboard" = "no" ]; then
-        sudo ufw allow $DEFAULT_PORT/tcp comment "Privatekonomi Aspire Dashboard"
-        log_info "Port $DEFAULT_PORT (Aspire Dashboard) öppnad"
-    fi
     
     # Allow Web application
     if [ "$has_web" = "no" ]; then
@@ -1209,32 +1160,40 @@ configure_firewall() {
     fi
 }
 
-# Create systemd service (optional)
+# Create systemd services for Web and API (optional)
 create_systemd_service() {
     if [ "$SKIP_SERVICE" = true ]; then
         log_info "Hoppar över systemd-tjänst (--no-service)"
         return 0
     fi
     
-    log_section "Skapar systemd-tjänst (valfritt)"
+    log_section "Skapar systemd-tjänster (valfritt)"
     
-    local service_file="/etc/systemd/system/${SERVICE_NAME}.service"
+    local web_service_file="/etc/systemd/system/privatekonomi-web.service"
+    local api_service_file="/etc/systemd/system/privatekonomi-api.service"
     
-    # Check if service already exists
-    if [ -f "$service_file" ]; then
-        log_info "Systemd-tjänst '$SERVICE_NAME' finns redan"
-        
-        if systemctl is-enabled "$SERVICE_NAME" &>/dev/null; then
-            log_success "Tjänsten är redan aktiverad"
-            
-            read -p "Vill du uppdatera tjänstekonfigurationen? (y/n): " -n 1 -r
-            echo
-            if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-                return 0
-            fi
+    # Check if services already exist
+    local web_exists=false
+    local api_exists=false
+    
+    if [ -f "$web_service_file" ]; then
+        web_exists=true
+        log_info "Systemd-tjänst 'privatekonomi-web' finns redan"
+    fi
+    
+    if [ -f "$api_service_file" ]; then
+        api_exists=true
+        log_info "Systemd-tjänst 'privatekonomi-api' finns redan"
+    fi
+    
+    if [ "$web_exists" = true ] || [ "$api_exists" = true ]; then
+        read -p "Vill du uppdatera tjänstkonfigurationerna? (y/n): " -n 1 -r
+        echo
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            return 0
         fi
     else
-        read -p "Vill du skapa en systemd-tjänst för att starta Privatekonomi automatiskt? (y/n): " -n 1 -r
+        read -p "Vill du skapa systemd-tjänster för att starta Privatekonomi automatiskt? (y/n): " -n 1 -r
         echo
         if [[ ! $REPLY =~ ^[Yy]$ ]]; then
             return 0
@@ -1243,59 +1202,121 @@ create_systemd_service() {
     
     local user=$(whoami)
     local home_dir="$HOME"
-    local working_dir
-    local exec_command
     
     # Determine if using published binaries or dotnet run
-    if [ -d "$INSTALL_DIR/publish/AppHost" ] && [ -f "$INSTALL_DIR/publish/AppHost/Privatekonomi.AppHost" ]; then
-        working_dir="$INSTALL_DIR/publish/AppHost"
-        exec_command="$INSTALL_DIR/publish/AppHost/Privatekonomi.AppHost"
-        log_info "Använder publicerade binärer för systemd-tjänst"
+    local use_published=false
+    local web_working_dir
+    local web_exec_command
+    local api_working_dir
+    local api_exec_command
+    
+    if [ -d "$INSTALL_DIR/publish/Web" ] && [ -f "$INSTALL_DIR/publish/Web/Privatekonomi.Web" ]; then
+        use_published=true
+        web_working_dir="$INSTALL_DIR/publish/Web"
+        web_exec_command="$INSTALL_DIR/publish/Web/Privatekonomi.Web"
+        log_info "Använder publicerade binärer för Web-tjänst"
     else
-        working_dir="$INSTALL_DIR/src/Privatekonomi.AppHost"
-        exec_command="$home_dir/.dotnet/dotnet run --configuration Release"
-        log_info "Använder dotnet run för systemd-tjänst"
+        web_working_dir="$INSTALL_DIR/src/Privatekonomi.Web"
+        web_exec_command="$home_dir/.dotnet/dotnet run --configuration Release"
+        log_info "Använder dotnet run för Web-tjänst"
     fi
     
-    log_info "Skapar systemd-tjänst: $service_file"
+    if [ -d "$INSTALL_DIR/publish/Api" ] && [ -f "$INSTALL_DIR/publish/Api/Privatekonomi.Api" ]; then
+        use_published=true
+        api_working_dir="$INSTALL_DIR/publish/Api"
+        api_exec_command="$INSTALL_DIR/publish/Api/Privatekonomi.Api"
+        log_info "Använder publicerade binärer för API-tjänst"
+    else
+        api_working_dir="$INSTALL_DIR/src/Privatekonomi.Api"
+        api_exec_command="$home_dir/.dotnet/dotnet run --configuration Release"
+        log_info "Använder dotnet run för API-tjänst"
+    fi
     
-    sudo tee "$service_file" > /dev/null << EOF
+    # Create Web service
+    log_info "Skapar systemd-tjänst: $web_service_file"
+    
+    sudo tee "$web_service_file" > /dev/null << EOF
 [Unit]
-Description=Privatekonomi Personal Finance Application
+Description=Privatekonomi Web Application
 After=network.target
 
 [Service]
 Type=simple
 User=$user
 Group=$user
-WorkingDirectory=$working_dir
+WorkingDirectory=$web_working_dir
 Environment=ASPNETCORE_ENVIRONMENT=Production
 Environment=PRIVATEKONOMI_ENVIRONMENT=RaspberryPi
 Environment=PRIVATEKONOMI_STORAGE_PROVIDER=Sqlite
 Environment=PRIVATEKONOMI_RASPBERRY_PI=true
-Environment=DOTNET_DASHBOARD_URLS=http://0.0.0.0:$DEFAULT_PORT
 Environment=DOTNET_ROOT=$home_dir/.dotnet
 Environment=PATH=$home_dir/.dotnet:$home_dir/.dotnet/tools:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-ExecStart=$exec_command
+ExecStart=$web_exec_command
 Restart=always
 RestartSec=10
-TimeoutStartSec=300
+TimeoutStartSec=120
 TimeoutStopSec=30
-SyslogIdentifier=$SERVICE_NAME
+SyslogIdentifier=privatekonomi-web
 
 [Install]
 WantedBy=multi-user.target
 EOF
     
-    sudo systemctl daemon-reload
-    sudo systemctl enable "$SERVICE_NAME"
+    # Create API service
+    log_info "Skapar systemd-tjänst: $api_service_file"
     
-    log_success "Systemd-tjänst '$SERVICE_NAME' skapad och aktiverad"
-    log_info "Använd följande kommandon för att hantera tjänsten:"
-    echo -e "  ${YELLOW}sudo systemctl start $SERVICE_NAME${NC}   # Starta tjänsten"
-    echo -e "  ${YELLOW}sudo systemctl stop $SERVICE_NAME${NC}    # Stoppa tjänsten"
-    echo -e "  ${YELLOW}sudo systemctl status $SERVICE_NAME${NC}  # Kontrollera status"
-    echo -e "  ${YELLOW}journalctl -u $SERVICE_NAME -f${NC}       # Visa loggar"
+    sudo tee "$api_service_file" > /dev/null << EOF
+[Unit]
+Description=Privatekonomi API
+After=network.target
+
+[Service]
+Type=simple
+User=$user
+Group=$user
+WorkingDirectory=$api_working_dir
+Environment=ASPNETCORE_ENVIRONMENT=Production
+Environment=PRIVATEKONOMI_ENVIRONMENT=RaspberryPi
+Environment=PRIVATEKONOMI_STORAGE_PROVIDER=Sqlite
+Environment=PRIVATEKONOMI_RASPBERRY_PI=true
+Environment=DOTNET_ROOT=$home_dir/.dotnet
+Environment=PATH=$home_dir/.dotnet:$home_dir/.dotnet/tools:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+ExecStart=$api_exec_command
+Restart=always
+RestartSec=10
+TimeoutStartSec=120
+TimeoutStopSec=30
+SyslogIdentifier=privatekonomi-api
+
+[Install]
+WantedBy=multi-user.target
+EOF
+    
+    # Remove old single service if it exists
+    if [ -f "/etc/systemd/system/privatekonomi.service" ]; then
+        log_info "Tar bort gammal privatekonomi.service..."
+        sudo systemctl stop privatekonomi 2>/dev/null || true
+        sudo systemctl disable privatekonomi 2>/dev/null || true
+        sudo rm -f "/etc/systemd/system/privatekonomi.service"
+    fi
+    
+    sudo systemctl daemon-reload
+    sudo systemctl enable privatekonomi-web
+    sudo systemctl enable privatekonomi-api
+    
+    log_success "Systemd-tjänster skapade och aktiverade"
+    log_info "Använd följande kommandon för att hantera tjänsterna:"
+    echo -e "  ${YELLOW}sudo systemctl start privatekonomi-web${NC}     # Starta Web"
+    echo -e "  ${YELLOW}sudo systemctl start privatekonomi-api${NC}     # Starta API"
+    echo -e "  ${YELLOW}sudo systemctl stop privatekonomi-web${NC}      # Stoppa Web"
+    echo -e "  ${YELLOW}sudo systemctl stop privatekonomi-api${NC}      # Stoppa API"
+    echo -e "  ${YELLOW}sudo systemctl status privatekonomi-web${NC}    # Status Web"
+    echo -e "  ${YELLOW}sudo systemctl status privatekonomi-api${NC}    # Status API"
+    echo -e "  ${YELLOW}journalctl -u privatekonomi-web -f${NC}         # Loggar Web"
+    echo -e "  ${YELLOW}journalctl -u privatekonomi-api -f${NC}         # Loggar API"
+    echo ""
+    log_info "För att starta båda tjänsterna:"
+    echo -e "  ${YELLOW}sudo systemctl start privatekonomi-web privatekonomi-api${NC}"
 }
 
 # Create backup script and schedule
