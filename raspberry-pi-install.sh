@@ -1200,9 +1200,11 @@ User=$user
 Group=$user
 WorkingDirectory=$web_working_dir
 Environment=ASPNETCORE_ENVIRONMENT=Production
+Environment=ASPNETCORE_URLS=http://0.0.0.0:$WEB_PORT
 Environment=PRIVATEKONOMI_ENVIRONMENT=RaspberryPi
 Environment=PRIVATEKONOMI_STORAGE_PROVIDER=Sqlite
 Environment=PRIVATEKONOMI_RASPBERRY_PI=true
+Environment=PORT=$WEB_PORT
 Environment=DOTNET_ROOT=$home_dir/.dotnet
 Environment=PATH=$home_dir/.dotnet:$home_dir/.dotnet/tools:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 ExecStart=$web_exec_command
@@ -1230,9 +1232,11 @@ User=$user
 Group=$user
 WorkingDirectory=$api_working_dir
 Environment=ASPNETCORE_ENVIRONMENT=Production
+Environment=ASPNETCORE_URLS=http://0.0.0.0:$API_PORT
 Environment=PRIVATEKONOMI_ENVIRONMENT=RaspberryPi
 Environment=PRIVATEKONOMI_STORAGE_PROVIDER=Sqlite
 Environment=PRIVATEKONOMI_RASPBERRY_PI=true
+Environment=PORT=$API_PORT
 Environment=DOTNET_ROOT=$home_dir/.dotnet
 Environment=PATH=$home_dir/.dotnet:$home_dir/.dotnet/tools:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 ExecStart=$api_exec_command
