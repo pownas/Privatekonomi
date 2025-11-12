@@ -409,30 +409,6 @@ EOF
 }
 EOF
     
-    # Create appsettings.Production.json for AppHost (Aspire Dashboard)
-    local apphost_config="$INSTALL_DIR/src/Privatekonomi.AppHost/appsettings.Production.json"
-    log_info "Skapar $apphost_config..."
-    
-    cat > "$apphost_config" << EOF
-{
-  "Logging": {
-    "LogLevel": {
-      "Default": "Information",
-      "Microsoft.AspNetCore": "Warning",
-      "Aspire.Hosting": "Information"
-    }
-  },
-  "Kestrel": {
-    "Endpoints": {
-      "Http": {
-        "Url": "http://0.0.0.0:$DEFAULT_PORT"
-      }
-    }
-  },
-  "AllowedHosts": "*"
-}
-EOF
-    
     log_success "Lagringskonfiguration skapad"
 }
 
@@ -730,7 +706,6 @@ EOF
         echo -e "${GREEN}Nginx Reverse Proxy är nu aktivt:${NC}"
         echo -e "  ${YELLOW}HTTP:${NC} http://$server_name"
         echo -e "  ${YELLOW}API:${NC} http://$server_name/api/"
-        echo -e "  ${YELLOW}Aspire Dashboard:${NC} http://$server_name/aspire/"
         echo -e ""
         echo -e "${BLUE}Nästa steg:${NC}"
         echo -e "  1. Konfigurera SSL/HTTPS med: ${YELLOW}sudo certbot --nginx -d $server_name${NC}"
@@ -901,11 +876,6 @@ upstream privatekonomi_api {
     keepalive 32;
 }
 
-upstream privatekonomi_dashboard {
-    server localhost:$DEFAULT_PORT;
-    keepalive 32;
-}
-
 # Redirect HTTP to HTTPS
 server {
     listen 80 default_server;
@@ -974,22 +944,6 @@ server {
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto \$scheme;
         proxy_set_header X-Real-IP \$remote_addr;
-        
-        # Better error handling
-        proxy_intercept_errors on;
-        error_page 502 503 504 /50x.html;
-    }
-    
-    # Aspire Dashboard (optional - comment out in production)
-    location /aspire/ {
-        proxy_pass http://privatekonomi_dashboard/;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade \$http_upgrade;
-        proxy_set_header Connection keep-alive;
-        proxy_set_header Host \$host;
-        proxy_cache_bypass \$http_upgrade;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
         
         # Better error handling
         proxy_intercept_errors on;
@@ -1573,39 +1527,28 @@ validate_network_config() {
         validation_passed=false
     fi
     
-    # Validate AppHost config
-    if [ -f "$apphost_config" ]; then
-        if grep -q '"Url".*"http://0.0.0.0:17127"' "$apphost_config"; then
-            log_success "AppHost konfiguration: Korrekt (lyssnar på 0.0.0.0:17127)"
-        else
-            log_warning "AppHost konfiguration: Kontrollera Kestrel-inställning"
-            validation_passed=false
-        fi
-    else
-        log_warning "AppHost konfiguration: Fil saknas"
-        validation_passed=false
-    fi
-    
     # Check network information
     local pi_ip=$(hostname -I | awk '{print $1}')
     if [ -n "$pi_ip" ]; then
         log_success "Raspberry Pi IP-adress: $pi_ip"
         echo ""
         echo -e "${BLUE}Åtkomst från andra enheter på nätverket:${NC}"
-        echo -e "  ${YELLOW}Direktåtkomst:${NC}"
-        echo -e "    http://$pi_ip:17127  (Aspire Dashboard)"
-        echo -e "    http://$pi_ip:5274   (Web App)"
-        echo -e "    http://$pi_ip:5277   (API)"
         
         if command -v nginx &> /dev/null && systemctl is-active --quiet nginx 2>/dev/null; then
-            echo -e ""
-            echo -e "  ${YELLOW}Via Nginx Proxy:${NC}"
+            echo -e "  ${YELLOW}Via Nginx Proxy (Rekommenderat):${NC}"
             echo -e "    http://$pi_ip        (Web App)"
+            echo -e "    http://$pi_ip/api    (API)"
             
             if ss -lntp 2>/dev/null | grep -q ":443 "; then
                 echo -e "    https://$pi_ip       (Web App med SSL)"
+                echo -e "    https://$pi_ip/api   (API med SSL)"
             fi
         fi
+        
+        echo -e ""
+        echo -e "  ${YELLOW}Direktåtkomst till tjänster:${NC}"
+        echo -e "    http://$pi_ip:5274   (Web App)"
+        echo -e "    http://$pi_ip:5277   (API)"
         echo ""
     else
         log_warning "Kunde inte fastställa IP-adress"
@@ -1617,7 +1560,7 @@ validate_network_config() {
         log_info "Kontrollerar brandväggsinställningar..."
         local firewall_ok=true
         
-        for port in 17127 5274 5277; do
+        for port in 5274 5277; do
             if sudo ufw status | grep -q "$port"; then
                 log_success "Port $port är öppen i brandväggen"
             else
@@ -1629,7 +1572,6 @@ validate_network_config() {
         if [ "$firewall_ok" = false ]; then
             echo ""
             echo -e "${YELLOW}Öppna portar med:${NC}"
-            echo "  sudo ufw allow 17127/tcp comment 'Privatekonomi Aspire'"
             echo "  sudo ufw allow 5274/tcp comment 'Privatekonomi Web'"
             echo "  sudo ufw allow 5277/tcp comment 'Privatekonomi API'"
             echo "  sudo ufw reload"
@@ -1661,31 +1603,34 @@ show_usage_info() {
     echo -e "    cd $INSTALL_DIR"
     echo -e "    ./raspberry-pi-start.sh"
     echo -e ""
-    echo -e "  ${YELLOW}Eller direkt med dotnet:${NC}"
-    echo -e "    cd $INSTALL_DIR/src/Privatekonomi.AppHost"
-    echo -e "    PRIVATEKONOMI_RASPBERRY_PI=true DOTNET_DASHBOARD_URLS=http://0.0.0.0:$DEFAULT_PORT dotnet run"
-    echo -e ""
     
-    if systemctl is-enabled "$SERVICE_NAME" &>/dev/null; then
-        echo -e "  ${YELLOW}Med systemd-tjänst:${NC}"
-        echo -e "    sudo systemctl start $SERVICE_NAME"
+    if systemctl is-enabled "privatekonomi-web" &>/dev/null; then
+        echo -e "  ${YELLOW}Med systemd-tjänster:${NC}"
+        echo -e "    sudo systemctl start privatekonomi-web privatekonomi-api"
         echo -e ""
     fi
     
     echo -e "${BLUE}Åtkomst till applikationen:${NC}"
     echo -e "  ${YELLOW}Lokalt (på Raspberry Pi):${NC}"
-    echo -e "    http://localhost:$DEFAULT_PORT (Aspire Dashboard)"
     echo -e "    http://localhost:$WEB_PORT (Web App)"
     echo -e "    http://localhost:$API_PORT (API)"
     echo -e ""
     echo -e "  ${YELLOW}Från andra enheter på nätverket:${NC}"
-    echo -e "    http://$pi_ip:$DEFAULT_PORT (Aspire Dashboard)"
-    echo -e "    http://$pi_ip:$WEB_PORT (Web App)"
-    echo -e "    http://$pi_ip:$API_PORT (API)"
+    
+    if command -v nginx &> /dev/null && systemctl is-active --quiet nginx 2>/dev/null; then
+        echo -e "    http://$pi_ip (Web App via Nginx)"
+        echo -e "    http://$pi_ip/api (API via Nginx)"
+    else
+        echo -e "    http://$pi_ip:$WEB_PORT (Web App)"
+        echo -e "    http://$pi_ip:$API_PORT (API)"
+    fi
     echo -e ""
     echo -e "${BLUE}Användbara kommandon:${NC}"
+    echo -e "  ${YELLOW}Kontrollera tjänster:${NC}"
+    echo -e "    sudo systemctl status privatekonomi-web privatekonomi-api"
+    echo -e ""
     echo -e "  ${YELLOW}Kontrollera portar:${NC}"
-    echo -e "    ss -lntp | grep '$DEFAULT_PORT\\|$WEB_PORT\\|$API_PORT'"
+    echo -e "    ss -lntp | grep '$WEB_PORT\\|$API_PORT'"
     echo -e ""
     echo -e "  ${YELLOW}Visa IP-adress:${NC}"
     echo -e "    hostname -I"
@@ -1693,7 +1638,7 @@ show_usage_info() {
     echo -e "  ${YELLOW}Uppdatera projekt:${NC}"
     echo -e "    cd $INSTALL_DIR"
     echo -e "    git pull origin main"
-    echo -e "    dotnet build --configuration Release"
+    echo -e "    ./raspberry-pi-install.sh"
     echo -e ""
     echo -e "  ${YELLOW}Manuell backup:${NC}"
     echo -e "    ~/scripts/backup-privatekonomi.sh"
@@ -1705,7 +1650,6 @@ show_usage_info() {
     echo -e "  • ${YELLOW}Privatekonomi.Api${NC} - Backend API"
     echo -e "  • ${YELLOW}Privatekonomi.Web${NC} - Blazor frontend"
     echo -e "  • ${YELLOW}Privatekonomi.Core${NC} - Kärnbibliotek"
-    echo -e "  • ${YELLOW}Privatekonomi.AppHost${NC} - Aspire-orkestrering"
     echo -e ""
     echo -e "${BLUE}Datakatalog:${NC}"
     echo -e "  • ${YELLOW}Data:${NC} $DATA_DIR"
