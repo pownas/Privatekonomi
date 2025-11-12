@@ -245,13 +245,13 @@ else
                                        Size="Size.Small" 
                                        OnClick="@(() => MovePriorityUp(context))"
                                        Disabled="@(context.Priority <= 1)"
-                                       Title="Öka prioritet"
+                                       title="Öka prioritet"
                                        Style="height: 20px; padding: 0;" />
                         <MudIconButton Icon="@Icons.Material.Filled.KeyboardArrowDown" 
                                        Size="Size.Small" 
                                        OnClick="@(() => MovePriorityDown(context))"
                                        Disabled="@(context.Priority >= 5)"
-                                       Title="Minska prioritet"
+                                       title="Minska prioritet"
                                        Style="height: 20px; padding: 0;" />
                     </div>
                     <MudChip T="string" Color="@GetPriorityColor(context.Priority)" Size="Size.Small">
@@ -277,7 +277,7 @@ else
                                    Size="Size.Small" 
                                    OnClick="@(() => OpenSimulationDialog(context))" 
                                    Color="Color.Info" 
-                                   Title="Simulera sparande"
+                                   title="Simulera sparande"
                                    aria-label="Simulera sparande" />
                     <MudIconButton Icon="@Icons.Material.Filled.Edit" 
                                    Size="Size.Small" 
@@ -463,7 +463,7 @@ else
         var dialog = await DialogService.ShowAsync<SavingsSimulationDialog>("Simulera Sparande", parameters, options);
         var result = await dialog.Result;
 
-        if (!result.Canceled && result.Data is decimal newMonthlySavings)
+        if (result != null && !result.Canceled && result.Data is decimal newMonthlySavings)
         {
             goal.MonthlyAutoSavingsAmount = newMonthlySavings;
             goal.AutoSavingsType = AutoSavingsType.FixedAmount;

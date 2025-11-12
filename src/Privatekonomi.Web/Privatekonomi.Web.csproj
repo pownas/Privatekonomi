@@ -6,7 +6,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.SignalR" Version="1.1.0" />
     <PackageReference Include="MudBlazor" Version="8.13.0" />
   </ItemGroup>
 
@@ -15,6 +14,8 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>2b2d9b8c-52d5-49e1-8a2b-4fcf76e8ae78</UserSecretsId>
+    <!-- Suppress NU1608 until Pomelo.EntityFrameworkCore.MySql releases 10.0 compatible version -->
+    <NoWarn>$(NoWarn);NU1608</NoWarn>
   </PropertyGroup>
 
 </Project>
