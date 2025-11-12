@@ -8,7 +8,7 @@
 # for the Privatekonomi project in GitHub Codespaces.
 #
 # Summary of setup performed:
-# 1. Install .NET 9 SDK (required for this project)
+# 1. Install .NET 10 SDK (required for this project)
 # 2. Configure PATH for .NET tools (Codespaces)
 # 3. Restore project dependencies
 # 4. Clean and rebuild solution
@@ -62,9 +62,9 @@ check_codespace() {
     fi
 }
 
-# Step 1: Install .NET 9 SDK
-install_dotnet_9() {
-    log_section "Installing .NET 9 SDK"
+# Step 1: Install .NET 10 SDK
+install_dotnet_10() {
+    log_section "Installing .NET 10 SDK"
     
     log_info "Checking current .NET installation..."
     if command -v dotnet &> /dev/null; then
@@ -72,25 +72,25 @@ install_dotnet_9() {
         log_info "Installed SDKs:"
         dotnet --list-sdks
         
-        # Check if .NET 9 is already installed
-        if dotnet --list-sdks | grep -q "9\."; then
-            log_success ".NET 9 SDK is already installed"
+        # Check if .NET 10 is already installed
+        if dotnet --list-sdks | grep -q "10\."; then
+            log_success ".NET 10 SDK is already installed"
             return 0
         fi
     else
         log_warning ".NET not found in PATH"
     fi
     
-    log_info "Installing .NET 9 SDK using Microsoft's installation script..."
-    curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --version latest --channel 9.0
+    log_info "Installing .NET 10 SDK using Microsoft's installation script..."
+    curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --version latest --channel 10.0
     
     log_info "Configuring PATH for .NET..."
     export PATH="$HOME/.dotnet:$PATH"
     echo 'export PATH="$HOME/.dotnet:$PATH"' >> ~/.bashrc
     
-    log_info "Verifying .NET 9 installation..."
+    log_info "Verifying .NET 10 installation..."
     dotnet --list-sdks
-    log_success ".NET 9 SDK installation completed"
+    log_success ".NET 10 SDK installation completed"
 }
 
 # Step 2: Restore and build project
@@ -235,7 +235,7 @@ show_usage_info() {
     echo -e "  • ${YELLOW}Privatekonomi.ServiceDefaults${NC} - Shared service configurations"
     echo -e ""
     echo -e "${BLUE}Installed Tools:${NC}"
-    echo -e "  • .NET 9 SDK"
+    echo -e "  • .NET 10 SDK"
     echo -e "  • Entity Framework CLI tools"
     echo -e "  • HTTPS development certificates (trusted)"
     echo -e "${BLUE}Aspire hanteras via projektets NuGet-paket – ingen separat workload krävs längre.${NC}"
@@ -249,7 +249,7 @@ main() {
     log_info "Starting automated environment setup..."
     
     check_codespace
-    install_dotnet_9
+    install_dotnet_10
     setup_project
     install_ef_tools
     configure_dev_certs

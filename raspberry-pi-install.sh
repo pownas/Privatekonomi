@@ -9,7 +9,7 @@
 #
 # Summary of setup performed:
 # 1. Check system requirements and dependencies
-# 2. Install/verify .NET 9 SDK
+# 2. Install/verify .NET 10 SDK
 # 3. Configure PATH for .NET tools
 # 4. Clone or update Privatekonomi repository 
 # 5. Install Entity Framework CLI tools
@@ -153,24 +153,24 @@ EOF
     log_success "NuGet.Config skapad"
 }
 
-# Install .NET 9 SDK
-install_dotnet_9() {
-    log_section "Installerar .NET 9 SDK"
+# Install .NET 10 SDK
+install_dotnet_10() {
+    log_section "Installerar .NET 10 SDK"
     
     if command -v dotnet &> /dev/null; then
         local current_version=$(dotnet --version 2>/dev/null || echo "Okänd")
         log_info "Befintlig .NET-version: $current_version"
         
-        if [[ "$current_version" == 9.* ]]; then
-            log_success ".NET 9 SDK är redan installerat"
+        if [[ "$current_version" == 10.* ]]; then
+            log_success ".NET 10 SDK är redan installerat"
             return 0
         fi
     fi
     
-    log_info "Laddar ner och installerar .NET 9 SDK..."
+    log_info "Laddar ner och installerar .NET 10 SDK..."
     
     # Download and run the install script
-    curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --channel 9.0
+    curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --channel 10.0
     
     # Add to PATH for current session
     export PATH="$PATH:$HOME/.dotnet"
@@ -186,9 +186,9 @@ install_dotnet_9() {
     # Verify installation
     if [ -f "$HOME/.dotnet/dotnet" ]; then
         local version=$($HOME/.dotnet/dotnet --version)
-        log_success ".NET 9 SDK installerat: version $version"
+        log_success ".NET 10 SDK installerat: version $version"
     else
-        log_error "Misslyckades med att installera .NET 9 SDK"
+        log_error "Misslyckades med att installera .NET 10 SDK"
         exit 1
     fi
 }
@@ -1688,7 +1688,7 @@ main() {
     check_raspberry_pi
     check_system_requirements
     create_nuget_config
-    install_dotnet_9
+    install_dotnet_10
     setup_project
     publish_application
     configure_storage

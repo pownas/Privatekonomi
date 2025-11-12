@@ -1,6 +1,6 @@
 # Privatekonomi
 
-En privatekonomi-applikation byggd med .NET 9, Blazor Server och MudBlazor för att hjälpa användare att få koll och kontroll över sin ekonomi.
+En privatekonomi-applikation byggd med .NET 10 LTS, Blazor Server och MudBlazor för att hjälpa användare att få koll och kontroll över sin ekonomi.
 
 ## 🌐 Landningssida (Beta)
 
@@ -222,7 +222,7 @@ Se [ASPIRE_GUIDE.md](docs/ASPIRE_GUIDE.md) för mer information.
 
 ### Förutsättningar
 
-- [.NET 9 SDK](https://dotnet.microsoft.com/download/dotnet/9.0)
+- [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
 - [Docker Desktop](https://www.docker.com/products/docker-desktop) (för Aspire Orchestrator)
 - [Node.js](https://nodejs.org/) (för Playwright-tester)
 
@@ -250,13 +250,13 @@ cd ~/Privatekonomi
 ```
 
 **Installationsskriptet hanterar automatiskt:**
-- ✅ Installation av .NET 9 SDK
-- ✅ **Publicering för linux-arm64 med self-contained binärer (NYTT)**
+- ✅ Installation av .NET 10 SDK
+- ✅ **Publicering för linux-arm64 med self-contained binärer**
 - ✅ Val av lagringsalternativ (SQLite/JsonFile)
 - ✅ Skapande av konfigurationsfiler
 - ✅ Byggning av applikationen
-- ✅ **Nginx reverse proxy-konfiguration (NYTT)**
-- ✅ **SSL/HTTPS med Let's Encrypt eller self-signed certifikat (NYTT)**
+- ✅ **Nginx reverse proxy-konfiguration**
+- ✅ **SSL/HTTPS med Let's Encrypt eller self-signed certifikat**
 - ✅ Valfri systemd-tjänst för automatisk start
 - ✅ Automatiska dagliga backuper med cron
 - ✅ Brandväggskonfiguration (UFW, inkluderar HTTP/HTTPS-portar)

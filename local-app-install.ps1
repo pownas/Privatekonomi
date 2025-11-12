@@ -6,7 +6,7 @@
 # for the Privatekonomi project on Windows/PowerShell.
 #
 # Summary of setup performed:
-# 1. Install .NET 9 SDK (required for this project)
+# 1. Install .NET 10 SDK (required for this project)
 # 2. Restore project dependencies
 # 3. Clean and rebuild solution
 # 4. Install Entity Framework CLI tools
@@ -84,9 +84,9 @@ function Test-AdminPrivileges {
     }
 }
 
-# Step 1: Install .NET 9 SDK
-function Install-DotNet9 {
-    Write-LogSection "Installing .NET 9 SDK"
+# Step 1: Install .NET 10 SDK
+function Install-DotNet10 {
+    Write-LogSection "Installing .NET 10 SDK"
     
     Write-LogInfo "Checking current .NET installation..."
     try {
@@ -95,10 +95,10 @@ function Install-DotNet9 {
         Write-LogInfo "Installed SDKs:"
         dotnet --list-sdks
         
-        # Check if .NET 9 is already installed
+        # Check if .NET 10 is already installed
         $sdks = dotnet --list-sdks | Out-String
-        if ($sdks -match "9\.") {
-            Write-LogSuccess ".NET 9 SDK is already installed"
+        if ($sdks -match "10\.") {
+            Write-LogSuccess ".NET 10 SDK is already installed"
             return
         }
     }
@@ -106,7 +106,7 @@ function Install-DotNet9 {
         Write-LogWarning ".NET not found in PATH"
     }
     
-    Write-LogInfo "Downloading and installing .NET 9 SDK..."
+    Write-LogInfo "Downloading and installing .NET 10 SDK..."
     try {
         # Download the .NET install script
         $installScript = Invoke-WebRequest -Uri "https://dot.net/v1/dotnet-install.ps1" -UseBasicParsing
@@ -114,7 +114,7 @@ function Install-DotNet9 {
         $installScript.Content | Out-File -FilePath $scriptPath -Encoding UTF8
         
         # Run the installer
-        & $scriptPath -Channel 9.0 -InstallDir "$env:LOCALAPPDATA\Microsoft\dotnet"
+        & $scriptPath -Channel 10.0 -InstallDir "$env:LOCALAPPDATA\Microsoft\dotnet"
         
         # Add to PATH for current session
         $dotnetPath = "$env:LOCALAPPDATA\Microsoft\dotnet"
@@ -128,13 +128,13 @@ function Install-DotNet9 {
             [Environment]::SetEnvironmentVariable("PATH", "$dotnetPath;$userPath", "User")
         }
         
-        Write-LogInfo "Verifying .NET 9 installation..."
+        Write-LogInfo "Verifying .NET 10 installation..."
         dotnet --list-sdks
-        Write-LogSuccess ".NET 9 SDK installation completed"
+        Write-LogSuccess ".NET 10 SDK installation completed"
     }
     catch {
-        Write-LogError "Failed to install .NET 9 SDK: $($_.Exception.Message)"
-        Write-LogWarning "Please manually download and install .NET 9 SDK from: https://dotnet.microsoft.com/download/dotnet/9.0"
+        Write-LogError "Failed to install .NET 10 SDK: $($_.Exception.Message)"
+        Write-LogWarning "Please manually download and install .NET 10 SDK from: https://dotnet.microsoft.com/download/dotnet/10.0"
         throw
     }
 }
@@ -378,7 +378,7 @@ function Show-UsageInfo {
     Write-Host "  • Privatekonomi.ServiceDefaults - Shared service configurations" -ForegroundColor Yellow
     Write-Host ""
     Write-Host "Installed Tools:" -ForegroundColor Blue
-    Write-Host "  • .NET 9 SDK"
+    Write-Host "  • .NET 10 SDK"
     Write-Host "  • Entity Framework CLI tools"
     Write-Host "  • HTTPS development certificates (trusted)"
     Write-Host "Aspire hanteras via projektets NuGet-paket – ingen separat workload krävs." -ForegroundColor Blue
@@ -395,7 +395,7 @@ function Main {
     
     try {
         Test-AdminPrivileges
-        Install-DotNet9
+        Install-DotNet10
         Setup-Project
         Install-EFTools
         Configure-DevCerts
