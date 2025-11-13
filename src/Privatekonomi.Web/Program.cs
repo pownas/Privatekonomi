@@ -176,22 +176,25 @@ builder.Services.AddScoped<IISKTaxCalculator, ISKTaxCalculator>();
 // Register bank API services and dependencies
 builder.Services.AddBankApiServices(builder.Configuration);
 
-// Add HttpClient for API calls (if needed later) using Aspire service discovery
+// Add HttpClient for API calls
 builder.Services.AddHttpClient("api", client =>
 {
-    // Aspire will configure this automatically through service discovery
-
-    // // This will be configured by Aspire service discovery
-    // client.BaseAddress = new Uri(builder.Configuration["services:api:http:0"] ?? "http://localhost:5001");
+    // Configure API base address based on environment
+    // Aspire will override this through service discovery when running with AppHost
+    // For Raspberry Pi and standalone deployments, use configuration
+    var apiBaseUrl = builder.Configuration["ApiSettings:BaseUrl"] 
+        ?? builder.Configuration["services:api:http:0"] 
+        ?? "http://localhost:5277";
+    
+    client.BaseAddress = new Uri(apiBaseUrl);
 });
 
-// Configure default HttpClient 
+// Configure default HttpClient to use the API client configuration
 builder.Services.AddScoped<HttpClient>(sp =>
 {
     var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
-    return httpClientFactory.CreateClient();
-    //// to use the API base address
-    //return httpClientFactory.CreateClient("api");
+    // Use the configured "api" client as the default
+    return httpClientFactory.CreateClient("api");
 });
 
 // Register stock price service with HttpClient
