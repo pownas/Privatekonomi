@@ -568,4 +568,249 @@ public class HouseholdServiceTests : IDisposable
     }
 
     #endregion
+
+    #region Recurring Task Tests
+
+    [Fact]
+    public async Task CreateNextRecurrenceAsync_CreatesNewTaskWithCorrectDueDate()
+    {
+        // Arrange
+        var household = new Household { Name = "Test Household" };
+        _context.Households.Add(household);
+        await _context.SaveChangesAsync();
+
+        var recurringTask = new HouseholdTask
+        {
+            HouseholdId = household.HouseholdId,
+            Title = "Weekly cleaning",
+            Description = "Clean the house",
+            Category = HouseholdActivityType.Cleaning,
+            DueDate = new DateTime(2025, 1, 1),
+            IsRecurring = true,
+            RecurrencePattern = RecurrencePattern.Weekly,
+            RecurrenceInterval = 1,
+            Status = HouseholdTaskStatus.Done,
+            IsCompleted = true
+        };
+
+        var created = await _householdService.CreateTaskAsync(recurringTask);
+
+        // Act
+        var nextTask = await _householdService.CreateNextRecurrenceAsync(created.HouseholdTaskId);
+
+        // Assert
+        Assert.NotNull(nextTask);
+        Assert.Equal("Weekly cleaning", nextTask.Title);
+        Assert.Equal(new DateTime(2025, 1, 8), nextTask.DueDate); // 7 days later
+        Assert.Equal(HouseholdTaskStatus.ToDo, nextTask.Status);
+        Assert.False(nextTask.IsCompleted);
+        Assert.True(nextTask.IsRecurring);
+        Assert.Equal(created.HouseholdTaskId, nextTask.ParentTaskId);
+    }
+
+    [Fact]
+    public async Task CreateNextRecurrenceAsync_MonthlyRecurrence_CalculatesCorrectDate()
+    {
+        // Arrange
+        var household = new Household { Name = "Test Household" };
+        _context.Households.Add(household);
+        await _context.SaveChangesAsync();
+
+        var recurringTask = new HouseholdTask
+        {
+            HouseholdId = household.HouseholdId,
+            Title = "Monthly budget review",
+            DueDate = new DateTime(2025, 1, 15),
+            IsRecurring = true,
+            RecurrencePattern = RecurrencePattern.Monthly,
+            RecurrenceInterval = 1,
+            Status = HouseholdTaskStatus.Done,
+            IsCompleted = true
+        };
+
+        var created = await _householdService.CreateTaskAsync(recurringTask);
+
+        // Act
+        var nextTask = await _householdService.CreateNextRecurrenceAsync(created.HouseholdTaskId);
+
+        // Assert
+        Assert.NotNull(nextTask);
+        Assert.Equal(new DateTime(2025, 2, 15), nextTask.DueDate);
+    }
+
+    [Fact]
+    public async Task UpdateTaskStatusAsync_CompletingRecurringTask_CreatesNextOccurrence()
+    {
+        // Arrange
+        var household = new Household { Name = "Test Household" };
+        _context.Households.Add(household);
+        await _context.SaveChangesAsync();
+
+        var recurringTask = new HouseholdTask
+        {
+            HouseholdId = household.HouseholdId,
+            Title = "Daily task",
+            DueDate = DateTime.Today,
+            IsRecurring = true,
+            RecurrencePattern = RecurrencePattern.Daily,
+            RecurrenceInterval = 1
+        };
+
+        var created = await _householdService.CreateTaskAsync(recurringTask);
+
+        // Act
+        await _householdService.UpdateTaskStatusAsync(created.HouseholdTaskId, HouseholdTaskStatus.Done);
+
+        // Assert
+        var allTasks = await _householdService.GetTasksAsync(household.HouseholdId);
+        var tasksList = allTasks.ToList();
+        Assert.Equal(2, tasksList.Count); // Original + next occurrence
+        Assert.True(tasksList.Any(t => t.DueDate == DateTime.Today.AddDays(1)));
+    }
+
+    #endregion
+
+    #region Kanban Board Tests
+
+    [Fact]
+    public async Task GetTasksByStatusAsync_ReturnsOnlyTasksWithSpecifiedStatus()
+    {
+        // Arrange
+        var household = new Household { Name = "Test Household" };
+        _context.Households.Add(household);
+        await _context.SaveChangesAsync();
+
+        var task1 = new HouseholdTask
+        {
+            HouseholdId = household.HouseholdId,
+            Title = "To do task",
+            Status = HouseholdTaskStatus.ToDo
+        };
+        var task2 = new HouseholdTask
+        {
+            HouseholdId = household.HouseholdId,
+            Title = "In progress task",
+            Status = HouseholdTaskStatus.InProgress
+        };
+        var task3 = new HouseholdTask
+        {
+            HouseholdId = household.HouseholdId,
+            Title = "Done task",
+            Status = HouseholdTaskStatus.Done
+        };
+
+        await _householdService.CreateTaskAsync(task1);
+        await _householdService.CreateTaskAsync(task2);
+        await _householdService.CreateTaskAsync(task3);
+
+        // Act
+        var inProgressTasks = await _householdService.GetTasksByStatusAsync(
+            household.HouseholdId, 
+            HouseholdTaskStatus.InProgress
+        );
+
+        // Assert
+        var tasks = inProgressTasks.ToList();
+        Assert.Single(tasks);
+        Assert.Equal("In progress task", tasks[0].Title);
+    }
+
+    [Fact]
+    public async Task GetTasksGroupedByStatusAsync_ReturnsTasksGroupedByStatus()
+    {
+        // Arrange
+        var household = new Household { Name = "Test Household" };
+        _context.Households.Add(household);
+        await _context.SaveChangesAsync();
+
+        await _householdService.CreateTaskAsync(new HouseholdTask
+        {
+            HouseholdId = household.HouseholdId,
+            Title = "Todo 1",
+            Status = HouseholdTaskStatus.ToDo,
+            Category = HouseholdActivityType.Cleaning
+        });
+        await _householdService.CreateTaskAsync(new HouseholdTask
+        {
+            HouseholdId = household.HouseholdId,
+            Title = "Todo 2",
+            Status = HouseholdTaskStatus.ToDo,
+            Category = HouseholdActivityType.Cleaning
+        });
+        await _householdService.CreateTaskAsync(new HouseholdTask
+        {
+            HouseholdId = household.HouseholdId,
+            Title = "In Progress",
+            Status = HouseholdTaskStatus.InProgress,
+            Category = HouseholdActivityType.Cleaning
+        });
+
+        // Act
+        var grouped = await _householdService.GetTasksGroupedByStatusAsync(
+            household.HouseholdId, 
+            HouseholdActivityType.Cleaning
+        );
+
+        // Assert
+        Assert.Equal(2, grouped.Count);
+        Assert.Equal(2, grouped[HouseholdTaskStatus.ToDo].Count());
+        Assert.Single(grouped[HouseholdTaskStatus.InProgress]);
+    }
+
+    [Fact]
+    public async Task UpdateTaskStatusAsync_UpdatesStatusCorrectly()
+    {
+        // Arrange
+        var household = new Household { Name = "Test Household" };
+        _context.Households.Add(household);
+        await _context.SaveChangesAsync();
+
+        var task = new HouseholdTask
+        {
+            HouseholdId = household.HouseholdId,
+            Title = "Test task",
+            Status = HouseholdTaskStatus.ToDo
+        };
+
+        var created = await _householdService.CreateTaskAsync(task);
+
+        // Act
+        var result = await _householdService.UpdateTaskStatusAsync(
+            created.HouseholdTaskId, 
+            HouseholdTaskStatus.InProgress
+        );
+
+        // Assert
+        Assert.True(result);
+        var updated = await _context.HouseholdTasks.FindAsync(created.HouseholdTaskId);
+        Assert.Equal(HouseholdTaskStatus.InProgress, updated!.Status);
+    }
+
+    [Fact]
+    public async Task UpdateTaskStatusAsync_MovingToDone_MarksAsCompleted()
+    {
+        // Arrange
+        var household = new Household { Name = "Test Household" };
+        _context.Households.Add(household);
+        await _context.SaveChangesAsync();
+
+        var task = new HouseholdTask
+        {
+            HouseholdId = household.HouseholdId,
+            Title = "Test task",
+            Status = HouseholdTaskStatus.InProgress
+        };
+
+        var created = await _householdService.CreateTaskAsync(task);
+
+        // Act
+        await _householdService.UpdateTaskStatusAsync(created.HouseholdTaskId, HouseholdTaskStatus.Done);
+
+        // Assert
+        var updated = await _context.HouseholdTasks.FindAsync(created.HouseholdTaskId);
+        Assert.True(updated!.IsCompleted);
+        Assert.NotNull(updated.CompletedDate);
+    }
+
+    #endregion
 }
