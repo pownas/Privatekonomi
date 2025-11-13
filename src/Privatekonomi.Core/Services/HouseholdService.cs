@@ -457,6 +457,136 @@ public class HouseholdService : IHouseholdService
         await _context.SaveChangesAsync();
         return true;
     }
+
+    public async Task<IEnumerable<HouseholdTask>> GetTasksByStatusAsync(int householdId, HouseholdTaskStatus status)
+    {
+        return await _context.HouseholdTasks
+            .Include(t => t.AssignedToMember)
+            .Include(t => t.CompletedByMember)
+            .Where(t => t.HouseholdId == householdId && t.Status == status)
+            .OrderBy(t => t.Priority)
+            .ThenBy(t => t.DueDate)
+            .ToListAsync();
+    }
+
+    public async Task<Dictionary<HouseholdTaskStatus, IEnumerable<HouseholdTask>>> GetTasksGroupedByStatusAsync(int householdId, HouseholdActivityType? category = null)
+    {
+        var query = _context.HouseholdTasks
+            .Include(t => t.AssignedToMember)
+            .Include(t => t.CompletedByMember)
+            .Where(t => t.HouseholdId == householdId);
+
+        if (category.HasValue)
+        {
+            query = query.Where(t => t.Category == category.Value);
+        }
+
+        var tasks = await query
+            .OrderBy(t => t.Priority)
+            .ThenBy(t => t.DueDate)
+            .ToListAsync();
+
+        return tasks.GroupBy(t => t.Status)
+            .ToDictionary(g => g.Key, g => g.AsEnumerable());
+    }
+
+    public async Task<bool> UpdateTaskStatusAsync(int taskId, HouseholdTaskStatus newStatus)
+    {
+        var task = await _context.HouseholdTasks.FindAsync(taskId);
+        if (task == null)
+            return false;
+
+        task.Status = newStatus;
+
+        // Automatically mark as completed when status changes to Done
+        if (newStatus == HouseholdTaskStatus.Done && !task.IsCompleted)
+        {
+            task.IsCompleted = true;
+            task.CompletedDate = DateTime.Now;
+
+            // If this is a recurring task, create the next occurrence
+            if (task.IsRecurring)
+            {
+                await CreateNextRecurrenceAsync(taskId);
+            }
+        }
+        // Mark as incomplete if moved back from Done
+        else if (newStatus != HouseholdTaskStatus.Done && task.IsCompleted)
+        {
+            task.IsCompleted = false;
+            task.CompletedDate = null;
+            task.CompletedByMemberId = null;
+        }
+
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<HouseholdTask?> CreateNextRecurrenceAsync(int taskId)
+    {
+        var task = await _context.HouseholdTasks.FindAsync(taskId);
+        if (task == null || !task.IsRecurring || !task.RecurrencePattern.HasValue)
+            return null;
+
+        // Calculate next due date
+        var nextDueDate = CalculateNextDueDate(task.DueDate ?? DateTime.Today, task.RecurrencePattern.Value, task.RecurrenceInterval ?? 1);
+
+        // Create new task instance
+        var nextTask = new HouseholdTask
+        {
+            HouseholdId = task.HouseholdId,
+            Title = task.Title,
+            Description = task.Description,
+            Category = task.Category,
+            Priority = task.Priority,
+            AssignedToMemberId = task.AssignedToMemberId,
+            DueDate = nextDueDate,
+            IsRecurring = true,
+            RecurrencePattern = task.RecurrencePattern,
+            RecurrenceInterval = task.RecurrenceInterval,
+            ParentTaskId = task.ParentTaskId ?? task.HouseholdTaskId,
+            CreatedDate = DateTime.Now,
+            Status = HouseholdTaskStatus.ToDo
+        };
+
+        _context.HouseholdTasks.Add(nextTask);
+        
+        // Update the current task's NextDueDate
+        task.NextDueDate = nextDueDate;
+        
+        await _context.SaveChangesAsync();
+        return nextTask;
+    }
+
+    public async Task ProcessRecurringTasksAsync(int householdId)
+    {
+        // Find all completed recurring tasks that don't have a next occurrence scheduled
+        var completedRecurringTasks = await _context.HouseholdTasks
+            .Where(t => t.HouseholdId == householdId 
+                && t.IsRecurring 
+                && t.IsCompleted 
+                && !t.NextDueDate.HasValue)
+            .ToListAsync();
+
+        foreach (var task in completedRecurringTasks)
+        {
+            await CreateNextRecurrenceAsync(task.HouseholdTaskId);
+        }
+    }
+
+    private DateTime CalculateNextDueDate(DateTime currentDueDate, RecurrencePattern pattern, int interval)
+    {
+        return pattern switch
+        {
+            RecurrencePattern.Daily => currentDueDate.AddDays(interval),
+            RecurrencePattern.Weekly => currentDueDate.AddDays(7 * interval),
+            RecurrencePattern.BiWeekly => currentDueDate.AddDays(14 * interval),
+            RecurrencePattern.Monthly => currentDueDate.AddMonths(interval),
+            RecurrencePattern.Quarterly => currentDueDate.AddMonths(3 * interval),
+            RecurrencePattern.Yearly => currentDueDate.AddYears(interval),
+            _ => currentDueDate.AddDays(1)
+        };
+    }
     
     // Shared Budget operations
     public async Task<Budget> CreateSharedBudgetAsync(Budget budget, Dictionary<int, decimal> memberContributions)

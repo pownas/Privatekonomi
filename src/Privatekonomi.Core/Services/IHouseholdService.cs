@@ -43,11 +43,16 @@ public interface IHouseholdService
     // Task (To-Do) operations
     Task<IEnumerable<HouseholdTask>> GetTasksAsync(int householdId, bool? includeCompleted = null);
     Task<IEnumerable<HouseholdTask>> SearchTasksAsync(int householdId, string searchTerm);
+    Task<IEnumerable<HouseholdTask>> GetTasksByStatusAsync(int householdId, HouseholdTaskStatus status);
+    Task<Dictionary<HouseholdTaskStatus, IEnumerable<HouseholdTask>>> GetTasksGroupedByStatusAsync(int householdId, HouseholdActivityType? category = null);
     Task<HouseholdTask> CreateTaskAsync(HouseholdTask task);
     Task<HouseholdTask> UpdateTaskAsync(HouseholdTask task);
+    Task<bool> UpdateTaskStatusAsync(int taskId, HouseholdTaskStatus newStatus);
     Task<bool> DeleteTaskAsync(int taskId);
     Task<bool> MarkTaskCompleteAsync(int taskId, int? completedByMemberId = null);
     Task<bool> MarkTaskIncompleteAsync(int taskId);
+    Task<HouseholdTask?> CreateNextRecurrenceAsync(int taskId);
+    Task ProcessRecurringTasksAsync(int householdId);
     
     // Shared Budget operations
     Task<Budget> CreateSharedBudgetAsync(Budget budget, Dictionary<int, decimal> memberContributions);

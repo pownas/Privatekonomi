@@ -187,82 +187,138 @@ else
                 Lägg till uppgift
             </MudButton>
 
-            <MudStack Row="true" Class="mb-4">
-                <MudTextField @bind-Value="taskSearchTerm" Label="Sök uppgifter" Immediate="true" Clearable="true" 
-                              Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" />
-                <MudSwitch @bind-Value="showCompletedTasks" Label="Visa genomförda" Color="Color.Primary" />
+            <MudStack Row="true" Class="mb-4" Spacing="2">
+                <MudSelect @bind-Value="selectedCategory" Label="Filtrera efter kategori" Clearable="true">
+                    <MudSelectItem Value="@((HouseholdActivityType?)null)">Alla kategorier</MudSelectItem>
+                    <MudSelectItem Value="@((HouseholdActivityType?)HouseholdActivityType.General)">Allmänt</MudSelectItem>
+                    <MudSelectItem Value="@((HouseholdActivityType?)HouseholdActivityType.Cleaning)">Städning</MudSelectItem>
+                    <MudSelectItem Value="@((HouseholdActivityType?)HouseholdActivityType.Maintenance)">Underhåll</MudSelectItem>
+                    <MudSelectItem Value="@((HouseholdActivityType?)HouseholdActivityType.Shopping)">Inköp</MudSelectItem>
+                    <MudSelectItem Value="@((HouseholdActivityType?)HouseholdActivityType.Cooking)">Matlagning</MudSelectItem>
+                    <MudSelectItem Value="@((HouseholdActivityType?)HouseholdActivityType.Repair)">Reparation</MudSelectItem>
+                    <MudSelectItem Value="@((HouseholdActivityType?)HouseholdActivityType.Other)">Övrigt</MudSelectItem>
+                </MudSelect>
+                <MudSwitch @bind-Value="showKanbanView" Label="Kanban-vy" Color="Color.Primary" />
             </MudStack>
 
-            @if (!filteredTasks.Any())
+            @if (showKanbanView)
             {
-                <MudAlert Severity="Severity.Info" Class="mt-4">Inga uppgifter ännu. Lägg till uppgifter att göra.</MudAlert>
+                @if (selectedCategory.HasValue)
+                {
+                    <!-- Single category kanban board -->
+                    <KanbanBoard Category="@selectedCategory.Value" 
+                                 Tasks="@GetTasksByCategory(selectedCategory.Value)"
+                                 OnEditTask="@OpenEditTaskDialog"
+                                 OnDeleteTask="@DeleteTaskAsync"
+                                 OnTasksChanged="@LoadTasks" />
+                }
+                else
+                {
+                    <!-- Show kanban boards for all categories that have tasks -->
+                    @foreach (var category in GetCategoriesWithTasks())
+                    {
+                        <KanbanBoard Category="@category" 
+                                     Tasks="@GetTasksByCategory(category)"
+                                     OnEditTask="@OpenEditTaskDialog"
+                                     OnDeleteTask="@DeleteTaskAsync"
+                                     OnTasksChanged="@LoadTasks" 
+                                     Class="mb-4" />
+                    }
+                    
+                    @if (!GetCategoriesWithTasks().Any())
+                    {
+                        <MudAlert Severity="Severity.Info" Class="mt-4">
+                            Inga uppgifter ännu. Lägg till uppgifter att göra.
+                        </MudAlert>
+                    }
+                }
             }
             else
             {
-                <MudList T="string" Class="mt-4">
-                    @foreach (var task in filteredTasks)
-                    {
-                        <MudListItem T="string" Class="@(task.IsCompleted ? "opacity-70" : "")">
-                            <MudCard Elevation="2" Class="mb-2">
-                                <MudCardContent>
-                                    <MudStack Row="true">
-                                        <MudCheckBox T="bool" Value="@task.IsCompleted" 
-                                                     ValueChanged="@((bool value) => ToggleTaskComplete(task.HouseholdTaskId, value))"
-                                                     Color="Color.Success" />
-                                        <MudStack Spacing="1" Style="flex-grow: 1;">
-                                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
-                                                <MudText Typo="Typo.h6" Style="@(task.IsCompleted ? "text-decoration: line-through;" : "")">
-                                                    @task.Title
-                                                </MudText>
-                                                @if (task.Priority == HouseholdTaskPriority.High)
+                <!-- Traditional list view -->
+                <MudStack Row="true" Class="mb-4">
+                    <MudTextField @bind-Value="taskSearchTerm" Label="Sök uppgifter" Immediate="true" Clearable="true" 
+                                  Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" />
+                    <MudSwitch @bind-Value="showCompletedTasks" Label="Visa genomförda" Color="Color.Primary" />
+                </MudStack>
+
+                @if (!filteredTasks.Any())
+                {
+                    <MudAlert Severity="Severity.Info" Class="mt-4">Inga uppgifter ännu. Lägg till uppgifter att göra.</MudAlert>
+                }
+                else
+                {
+                    <MudList T="string" Class="mt-4">
+                        @foreach (var task in filteredTasks)
+                        {
+                            <MudListItem T="string" Class="@(task.IsCompleted ? "opacity-70" : "")">
+                                <MudCard Elevation="2" Class="mb-2">
+                                    <MudCardContent>
+                                        <MudStack Row="true">
+                                            <MudCheckBox T="bool" Value="@task.IsCompleted" 
+                                                         ValueChanged="@((bool value) => ToggleTaskComplete(task.HouseholdTaskId, value))"
+                                                         Color="Color.Success" />
+                                            <MudStack Spacing="1" Style="flex-grow: 1;">
+                                                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                                                    <MudText Typo="Typo.h6" Style="@(task.IsCompleted ? "text-decoration: line-through;" : "")">
+                                                        @task.Title
+                                                    </MudText>
+                                                    @if (task.Priority == HouseholdTaskPriority.High)
+                                                    {
+                                                        <MudChip T="string" Size="Size.Small" Color="Color.Error" Icon="@Icons.Material.Filled.PriorityHigh">Hög</MudChip>
+                                                    }
+                                                    else if (task.Priority == HouseholdTaskPriority.Low)
+                                                    {
+                                                        <MudChip T="string" Size="Size.Small" Color="Color.Default">Låg</MudChip>
+                                                    }
+                                                    <MudChip T="string" Size="Size.Small" Color="Color.Info">@GetActivityTypeText(task.Category)</MudChip>
+                                                    @if (task.IsRecurring)
+                                                    {
+                                                        <MudChip T="string" Size="Size.Small" Color="Color.Success" Icon="@Icons.Material.Filled.Repeat">
+                                                            Återkommande
+                                                        </MudChip>
+                                                    }
+                                                </MudStack>
+                                                @if (!string.IsNullOrEmpty(task.Description))
                                                 {
-                                                    <MudChip T="string" Size="Size.Small" Color="Color.Error" Icon="@Icons.Material.Filled.PriorityHigh">Hög</MudChip>
+                                                    <MudText Typo="Typo.body2" Color="Color.Secondary">@task.Description</MudText>
                                                 }
-                                                else if (task.Priority == HouseholdTaskPriority.Low)
-                                                {
-                                                    <MudChip T="string" Size="Size.Small" Color="Color.Default">Låg</MudChip>
-                                                }
-                                                <MudChip T="string" Size="Size.Small" Color="Color.Info">@GetActivityTypeText(task.Category)</MudChip>
-                                            </MudStack>
-                                            @if (!string.IsNullOrEmpty(task.Description))
-                                            {
-                                                <MudText Typo="Typo.body2" Color="Color.Secondary">@task.Description</MudText>
-                                            }
-                                            <MudStack Row="true" Spacing="2">
-                                                @if (task.DueDate.HasValue)
-                                                {
-                                                    var isOverdue = !task.IsCompleted && task.DueDate.Value < DateTime.Today;
-                                                    <MudChip T="string" Size="Size.Small" Icon="@Icons.Material.Filled.CalendarToday" 
-                                                             Color="@(isOverdue ? Color.Error : Color.Default)">
-                                                        Förfaller: @task.DueDate.Value.ToString("yyyy-MM-dd")
-                                                    </MudChip>
-                                                }
-                                                @if (task.AssignedToMember != null)
-                                                {
-                                                    <MudChip T="string" Size="Size.Small" Icon="@Icons.Material.Filled.Person">
-                                                        @task.AssignedToMember.Name
-                                                    </MudChip>
-                                                }
-                                                @if (task.IsCompleted && task.CompletedByMember != null)
-                                                {
-                                                    <MudChip T="string" Size="Size.Small" Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success">
-                                                        Genomförd av @task.CompletedByMember.Name
-                                                    </MudChip>
-                                                }
+                                                <MudStack Row="true" Spacing="2">
+                                                    @if (task.DueDate.HasValue)
+                                                    {
+                                                        var isOverdue = !task.IsCompleted && task.DueDate.Value < DateTime.Today;
+                                                        <MudChip T="string" Size="Size.Small" Icon="@Icons.Material.Filled.CalendarToday" 
+                                                                 Color="@(isOverdue ? Color.Error : Color.Default)">
+                                                            Förfaller: @task.DueDate.Value.ToString("yyyy-MM-dd")
+                                                        </MudChip>
+                                                    }
+                                                    @if (task.AssignedToMember != null)
+                                                    {
+                                                        <MudChip T="string" Size="Size.Small" Icon="@Icons.Material.Filled.Person">
+                                                            @task.AssignedToMember.Name
+                                                        </MudChip>
+                                                    }
+                                                    @if (task.IsCompleted && task.CompletedByMember != null)
+                                                    {
+                                                        <MudChip T="string" Size="Size.Small" Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success">
+                                                            Genomförd av @task.CompletedByMember.Name
+                                                        </MudChip>
+                                                    }
+                                                </MudStack>
                                             </MudStack>
                                         </MudStack>
-                                    </MudStack>
-                                </MudCardContent>
-                                <MudCardActions>
-                                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" 
-                                                   OnClick="@(() => OpenEditTaskDialog(task))" />
-                                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" 
-                                                   OnClick="@(() => DeleteTask(task.HouseholdTaskId))" />
-                                </MudCardActions>
-                            </MudCard>
-                        </MudListItem>
-                    }
-                </MudList>
+                                    </MudCardContent>
+                                    <MudCardActions>
+                                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" 
+                                                       OnClick="@(() => OpenEditTaskDialog(task))" />
+                                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" 
+                                                       OnClick="@(() => DeleteTask(task.HouseholdTaskId))" />
+                                    </MudCardActions>
+                                </MudCard>
+                            </MudListItem>
+                        }
+                    </MudList>
+                }
             }
         </MudTabPanel>
     </MudTabs>
@@ -422,6 +478,24 @@ else
                 }
             </MudSelect>
         }
+        
+        <MudDivider Class="my-4" />
+        <MudText Typo="Typo.subtitle2" Class="mb-2">Återkommande uppgift</MudText>
+        <MudSwitch @bind-Value="taskIsRecurring" Label="Gör uppgiften återkommande" Color="Color.Primary" />
+        
+        @if (taskIsRecurring)
+        {
+            <MudSelect @bind-Value="taskRecurrencePattern" Label="Återkommande mönster" Required="true">
+                <MudSelectItem Value="@RecurrencePattern.Daily">Dagligen</MudSelectItem>
+                <MudSelectItem Value="@RecurrencePattern.Weekly">Veckovis</MudSelectItem>
+                <MudSelectItem Value="@RecurrencePattern.BiWeekly">Varannan vecka</MudSelectItem>
+                <MudSelectItem Value="@RecurrencePattern.Monthly">Månadsvis</MudSelectItem>
+                <MudSelectItem Value="@RecurrencePattern.Quarterly">Kvartalsvis</MudSelectItem>
+                <MudSelectItem Value="@RecurrencePattern.Yearly">Årligen</MudSelectItem>
+            </MudSelect>
+            <MudNumericField @bind-Value="taskRecurrenceInterval" Label="Intervall" Min="1" Max="100" 
+                             HelperText="Hur ofta ska uppgiften upprepas (t.ex. 1 för varje vecka, 2 för varannan vecka)" />
+        }
     </DialogContent>
     <DialogActions>
         <MudButton OnClick="CloseAddTaskDialog">Avbryt</MudButton>
@@ -464,6 +538,13 @@ else
     private int? selectedTaskMemberId;
     private string taskSearchTerm = string.Empty;
     private bool showCompletedTasks = false;
+    
+    // Kanban and recurring task variables
+    private bool showKanbanView = true;
+    private HouseholdActivityType? selectedCategory = null;
+    private bool taskIsRecurring = false;
+    private RecurrencePattern taskRecurrencePattern = RecurrencePattern.Weekly;
+    private int taskRecurrenceInterval = 1;
 
     protected override async Task OnInitializedAsync()
     {
@@ -689,10 +770,14 @@ else
         { 
             HouseholdId = HouseholdId,
             Priority = HouseholdTaskPriority.Normal,
-            Category = HouseholdActivityType.General
+            Category = selectedCategory ?? HouseholdActivityType.General,
+            Status = HouseholdTaskStatus.ToDo
         };
         taskDueDate = null;
         selectedTaskMemberId = null;
+        taskIsRecurring = false;
+        taskRecurrencePattern = RecurrencePattern.Weekly;
+        taskRecurrenceInterval = 1;
         showAddTaskDialog = true;
     }
 
@@ -712,10 +797,18 @@ else
             IsCompleted = task.IsCompleted,
             CompletedDate = task.CompletedDate,
             CompletedByMemberId = task.CompletedByMemberId,
-            CreatedDate = task.CreatedDate
+            CreatedDate = task.CreatedDate,
+            Status = task.Status,
+            IsRecurring = task.IsRecurring,
+            RecurrencePattern = task.RecurrencePattern,
+            RecurrenceInterval = task.RecurrenceInterval,
+            ParentTaskId = task.ParentTaskId
         };
         taskDueDate = task.DueDate;
         selectedTaskMemberId = task.AssignedToMemberId;
+        taskIsRecurring = task.IsRecurring;
+        taskRecurrencePattern = task.RecurrencePattern ?? RecurrencePattern.Weekly;
+        taskRecurrenceInterval = task.RecurrenceInterval ?? 1;
         showAddTaskDialog = true;
     }
 
@@ -732,6 +825,18 @@ else
 
         newTask.DueDate = taskDueDate;
         newTask.AssignedToMemberId = selectedTaskMemberId;
+        newTask.IsRecurring = taskIsRecurring;
+        
+        if (taskIsRecurring)
+        {
+            newTask.RecurrencePattern = taskRecurrencePattern;
+            newTask.RecurrenceInterval = taskRecurrenceInterval;
+        }
+        else
+        {
+            newTask.RecurrencePattern = null;
+            newTask.RecurrenceInterval = null;
+        }
 
         if (editingTask != null)
         {
@@ -753,6 +858,11 @@ else
         await HouseholdService.DeleteTaskAsync(taskId);
         await LoadTasks();
     }
+    
+    private async Task DeleteTaskAsync(HouseholdTask task)
+    {
+        await DeleteTask(task.HouseholdTaskId);
+    }
 
     private async Task ToggleTaskComplete(int taskId, bool isCompleted)
     {
@@ -765,5 +875,19 @@ else
             await HouseholdService.MarkTaskIncompleteAsync(taskId);
         }
         await LoadTasks();
+    }
+    
+    // Kanban view helper methods
+    private IEnumerable<HouseholdTask> GetTasksByCategory(HouseholdActivityType category)
+    {
+        return filteredTasks.Where(t => t.Category == category);
+    }
+    
+    private IEnumerable<HouseholdActivityType> GetCategoriesWithTasks()
+    {
+        return filteredTasks
+            .Select(t => t.Category)
+            .Distinct()
+            .OrderBy(c => c);
     }
 }

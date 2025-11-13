@@ -1,0 +1,300 @@
+@using Privatekonomi.Core.Models
+@using Privatekonomi.Core.Services
+@inject IHouseholdService HouseholdService
+
+<MudPaper Elevation="0" Class="pa-4">
+    <MudText Typo="Typo.h6" Class="mb-4">
+        <MudIcon Icon="@GetCategoryIcon(Category)" Class="mr-2" />
+        @GetCategoryText(Category)
+    </MudText>
+
+    <MudGrid>
+        <!-- To Do Column -->
+        <MudItem xs="12" sm="4">
+            <MudPaper Elevation="2" Class="pa-3" Style="min-height: 300px; background-color: var(--mud-palette-background-grey);">
+                <MudStack Spacing="2">
+                    <MudText Typo="Typo.subtitle1" Align="Align.Center">
+                        <MudBadge Content="@todoTasks.Count()" Color="Color.Primary" Overlap="true" Class="mr-2">
+                            Att göra
+                        </MudBadge>
+                    </MudText>
+                    <MudDivider />
+                    @foreach (var task in todoTasks)
+                    {
+                        <MudCard Elevation="1" Class="mb-2">
+                            <MudCardContent Class="pa-2">
+                                <MudStack Spacing="1">
+                                    <MudText Typo="Typo.body1">@task.Title</MudText>
+                                    @if (!string.IsNullOrEmpty(task.Description))
+                                    {
+                                        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="text-truncate">@task.Description</MudText>
+                                    }
+                                    <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
+                                        @if (task.DueDate.HasValue)
+                                        {
+                                            var isOverdue = task.DueDate.Value < DateTime.Today;
+                                            <MudChip T="string" Size="Size.Small" Icon="@Icons.Material.Filled.CalendarToday" 
+                                                     Color="@(isOverdue ? Color.Error : Color.Default)">
+                                                @task.DueDate.Value.ToString("MM/dd")
+                                            </MudChip>
+                                        }
+                                        @if (task.Priority == HouseholdTaskPriority.High)
+                                        {
+                                            <MudChip T="string" Size="Size.Small" Color="Color.Error" Icon="@Icons.Material.Filled.PriorityHigh">Hög</MudChip>
+                                        }
+                                        @if (task.IsRecurring)
+                                        {
+                                            <MudChip T="string" Size="Size.Small" Color="Color.Info" Icon="@Icons.Material.Filled.Repeat">
+                                                @GetRecurrenceText(task.RecurrencePattern)
+                                            </MudChip>
+                                        }
+                                        @if (task.AssignedToMember != null)
+                                        {
+                                            <MudChip T="string" Size="Size.Small" Icon="@Icons.Material.Filled.Person">
+                                                @task.AssignedToMember.Name
+                                            </MudChip>
+                                        }
+                                    </MudStack>
+                                </MudStack>
+                            </MudCardContent>
+                            <MudCardActions Class="pa-1">
+                                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Primary" 
+                                               OnClick="@(() => OnEditTask.InvokeAsync(task))" />
+                                <MudIconButton Icon="@Icons.Material.Filled.ArrowForward" Size="Size.Small" Color="Color.Success" 
+                                               OnClick="@(() => MoveToInProgress(task))"
+                                               title="Flytta till Pågår" />
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" 
+                                               OnClick="@(() => OnDeleteTask.InvokeAsync(task))" />
+                            </MudCardActions>
+                        </MudCard>
+                    }
+                    @if (!todoTasks.Any())
+                    {
+                        <MudText Typo="Typo.body2" Align="Align.Center" Color="Color.Secondary" Class="mt-4">
+                            Inga uppgifter
+                        </MudText>
+                    }
+                </MudStack>
+            </MudPaper>
+        </MudItem>
+
+        <!-- In Progress Column -->
+        <MudItem xs="12" sm="4">
+            <MudPaper Elevation="2" Class="pa-3" Style="min-height: 300px; background-color: var(--mud-palette-background-grey);">
+                <MudStack Spacing="2">
+                    <MudText Typo="Typo.subtitle1" Align="Align.Center">
+                        <MudBadge Content="@inProgressTasks.Count()" Color="Color.Warning" Overlap="true" Class="mr-2">
+                            Pågår
+                        </MudBadge>
+                    </MudText>
+                    <MudDivider />
+                    @foreach (var task in inProgressTasks)
+                    {
+                        <MudCard Elevation="1" Class="mb-2">
+                            <MudCardContent Class="pa-2">
+                                <MudStack Spacing="1">
+                                    <MudText Typo="Typo.body1">@task.Title</MudText>
+                                    @if (!string.IsNullOrEmpty(task.Description))
+                                    {
+                                        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="text-truncate">@task.Description</MudText>
+                                    }
+                                    <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
+                                        @if (task.DueDate.HasValue)
+                                        {
+                                            var isOverdue = task.DueDate.Value < DateTime.Today;
+                                            <MudChip T="string" Size="Size.Small" Icon="@Icons.Material.Filled.CalendarToday" 
+                                                     Color="@(isOverdue ? Color.Error : Color.Default)">
+                                                @task.DueDate.Value.ToString("MM/dd")
+                                            </MudChip>
+                                        }
+                                        @if (task.Priority == HouseholdTaskPriority.High)
+                                        {
+                                            <MudChip T="string" Size="Size.Small" Color="Color.Error" Icon="@Icons.Material.Filled.PriorityHigh">Hög</MudChip>
+                                        }
+                                        @if (task.IsRecurring)
+                                        {
+                                            <MudChip T="string" Size="Size.Small" Color="Color.Info" Icon="@Icons.Material.Filled.Repeat">
+                                                @GetRecurrenceText(task.RecurrencePattern)
+                                            </MudChip>
+                                        }
+                                        @if (task.AssignedToMember != null)
+                                        {
+                                            <MudChip T="string" Size="Size.Small" Icon="@Icons.Material.Filled.Person">
+                                                @task.AssignedToMember.Name
+                                            </MudChip>
+                                        }
+                                    </MudStack>
+                                </MudStack>
+                            </MudCardContent>
+                            <MudCardActions Class="pa-1">
+                                <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" Size="Size.Small" Color="Color.Default" 
+                                               OnClick="@(() => MoveToTodo(task))"
+                                               title="Flytta till Att göra" />
+                                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Primary" 
+                                               OnClick="@(() => OnEditTask.InvokeAsync(task))" />
+                                <MudIconButton Icon="@Icons.Material.Filled.Check" Size="Size.Small" Color="Color.Success" 
+                                               OnClick="@(() => MoveToDone(task))"
+                                               title="Flytta till Klart" />
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" 
+                                               OnClick="@(() => OnDeleteTask.InvokeAsync(task))" />
+                            </MudCardActions>
+                        </MudCard>
+                    }
+                    @if (!inProgressTasks.Any())
+                    {
+                        <MudText Typo="Typo.body2" Align="Align.Center" Color="Color.Secondary" Class="mt-4">
+                            Inga uppgifter
+                        </MudText>
+                    }
+                </MudStack>
+            </MudPaper>
+        </MudItem>
+
+        <!-- Done Column -->
+        <MudItem xs="12" sm="4">
+            <MudPaper Elevation="2" Class="pa-3" Style="min-height: 300px; background-color: var(--mud-palette-background-grey);">
+                <MudStack Spacing="2">
+                    <MudText Typo="Typo.subtitle1" Align="Align.Center">
+                        <MudBadge Content="@doneTasks.Count()" Color="Color.Success" Overlap="true" Class="mr-2">
+                            Klart
+                        </MudBadge>
+                    </MudText>
+                    <MudDivider />
+                    @foreach (var task in doneTasks)
+                    {
+                        <MudCard Elevation="1" Class="mb-2" Style="opacity: 0.7;">
+                            <MudCardContent Class="pa-2">
+                                <MudStack Spacing="1">
+                                    <MudText Typo="Typo.body1" Style="text-decoration: line-through;">@task.Title</MudText>
+                                    @if (!string.IsNullOrEmpty(task.Description))
+                                    {
+                                        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="text-truncate">@task.Description</MudText>
+                                    }
+                                    <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
+                                        @if (task.CompletedDate.HasValue)
+                                        {
+                                            <MudChip T="string" Size="Size.Small" Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success">
+                                                @task.CompletedDate.Value.ToString("MM/dd")
+                                            </MudChip>
+                                        }
+                                        @if (task.IsRecurring)
+                                        {
+                                            <MudChip T="string" Size="Size.Small" Color="Color.Info" Icon="@Icons.Material.Filled.Repeat">
+                                                @GetRecurrenceText(task.RecurrencePattern)
+                                            </MudChip>
+                                        }
+                                        @if (task.CompletedByMember != null)
+                                        {
+                                            <MudChip T="string" Size="Size.Small" Icon="@Icons.Material.Filled.Person">
+                                                @task.CompletedByMember.Name
+                                            </MudChip>
+                                        }
+                                    </MudStack>
+                                </MudStack>
+                            </MudCardContent>
+                            <MudCardActions Class="pa-1">
+                                <MudIconButton Icon="@Icons.Material.Filled.Undo" Size="Size.Small" Color="Color.Default" 
+                                               OnClick="@(() => MoveToInProgress(task))"
+                                               title="Flytta till Pågår" />
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" 
+                                               OnClick="@(() => OnDeleteTask.InvokeAsync(task))" />
+                            </MudCardActions>
+                        </MudCard>
+                    }
+                    @if (!doneTasks.Any())
+                    {
+                        <MudText Typo="Typo.body2" Align="Align.Center" Color="Color.Secondary" Class="mt-4">
+                            Inga uppgifter
+                        </MudText>
+                    }
+                </MudStack>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+</MudPaper>
+
+@code {
+    [Parameter]
+    public HouseholdActivityType Category { get; set; }
+
+    [Parameter]
+    public IEnumerable<HouseholdTask> Tasks { get; set; } = new List<HouseholdTask>();
+
+    [Parameter]
+    public EventCallback<HouseholdTask> OnEditTask { get; set; }
+
+    [Parameter]
+    public EventCallback<HouseholdTask> OnDeleteTask { get; set; }
+
+    [Parameter]
+    public EventCallback OnTasksChanged { get; set; }
+
+    private IEnumerable<HouseholdTask> todoTasks => Tasks.Where(t => t.Status == HouseholdTaskStatus.ToDo);
+    private IEnumerable<HouseholdTask> inProgressTasks => Tasks.Where(t => t.Status == HouseholdTaskStatus.InProgress);
+    private IEnumerable<HouseholdTask> doneTasks => Tasks.Where(t => t.Status == HouseholdTaskStatus.Done);
+
+    private async Task MoveToTodo(HouseholdTask task)
+    {
+        await HouseholdService.UpdateTaskStatusAsync(task.HouseholdTaskId, HouseholdTaskStatus.ToDo);
+        await OnTasksChanged.InvokeAsync();
+    }
+
+    private async Task MoveToInProgress(HouseholdTask task)
+    {
+        await HouseholdService.UpdateTaskStatusAsync(task.HouseholdTaskId, HouseholdTaskStatus.InProgress);
+        await OnTasksChanged.InvokeAsync();
+    }
+
+    private async Task MoveToDone(HouseholdTask task)
+    {
+        await HouseholdService.UpdateTaskStatusAsync(task.HouseholdTaskId, HouseholdTaskStatus.Done);
+        await OnTasksChanged.InvokeAsync();
+    }
+
+    private string GetCategoryText(HouseholdActivityType type)
+    {
+        return type switch
+        {
+            HouseholdActivityType.General => "Allmänt",
+            HouseholdActivityType.Cleaning => "Städning",
+            HouseholdActivityType.Maintenance => "Underhåll",
+            HouseholdActivityType.Shopping => "Inköp",
+            HouseholdActivityType.Cooking => "Matlagning",
+            HouseholdActivityType.Repair => "Reparation",
+            HouseholdActivityType.Other => "Övrigt",
+            _ => type.ToString()
+        };
+    }
+
+    private string GetCategoryIcon(HouseholdActivityType type)
+    {
+        return type switch
+        {
+            HouseholdActivityType.General => Icons.Material.Filled.FolderOpen,
+            HouseholdActivityType.Cleaning => Icons.Material.Filled.CleaningServices,
+            HouseholdActivityType.Maintenance => Icons.Material.Filled.Build,
+            HouseholdActivityType.Shopping => Icons.Material.Filled.ShoppingCart,
+            HouseholdActivityType.Cooking => Icons.Material.Filled.Restaurant,
+            HouseholdActivityType.Repair => Icons.Material.Filled.Handyman,
+            HouseholdActivityType.Other => Icons.Material.Filled.MoreHoriz,
+            _ => Icons.Material.Filled.Task
+        };
+    }
+
+    private string GetRecurrenceText(RecurrencePattern? pattern)
+    {
+        if (!pattern.HasValue)
+            return "";
+
+        return pattern.Value switch
+        {
+            RecurrencePattern.Daily => "Dagligen",
+            RecurrencePattern.Weekly => "Veckovis",
+            RecurrencePattern.BiWeekly => "Varannan vecka",
+            RecurrencePattern.Monthly => "Månadsvis",
+            RecurrencePattern.Quarterly => "Kvartalsvis",
+            RecurrencePattern.Yearly => "Årligen",
+            _ => ""
+        };
+    }
+}
