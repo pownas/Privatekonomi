@@ -23,6 +23,9 @@ test.describe('Login Page', () => {
     await expect(emailField).toBeVisible({ timeout: 5000 });
     await expect(passwordField).toBeVisible();
     await expect(submitButton).toBeVisible();
+
+    // Take a screenshot of the login page
+    await page.screenshot({ path: 'screenshots/login-page.png', fullPage: true });
   });
 
   test('should display validation error for empty email', async ({ page }) => {

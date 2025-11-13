@@ -27,6 +27,9 @@ test.describe('Register Page', () => {
     await expect(emailField).toBeVisible();
     await expect(passwordField).toBeVisible();
     await expect(submitButton).toBeVisible();
+
+    // Take a screenshot of the register page
+    await page.screenshot({ path: 'screenshots/register-page.png', fullPage: true });
   });
 
   test('should display login link', async ({ page }) => {
