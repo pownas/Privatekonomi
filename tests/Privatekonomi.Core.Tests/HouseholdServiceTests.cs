@@ -27,6 +27,39 @@ public class HouseholdServiceTests : IDisposable
         _context.Dispose();
     }
 
+    #region Household CRUD Tests
+
+    [Fact]
+    public async Task UpdateHouseholdAsync_UpdatesHouseholdSuccessfully()
+    {
+        // Arrange
+        var household = new Household 
+        { 
+            Name = "Original Name",
+            Description = "Original Description"
+        };
+        var created = await _householdService.CreateHouseholdAsync(household);
+
+        // Act
+        created.Name = "Updated Name";
+        created.Description = "Updated Description";
+        var updated = await _householdService.UpdateHouseholdAsync(created);
+
+        // Assert
+        Assert.NotNull(updated);
+        Assert.Equal("Updated Name", updated.Name);
+        Assert.Equal("Updated Description", updated.Description);
+        Assert.Equal(created.HouseholdId, updated.HouseholdId);
+
+        // Verify the update persisted
+        var retrieved = await _householdService.GetHouseholdByIdAsync(created.HouseholdId);
+        Assert.NotNull(retrieved);
+        Assert.Equal("Updated Name", retrieved.Name);
+        Assert.Equal("Updated Description", retrieved.Description);
+    }
+
+    #endregion
+
     #region Activity Tests
 
     [Fact]
