@@ -394,4 +394,216 @@ public class HouseholdServiceTests : IDisposable
     }
 
     #endregion
+    
+    #region Activity Image Tests
+
+    [Fact]
+    public async Task AddActivityImageAsync_AddsImageSuccessfully()
+    {
+        // Arrange
+        var household = new Household { Name = "Test Household" };
+        _context.Households.Add(household);
+        await _context.SaveChangesAsync();
+
+        var activity = new HouseholdActivity
+        {
+            HouseholdId = household.HouseholdId,
+            Title = "Test Activity",
+            Type = HouseholdActivityType.General
+        };
+        var createdActivity = await _householdService.CreateActivityAsync(activity);
+
+        // Act
+        var image = await _householdService.AddActivityImageAsync(
+            createdActivity.HouseholdActivityId,
+            "test-image.jpg",
+            "image/jpeg",
+            1024000,
+            "Test caption"
+        );
+
+        // Assert
+        Assert.NotNull(image);
+        Assert.Equal("test-image.jpg", image.ImagePath);
+        Assert.Equal("image/jpeg", image.MimeType);
+        Assert.Equal(1024000, image.FileSize);
+        Assert.Equal("Test caption", image.Caption);
+        Assert.Equal(1, image.DisplayOrder);
+    }
+
+    [Fact]
+    public async Task AddActivityImageAsync_SetsCorrectDisplayOrder()
+    {
+        // Arrange
+        var household = new Household { Name = "Test Household" };
+        _context.Households.Add(household);
+        await _context.SaveChangesAsync();
+
+        var activity = new HouseholdActivity
+        {
+            HouseholdId = household.HouseholdId,
+            Title = "Test Activity",
+            Type = HouseholdActivityType.General
+        };
+        var createdActivity = await _householdService.CreateActivityAsync(activity);
+
+        // Act
+        var image1 = await _householdService.AddActivityImageAsync(
+            createdActivity.HouseholdActivityId,
+            "image1.jpg",
+            "image/jpeg",
+            1024000
+        );
+        var image2 = await _householdService.AddActivityImageAsync(
+            createdActivity.HouseholdActivityId,
+            "image2.jpg",
+            "image/jpeg",
+            1024000
+        );
+        var image3 = await _householdService.AddActivityImageAsync(
+            createdActivity.HouseholdActivityId,
+            "image3.jpg",
+            "image/jpeg",
+            1024000
+        );
+
+        // Assert
+        Assert.Equal(1, image1.DisplayOrder);
+        Assert.Equal(2, image2.DisplayOrder);
+        Assert.Equal(3, image3.DisplayOrder);
+    }
+
+    [Fact]
+    public async Task GetActivityImagesAsync_ReturnsImagesInOrder()
+    {
+        // Arrange
+        var household = new Household { Name = "Test Household" };
+        _context.Households.Add(household);
+        await _context.SaveChangesAsync();
+
+        var activity = new HouseholdActivity
+        {
+            HouseholdId = household.HouseholdId,
+            Title = "Test Activity",
+            Type = HouseholdActivityType.General
+        };
+        var createdActivity = await _householdService.CreateActivityAsync(activity);
+
+        await _householdService.AddActivityImageAsync(
+            createdActivity.HouseholdActivityId, "image3.jpg", "image/jpeg", 1024000
+        );
+        await _householdService.AddActivityImageAsync(
+            createdActivity.HouseholdActivityId, "image1.jpg", "image/jpeg", 1024000
+        );
+        await _householdService.AddActivityImageAsync(
+            createdActivity.HouseholdActivityId, "image2.jpg", "image/jpeg", 1024000
+        );
+
+        // Act
+        var images = await _householdService.GetActivityImagesAsync(createdActivity.HouseholdActivityId);
+
+        // Assert
+        var imageList = images.ToList();
+        Assert.Equal(3, imageList.Count);
+        Assert.Equal("image3.jpg", imageList[0].ImagePath);
+        Assert.Equal("image1.jpg", imageList[1].ImagePath);
+        Assert.Equal("image2.jpg", imageList[2].ImagePath);
+    }
+
+    [Fact]
+    public async Task DeleteActivityImageAsync_DeletesImageSuccessfully()
+    {
+        // Arrange
+        var household = new Household { Name = "Test Household" };
+        _context.Households.Add(household);
+        await _context.SaveChangesAsync();
+
+        var activity = new HouseholdActivity
+        {
+            HouseholdId = household.HouseholdId,
+            Title = "Test Activity",
+            Type = HouseholdActivityType.General
+        };
+        var createdActivity = await _householdService.CreateActivityAsync(activity);
+        var image = await _householdService.AddActivityImageAsync(
+            createdActivity.HouseholdActivityId,
+            "test-image.jpg",
+            "image/jpeg",
+            1024000
+        );
+
+        // Act
+        var result = await _householdService.DeleteActivityImageAsync(image.HouseholdActivityImageId);
+
+        // Assert
+        Assert.True(result);
+        var images = await _householdService.GetActivityImagesAsync(createdActivity.HouseholdActivityId);
+        Assert.Empty(images);
+    }
+
+    [Fact]
+    public async Task UpdateImageOrderAsync_UpdatesOrderSuccessfully()
+    {
+        // Arrange
+        var household = new Household { Name = "Test Household" };
+        _context.Households.Add(household);
+        await _context.SaveChangesAsync();
+
+        var activity = new HouseholdActivity
+        {
+            HouseholdId = household.HouseholdId,
+            Title = "Test Activity",
+            Type = HouseholdActivityType.General
+        };
+        var createdActivity = await _householdService.CreateActivityAsync(activity);
+        var image = await _householdService.AddActivityImageAsync(
+            createdActivity.HouseholdActivityId,
+            "test-image.jpg",
+            "image/jpeg",
+            1024000
+        );
+
+        // Act
+        var result = await _householdService.UpdateImageOrderAsync(image.HouseholdActivityImageId, 5);
+
+        // Assert
+        Assert.True(result);
+        var updatedImage = await _context.HouseholdActivityImages.FindAsync(image.HouseholdActivityImageId);
+        Assert.NotNull(updatedImage);
+        Assert.Equal(5, updatedImage.DisplayOrder);
+    }
+
+    [Fact]
+    public async Task GetActivitiesAsync_IncludesImages()
+    {
+        // Arrange
+        var household = new Household { Name = "Test Household" };
+        _context.Households.Add(household);
+        await _context.SaveChangesAsync();
+
+        var activity = new HouseholdActivity
+        {
+            HouseholdId = household.HouseholdId,
+            Title = "Test Activity",
+            Type = HouseholdActivityType.General
+        };
+        var createdActivity = await _householdService.CreateActivityAsync(activity);
+        
+        await _householdService.AddActivityImageAsync(
+            createdActivity.HouseholdActivityId, "image1.jpg", "image/jpeg", 1024000
+        );
+        await _householdService.AddActivityImageAsync(
+            createdActivity.HouseholdActivityId, "image2.jpg", "image/jpeg", 1024000
+        );
+
+        // Act
+        var activities = await _householdService.GetActivitiesAsync(household.HouseholdId);
+
+        // Assert
+        var activityList = activities.ToList();
+        Assert.Single(activityList);
+        Assert.Equal(2, activityList[0].Images.Count);
+    }
+
+    #endregion
 }

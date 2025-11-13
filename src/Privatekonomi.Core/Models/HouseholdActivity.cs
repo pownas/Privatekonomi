@@ -18,6 +18,9 @@ public class HouseholdActivity
     public HouseholdMember? CompletedByMember { get; set; }
     
     public Household? Household { get; set; }
+    
+    // Images attached to this activity
+    public List<HouseholdActivityImage> Images { get; set; } = new();
 }
 
 public enum HouseholdActivityType

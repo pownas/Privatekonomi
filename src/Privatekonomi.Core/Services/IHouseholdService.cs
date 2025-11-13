@@ -39,6 +39,12 @@ public interface IHouseholdService
     Task<HouseholdActivity> CreateActivityAsync(HouseholdActivity activity);
     Task<HouseholdActivity> UpdateActivityAsync(HouseholdActivity activity);
     Task<bool> DeleteActivityAsync(int activityId);
+    
+    // Activity Image operations
+    Task<HouseholdActivityImage> AddActivityImageAsync(int activityId, string imagePath, string mimeType, long fileSize, string? caption = null);
+    Task<bool> DeleteActivityImageAsync(int imageId);
+    Task<IEnumerable<HouseholdActivityImage>> GetActivityImagesAsync(int activityId);
+    Task<bool> UpdateImageOrderAsync(int imageId, int newOrder);
 
     // Task (To-Do) operations
     Task<IEnumerable<HouseholdTask>> GetTasksAsync(int householdId, bool? includeCompleted = null);
