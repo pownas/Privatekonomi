@@ -246,6 +246,11 @@ try
             }
         }
         
+        // Always seed production reference data (challenge templates, etc.)
+        logger.LogInformation("Seeding production reference data (challenge templates)...");
+        TestDataSeeder.SeedProductionReferenceData(context);
+        logger.LogInformation("Production reference data seeded successfully");
+        
         // Seed test data only if configured
         if (storageSettings.SeedTestData)
         {

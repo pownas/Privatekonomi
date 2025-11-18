@@ -5,6 +5,16 @@ namespace Privatekonomi.Core.Data;
 
 public static class TestDataSeeder
 {
+    /// <summary>
+    /// Seeds production reference data that should always be available (challenge templates, etc.)
+    /// This method is called regardless of the SeedTestData setting.
+    /// </summary>
+    public static void SeedProductionReferenceData(PrivatekonomyContext context)
+    {
+        // Seed challenge templates if they don't exist
+        SeedChallengeTemplates(context);
+    }
+
     public static async Task SeedTestDataAsync(PrivatekonomyContext context, UserManager<ApplicationUser> userManager)
     {
         // Check if there are already transactions to avoid duplicate seeding
@@ -28,7 +38,7 @@ public static class TestDataSeeder
         SeedSalaryHistory(context, testUserId);
         SeedNetWorthSnapshots(context, testUserId);
         SeedPockets(context, testUserId);
-        SeedChallengeTemplates(context);
+        // Challenge templates are now seeded via SeedProductionReferenceData
         SeedSubscriptions(context, testUserId);
         SeedBills(context, testUserId);
         SeedBillReminders(context, testUserId);
