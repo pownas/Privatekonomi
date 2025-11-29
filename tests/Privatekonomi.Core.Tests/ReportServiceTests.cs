@@ -896,4 +896,505 @@ public class ReportServiceTests : IDisposable
         // Assert
         Assert.Equal(500m, report.TotalSpending);
     }
+
+    [Fact]
+    public async Task GenerateMonthlyReportAsync_WithNoData_ReturnsEmptyReport()
+    {
+        // Arrange
+        var year = 2025;
+        var month = 1;
+
+        // Act
+        var report = await _reportService.GenerateMonthlyReportAsync(year, month);
+
+        // Assert
+        Assert.NotNull(report);
+        Assert.Equal(year, report.Year);
+        Assert.Equal(month, report.Month);
+        Assert.Equal("januari", report.MonthName);
+        Assert.Equal(0, report.TotalIncome);
+        Assert.Equal(0, report.TotalExpenses);
+        Assert.Equal(0, report.NetFlow);
+        Assert.Equal(0, report.TransactionCount);
+        Assert.Empty(report.CategorySummaries);
+        Assert.Empty(report.TopMerchants);
+    }
+
+    [Fact]
+    public async Task GenerateMonthlyReportAsync_WithTransactions_CalculatesCorrectTotals()
+    {
+        // Arrange
+        var year = 2025;
+        var month = 1;
+
+        // Add income
+        await _context.Transactions.AddAsync(new Transaction
+        {
+            Amount = 30000m,
+            Date = new DateTime(2025, 1, 25),
+            Description = "Lön",
+            IsIncome = true,
+            UserId = TestUserId,
+            CreatedAt = DateTime.UtcNow,
+            ValidFrom = DateTime.UtcNow
+        });
+
+        // Add expenses
+        await _context.Transactions.AddAsync(new Transaction
+        {
+            Amount = 5000m,
+            Date = new DateTime(2025, 1, 5),
+            Description = "Hyra",
+            IsIncome = false,
+            UserId = TestUserId,
+            CreatedAt = DateTime.UtcNow,
+            ValidFrom = DateTime.UtcNow
+        });
+
+        await _context.Transactions.AddAsync(new Transaction
+        {
+            Amount = 2000m,
+            Date = new DateTime(2025, 1, 10),
+            Description = "Mat",
+            IsIncome = false,
+            UserId = TestUserId,
+            CreatedAt = DateTime.UtcNow,
+            ValidFrom = DateTime.UtcNow
+        });
+
+        await _context.SaveChangesAsync();
+
+        // Act
+        var report = await _reportService.GenerateMonthlyReportAsync(year, month);
+
+        // Assert
+        Assert.NotNull(report);
+        Assert.Equal(30000m, report.TotalIncome);
+        Assert.Equal(7000m, report.TotalExpenses);
+        Assert.Equal(23000m, report.NetFlow);
+        Assert.Equal(3, report.TransactionCount);
+        Assert.True(report.SavingsRate > 75m); // (23000 / 30000) * 100 ≈ 76.67%
+    }
+
+    [Fact]
+    public async Task GenerateMonthlyReportAsync_CalculatesSavingsRate()
+    {
+        // Arrange
+        var year = 2025;
+        var month = 1;
+
+        await _context.Transactions.AddAsync(new Transaction
+        {
+            Amount = 10000m,
+            Date = new DateTime(2025, 1, 25),
+            Description = "Lön",
+            IsIncome = true,
+            UserId = TestUserId,
+            CreatedAt = DateTime.UtcNow,
+            ValidFrom = DateTime.UtcNow
+        });
+
+        await _context.Transactions.AddAsync(new Transaction
+        {
+            Amount = 8000m,
+            Date = new DateTime(2025, 1, 10),
+            Description = "Utgifter",
+            IsIncome = false,
+            UserId = TestUserId,
+            CreatedAt = DateTime.UtcNow,
+            ValidFrom = DateTime.UtcNow
+        });
+
+        await _context.SaveChangesAsync();
+
+        // Act
+        var report = await _reportService.GenerateMonthlyReportAsync(year, month);
+
+        // Assert
+        // Savings rate = (10000 - 8000) / 10000 * 100 = 20%
+        Assert.Equal(20m, report.SavingsRate);
+    }
+
+    [Fact]
+    public async Task GenerateMonthlyReportAsync_WithCategorizedExpenses_GeneratesCategorySummaries()
+    {
+        // Arrange
+        var year = 2025;
+        var month = 1;
+
+        var category = new Category { CategoryId = 100, Name = "Mat", Color = "#FF0000" };
+        _context.Categories.Add(category);
+
+        var transaction = new Transaction
+        {
+            TransactionId = 100,
+            Amount = 3000m,
+            Date = new DateTime(2025, 1, 15),
+            Description = "ICA",
+            IsIncome = false,
+            UserId = TestUserId,
+            CreatedAt = DateTime.UtcNow,
+            ValidFrom = DateTime.UtcNow,
+            TransactionCategories = new List<TransactionCategory>
+            {
+                new TransactionCategory { CategoryId = 100, Category = category }
+            }
+        };
+
+        _context.Transactions.Add(transaction);
+        await _context.SaveChangesAsync();
+
+        // Act
+        var report = await _reportService.GenerateMonthlyReportAsync(year, month);
+
+        // Assert
+        Assert.NotNull(report);
+        Assert.NotEmpty(report.CategorySummaries);
+        var matCategory = report.CategorySummaries.FirstOrDefault(c => c.CategoryName == "Mat");
+        Assert.NotNull(matCategory);
+        Assert.Equal(3000m, matCategory.Amount);
+        Assert.Equal(100m, matCategory.Percentage); // Only category, so 100%
+    }
+
+    [Fact]
+    public async Task GenerateMonthlyReportAsync_ComparesWithPreviousMonth()
+    {
+        // Arrange
+        var year = 2025;
+        var month = 2;
+
+        // January transactions
+        await _context.Transactions.AddAsync(new Transaction
+        {
+            Amount = 25000m,
+            Date = new DateTime(2025, 1, 25),
+            Description = "Lön januari",
+            IsIncome = true,
+            UserId = TestUserId,
+            CreatedAt = DateTime.UtcNow,
+            ValidFrom = DateTime.UtcNow
+        });
+
+        await _context.Transactions.AddAsync(new Transaction
+        {
+            Amount = 20000m,
+            Date = new DateTime(2025, 1, 15),
+            Description = "Utgifter januari",
+            IsIncome = false,
+            UserId = TestUserId,
+            CreatedAt = DateTime.UtcNow,
+            ValidFrom = DateTime.UtcNow
+        });
+
+        // February transactions
+        await _context.Transactions.AddAsync(new Transaction
+        {
+            Amount = 30000m,
+            Date = new DateTime(2025, 2, 25),
+            Description = "Lön februari",
+            IsIncome = true,
+            UserId = TestUserId,
+            CreatedAt = DateTime.UtcNow,
+            ValidFrom = DateTime.UtcNow
+        });
+
+        await _context.Transactions.AddAsync(new Transaction
+        {
+            Amount = 18000m,
+            Date = new DateTime(2025, 2, 15),
+            Description = "Utgifter februari",
+            IsIncome = false,
+            UserId = TestUserId,
+            CreatedAt = DateTime.UtcNow,
+            ValidFrom = DateTime.UtcNow
+        });
+
+        await _context.SaveChangesAsync();
+
+        // Act
+        var report = await _reportService.GenerateMonthlyReportAsync(year, month);
+
+        // Assert
+        Assert.NotNull(report.PreviousMonthComparison);
+        Assert.Equal(5000m, report.PreviousMonthComparison.IncomeChange); // 30000 - 25000
+        Assert.Equal(-2000m, report.PreviousMonthComparison.ExpenseChange); // 18000 - 20000
+        Assert.Equal(20m, report.PreviousMonthComparison.IncomeChangePercent); // (5000/25000) * 100
+    }
+
+    [Fact]
+    public async Task GenerateMonthlyReportAsync_GeneratesInsights()
+    {
+        // Arrange
+        var year = 2025;
+        var month = 1;
+
+        await _context.Transactions.AddAsync(new Transaction
+        {
+            Amount = 50000m,
+            Date = new DateTime(2025, 1, 25),
+            Description = "Lön",
+            IsIncome = true,
+            UserId = TestUserId,
+            CreatedAt = DateTime.UtcNow,
+            ValidFrom = DateTime.UtcNow
+        });
+
+        await _context.Transactions.AddAsync(new Transaction
+        {
+            Amount = 35000m,
+            Date = new DateTime(2025, 1, 15),
+            Description = "Utgifter",
+            IsIncome = false,
+            UserId = TestUserId,
+            CreatedAt = DateTime.UtcNow,
+            ValidFrom = DateTime.UtcNow
+        });
+
+        await _context.SaveChangesAsync();
+
+        // Act
+        var report = await _reportService.GenerateMonthlyReportAsync(year, month);
+
+        // Assert
+        Assert.NotNull(report.Insights);
+        Assert.NotEmpty(report.Insights);
+        // Should have a savings rate insight
+        Assert.True(report.Insights.Any(i => i.Title.Contains("sparande", StringComparison.OrdinalIgnoreCase) || 
+                                              i.Title.Contains("sparprocent", StringComparison.OrdinalIgnoreCase)));
+    }
+
+    [Fact]
+    public async Task GenerateMonthlyReportAsync_IncludesTopMerchants()
+    {
+        // Arrange
+        var year = 2025;
+        var month = 1;
+
+        await _context.Transactions.AddAsync(new Transaction
+        {
+            Amount = 3000m,
+            Date = new DateTime(2025, 1, 5),
+            Description = "ICA Supermarket",
+            IsIncome = false,
+            UserId = TestUserId,
+            CreatedAt = DateTime.UtcNow,
+            ValidFrom = DateTime.UtcNow
+        });
+
+        await _context.Transactions.AddAsync(new Transaction
+        {
+            Amount = 2500m,
+            Date = new DateTime(2025, 1, 12),
+            Description = "ICA Supermarket",
+            IsIncome = false,
+            UserId = TestUserId,
+            CreatedAt = DateTime.UtcNow,
+            ValidFrom = DateTime.UtcNow
+        });
+
+        await _context.Transactions.AddAsync(new Transaction
+        {
+            Amount = 500m,
+            Date = new DateTime(2025, 1, 20),
+            Description = "Coop Forum",
+            IsIncome = false,
+            UserId = TestUserId,
+            CreatedAt = DateTime.UtcNow,
+            ValidFrom = DateTime.UtcNow
+        });
+
+        await _context.SaveChangesAsync();
+
+        // Act
+        var report = await _reportService.GenerateMonthlyReportAsync(year, month);
+
+        // Assert
+        Assert.NotNull(report.TopMerchants);
+        Assert.NotEmpty(report.TopMerchants);
+        // ICA should be first as it has highest total
+        Assert.Equal("ICA", report.TopMerchants.First().Name);
+    }
+
+    [Fact]
+    public async Task GetMonthlyReportAsync_WithNoSavedReport_ReturnsNull()
+    {
+        // Act
+        var report = await _reportService.GetMonthlyReportAsync(2025, 1, TestUserId);
+
+        // Assert
+        Assert.Null(report);
+    }
+
+    [Fact]
+    public async Task SaveMonthlyReportAsync_SavesReportToDatabase()
+    {
+        // Arrange
+        var reportData = new MonthlyReportData
+        {
+            Year = 2025,
+            Month = 1,
+            MonthName = "januari",
+            TotalIncome = 30000m,
+            TotalExpenses = 20000m,
+            NetFlow = 10000m,
+            SavingsRate = 33.33m,
+            TransactionCount = 15,
+            GeneratedAt = DateTime.UtcNow
+        };
+
+        // Act
+        var savedReport = await _reportService.SaveMonthlyReportAsync(reportData, TestUserId);
+
+        // Assert
+        Assert.NotNull(savedReport);
+        Assert.Equal(new DateTime(2025, 1, 1), savedReport.ReportMonth);
+        Assert.Equal(30000m, savedReport.TotalIncome);
+        Assert.Equal(20000m, savedReport.TotalExpenses);
+        Assert.Equal(10000m, savedReport.NetFlow);
+        Assert.Equal(ReportStatus.Generated, savedReport.Status);
+        Assert.Equal(TestUserId, savedReport.UserId);
+    }
+
+    [Fact]
+    public async Task SaveMonthlyReportAsync_UpdatesExistingReport()
+    {
+        // Arrange
+        var initialReport = new MonthlyReportData
+        {
+            Year = 2025,
+            Month = 1,
+            MonthName = "januari",
+            TotalIncome = 25000m,
+            TotalExpenses = 20000m,
+            NetFlow = 5000m,
+            GeneratedAt = DateTime.UtcNow
+        };
+
+        await _reportService.SaveMonthlyReportAsync(initialReport, TestUserId);
+
+        var updatedReport = new MonthlyReportData
+        {
+            Year = 2025,
+            Month = 1,
+            MonthName = "januari",
+            TotalIncome = 30000m,
+            TotalExpenses = 22000m,
+            NetFlow = 8000m,
+            GeneratedAt = DateTime.UtcNow
+        };
+
+        // Act
+        var result = await _reportService.SaveMonthlyReportAsync(updatedReport, TestUserId);
+
+        // Assert
+        Assert.Equal(30000m, result.TotalIncome);
+        Assert.Equal(22000m, result.TotalExpenses);
+        Assert.Equal(8000m, result.NetFlow);
+
+        // Verify only one report exists for this month
+        var allReports = await _reportService.GetMonthlyReportsAsync(TestUserId);
+        var reportsForJan2025 = allReports.Where(r => r.ReportMonth.Year == 2025 && r.ReportMonth.Month == 1);
+        Assert.Single(reportsForJan2025);
+    }
+
+    [Fact]
+    public async Task GetMonthlyReportsAsync_ReturnsReportsInDescendingOrder()
+    {
+        // Arrange
+        var report1 = new MonthlyReportData { Year = 2024, Month = 11, GeneratedAt = DateTime.UtcNow };
+        var report2 = new MonthlyReportData { Year = 2024, Month = 12, GeneratedAt = DateTime.UtcNow };
+        var report3 = new MonthlyReportData { Year = 2025, Month = 1, GeneratedAt = DateTime.UtcNow };
+
+        await _reportService.SaveMonthlyReportAsync(report1, TestUserId);
+        await _reportService.SaveMonthlyReportAsync(report2, TestUserId);
+        await _reportService.SaveMonthlyReportAsync(report3, TestUserId);
+
+        // Act
+        var reports = (await _reportService.GetMonthlyReportsAsync(TestUserId)).ToList();
+
+        // Assert
+        Assert.Equal(3, reports.Count);
+        Assert.Equal(2025, reports[0].ReportMonth.Year);
+        Assert.Equal(1, reports[0].ReportMonth.Month);
+        Assert.Equal(2024, reports[1].ReportMonth.Year);
+        Assert.Equal(12, reports[1].ReportMonth.Month);
+        Assert.Equal(2024, reports[2].ReportMonth.Year);
+        Assert.Equal(11, reports[2].ReportMonth.Month);
+    }
+
+    [Fact]
+    public async Task GetReportPreferencesAsync_WithNoPreferences_ReturnsDefaults()
+    {
+        // Act
+        var preferences = await _reportService.GetReportPreferencesAsync(TestUserId);
+
+        // Assert
+        Assert.NotNull(preferences);
+        Assert.Equal(TestUserId, preferences.UserId);
+        Assert.False(preferences.SendEmail);
+        Assert.True(preferences.ShowInApp);
+        Assert.Equal(1, preferences.PreferredDeliveryDay);
+        Assert.True(preferences.IsEnabled);
+    }
+
+    [Fact]
+    public async Task SaveReportPreferencesAsync_SavesPreferences()
+    {
+        // Arrange
+        var preferences = new ReportPreference
+        {
+            UserId = TestUserId,
+            SendEmail = true,
+            ShowInApp = true,
+            EmailAddress = "test@example.com",
+            PreferredDeliveryDay = 5,
+            IncludeCategoryDetails = true,
+            IncludeTopMerchants = true,
+            IncludeBudgetComparison = false,
+            IncludeTrendAnalysis = true,
+            IsEnabled = true
+        };
+
+        // Act
+        var saved = await _reportService.SaveReportPreferencesAsync(preferences);
+
+        // Assert
+        Assert.NotNull(saved);
+        Assert.True(saved.SendEmail);
+        Assert.Equal("test@example.com", saved.EmailAddress);
+        Assert.Equal(5, saved.PreferredDeliveryDay);
+        Assert.False(saved.IncludeBudgetComparison);
+    }
+
+    [Fact]
+    public async Task SaveReportPreferencesAsync_UpdatesExistingPreferences()
+    {
+        // Arrange
+        var initialPrefs = new ReportPreference
+        {
+            UserId = TestUserId,
+            SendEmail = false,
+            ShowInApp = true,
+            IsEnabled = true
+        };
+        await _reportService.SaveReportPreferencesAsync(initialPrefs);
+
+        var updatedPrefs = new ReportPreference
+        {
+            UserId = TestUserId,
+            SendEmail = true,
+            ShowInApp = false,
+            EmailAddress = "updated@example.com",
+            IsEnabled = false
+        };
+
+        // Act
+        var result = await _reportService.SaveReportPreferencesAsync(updatedPrefs);
+
+        // Assert
+        Assert.True(result.SendEmail);
+        Assert.False(result.ShowInApp);
+        Assert.Equal("updated@example.com", result.EmailAddress);
+        Assert.False(result.IsEnabled);
+    }
 }

@@ -48,6 +48,36 @@ public interface IReportService
     /// Get spending pattern analysis report with category distribution, trends, anomalies and recommendations
     /// </summary>
     Task<SpendingPatternReport> GetSpendingPatternReportAsync(DateTime fromDate, DateTime toDate, int? householdId = null);
+    
+    /// <summary>
+    /// Generate a monthly report for a specific month
+    /// </summary>
+    Task<MonthlyReportData> GenerateMonthlyReportAsync(int year, int month, string? userId = null, int? householdId = null);
+    
+    /// <summary>
+    /// Get a stored monthly report by month
+    /// </summary>
+    Task<MonthlyReport?> GetMonthlyReportAsync(int year, int month, string? userId = null, int? householdId = null);
+    
+    /// <summary>
+    /// Get all monthly reports for a user
+    /// </summary>
+    Task<IEnumerable<MonthlyReport>> GetMonthlyReportsAsync(string? userId = null, int? householdId = null, int limit = 12);
+    
+    /// <summary>
+    /// Save a generated monthly report to the database
+    /// </summary>
+    Task<MonthlyReport> SaveMonthlyReportAsync(MonthlyReportData reportData, string? userId = null, int? householdId = null);
+    
+    /// <summary>
+    /// Get report preferences for a user
+    /// </summary>
+    Task<ReportPreference> GetReportPreferencesAsync(string userId);
+    
+    /// <summary>
+    /// Save report preferences for a user
+    /// </summary>
+    Task<ReportPreference> SaveReportPreferencesAsync(ReportPreference preferences);
 }
 
 public class CashFlowReport
@@ -306,4 +336,135 @@ public class MonthlySpendingData
     public decimal TotalAmount { get; set; }
     public int TransactionCount { get; set; }
     public Dictionary<string, decimal> CategoryBreakdown { get; set; } = new();
+}
+
+/// <summary>
+/// Complete monthly report data for a specific month
+/// </summary>
+public class MonthlyReportData
+{
+    /// <summary>
+    /// Year of the report
+    /// </summary>
+    public int Year { get; set; }
+    
+    /// <summary>
+    /// Month of the report (1-12)
+    /// </summary>
+    public int Month { get; set; }
+    
+    /// <summary>
+    /// Swedish name of the month
+    /// </summary>
+    public string MonthName { get; set; } = string.Empty;
+    
+    /// <summary>
+    /// Total income for the month
+    /// </summary>
+    public decimal TotalIncome { get; set; }
+    
+    /// <summary>
+    /// Total expenses for the month
+    /// </summary>
+    public decimal TotalExpenses { get; set; }
+    
+    /// <summary>
+    /// Net flow (income - expenses)
+    /// </summary>
+    public decimal NetFlow { get; set; }
+    
+    /// <summary>
+    /// Savings rate as percentage (net flow / income * 100)
+    /// </summary>
+    public decimal SavingsRate { get; set; }
+    
+    /// <summary>
+    /// Comparison with previous month
+    /// </summary>
+    public MonthlyComparison? PreviousMonthComparison { get; set; }
+    
+    /// <summary>
+    /// Breakdown of spending by category
+    /// </summary>
+    public List<ReportCategorySummary> CategorySummaries { get; set; } = new();
+    
+    /// <summary>
+    /// Top merchants/payees by spending
+    /// </summary>
+    public List<TopMerchant> TopMerchants { get; set; } = new();
+    
+    /// <summary>
+    /// Budget performance for the month
+    /// </summary>
+    public List<BudgetOutcome> BudgetOutcomes { get; set; } = new();
+    
+    /// <summary>
+    /// Key insights and recommendations
+    /// </summary>
+    public List<ReportInsight> Insights { get; set; } = new();
+    
+    /// <summary>
+    /// Number of transactions in the month
+    /// </summary>
+    public int TransactionCount { get; set; }
+    
+    /// <summary>
+    /// When the report was generated
+    /// </summary>
+    public DateTime GeneratedAt { get; set; }
+}
+
+/// <summary>
+/// Comparison data between two months
+/// </summary>
+public class MonthlyComparison
+{
+    public decimal IncomeChange { get; set; }
+    public decimal IncomeChangePercent { get; set; }
+    public decimal ExpenseChange { get; set; }
+    public decimal ExpenseChangePercent { get; set; }
+    public decimal NetFlowChange { get; set; }
+    public decimal NetFlowChangePercent { get; set; }
+    public string TrendDirection { get; set; } = string.Empty; // "Improving", "Worsening", "Stable"
+}
+
+/// <summary>
+/// Category summary for the monthly report
+/// </summary>
+public class ReportCategorySummary
+{
+    public int CategoryId { get; set; }
+    public string CategoryName { get; set; } = string.Empty;
+    public string CategoryColor { get; set; } = "#000000";
+    public decimal Amount { get; set; }
+    public decimal Percentage { get; set; }
+    public int TransactionCount { get; set; }
+    public decimal? PreviousMonthAmount { get; set; }
+    public decimal? ChangePercent { get; set; }
+}
+
+/// <summary>
+/// Budget performance for a category in the monthly report
+/// </summary>
+public class BudgetOutcome
+{
+    public int CategoryId { get; set; }
+    public string CategoryName { get; set; } = string.Empty;
+    public decimal BudgetedAmount { get; set; }
+    public decimal ActualAmount { get; set; }
+    public decimal Difference { get; set; }
+    public decimal PercentageUsed { get; set; }
+    public string Status { get; set; } = string.Empty; // "UnderBudget", "OnTrack", "OverBudget"
+}
+
+/// <summary>
+/// An insight or recommendation in the monthly report
+/// </summary>
+public class ReportInsight
+{
+    public string Type { get; set; } = string.Empty; // "Positive", "Warning", "Info", "Action"
+    public string Title { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public string? CategoryName { get; set; }
+    public decimal? Amount { get; set; }
 }

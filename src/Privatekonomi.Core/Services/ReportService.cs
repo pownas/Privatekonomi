@@ -1535,4 +1535,539 @@ public class ReportService : IReportService
 
         return recommendations.OrderByDescending(r => r.Priority == "High" ? 3 : r.Priority == "Medium" ? 2 : 1).ToList();
     }
+
+    private static readonly string[] SwedishMonthNames = 
+    {
+        "januari", "februari", "mars", "april", "maj", "juni",
+        "juli", "augusti", "september", "oktober", "november", "december"
+    };
+
+    public async Task<MonthlyReportData> GenerateMonthlyReportAsync(int year, int month, string? userId = null, int? householdId = null)
+    {
+        var monthStart = new DateTime(year, month, 1);
+        var monthEnd = monthStart.AddMonths(1).AddDays(-1);
+        var previousMonthStart = monthStart.AddMonths(-1);
+        var previousMonthEnd = monthStart.AddDays(-1);
+
+        // Get transactions for current month
+        var query = _context.Transactions
+            .Include(t => t.TransactionCategories)
+                .ThenInclude(tc => tc.Category)
+            .Where(t => t.Date >= monthStart && t.Date <= monthEnd);
+
+        if (!string.IsNullOrEmpty(userId))
+        {
+            query = query.Where(t => t.UserId == userId);
+        }
+
+        if (householdId.HasValue)
+        {
+            query = query.Where(t => t.HouseholdId == householdId.Value);
+        }
+
+        var transactions = await query.ToListAsync();
+
+        // Get transactions for previous month for comparison
+        var previousQuery = _context.Transactions
+            .Include(t => t.TransactionCategories)
+                .ThenInclude(tc => tc.Category)
+            .Where(t => t.Date >= previousMonthStart && t.Date <= previousMonthEnd);
+
+        if (!string.IsNullOrEmpty(userId))
+        {
+            previousQuery = previousQuery.Where(t => t.UserId == userId);
+        }
+
+        if (householdId.HasValue)
+        {
+            previousQuery = previousQuery.Where(t => t.HouseholdId == householdId.Value);
+        }
+
+        var previousTransactions = await previousQuery.ToListAsync();
+
+        // Calculate totals
+        var totalIncome = transactions.Where(t => t.IsIncome).Sum(t => t.Amount);
+        var totalExpenses = transactions.Where(t => !t.IsIncome).Sum(t => t.Amount);
+        var netFlow = totalIncome - totalExpenses;
+        var savingsRate = totalIncome > 0 ? (netFlow / totalIncome) * 100 : 0;
+
+        var previousIncome = previousTransactions.Where(t => t.IsIncome).Sum(t => t.Amount);
+        var previousExpenses = previousTransactions.Where(t => !t.IsIncome).Sum(t => t.Amount);
+        var previousNetFlow = previousIncome - previousExpenses;
+
+        // Category summaries
+        var categorySummaries = await CalculateCategorySummariesAsync(transactions, totalExpenses, previousTransactions);
+
+        // Top merchants
+        var topMerchants = (await GetTopMerchantsAsync(5, monthStart, monthEnd, householdId)).ToList();
+
+        // Budget outcomes
+        var budgetOutcomes = await CalculateBudgetOutcomesAsync(monthStart, monthEnd, userId, householdId);
+
+        // Generate insights
+        var insights = GenerateMonthlyInsights(totalIncome, totalExpenses, netFlow, savingsRate, 
+            previousIncome, previousExpenses, categorySummaries, budgetOutcomes);
+
+        // Build comparison data
+        var comparison = new MonthlyComparison
+        {
+            IncomeChange = totalIncome - previousIncome,
+            IncomeChangePercent = previousIncome > 0 ? ((totalIncome - previousIncome) / previousIncome) * 100 : 0,
+            ExpenseChange = totalExpenses - previousExpenses,
+            ExpenseChangePercent = previousExpenses > 0 ? ((totalExpenses - previousExpenses) / previousExpenses) * 100 : 0,
+            NetFlowChange = netFlow - previousNetFlow,
+            NetFlowChangePercent = previousNetFlow != 0 ? ((netFlow - previousNetFlow) / Math.Abs(previousNetFlow)) * 100 : 0,
+            TrendDirection = DetermineTrendDirection(netFlow, previousNetFlow)
+        };
+
+        return new MonthlyReportData
+        {
+            Year = year,
+            Month = month,
+            MonthName = SwedishMonthNames[month - 1],
+            TotalIncome = totalIncome,
+            TotalExpenses = totalExpenses,
+            NetFlow = netFlow,
+            SavingsRate = savingsRate,
+            PreviousMonthComparison = comparison,
+            CategorySummaries = categorySummaries,
+            TopMerchants = topMerchants,
+            BudgetOutcomes = budgetOutcomes,
+            Insights = insights,
+            TransactionCount = transactions.Count,
+            GeneratedAt = DateTime.UtcNow
+        };
+    }
+
+    private async Task<List<ReportCategorySummary>> CalculateCategorySummariesAsync(
+        List<Transaction> transactions, 
+        decimal totalExpenses,
+        List<Transaction> previousTransactions)
+    {
+        var expenseTransactions = transactions.Where(t => !t.IsIncome).ToList();
+        var previousExpenseTransactions = previousTransactions.Where(t => !t.IsIncome).ToList();
+
+        // Group by category
+        var categoryGroups = expenseTransactions
+            .SelectMany(t => t.TransactionCategories.Select(tc => new { Transaction = t, Category = tc.Category }))
+            .GroupBy(x => new { x.Category?.CategoryId, x.Category?.Name, x.Category?.Color })
+            .Select(g => new
+            {
+                CategoryId = g.Key.CategoryId ?? 0,
+                CategoryName = g.Key.Name ?? "Okategoriserad",
+                CategoryColor = g.Key.Color ?? "#757575",
+                Transactions = g.Select(x => x.Transaction).Distinct().ToList()
+            })
+            .ToList();
+
+        var result = new List<ReportCategorySummary>();
+
+        foreach (var group in categoryGroups)
+        {
+            var amount = group.Transactions.Sum(t => t.Amount);
+            var transactionCount = group.Transactions.Count;
+
+            // Calculate previous month amount for this category
+            var previousAmount = previousExpenseTransactions
+                .Where(t => t.TransactionCategories.Any(tc => tc.CategoryId == group.CategoryId))
+                .Sum(t => t.Amount);
+
+            var changePercent = previousAmount > 0 ? ((amount - previousAmount) / previousAmount) * 100 : (decimal?)null;
+
+            result.Add(new ReportCategorySummary
+            {
+                CategoryId = group.CategoryId,
+                CategoryName = group.CategoryName,
+                CategoryColor = group.CategoryColor,
+                Amount = amount,
+                Percentage = totalExpenses > 0 ? (amount / totalExpenses) * 100 : 0,
+                TransactionCount = transactionCount,
+                PreviousMonthAmount = previousAmount > 0 ? previousAmount : null,
+                ChangePercent = changePercent
+            });
+        }
+
+        // Handle uncategorized transactions
+        var uncategorizedTransactions = expenseTransactions.Where(t => !t.TransactionCategories.Any()).ToList();
+        if (uncategorizedTransactions.Any())
+        {
+            var amount = uncategorizedTransactions.Sum(t => t.Amount);
+            var previousUncategorized = previousExpenseTransactions.Where(t => !t.TransactionCategories.Any()).Sum(t => t.Amount);
+            var changePercent = previousUncategorized > 0 ? ((amount - previousUncategorized) / previousUncategorized) * 100 : (decimal?)null;
+
+            result.Add(new ReportCategorySummary
+            {
+                CategoryId = 0,
+                CategoryName = "Okategoriserad",
+                CategoryColor = "#757575",
+                Amount = amount,
+                Percentage = totalExpenses > 0 ? (amount / totalExpenses) * 100 : 0,
+                TransactionCount = uncategorizedTransactions.Count,
+                PreviousMonthAmount = previousUncategorized > 0 ? previousUncategorized : null,
+                ChangePercent = changePercent
+            });
+        }
+
+        return result.OrderByDescending(c => c.Amount).ToList();
+    }
+
+    private async Task<List<BudgetOutcome>> CalculateBudgetOutcomesAsync(DateTime monthStart, DateTime monthEnd, string? userId, int? householdId)
+    {
+        var outcomes = new List<BudgetOutcome>();
+
+        // Get active budget for the month
+        var budget = await _context.Budgets
+            .Include(b => b.BudgetCategories)
+            .ThenInclude(bc => bc.Category)
+            .Where(b => b.StartDate <= monthEnd && b.EndDate >= monthStart)
+            .Where(b => householdId.HasValue ? b.HouseholdId == householdId : string.IsNullOrEmpty(userId) || b.UserId == userId)
+            .FirstOrDefaultAsync();
+
+        if (budget == null || !budget.BudgetCategories.Any())
+        {
+            return outcomes;
+        }
+
+        foreach (var budgetCategory in budget.BudgetCategories)
+        {
+            var actualAmount = await _context.Transactions
+                .Where(t => t.Date >= monthStart && t.Date <= monthEnd && !t.IsIncome)
+                .Where(t => t.TransactionCategories.Any(tc => tc.CategoryId == budgetCategory.CategoryId))
+                .SumAsync(t => t.Amount);
+
+            var budgetedAmount = budgetCategory.PlannedAmount;
+            var difference = budgetedAmount - actualAmount;
+            var percentageUsed = budgetedAmount > 0 ? (actualAmount / budgetedAmount) * 100 : 0;
+
+            var status = percentageUsed switch
+            {
+                <= 90 => "UnderBudget",
+                <= 105 => "OnTrack",
+                _ => "OverBudget"
+            };
+
+            outcomes.Add(new BudgetOutcome
+            {
+                CategoryId = budgetCategory.CategoryId,
+                CategoryName = budgetCategory.Category?.Name ?? "Okänd",
+                BudgetedAmount = budgetedAmount,
+                ActualAmount = actualAmount,
+                Difference = difference,
+                PercentageUsed = percentageUsed,
+                Status = status
+            });
+        }
+
+        return outcomes.OrderByDescending(o => o.ActualAmount).ToList();
+    }
+
+    private List<ReportInsight> GenerateMonthlyInsights(
+        decimal totalIncome, 
+        decimal totalExpenses, 
+        decimal netFlow, 
+        decimal savingsRate,
+        decimal previousIncome,
+        decimal previousExpenses,
+        List<ReportCategorySummary> categorySummaries,
+        List<BudgetOutcome> budgetOutcomes)
+    {
+        var insights = new List<ReportInsight>();
+
+        // Savings rate insight
+        if (savingsRate >= 20)
+        {
+            insights.Add(new ReportInsight
+            {
+                Type = "Positive",
+                Title = "Utmärkt sparprocent!",
+                Description = $"Du sparade {savingsRate:F1}% av din inkomst denna månad, vilket är över rekommenderade 20%.",
+                Amount = netFlow
+            });
+        }
+        else if (savingsRate >= 10)
+        {
+            insights.Add(new ReportInsight
+            {
+                Type = "Info",
+                Title = "Bra sparande",
+                Description = $"Du sparade {savingsRate:F1}% av din inkomst. Sikta på 20% för optimal ekonomisk hälsa.",
+                Amount = netFlow
+            });
+        }
+        else if (savingsRate >= 0)
+        {
+            insights.Add(new ReportInsight
+            {
+                Type = "Warning",
+                Title = "Lågt sparande",
+                Description = $"Din sparprocent är {savingsRate:F1}%. Försök hitta områden där du kan minska utgifterna.",
+                Amount = netFlow
+            });
+        }
+        else
+        {
+            insights.Add(new ReportInsight
+            {
+                Type = "Warning",
+                Title = "Negativt netto",
+                Description = $"Du spenderade {Math.Abs(netFlow):C0} mer än du tjänade denna månad.",
+                Amount = netFlow
+            });
+        }
+
+        // Expense trend insight
+        if (previousExpenses > 0)
+        {
+            var expenseChange = ((totalExpenses - previousExpenses) / previousExpenses) * 100;
+            if (expenseChange <= -10)
+            {
+                insights.Add(new ReportInsight
+                {
+                    Type = "Positive",
+                    Title = "Minskade utgifter",
+                    Description = $"Dina utgifter minskade med {Math.Abs(expenseChange):F1}% jämfört med förra månaden. Bra jobbat!",
+                    Amount = totalExpenses - previousExpenses
+                });
+            }
+            else if (expenseChange >= 20)
+            {
+                insights.Add(new ReportInsight
+                {
+                    Type = "Warning",
+                    Title = "Ökade utgifter",
+                    Description = $"Dina utgifter ökade med {expenseChange:F1}% jämfört med förra månaden.",
+                    Amount = totalExpenses - previousExpenses
+                });
+            }
+        }
+
+        // Top category insight
+        var topCategory = categorySummaries.FirstOrDefault();
+        if (topCategory != null && topCategory.Percentage > 30)
+        {
+            insights.Add(new ReportInsight
+            {
+                Type = "Info",
+                Title = $"Största utgiftskategori: {topCategory.CategoryName}",
+                Description = $"{topCategory.CategoryName} stod för {topCategory.Percentage:F1}% av dina totala utgifter.",
+                CategoryName = topCategory.CategoryName,
+                Amount = topCategory.Amount
+            });
+        }
+
+        // Categories with significant increase
+        var increasingCategories = categorySummaries
+            .Where(c => c.ChangePercent.HasValue && c.ChangePercent > 25 && c.Amount > 500)
+            .OrderByDescending(c => c.ChangePercent)
+            .Take(2);
+
+        foreach (var category in increasingCategories)
+        {
+            insights.Add(new ReportInsight
+            {
+                Type = "Warning",
+                Title = $"Ökad kostnad: {category.CategoryName}",
+                Description = $"Utgifter för {category.CategoryName} ökade med {category.ChangePercent:F1}% jämfört med förra månaden.",
+                CategoryName = category.CategoryName,
+                Amount = category.Amount
+            });
+        }
+
+        // Budget performance insight
+        var overBudgetCategories = budgetOutcomes.Where(b => b.Status == "OverBudget").ToList();
+        if (overBudgetCategories.Count > 0)
+        {
+            var worstCategory = overBudgetCategories.OrderByDescending(b => b.PercentageUsed).First();
+            insights.Add(new ReportInsight
+            {
+                Type = "Warning",
+                Title = $"Budgetöverskridande: {worstCategory.CategoryName}",
+                Description = $"Du överskred budgeten för {worstCategory.CategoryName} med {Math.Abs(worstCategory.Difference):C0} ({worstCategory.PercentageUsed:F0}% av budget).",
+                CategoryName = worstCategory.CategoryName,
+                Amount = worstCategory.Difference
+            });
+        }
+
+        var underBudgetCount = budgetOutcomes.Count(b => b.Status == "UnderBudget");
+        if (underBudgetCount > 0 && budgetOutcomes.Count > 0)
+        {
+            var underBudgetPercent = (underBudgetCount * 100.0m) / budgetOutcomes.Count;
+            if (underBudgetPercent >= 70)
+            {
+                insights.Add(new ReportInsight
+                {
+                    Type = "Positive",
+                    Title = "Bra budgetföljning",
+                    Description = $"Du höll dig inom budget för {underBudgetCount} av {budgetOutcomes.Count} kategorier."
+                });
+            }
+        }
+
+        return insights.Take(6).ToList();
+    }
+
+    private static string DetermineTrendDirection(decimal current, decimal previous)
+    {
+        if (previous == 0)
+            return "Stable";
+        
+        var changePercent = ((current - previous) / Math.Abs(previous)) * 100;
+        
+        return changePercent switch
+        {
+            > 5 => "Improving",
+            < -5 => "Worsening",
+            _ => "Stable"
+        };
+    }
+
+    public async Task<MonthlyReport?> GetMonthlyReportAsync(int year, int month, string? userId = null, int? householdId = null)
+    {
+        var reportMonth = new DateTime(year, month, 1);
+        
+        var query = _context.MonthlyReports
+            .Include(r => r.Deliveries)
+            .Where(r => r.ReportMonth == reportMonth);
+
+        if (!string.IsNullOrEmpty(userId))
+        {
+            query = query.Where(r => r.UserId == userId);
+        }
+
+        if (householdId.HasValue)
+        {
+            query = query.Where(r => r.HouseholdId == householdId);
+        }
+
+        return await query.FirstOrDefaultAsync();
+    }
+
+    public async Task<IEnumerable<MonthlyReport>> GetMonthlyReportsAsync(string? userId = null, int? householdId = null, int limit = 12)
+    {
+        var query = _context.MonthlyReports
+            .Include(r => r.Deliveries)
+            .OrderByDescending(r => r.ReportMonth)
+            .AsQueryable();
+
+        if (!string.IsNullOrEmpty(userId))
+        {
+            query = query.Where(r => r.UserId == userId);
+        }
+
+        if (householdId.HasValue)
+        {
+            query = query.Where(r => r.HouseholdId == householdId);
+        }
+
+        return await query.Take(limit).ToListAsync();
+    }
+
+    public async Task<MonthlyReport> SaveMonthlyReportAsync(MonthlyReportData reportData, string? userId = null, int? householdId = null)
+    {
+        var reportMonth = new DateTime(reportData.Year, reportData.Month, 1);
+        
+        // Check if report already exists
+        var existingReport = await GetMonthlyReportAsync(reportData.Year, reportData.Month, userId, householdId);
+        
+        if (existingReport != null)
+        {
+            // Update existing report
+            existingReport.TotalIncome = reportData.TotalIncome;
+            existingReport.TotalExpenses = reportData.TotalExpenses;
+            existingReport.NetFlow = reportData.NetFlow;
+            existingReport.IncomeChangePercent = reportData.PreviousMonthComparison?.IncomeChangePercent ?? 0;
+            existingReport.ExpenseChangePercent = reportData.PreviousMonthComparison?.ExpenseChangePercent ?? 0;
+            existingReport.CategorySummariesJson = System.Text.Json.JsonSerializer.Serialize(reportData.CategorySummaries);
+            existingReport.TopMerchantsJson = System.Text.Json.JsonSerializer.Serialize(reportData.TopMerchants);
+            existingReport.BudgetOutcomeJson = System.Text.Json.JsonSerializer.Serialize(reportData.BudgetOutcomes);
+            existingReport.InsightsJson = System.Text.Json.JsonSerializer.Serialize(reportData.Insights);
+            existingReport.GeneratedAt = reportData.GeneratedAt;
+            existingReport.Status = ReportStatus.Generated;
+            existingReport.UpdatedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+            return existingReport;
+        }
+
+        // Create new report
+        var report = new MonthlyReport
+        {
+            ReportMonth = reportMonth,
+            TotalIncome = reportData.TotalIncome,
+            TotalExpenses = reportData.TotalExpenses,
+            NetFlow = reportData.NetFlow,
+            IncomeChangePercent = reportData.PreviousMonthComparison?.IncomeChangePercent ?? 0,
+            ExpenseChangePercent = reportData.PreviousMonthComparison?.ExpenseChangePercent ?? 0,
+            CategorySummariesJson = System.Text.Json.JsonSerializer.Serialize(reportData.CategorySummaries),
+            TopMerchantsJson = System.Text.Json.JsonSerializer.Serialize(reportData.TopMerchants),
+            BudgetOutcomeJson = System.Text.Json.JsonSerializer.Serialize(reportData.BudgetOutcomes),
+            InsightsJson = System.Text.Json.JsonSerializer.Serialize(reportData.Insights),
+            GeneratedAt = reportData.GeneratedAt,
+            Status = ReportStatus.Generated,
+            UserId = userId,
+            HouseholdId = householdId,
+            ValidFrom = DateTime.UtcNow,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        _context.MonthlyReports.Add(report);
+        await _context.SaveChangesAsync();
+
+        return report;
+    }
+
+    public async Task<ReportPreference> GetReportPreferencesAsync(string userId)
+    {
+        var preferences = await _context.ReportPreferences
+            .FirstOrDefaultAsync(p => p.UserId == userId);
+
+        if (preferences == null)
+        {
+            // Return default preferences
+            preferences = new ReportPreference
+            {
+                UserId = userId,
+                SendEmail = false,
+                ShowInApp = true,
+                PreferredDeliveryDay = 1,
+                IncludeCategoryDetails = true,
+                IncludeTopMerchants = true,
+                IncludeBudgetComparison = true,
+                IncludeTrendAnalysis = true,
+                IsEnabled = true,
+                CreatedAt = DateTime.UtcNow
+            };
+        }
+
+        return preferences;
+    }
+
+    public async Task<ReportPreference> SaveReportPreferencesAsync(ReportPreference preferences)
+    {
+        var existingPreferences = await _context.ReportPreferences
+            .FirstOrDefaultAsync(p => p.UserId == preferences.UserId);
+
+        if (existingPreferences != null)
+        {
+            existingPreferences.SendEmail = preferences.SendEmail;
+            existingPreferences.ShowInApp = preferences.ShowInApp;
+            existingPreferences.EmailAddress = preferences.EmailAddress;
+            existingPreferences.PreferredDeliveryDay = preferences.PreferredDeliveryDay;
+            existingPreferences.IncludeCategoryDetails = preferences.IncludeCategoryDetails;
+            existingPreferences.IncludeTopMerchants = preferences.IncludeTopMerchants;
+            existingPreferences.IncludeBudgetComparison = preferences.IncludeBudgetComparison;
+            existingPreferences.IncludeTrendAnalysis = preferences.IncludeTrendAnalysis;
+            existingPreferences.IsEnabled = preferences.IsEnabled;
+            existingPreferences.UpdatedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+            return existingPreferences;
+        }
+
+        preferences.CreatedAt = DateTime.UtcNow;
+        _context.ReportPreferences.Add(preferences);
+        await _context.SaveChangesAsync();
+
+        return preferences;
+    }
 }

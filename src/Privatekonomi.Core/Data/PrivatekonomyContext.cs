@@ -127,6 +127,11 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
     public DbSet<HouseholdRole> HouseholdRoles { get; set; }
     public DbSet<RolePermission> RolePermissions { get; set; }
     public DbSet<AuditLogEntry> AuditLogEntries { get; set; }
+    
+    // Monthly Reports
+    public DbSet<MonthlyReport> MonthlyReports { get; set; }
+    public DbSet<ReportDelivery> ReportDeliveries { get; set; }
+    public DbSet<ReportPreference> ReportPreferences { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -1637,6 +1642,90 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
             entity.Property(e => e.Settings).HasMaxLength(2000);
             
             entity.HasIndex(e => e.LayoutId);
+        });
+        
+        // MonthlyReport configuration
+        modelBuilder.Entity<MonthlyReport>(entity =>
+        {
+            entity.HasKey(e => e.MonthlyReportId);
+            entity.Property(e => e.ReportMonth).IsRequired();
+            entity.Property(e => e.TotalIncome).HasPrecision(18, 2);
+            entity.Property(e => e.TotalExpenses).HasPrecision(18, 2);
+            entity.Property(e => e.NetFlow).HasPrecision(18, 2);
+            entity.Property(e => e.IncomeChangePercent).HasPrecision(10, 2);
+            entity.Property(e => e.ExpenseChangePercent).HasPrecision(10, 2);
+            entity.Property(e => e.CategorySummariesJson).HasMaxLength(10000);
+            entity.Property(e => e.TopMerchantsJson).HasMaxLength(5000);
+            entity.Property(e => e.BudgetOutcomeJson).HasMaxLength(5000);
+            entity.Property(e => e.InsightsJson).HasMaxLength(5000);
+            entity.Property(e => e.GeneratedAt).IsRequired();
+            entity.Property(e => e.Status).IsRequired();
+            entity.Property(e => e.CreatedAt).IsRequired();
+            
+            // Temporal tracking
+            entity.Property(e => e.ValidFrom).IsRequired();
+            entity.Property(e => e.ValidTo);
+            
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.HasOne(e => e.Household)
+                .WithMany()
+                .HasForeignKey(e => e.HouseholdId)
+                .OnDelete(DeleteBehavior.SetNull);
+            
+            entity.HasIndex(e => e.UserId);
+            entity.HasIndex(e => e.ReportMonth);
+            entity.HasIndex(e => new { e.UserId, e.ReportMonth });
+            entity.HasIndex(e => e.ValidFrom);
+            entity.HasIndex(e => e.ValidTo);
+        });
+        
+        // ReportDelivery configuration
+        modelBuilder.Entity<ReportDelivery>(entity =>
+        {
+            entity.HasKey(e => e.ReportDeliveryId);
+            entity.Property(e => e.DeliveryMethod).IsRequired();
+            entity.Property(e => e.Status).IsRequired();
+            entity.Property(e => e.EmailAddress).HasMaxLength(256);
+            entity.Property(e => e.ScheduledAt).IsRequired();
+            entity.Property(e => e.ErrorMessage).HasMaxLength(1000);
+            entity.Property(e => e.RetryCount).IsRequired();
+            entity.Property(e => e.CreatedAt).IsRequired();
+            
+            entity.HasOne(e => e.MonthlyReport)
+                .WithMany(r => r.Deliveries)
+                .HasForeignKey(e => e.MonthlyReportId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.HasIndex(e => e.MonthlyReportId);
+            entity.HasIndex(e => e.Status);
+            entity.HasIndex(e => e.ScheduledAt);
+        });
+        
+        // ReportPreference configuration
+        modelBuilder.Entity<ReportPreference>(entity =>
+        {
+            entity.HasKey(e => e.ReportPreferenceId);
+            entity.Property(e => e.SendEmail).IsRequired();
+            entity.Property(e => e.ShowInApp).IsRequired();
+            entity.Property(e => e.EmailAddress).HasMaxLength(256);
+            entity.Property(e => e.PreferredDeliveryDay).IsRequired();
+            entity.Property(e => e.IncludeCategoryDetails).IsRequired();
+            entity.Property(e => e.IncludeTopMerchants).IsRequired();
+            entity.Property(e => e.IncludeBudgetComparison).IsRequired();
+            entity.Property(e => e.IncludeTrendAnalysis).IsRequired();
+            entity.Property(e => e.IsEnabled).IsRequired();
+            entity.Property(e => e.CreatedAt).IsRequired();
+            
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.HasIndex(e => e.UserId).IsUnique();
         });
     }
 }
