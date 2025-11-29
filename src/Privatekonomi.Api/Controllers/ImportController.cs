@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using Microsoft.AspNetCore.Mvc;
 using Privatekonomi.Core.Models;
 using Privatekonomi.Core.Services;
@@ -10,7 +11,7 @@ public class ImportController : ControllerBase
 {
     private readonly ICsvImportService _csvImportService;
     private readonly ILogger<ImportController> _logger;
-    private static readonly Dictionary<string, byte[]> _tempFiles = new();
+    private static readonly ConcurrentDictionary<string, (byte[] Content, string FileName, long FileSize)> _tempFiles = new();
 
     public ImportController(ICsvImportService csvImportService, ILogger<ImportController> logger)
     {
@@ -18,6 +19,9 @@ public class ImportController : ControllerBase
         _logger = logger;
     }
 
+    /// <summary>
+    /// Upload a file for preview (CSV or OFX format).
+    /// </summary>
     [HttpPost("upload")]
     public async Task<ActionResult<PreviewResponse>> Upload([FromForm] IFormFile file, [FromForm] string bankName)
     {
@@ -35,9 +39,9 @@ public class ImportController : ControllerBase
             }
 
             var extension = Path.GetExtension(file.FileName).ToLower();
-            if (extension != ".csv" && extension != ".txt")
+            if (extension != ".csv" && extension != ".txt" && extension != ".ofx" && extension != ".qfx")
             {
-                return BadRequest(new { error = "Filtypen stöds inte. Endast .csv-filer accepteras." });
+                return BadRequest(new { error = "Filtypen stöds inte. Endast .csv, .ofx och .qfx-filer accepteras." });
             }
 
             // Read file content
@@ -47,16 +51,24 @@ public class ImportController : ControllerBase
 
             // Parse and preview
             memoryStream.Position = 0;
-            var result = await _csvImportService.PreviewCsvAsync(memoryStream, bankName);
+            
+            // Determine bank name for OFX files
+            var effectiveBankName = bankName;
+            if ((extension == ".ofx" || extension == ".qfx") && !bankName.Contains("OFX", StringComparison.OrdinalIgnoreCase))
+            {
+                effectiveBankName = "OFX (Allmän)";
+            }
+            
+            var result = await _csvImportService.PreviewCsvAsync(memoryStream, effectiveBankName);
 
             if (!result.Success)
             {
-                return BadRequest(new { error = "Kunde inte läsa CSV-filen", errors = result.Errors });
+                return BadRequest(new { error = "Kunde inte läsa filen", errors = result.Errors });
             }
 
             // Store file temporarily
             var fileId = Guid.NewGuid().ToString();
-            _tempFiles[fileId] = fileContent;
+            _tempFiles[fileId] = (fileContent, file.FileName, file.Length);
 
             // Clean up old temp files (older than 1 hour)
             CleanupOldTempFiles();
@@ -88,31 +100,45 @@ public class ImportController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error uploading CSV file");
+            _logger.LogError(ex, "Error uploading file");
             return StatusCode(500, new { error = $"Ett fel uppstod: {ex.Message}" });
         }
     }
 
+    /// <summary>
+    /// Confirm and execute the import.
+    /// </summary>
     [HttpPost("confirm")]
     public async Task<ActionResult<ImportResponse>> Confirm([FromBody] ConfirmRequest request)
     {
         try
         {
-            if (!_tempFiles.TryGetValue(request.FileId, out var fileContent))
+            if (!_tempFiles.TryGetValue(request.FileId, out var fileData))
             {
                 return BadRequest(new { error = "Filen kunde inte hittas. Vänligen ladda upp filen igen." });
             }
 
-            // Import transactions
-            using var memoryStream = new MemoryStream(fileContent);
-            var result = await _csvImportService.ImportCsvAsync(memoryStream, request.Bank, request.SkipDuplicates);
+            // Get authenticated user's ID from the HttpContext
+            var userId = User.Identity?.IsAuthenticated == true 
+                ? User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value 
+                : null;
+
+            // Import transactions with job tracking
+            using var memoryStream = new MemoryStream(fileData.Content);
+            var (result, importJob) = await _csvImportService.ImportWithJobAsync(
+                memoryStream, 
+                request.Bank, 
+                fileData.FileName, 
+                fileData.FileSize,
+                userId: userId,
+                request.SkipDuplicates);
 
             // Remove temp file
-            _tempFiles.Remove(request.FileId);
+            _tempFiles.TryRemove(request.FileId, out _);
 
             if (!result.Success)
             {
-                return BadRequest(new { error = "Import misslyckades", errors = result.Errors });
+                return BadRequest(new { error = "Import misslyckades", errors = result.Errors, jobId = importJob.ImportJobId });
             }
 
             return Ok(new ImportResponse
@@ -121,7 +147,8 @@ public class ImportController : ControllerBase
                 Imported = result.ImportedCount,
                 Duplicates = result.DuplicateCount,
                 Errors = result.ErrorCount,
-                ErrorDetails = result.Errors
+                ErrorDetails = result.Errors,
+                JobId = importJob.ImportJobId
             });
         }
         catch (Exception ex)
@@ -129,6 +156,61 @@ public class ImportController : ControllerBase
             _logger.LogError(ex, "Error confirming import");
             return StatusCode(500, new { error = $"Ett fel uppstod: {ex.Message}" });
         }
+    }
+
+    /// <summary>
+    /// Get the status of an import job.
+    /// </summary>
+    [HttpGet("{id}/status")]
+    public async Task<ActionResult<ImportJobStatusResponse>> GetImportStatus(int id)
+    {
+        try
+        {
+            var importJob = await _csvImportService.GetImportJobAsync(id);
+            
+            if (importJob == null)
+            {
+                return NotFound(new { error = "Import-jobb hittades inte" });
+            }
+
+            return Ok(new ImportJobStatusResponse
+            {
+                ImportJobId = importJob.ImportJobId,
+                Status = importJob.Status,
+                BankName = importJob.BankName,
+                FileType = importJob.FileType,
+                FileName = importJob.FileName,
+                TotalRows = importJob.TotalRows,
+                ImportedCount = importJob.ImportedCount,
+                DuplicateCount = importJob.DuplicateCount,
+                ErrorCount = importJob.ErrorCount,
+                Source = importJob.Source,
+                CreatedAt = importJob.CreatedAt,
+                StartedAt = importJob.StartedAt,
+                CompletedAt = importJob.CompletedAt
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting import status for job {JobId}", id);
+            return StatusCode(500, new { error = $"Ett fel uppstod: {ex.Message}" });
+        }
+    }
+    
+    /// <summary>
+    /// Get all supported banks for import.
+    /// </summary>
+    [HttpGet("banks")]
+    public ActionResult<List<BankInfo>> GetSupportedBanks()
+    {
+        var banks = new List<BankInfo>
+        {
+            new() { Name = "ICA-banken", FileTypes = new[] { "CSV" }, Description = "ICA-banken CSV-export" },
+            new() { Name = "Swedbank", FileTypes = new[] { "CSV" }, Description = "Swedbank CSV-export (båda formaten)" },
+            new() { Name = "OFX (Allmän)", FileTypes = new[] { "OFX", "QFX" }, Description = "OFX/QFX-format (stöds av många banker)" }
+        };
+        
+        return Ok(banks);
     }
 
     private void CleanupOldTempFiles()
@@ -140,7 +222,7 @@ public class ImportController : ControllerBase
             var oldestKeys = _tempFiles.Keys.Take(_tempFiles.Count - 100).ToList();
             foreach (var key in oldestKeys)
             {
-                _tempFiles.Remove(key);
+                _tempFiles.TryRemove(key, out _);
             }
         }
     }
@@ -179,4 +261,29 @@ public class ImportResponse
     public int Duplicates { get; set; }
     public int Errors { get; set; }
     public List<CsvImportError> ErrorDetails { get; set; } = new();
+    public int JobId { get; set; }
+}
+
+public class ImportJobStatusResponse
+{
+    public int ImportJobId { get; set; }
+    public string Status { get; set; } = string.Empty;
+    public string BankName { get; set; } = string.Empty;
+    public string FileType { get; set; } = string.Empty;
+    public string FileName { get; set; } = string.Empty;
+    public int TotalRows { get; set; }
+    public int ImportedCount { get; set; }
+    public int DuplicateCount { get; set; }
+    public int ErrorCount { get; set; }
+    public string Source { get; set; } = string.Empty;
+    public DateTime CreatedAt { get; set; }
+    public DateTime? StartedAt { get; set; }
+    public DateTime? CompletedAt { get; set; }
+}
+
+public class BankInfo
+{
+    public string Name { get; set; } = string.Empty;
+    public string[] FileTypes { get; set; } = Array.Empty<string>();
+    public string Description { get; set; } = string.Empty;
 }

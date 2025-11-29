@@ -1,12 +1,27 @@
-# CSV Import Guide
+# Transaction Import Guide (CSV/OFX)
 
-This guide explains how to use the CSV import functionality to import transactions from ICA-banken and Swedbank.
+This guide explains how to use the import functionality to import transactions from Swedish banks using CSV or OFX files.
 
 ![Importera Transaktioner](https://github.com/user-attachments/assets/e352caaf-230e-4032-baf0-b850667760f0)
 
+## Supported Formats
+
+### CSV Format
+CSV (Comma/Semicolon Separated Values) files are supported from the following banks:
+- ICA-banken
+- Swedbank (both CSN and old formats)
+
+### OFX/QFX Format
+OFX (Open Financial Exchange) is a standardized format supported by most banks worldwide. QFX is Quicken's variant of OFX.
+
+**Features:**
+- Universal format supported by most banks
+- Contains complete transaction data including dates, amounts, and descriptions
+- Can include transaction types (debit/credit)
+
 ## Supported Banks
 
-### ICA-banken
+### ICA-banken (CSV)
 **Format:** Semicolon-separated (`;`) CSV file
 **Required columns:**
 - Datum (Date)
@@ -20,7 +35,7 @@ Datum;Belopp;Beskrivning;Saldo
 2025-01-16;3500,00;Lön;12242,30
 ```
 
-### Swedbank
+### Swedbank (CSV)
 
 Swedbank supports two export formats:
 
@@ -61,23 +76,64 @@ Radnummer	Clearingnummer	Kontonummer	Produkt	Valuta	Bokföringsdag	Transaktionsd
 
 **Note:** Only row type 20 (standard transactions) are imported. Opening balance (10), turnover (82), and closing balance (86) are skipped.
 
+### OFX/QFX (Universal Format)
+**Format:** OFX (Open Financial Exchange) or QFX (Quicken Financial Exchange)
+**Supported versions:** OFX 1.x (SGML) and OFX 2.x (XML)
+
+OFX is a standardized format that most banks support for exporting account statements.
+
+**Key elements parsed:**
+- `<DTPOSTED>` - Transaction date
+- `<TRNAMT>` - Transaction amount
+- `<NAME>` - Transaction name/payee
+- `<MEMO>` - Additional memo/description
+- `<TRNTYPE>` - Transaction type (DEBIT, CREDIT, etc.)
+
+**Example OFX format:**
+```xml
+<STMTTRN>
+<TRNTYPE>DEBIT</TRNTYPE>
+<DTPOSTED>20250110</DTPOSTED>
+<TRNAMT>-125.50</TRNAMT>
+<FITID>20250110001</FITID>
+<NAME>ICA MAXI STOCKHOLM</NAME>
+<MEMO>Kortköp</MEMO>
+</STMTTRN>
+```
+
+**How to export OFX from your bank:**
+- Most Swedish banks provide OFX export in their internet banking
+- Look for "Exportera kontoutdrag" or "Ladda ner transaktioner"
+- Select OFX or QFX format
+
 ## How to Import
 
 ### Using the Web Interface
 
 1. Navigate to **Importera** in the menu
-2. Select your bank (ICA-banken or Swedbank)
-3. Choose a CSV file to upload (max 10 MB)
-4. Review the preview of transactions
-5. Confirm the import
+2. Select **Transaktioner**
+3. Choose your format:
+   - ICA-banken (CSV)
+   - Swedbank (CSV)
+   - OFX/QFX (Allmänt bankformat)
+4. Upload your file (max 10 MB)
+5. Review the preview of transactions
+6. Confirm the import
 
 ### Using the API
 
-#### Upload and Preview
+#### Upload and Preview (CSV)
 ```bash
 curl -X POST https://localhost:7023/api/import/upload \
   -F "file=@transactions.csv" \
   -F "bankName=ICA-banken"
+```
+
+#### Upload and Preview (OFX)
+```bash
+curl -X POST https://localhost:7023/api/import/upload \
+  -F "file=@transactions.ofx" \
+  -F "bankName=OFX (Allmän)"
 ```
 
 #### Confirm Import
@@ -85,6 +141,16 @@ curl -X POST https://localhost:7023/api/import/upload \
 curl -X POST https://localhost:7023/api/import/confirm \
   -H "Content-Type: application/json" \
   -d '{"fileId":"<file-id>","bank":"ICA-banken","skipDuplicates":true}'
+```
+
+#### Get Import Job Status
+```bash
+curl -X GET https://localhost:7023/api/import/{jobId}/status
+```
+
+#### List Supported Banks
+```bash
+curl -X GET https://localhost:7023/api/import/banks
 ```
 
 ## Features
@@ -128,8 +194,8 @@ Each transaction is validated for:
 ## Limitations
 
 - Maximum file size: 10 MB
-- Only CSV files (.csv) are supported
-- Only SEK currency is supported (for Swedbank)
+- Supported file formats: CSV (.csv, .txt) and OFX (.ofx, .qfx)
+- Only SEK currency is fully supported (transactions in other currencies are skipped for Swedbank)
 - Dates cannot be older than 10 years (warning only)
 - Dates cannot be more than 7 days in the future
 

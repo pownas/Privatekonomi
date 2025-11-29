@@ -137,6 +137,9 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
     public DbSet<MonthlyReport> MonthlyReports { get; set; }
     public DbSet<ReportDelivery> ReportDeliveries { get; set; }
     public DbSet<ReportPreference> ReportPreferences { get; set; }
+    
+    // Import Jobs
+    public DbSet<ImportJob> ImportJobs { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -1803,6 +1806,35 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
                 .OnDelete(DeleteBehavior.Cascade);
             
             entity.HasIndex(e => e.UserId).IsUnique();
+        });
+        
+        // ImportJob configuration
+        modelBuilder.Entity<ImportJob>(entity =>
+        {
+            entity.HasKey(e => e.ImportJobId);
+            entity.Property(e => e.Status).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.BankName).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.FileType).IsRequired().HasMaxLength(10);
+            entity.Property(e => e.FileName).IsRequired().HasMaxLength(255);
+            entity.Property(e => e.FileSize).IsRequired();
+            entity.Property(e => e.TotalRows).IsRequired();
+            entity.Property(e => e.ImportedCount).IsRequired();
+            entity.Property(e => e.DuplicateCount).IsRequired();
+            entity.Property(e => e.ErrorCount).IsRequired();
+            entity.Property(e => e.ErrorMessages).HasMaxLength(5000);
+            entity.Property(e => e.Source).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.UserId).HasMaxLength(450);
+            entity.Property(e => e.CreatedAt).IsRequired();
+            
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.HasIndex(e => e.UserId);
+            entity.HasIndex(e => e.Status);
+            entity.HasIndex(e => e.CreatedAt);
+            entity.HasIndex(e => new { e.UserId, e.Status });
         });
     }
 }
