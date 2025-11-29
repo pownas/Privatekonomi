@@ -33,6 +33,10 @@
         <PeriodComparisonWidget ComparisonData="@_periodComparison" ShowSparkline="true" />
         break;
     
+    case WidgetType.UpcomingBills:
+        <UpcomingBillsWidget Configuration="@Configuration" />
+        break;
+    
     default:
         <WidgetBase Title="@Configuration.Type.ToString()" Configuration="@Configuration">
             <ChildContent>

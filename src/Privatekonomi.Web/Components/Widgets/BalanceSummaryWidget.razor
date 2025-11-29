@@ -1,0 +1,154 @@
+@using Privatekonomi.Core.Services
+@using Privatekonomi.Core.Models
+@inject IDashboardService DashboardService
+@inject ISnackbar Snackbar
+@inject NavigationManager Navigation
+
+<WidgetBase Title="Saldo" Configuration="@Configuration" ShowHeader="true">
+    <HeaderActions>
+        <MudIconButton Icon="@Icons.Material.Filled.AccountBalance" 
+                       Size="Size.Small" 
+                       Color="Color.Primary"
+                       OnClick="@(() => Navigation.NavigateTo("/accounts"))" />
+    </HeaderActions>
+    <ChildContent>
+        @if (_loading)
+        {
+            <div class="d-flex justify-center align-center" style="min-height: 150px;">
+                <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+            </div>
+        }
+        else if (_balance != null)
+        {
+            <div class="d-flex flex-column">
+                <div class="text-center mb-4">
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">Totalt saldo</MudText>
+                    <MudText Typo="Typo.h4" Color="@(_balance.TotalBalance >= 0 ? Color.Success : Color.Error)">
+                        @_balance.TotalBalance.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))
+                    </MudText>
+                    @if (_balance.ChangeFromPrevious != 0)
+                    {
+                        <div class="d-flex justify-center align-center gap-1 mt-1">
+                            <MudIcon Icon="@(_balance.ChangeFromPrevious > 0 ? Icons.Material.Filled.TrendingUp : Icons.Material.Filled.TrendingDown)" 
+                                     Size="Size.Small" 
+                                     Color="@(_balance.ChangeFromPrevious > 0 ? Color.Success : Color.Error)" />
+                            <MudText Typo="Typo.caption" Color="@(_balance.ChangeFromPrevious > 0 ? Color.Success : Color.Error)">
+                                @(_balance.ChangeFromPrevious > 0 ? "+" : "")@_balance.ChangeFromPrevious.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))
+                                (@_balance.PercentageChange.ToString("+0.0%;-0.0%;0%"))
+                            </MudText>
+                        </div>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">sedan förra månaden</MudText>
+                    }
+                </div>
+
+                @if (_balance.Accounts.Any())
+                {
+                    <MudDivider Class="mb-3" />
+                    <MudText Typo="Typo.subtitle2" Class="mb-2">Konton</MudText>
+                    
+                    @foreach (var account in _balance.Accounts.Take(ShowAllAccounts ? int.MaxValue : 4))
+                    {
+                        <div class="d-flex justify-space-between align-center mb-2">
+                            <div class="d-flex align-center gap-2">
+                                @if (!string.IsNullOrEmpty(account.Color))
+                                {
+                                    <div style="width: 8px; height: 8px; border-radius: 50%; background-color: @account.Color;"></div>
+                                }
+                                <div>
+                                    <MudText Typo="Typo.body2">@account.Name</MudText>
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">@GetAccountTypeLabel(account.AccountType)</MudText>
+                                </div>
+                            </div>
+                            <MudText Typo="Typo.body2" Color="@(account.Balance >= 0 ? Color.Default : Color.Error)">
+                                @account.Balance.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))
+                            </MudText>
+                        </div>
+                    }
+
+                    @if (_balance.Accounts.Count > 4 && !ShowAllAccounts)
+                    {
+                        <MudButton Variant="Variant.Text" 
+                                   Size="Size.Small"
+                                   Color="Color.Primary"
+                                   OnClick="@(() => ShowAllAccounts = true)">
+                            Visa alla (@_balance.Accounts.Count)
+                        </MudButton>
+                    }
+                }
+                else
+                {
+                    <MudButton Variant="Variant.Text" 
+                               Color="Color.Primary"
+                               FullWidth="true"
+                               OnClick="@(() => Navigation.NavigateTo("/accounts"))">
+                        Lägg till konton
+                    </MudButton>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="d-flex flex-column align-center justify-center" style="min-height: 150px;">
+                <MudIcon Icon="@Icons.Material.Filled.AccountBalance" Size="Size.Large" Color="Color.Secondary" />
+                <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-2 text-center">
+                    Inga konton registrerade
+                </MudText>
+                <MudButton Variant="Variant.Text" 
+                           Color="Color.Primary" 
+                           OnClick="@(() => Navigation.NavigateTo("/accounts"))"
+                           Class="mt-2">
+                    Lägg till konto
+                </MudButton>
+            </div>
+        }
+    </ChildContent>
+</WidgetBase>
+
+@code {
+    [Parameter]
+    public WidgetConfiguration? Configuration { get; set; }
+
+    [Parameter]
+    public int[]? AccountIds { get; set; }
+
+    private bool _loading = true;
+    private BalanceSummary? _balance;
+    private bool ShowAllAccounts { get; set; } = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        _loading = true;
+        try
+        {
+            _balance = await DashboardService.GetBalanceSummaryAsync(AccountIds);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Kunde inte ladda saldo: {ex.Message}", Severity.Warning);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private string GetAccountTypeLabel(string accountType)
+    {
+        return accountType.ToLowerInvariant() switch
+        {
+            "checking" => "Lönekonto",
+            "savings" => "Sparkonto",
+            "credit_card" => "Kreditkort",
+            "investment" => "Investeringskonto",
+            "cash" => "Kontanter",
+            "loan" => "Lån",
+            "pension" => "Pension",
+            _ => accountType
+        };
+    }
+}

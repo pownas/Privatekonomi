@@ -1,0 +1,127 @@
+@using Privatekonomi.Core.Services
+@using Privatekonomi.Core.Models
+@inject IDashboardService DashboardService
+@inject ISnackbar Snackbar
+@inject NavigationManager Navigation
+
+<WidgetBase Title="Kommande Räkningar" Configuration="@Configuration" ShowHeader="true">
+    <HeaderActions>
+        <MudIconButton Icon="@Icons.Material.Filled.Add" 
+                       Size="Size.Small" 
+                       Color="Color.Primary"
+                       OnClick="@(() => Navigation.NavigateTo("/bills"))" />
+    </HeaderActions>
+    <ChildContent>
+        @if (_loading)
+        {
+            <div class="d-flex justify-center align-center" style="min-height: 150px;">
+                <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+            </div>
+        }
+        else if (_bills.Any())
+        {
+            <MudList T="BillSummary" Dense="true">
+                @foreach (var bill in _bills)
+                {
+                    <MudListItem>
+                        <div class="d-flex justify-space-between align-center flex-wrap gap-2" style="width: 100%;">
+                            <div class="d-flex flex-column">
+                                <MudText Typo="Typo.subtitle2">@bill.Name</MudText>
+                                <MudText Typo="Typo.caption" Color="@(bill.IsOverdue ? Color.Error : Color.Secondary)">
+                                    @if (bill.IsOverdue)
+                                    {
+                                        <MudIcon Icon="@Icons.Material.Filled.Warning" Size="Size.Small" Color="Color.Error" Class="mr-1" />
+                                        @:Förfallen @bill.DueDate.ToString("yyyy-MM-dd")
+                                    }
+                                    else if (bill.DaysUntilDue == 0)
+                                    {
+                                        @:Förfaller idag
+                                    }
+                                    else if (bill.DaysUntilDue == 1)
+                                    {
+                                        @:Förfaller imorgon
+                                    }
+                                    else
+                                    {
+                                        @:Förfaller om @bill.DaysUntilDue dagar
+                                    }
+                                </MudText>
+                            </div>
+                            <div class="text-right">
+                                <MudText Typo="Typo.body2" Color="@(bill.IsOverdue ? Color.Error : Color.Default)">
+                                    @bill.Amount.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))
+                                </MudText>
+                                @if (!string.IsNullOrEmpty(bill.CategoryName))
+                                {
+                                    <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Default">
+                                        @bill.CategoryName
+                                    </MudChip>
+                                }
+                            </div>
+                        </div>
+                    </MudListItem>
+                    <MudDivider />
+                }
+            </MudList>
+            
+            <MudButton Variant="Variant.Text" 
+                       Color="Color.Primary" 
+                       FullWidth="true"
+                       Class="mt-2"
+                       OnClick="@(() => Navigation.NavigateTo("/bills"))">
+                Visa alla räkningar
+            </MudButton>
+        }
+        else
+        {
+            <div class="d-flex flex-column align-center justify-center" style="min-height: 150px;">
+                <MudIcon Icon="@Icons.Material.Filled.Receipt" Size="Size.Large" Color="Color.Secondary" />
+                <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-2 text-center">
+                    Inga kommande räkningar
+                </MudText>
+                <MudButton Variant="Variant.Text" 
+                           Color="Color.Primary" 
+                           OnClick="@(() => Navigation.NavigateTo("/bills"))"
+                           Class="mt-2">
+                    Lägg till räkning
+                </MudButton>
+            </div>
+        }
+    </ChildContent>
+</WidgetBase>
+
+@code {
+    [Parameter]
+    public WidgetConfiguration? Configuration { get; set; }
+
+    [Parameter]
+    public int DaysAhead { get; set; } = 30;
+
+    [Parameter]
+    public int Limit { get; set; } = 5;
+
+    private bool _loading = true;
+    private List<BillSummary> _bills = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        _loading = true;
+        try
+        {
+            _bills = await DashboardService.GetUpcomingBillsAsync(DaysAhead, Limit);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Kunde inte ladda räkningar: {ex.Message}", Severity.Warning);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}

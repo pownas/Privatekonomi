@@ -161,6 +161,7 @@ builder.Services.AddScoped<IOnboardingService, OnboardingService>();
 builder.Services.AddScoped<ThemeService>();
 builder.Services.AddScoped<DashboardPreferencesService>();
 builder.Services.AddScoped<IDashboardLayoutService, DashboardLayoutService>();
+builder.Services.AddScoped<IDashboardService, DashboardService>();
 builder.Services.AddScoped<ViewDensityService>();
 
 // Register background services
