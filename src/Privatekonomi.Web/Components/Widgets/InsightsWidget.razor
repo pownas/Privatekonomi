@@ -1,0 +1,172 @@
+@using Privatekonomi.Core.Services
+@using Privatekonomi.Core.Models
+@inject IDashboardService DashboardService
+@inject ISnackbar Snackbar
+@inject NavigationManager Navigation
+
+<WidgetBase Title="Insikter & Alerts" Configuration="@Configuration" ShowHeader="true">
+    <HeaderActions>
+        <MudIconButton Icon="@Icons.Material.Filled.Notifications" 
+                       Size="Size.Small" 
+                       Color="Color.Primary"
+                       OnClick="@(() => Navigation.NavigateTo("/notifications"))" />
+    </HeaderActions>
+    <ChildContent>
+        @if (_loading)
+        {
+            <div class="d-flex justify-center align-center" style="min-height: 150px;">
+                <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+            </div>
+        }
+        else if (_insights.Any())
+        {
+            <MudList T="InsightItem" Dense="true">
+                @foreach (var insight in _insights)
+                {
+                    <MudListItem OnClick="@(() => HandleInsightClick(insight))" 
+                                 Class="@(insight.IsRead ? "" : "mud-list-item-unread")">
+                        <div class="d-flex gap-3 align-start" style="width: 100%;">
+                            <MudAvatar Color="@GetInsightColor(insight)" Size="Size.Small">
+                                <MudIcon Icon="@GetInsightIcon(insight)" Size="Size.Small" />
+                            </MudAvatar>
+                            <div class="flex-grow-1">
+                                <div class="d-flex justify-space-between align-start">
+                                    <MudText Typo="Typo.subtitle2" Class="@(insight.IsRead ? "" : "font-weight-bold")">
+                                        @insight.Title
+                                    </MudText>
+                                    @if (!insight.IsRead)
+                                    {
+                                        <MudBadge Dot="true" Color="Color.Primary" Class="ml-2" />
+                                    }
+                                </div>
+                                <MudText Typo="Typo.caption" Color="Color.Secondary" Style="line-height: 1.3;">
+                                    @TruncateDescription(insight.Description, 80)
+                                </MudText>
+                                <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-1">
+                                    @GetRelativeTime(insight.CreatedAt)
+                                </MudText>
+                            </div>
+                        </div>
+                    </MudListItem>
+                    <MudDivider />
+                }
+            </MudList>
+            
+            <MudButton Variant="Variant.Text" 
+                       Color="Color.Primary" 
+                       FullWidth="true"
+                       Class="mt-2"
+                       OnClick="@(() => Navigation.NavigateTo("/notifications"))">
+                Visa alla notifieringar
+            </MudButton>
+        }
+        else
+        {
+            <div class="d-flex flex-column align-center justify-center" style="min-height: 150px;">
+                <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Large" Color="Color.Success" />
+                <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-2 text-center">
+                    Inga nya insikter
+                </MudText>
+                <MudText Typo="Typo.caption" Color="Color.Secondary" Class="text-center">
+                    Din ekonomi ser bra ut!
+                </MudText>
+            </div>
+        }
+    </ChildContent>
+</WidgetBase>
+
+@code {
+    [Parameter]
+    public WidgetConfiguration? Configuration { get; set; }
+
+    [Parameter]
+    public int Limit { get; set; } = 5;
+
+    private bool _loading = true;
+    private List<InsightItem> _insights = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        _loading = true;
+        try
+        {
+            _insights = await DashboardService.GetRecentInsightsAsync(Limit);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Kunde inte ladda insikter: {ex.Message}", Severity.Warning);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void HandleInsightClick(InsightItem insight)
+    {
+        if (!string.IsNullOrEmpty(insight.ActionUrl))
+        {
+            Navigation.NavigateTo(insight.ActionUrl);
+        }
+    }
+
+    private Color GetInsightColor(InsightItem insight)
+    {
+        return insight.Priority switch
+        {
+            InsightPriority.Critical => Color.Error,
+            InsightPriority.High => Color.Warning,
+            InsightPriority.Medium => Color.Info,
+            _ => Color.Default
+        };
+    }
+
+    private string GetInsightIcon(InsightItem insight)
+    {
+        return insight.Type switch
+        {
+            InsightType.BudgetAlert => Icons.Material.Filled.PieChart,
+            InsightType.SpendingTrend => Icons.Material.Filled.TrendingUp,
+            InsightType.SavingsOpportunity => Icons.Material.Filled.Savings,
+            InsightType.BillReminder => Icons.Material.Filled.Receipt,
+            InsightType.GoalProgress => Icons.Material.Filled.Flag,
+            InsightType.UnusualTransaction => Icons.Material.Filled.Warning,
+            InsightType.SubscriptionAlert => Icons.Material.Filled.Subscriptions,
+            InsightType.SystemNotification => Icons.Material.Filled.Info,
+            _ => Icons.Material.Filled.Info
+        };
+    }
+
+    private string TruncateDescription(string description, int maxLength)
+    {
+        if (string.IsNullOrEmpty(description))
+            return string.Empty;
+        
+        if (description.Length <= maxLength)
+            return description;
+        
+        return description.Substring(0, maxLength).TrimEnd() + "...";
+    }
+
+    private string GetRelativeTime(DateTime dateTime)
+    {
+        var now = DateTime.UtcNow;
+        var diff = now - dateTime;
+
+        if (diff.TotalMinutes < 1)
+            return "Just nu";
+        if (diff.TotalMinutes < 60)
+            return $"{(int)diff.TotalMinutes} min sedan";
+        if (diff.TotalHours < 24)
+            return $"{(int)diff.TotalHours} timmar sedan";
+        if (diff.TotalDays < 7)
+            return $"{(int)diff.TotalDays} dagar sedan";
+        
+        return dateTime.ToString("yyyy-MM-dd");
+    }
+}

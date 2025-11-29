@@ -75,7 +75,9 @@ builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<ISalaryHistoryService, SalaryHistoryService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<INotificationPreferenceService, NotificationPreferenceService>();
+builder.Services.AddScoped<IBillService, BillService>();
 builder.Services.AddScoped<IDashboardLayoutService, DashboardLayoutService>();
+builder.Services.AddScoped<IDashboardService, DashboardService>();
 
 // Register bank API services and dependencies
 builder.Services.AddBankApiServices(builder.Configuration);
