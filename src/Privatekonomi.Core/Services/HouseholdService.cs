@@ -309,6 +309,7 @@ public class HouseholdService : IHouseholdService
     {
         var query = _context.HouseholdActivities
             .Include(a => a.CompletedByMember)
+            .Include(a => a.Images.OrderBy(i => i.DisplayOrder))
             .Where(a => a.HouseholdId == householdId);
 
         if (startDate.HasValue)
@@ -850,5 +851,64 @@ public class HouseholdService : IHouseholdService
         }
         
         return settlements;
+    }
+
+    // Activity Image operations
+    public async Task<HouseholdActivityImage> AddActivityImageAsync(int activityId, string imagePath, string mimeType, long fileSize, string? caption = null)
+    {
+        var activity = await _context.HouseholdActivities
+            .Include(a => a.Images)
+            .FirstOrDefaultAsync(a => a.HouseholdActivityId == activityId);
+        
+        if (activity == null)
+            throw new InvalidOperationException("Activity not found");
+        
+        // Get the next display order
+        var maxOrder = activity.Images.Any() ? activity.Images.Max(i => i.DisplayOrder) : 0;
+        
+        var image = new HouseholdActivityImage
+        {
+            HouseholdActivityId = activityId,
+            ImagePath = imagePath,
+            MimeType = mimeType,
+            FileSize = fileSize,
+            Caption = caption,
+            DisplayOrder = maxOrder + 1,
+            UploadedDate = DateTime.UtcNow
+        };
+        
+        _context.HouseholdActivityImages.Add(image);
+        await _context.SaveChangesAsync();
+        return image;
+    }
+
+    public async Task<bool> DeleteActivityImageAsync(int imageId)
+    {
+        var image = await _context.HouseholdActivityImages.FindAsync(imageId);
+        if (image == null)
+            return false;
+        
+        _context.HouseholdActivityImages.Remove(image);
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<IEnumerable<HouseholdActivityImage>> GetActivityImagesAsync(int activityId)
+    {
+        return await _context.HouseholdActivityImages
+            .Where(i => i.HouseholdActivityId == activityId)
+            .OrderBy(i => i.DisplayOrder)
+            .ToListAsync();
+    }
+
+    public async Task<bool> UpdateImageOrderAsync(int imageId, int newOrder)
+    {
+        var image = await _context.HouseholdActivityImages.FindAsync(imageId);
+        if (image == null)
+            return false;
+        
+        image.DisplayOrder = newOrder;
+        await _context.SaveChangesAsync();
+        return true;
     }
 }

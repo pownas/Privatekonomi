@@ -2,8 +2,10 @@
 @page "/households/{HouseholdId:int}"
 @using Privatekonomi.Core.Models
 @using Privatekonomi.Core.Services
+@using Microsoft.AspNetCore.Components.Forms
 @inject IHouseholdService HouseholdService
 @inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
 
 <PageTitle>@(household?.Name ?? "Hushåll")</PageTitle>
 
@@ -168,10 +170,38 @@ else
                                         {
                                             <MudChip T="string" Size="Size.Small" Icon="@Icons.Material.Filled.Person">@activity.CompletedByMember.Name</MudChip>
                                         }
+                                        
+                                        @* Display activity images *@
+                                        @if (activity.Images.Any())
+                                        {
+                                            <MudStack Row="true" Wrap="Wrap.Wrap" Class="mt-3" Spacing="2">
+                                                @foreach (var image in activity.Images.Take(4))
+                                                {
+                                                    <MudPaper Elevation="1" Style="cursor: pointer; position: relative; width: 100px; height: 100px; overflow: hidden; border-radius: 8px;"
+                                                             @onclick="@(() => ShowImageFullscreen(image.ImagePath))">
+                                                        <MudImage Src="@GetImageUrl(image.ImagePath)" 
+                                                                 Alt="@image.Caption" 
+                                                                 ObjectFit="ObjectFit.Cover"
+                                                                 Style="width: 100%; height: 100%;" />
+                                                    </MudPaper>
+                                                }
+                                                @if (activity.Images.Count > 4)
+                                                {
+                                                    <MudPaper Elevation="1" Class="d-flex align-center justify-center" 
+                                                             Style="width: 100px; height: 100px; background-color: var(--mud-palette-surface); border-radius: 8px;">
+                                                        <MudText Typo="Typo.body2" Color="Color.Secondary">+@(activity.Images.Count - 4) fler</MudText>
+                                                    </MudPaper>
+                                                }
+                                            </MudStack>
+                                        }
                                     </MudCardContent>
                                     <MudCardActions>
                                         <MudText Typo="Typo.caption" Color="Color.Secondary">@activity.CompletedDate.ToString("yyyy-MM-dd HH:mm")</MudText>
                                         <MudSpacer />
+                                        @if (activity.Images.Any())
+                                        {
+                                            <MudChip T="string" Size="Size.Small" Icon="@Icons.Material.Filled.Image">@activity.Images.Count</MudChip>
+                                        }
                                         <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="@(() => DeleteActivity(activity.HouseholdActivityId))" />
                                     </MudCardActions>
                                 </MudCard>
@@ -438,6 +468,50 @@ else
                 }
             </MudSelect>
         }
+        
+        <!-- Image Upload Section -->
+        <MudText Typo="Typo.subtitle2" Class="mt-4 mb-2">Bilder (valfritt, max 10)</MudText>
+        <MudFileUpload T="IReadOnlyList<IBrowserFile>" 
+                       FilesChanged="OnActivityImagesSelected" 
+                       Accept="image/*" 
+                       MaximumFileCount="10">
+            <ActivatorContent>
+                <MudPaper Outlined="true" Class="pa-4 d-flex flex-column align-center justify-center" 
+                         Style="min-height: 120px; cursor: pointer; border: 2px dashed var(--mud-palette-primary);">
+                    <MudIcon Icon="@Icons.Material.Filled.AddPhotoAlternate" Size="Size.Large" Color="Color.Primary" Class="mb-2" />
+                    <MudText Typo="Typo.body2" Class="mb-1">Ladda upp bilder</MudText>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">eller dra och släpp här</MudText>
+                    <MudChip T="string" Icon="@Icons.Material.Filled.Image" Color="Color.Info" Size="Size.Small" Class="mt-2">
+                        JPEG, PNG, WebP, GIF (Max 5 MB per bild)
+                    </MudChip>
+                </MudPaper>
+            </ActivatorContent>
+        </MudFileUpload>
+        
+        @if (selectedActivityImages.Any())
+        {
+            <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-2">
+                @selectedActivityImages.Count bild@(selectedActivityImages.Count != 1 ? "er" : "") vald@(selectedActivityImages.Count != 1 ? "a" : "")
+            </MudText>
+            <MudStack Row="true" Wrap="Wrap.Wrap" Class="mt-2" Spacing="2">
+                @for (int i = 0; i < selectedActivityImages.Count; i++)
+                {
+                    var index = i; // Capture for lambda
+                    var file = selectedActivityImages[i];
+                    <MudPaper Class="pa-2 d-flex align-center" Style="position: relative;">
+                        <MudIcon Icon="@Icons.Material.Filled.Image" Class="mr-2" />
+                        <MudText Typo="Typo.caption" Style="max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                            @file.Name
+                        </MudText>
+                        <MudIconButton Icon="@Icons.Material.Filled.Close" 
+                                      Size="Size.Small" 
+                                      Color="Color.Error" 
+                                      OnClick="@(() => RemoveSelectedImage(index))"
+                                      Style="margin-left: 8px;" />
+                    </MudPaper>
+                }
+            </MudStack>
+        }
     </DialogContent>
     <DialogActions>
         <MudButton OnClick="CloseAddActivityDialog">Avbryt</MudButton>
@@ -503,6 +577,24 @@ else
     </DialogActions>
 </MudDialog>
 
+<!-- Image Fullscreen Dialog -->
+<MudDialog @bind-Visible="showImageFullscreenDialog" Options="fullscreenDialogOptions">
+    <DialogContent>
+        <div class="d-flex justify-center align-center" style="height: 80vh;">
+            @if (!string.IsNullOrEmpty(currentFullscreenImage))
+            {
+                <MudImage Src="@GetImageUrl(currentFullscreenImage)" 
+                         Alt="Activity image" 
+                         ObjectFit="ObjectFit.Contain"
+                         Style="max-width: 100%; max-height: 100%;" />
+            }
+        </div>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="CloseImageFullscreen">Stäng</MudButton>
+    </DialogActions>
+</MudDialog>
+
 @code {
     [Parameter]
     public int HouseholdId { get; set; }
@@ -519,6 +611,7 @@ else
     private SharedExpense? selectedExpense;
     private DateTime? expenseDate = DateTime.Today;
     private DialogOptions dialogOptions = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true };
+    private DialogOptions fullscreenDialogOptions = new DialogOptions { MaxWidth = MaxWidth.ExtraExtraLarge, FullWidth = true };
 
     // Timeline (Activity) variables
     private List<HouseholdActivity> filteredActivities = new();
@@ -528,6 +621,13 @@ else
     private DateTime? activityFilterStartDate;
     private DateTime? activityFilterEndDate;
     private int? selectedActivityMemberId;
+    private List<IBrowserFile> selectedActivityImages = new();
+    private const long MaxImageSize = 5 * 1024 * 1024; // 5 MB
+    private const int MaxImageCount = 10;
+    
+    // Image fullscreen dialog
+    private bool showImageFullscreenDialog = false;
+    private string? currentFullscreenImage;
 
     // To-Do (Task) variables
     private List<HouseholdTask> filteredTasks = new();
@@ -715,12 +815,14 @@ else
         };
         activityCompletedDate = DateTime.Today;
         selectedActivityMemberId = null;
+        selectedActivityImages.Clear();
         showAddActivityDialog = true;
     }
 
     private void CloseAddActivityDialog()
     {
         showAddActivityDialog = false;
+        selectedActivityImages.Clear();
     }
 
     private async Task AddActivity()
@@ -731,13 +833,45 @@ else
         newActivity.CompletedDate = activityCompletedDate ?? DateTime.Now;
         newActivity.CompletedByMemberId = selectedActivityMemberId;
         
-        await HouseholdService.CreateActivityAsync(newActivity);
+        var createdActivity = await HouseholdService.CreateActivityAsync(newActivity);
+        
+        // Upload and save images if any were selected
+        if (selectedActivityImages.Any())
+        {
+            foreach (var imageFile in selectedActivityImages)
+            {
+                var imagePath = await SaveActivityImage(imageFile);
+                if (!string.IsNullOrEmpty(imagePath))
+                {
+                    await HouseholdService.AddActivityImageAsync(
+                        createdActivity.HouseholdActivityId,
+                        imagePath,
+                        imageFile.ContentType,
+                        imageFile.Size
+                    );
+                }
+            }
+        }
+        
         await LoadActivities();
         CloseAddActivityDialog();
     }
 
     private async Task DeleteActivity(int activityId)
     {
+        // Get activity with images first to delete image files
+        var activities = await HouseholdService.GetActivitiesAsync(HouseholdId);
+        var activity = activities.FirstOrDefault(a => a.HouseholdActivityId == activityId);
+        
+        if (activity != null)
+        {
+            // Delete image files from disk
+            foreach (var image in activity.Images)
+            {
+                DeleteImageFile(image.ImagePath);
+            }
+        }
+        
         await HouseholdService.DeleteActivityAsync(activityId);
         await LoadActivities();
     }
@@ -889,5 +1023,116 @@ else
             .Select(t => t.Category)
             .Distinct()
             .OrderBy(c => c);
+    }
+    
+    // Image handling methods
+    private void OnActivityImagesSelected(IReadOnlyList<IBrowserFile> files)
+    {
+        var validFiles = new List<IBrowserFile>();
+        
+        foreach (var file in files)
+        {
+            // Validate file size
+            if (file.Size > MaxImageSize)
+            {
+                Snackbar.Add($"Filen {file.Name} är för stor. Max storlek är 5 MB.", Severity.Warning);
+                continue;
+            }
+            
+            // Validate file type
+            var allowedTypes = new[] { "image/jpeg", "image/jpg", "image/png", "image/webp", "image/gif" };
+            if (!allowedTypes.Contains(file.ContentType.ToLower()))
+            {
+                Snackbar.Add($"Filen {file.Name} har ett ogiltigt format. Endast JPEG, PNG, WebP och GIF är tillåtna.", Severity.Warning);
+                continue;
+            }
+            
+            validFiles.Add(file);
+        }
+        
+        // Check total count
+        if (selectedActivityImages.Count + validFiles.Count > MaxImageCount)
+        {
+            Snackbar.Add($"Du kan max ladda upp {MaxImageCount} bilder per aktivitet.", Severity.Warning);
+            var remaining = MaxImageCount - selectedActivityImages.Count;
+            validFiles = validFiles.Take(remaining).ToList();
+        }
+        
+        selectedActivityImages.AddRange(validFiles);
+        
+        if (validFiles.Any())
+        {
+            Snackbar.Add($"{validFiles.Count} bild{(validFiles.Count != 1 ? "er" : "")} vald{(validFiles.Count != 1 ? "a" : "")}", Severity.Success);
+        }
+    }
+    
+    private void RemoveSelectedImage(int index)
+    {
+        if (index >= 0 && index < selectedActivityImages.Count)
+        {
+            selectedActivityImages.RemoveAt(index);
+        }
+    }
+    
+    private async Task<string?> SaveActivityImage(IBrowserFile file)
+    {
+        try
+        {
+            // Create uploads directory if it doesn't exist
+            var uploadsPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "household-activities");
+            Directory.CreateDirectory(uploadsPath);
+
+            // Generate unique filename
+            var extension = Path.GetExtension(file.Name);
+            var fileName = $"{Guid.NewGuid()}{extension}";
+            var filePath = Path.Combine(uploadsPath, fileName);
+
+            // Save the file
+            using (var stream = file.OpenReadStream(MaxImageSize))
+            using (var fileStream = new FileStream(filePath, FileMode.Create))
+            {
+                await stream.CopyToAsync(fileStream);
+            }
+
+            return fileName;
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Fel vid uppladdning av bild: {ex.Message}", Severity.Error);
+            return null;
+        }
+    }
+    
+    private void DeleteImageFile(string imagePath)
+    {
+        try
+        {
+            var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "household-activities", imagePath);
+            if (File.Exists(filePath))
+            {
+                File.Delete(filePath);
+            }
+        }
+        catch
+        {
+            // Ignore errors when deleting files
+        }
+    }
+    
+    private string GetImageUrl(string imagePath)
+    {
+        return $"/uploads/household-activities/{imagePath}";
+    }
+    
+    private void ShowImageFullscreen(string imagePath)
+    {
+        currentFullscreenImage = imagePath;
+        showImageFullscreenDialog = true;
+    }
+    
+    private void CloseImageFullscreen()
+    {
+        showImageFullscreenDialog = false;
+        currentFullscreenImage = null;
     }
 }
