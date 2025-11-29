@@ -285,7 +285,8 @@ public class BudgetSuggestionServiceTests
 
         // Assert
         var updatedSuggestion = await _service.GetSuggestionByIdAsync(suggestion.BudgetSuggestionId);
-        Assert.True(updatedSuggestion!.IsAccepted);
+        Assert.NotNull(updatedSuggestion);
+        Assert.True(updatedSuggestion.IsAccepted);
         Assert.NotNull(updatedSuggestion.AcceptedAt);
     }
 
