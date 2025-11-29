@@ -207,14 +207,15 @@
     {
         try
         {
+            const int monthsToAnalyze = 3;
             var endDate = DateTime.Today;
-            var startDate = endDate.AddMonths(-3);
+            var startDate = endDate.AddMonths(-monthsToAnalyze);
             var transactions = await TransactionService.GetTransactionsByDateRangeAsync(startDate, endDate);
             var incomeTransactions = transactions.Where(t => t.IsIncome);
             
             if (incomeTransactions.Any())
             {
-                _monthlyIncome = Math.Round(incomeTransactions.Sum(t => t.Amount) / 3, 0);
+                _monthlyIncome = Math.Round(incomeTransactions.Sum(t => t.Amount) / monthsToAnalyze, 0);
             }
         }
         catch
