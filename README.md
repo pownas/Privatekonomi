@@ -140,6 +140,13 @@ En privatekonomi-applikation byggd med .NET 10 LTS, Blazor Server och MudBlazor 
   - Barnkonton med veckopeng och sparande
   - Uppdrag-till-belöning system för sysslor
   - Gemensamma budgetar för hela familjen
+  - **Återkommande uppgifter och Kanban-tavla**: ⭐ NYTT!
+    - Skapa återkommande uppgifter (dagligen, veckovis, månadsvis, etc.)
+    - Kanban-vy med tre kolumner: Att göra, Pågår, Klart
+    - Organisera uppgifter per kategori (Städning, Underhåll, Inköp, etc.)
+    - Automatisk generering av nästa förekomst när uppgift markeras som klar
+    - Visuell översikt över hushållets uppgifter och arbetsflöde
+    - Se [Återkommande uppgifter & Kanban guide](docs/RECURRING_TASKS_KANBAN.md)
 - **Dark Mode & Tillgänglighet**:
   - MudBlazor Dark Mode med systempreferens-detektering
   - WCAG 2.1 Nivå AA compliance

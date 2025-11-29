@@ -15,6 +15,14 @@ public class HouseholdTask
     public bool IsCompleted { get; set; }
     public HouseholdTaskPriority Priority { get; set; } = HouseholdTaskPriority.Normal;
     public HouseholdActivityType Category { get; set; }
+    public HouseholdTaskStatus Status { get; set; } = HouseholdTaskStatus.ToDo;
+    
+    // Recurring task properties
+    public bool IsRecurring { get; set; }
+    public RecurrencePattern? RecurrencePattern { get; set; }
+    public int? RecurrenceInterval { get; set; }
+    public DateTime? NextDueDate { get; set; }
+    public int? ParentTaskId { get; set; }
     
     // Optional: Assigned to a specific member
     public int? AssignedToMemberId { get; set; }
@@ -32,4 +40,21 @@ public enum HouseholdTaskPriority
     Low,      // Låg
     Normal,   // Normal
     High      // Hög
+}
+
+public enum HouseholdTaskStatus
+{
+    ToDo,        // Att göra
+    InProgress,  // Pågår
+    Done         // Klart
+}
+
+public enum RecurrencePattern
+{
+    Daily,       // Dagligen
+    Weekly,      // Veckovis
+    BiWeekly,    // Varannan vecka
+    Monthly,     // Månadsvis
+    Quarterly,   // Kvartalsvis
+    Yearly       // Årligen
 }
