@@ -1,0 +1,504 @@
+@page "/economy/reports/monthly"
+@page "/reports/monthly"
+@rendermode InteractiveServer
+@using Privatekonomi.Core.Services
+@inject IReportService ReportService
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+
+<PageTitle>Månadsrapport - Privatekonomi</PageTitle>
+
+<div class="d-flex flex-column flex-md-row justify-space-between align-start align-md-center mb-4 gap-2">
+    <div>
+        <MudText Typo="Typo.h4">
+            <MudIcon Icon="@Icons.Material.Filled.Summarize" Color="Color.Primary" Class="mr-2" aria-hidden="true" />
+            Månadsrapport
+        </MudText>
+        <MudText Typo="Typo.body2" Color="Color.Secondary">
+            Sammanfattning av din ekonomi för vald månad med insikter och jämförelser
+        </MudText>
+    </div>
+</div>
+
+@if (_loading)
+{
+    <div class="d-flex flex-column align-center pa-6">
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Large" />
+        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-4">Genererar månadsrapport...</MudText>
+    </div>
+}
+else
+{
+    <!-- Month Selection -->
+    <MudPaper Class="pa-4 mb-4" Elevation="2">
+        <MudText Typo="Typo.subtitle2" Class="mb-2">Välj månad</MudText>
+        <div class="d-flex flex-column flex-md-row gap-3 align-end">
+            <MudSelect T="int" Label="År" @bind-Value="_selectedYear" Dense="true" Style="min-width: 120px;">
+                @for (int year = DateTime.Now.Year; year >= DateTime.Now.Year - 5; year--)
+                {
+                    <MudSelectItem Value="@year">@year</MudSelectItem>
+                }
+            </MudSelect>
+            
+            <MudSelect T="int" Label="Månad" @bind-Value="_selectedMonth" Dense="true" Style="min-width: 150px;">
+                @for (int month = 1; month <= 12; month++)
+                {
+                    <MudSelectItem Value="@month">@GetSwedishMonthName(month)</MudSelectItem>
+                }
+            </MudSelect>
+            
+            <MudButton Variant="Variant.Filled" 
+                       Color="Color.Primary" 
+                       OnClick="LoadReportAsync"
+                       StartIcon="@Icons.Material.Filled.Refresh">
+                Visa rapport
+            </MudButton>
+        </div>
+    </MudPaper>
+
+    @if (_report != null)
+    {
+        <!-- Report Header -->
+        <MudPaper Class="pa-4 mb-4 primary-gradient" Elevation="2">
+            <MudText Typo="Typo.h5" Class="white-text mb-2">
+                @GetSwedishMonthName(_report.Month) @_report.Year
+            </MudText>
+            <MudText Typo="Typo.body2" Class="white-text-secondary">
+                Genererad: @_report.GeneratedAt.ToString("yyyy-MM-dd HH:mm", SwedishCulture)
+            </MudText>
+        </MudPaper>
+
+        <!-- Summary Cards -->
+        <div class="d-flex flex-wrap gap-3 mb-4">
+            <MudPaper Class="pa-4 flex-grow-1" Elevation="2" Style="min-width: 200px;">
+                <MudText Typo="Typo.subtitle2" Color="Color.Secondary">Inkomster</MudText>
+                <MudText Typo="Typo.h5" Color="Color.Success">@_report.TotalIncome.ToString("C0", SwedishCulture)</MudText>
+                @if (_report.PreviousMonthComparison != null)
+                {
+                    <div class="d-flex align-center gap-1 mt-1">
+                        @{
+                            var incomeIcon = _report.PreviousMonthComparison.IncomeChangePercent >= 0 
+                                ? Icons.Material.Filled.TrendingUp : Icons.Material.Filled.TrendingDown;
+                            var incomeColor = _report.PreviousMonthComparison.IncomeChangePercent >= 0 
+                                ? Color.Success : Color.Error;
+                        }
+                        <MudIcon Icon="@incomeIcon" Color="@incomeColor" Size="Size.Small" />
+                        <MudText Typo="Typo.caption" Color="@incomeColor">
+                            @Math.Abs(_report.PreviousMonthComparison.IncomeChangePercent).ToString("F1")%
+                        </MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">mot förra månaden</MudText>
+                    </div>
+                }
+            </MudPaper>
+            
+            <MudPaper Class="pa-4 flex-grow-1" Elevation="2" Style="min-width: 200px;">
+                <MudText Typo="Typo.subtitle2" Color="Color.Secondary">Utgifter</MudText>
+                <MudText Typo="Typo.h5" Color="Color.Error">@_report.TotalExpenses.ToString("C0", SwedishCulture)</MudText>
+                @if (_report.PreviousMonthComparison != null)
+                {
+                    <div class="d-flex align-center gap-1 mt-1">
+                        @{
+                            var expenseIcon = _report.PreviousMonthComparison.ExpenseChangePercent <= 0 
+                                ? Icons.Material.Filled.TrendingDown : Icons.Material.Filled.TrendingUp;
+                            var expenseColor = _report.PreviousMonthComparison.ExpenseChangePercent <= 0 
+                                ? Color.Success : Color.Error;
+                        }
+                        <MudIcon Icon="@expenseIcon" Color="@expenseColor" Size="Size.Small" />
+                        <MudText Typo="Typo.caption" Color="@expenseColor">
+                            @Math.Abs(_report.PreviousMonthComparison.ExpenseChangePercent).ToString("F1")%
+                        </MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">mot förra månaden</MudText>
+                    </div>
+                }
+            </MudPaper>
+            
+            <MudPaper Class="pa-4 flex-grow-1" Elevation="2" Style="min-width: 200px;">
+                <MudText Typo="Typo.subtitle2" Color="Color.Secondary">Netto</MudText>
+                @{
+                    var netColor = _report.NetFlow >= 0 ? Color.Success : Color.Error;
+                }
+                <MudText Typo="Typo.h5" Color="@netColor">@_report.NetFlow.ToString("C0", SwedishCulture)</MudText>
+            </MudPaper>
+            
+            <MudPaper Class="pa-4 flex-grow-1" Elevation="2" Style="min-width: 200px;">
+                <MudText Typo="Typo.subtitle2" Color="Color.Secondary">Sparprocent</MudText>
+                @{
+                    var savingsColor = _report.SavingsRate >= 20 ? Color.Success : _report.SavingsRate >= 10 ? Color.Warning : Color.Error;
+                }
+                <MudText Typo="Typo.h5" Color="@savingsColor">@_report.SavingsRate.ToString("F1")%</MudText>
+                <MudText Typo="Typo.caption" Color="Color.Secondary">av inkomst</MudText>
+            </MudPaper>
+        </div>
+
+        <!-- Insights Section -->
+        @if (_report.Insights.Any())
+        {
+            <MudPaper Class="pa-4 mb-4" Elevation="2">
+                <MudText Typo="Typo.h6" Class="mb-3">
+                    <MudIcon Icon="@Icons.Material.Filled.Lightbulb" Color="Color.Warning" Size="Size.Small" />
+                    Insikter & Rekommendationer
+                </MudText>
+                
+                <div class="d-flex flex-column gap-2">
+                    @foreach (var insight in _report.Insights)
+                    {
+                        var severity = insight.Type switch
+                        {
+                            "Positive" => Severity.Success,
+                            "Warning" => Severity.Warning,
+                            "Info" => Severity.Info,
+                            "Action" => Severity.Error,
+                            _ => Severity.Normal
+                        };
+                        
+                        <MudAlert Severity="@severity" Variant="Variant.Outlined" Dense="true">
+                            <MudText Typo="Typo.subtitle2" Class="font-weight-bold">@insight.Title</MudText>
+                            <MudText Typo="Typo.body2">@insight.Description</MudText>
+                            @if (insight.Amount.HasValue)
+                            {
+                                <MudText Typo="Typo.caption" Class="mt-1">
+                                    💰 @Math.Abs(insight.Amount.Value).ToString("C0", SwedishCulture)
+                                </MudText>
+                            }
+                        </MudAlert>
+                    }
+                </div>
+            </MudPaper>
+        }
+
+        <!-- Category Breakdown -->
+        @if (_report.CategorySummaries.Any())
+        {
+            <MudPaper Class="pa-4 mb-4" Elevation="2">
+                <MudText Typo="Typo.h6" Class="mb-3">
+                    <MudIcon Icon="@Icons.Material.Filled.PieChart" Color="Color.Primary" Size="Size.Small" />
+                    Utgifter per kategori
+                </MudText>
+                
+                <MudSimpleTable Hover="true" Dense="true" Style="overflow-x: auto;">
+                    <thead>
+                        <tr>
+                            <th>Kategori</th>
+                            <th class="text-right">Belopp</th>
+                            <th class="text-right">Andel</th>
+                            <th class="text-right">Antal</th>
+                            <th class="text-right">Förändring</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var category in _report.CategorySummaries.Take(10))
+                        {
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-center gap-2">
+                                        <div style="@($"width: 14px; height: 14px; background-color: {category.CategoryColor}; border-radius: 50%;")" />
+                                        @category.CategoryName
+                                    </div>
+                                </td>
+                                <td class="text-right">@category.Amount.ToString("C0", SwedishCulture)</td>
+                                <td class="text-right">
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Default">@category.Percentage.ToString("F1")%</MudChip>
+                                </td>
+                                <td class="text-right">@category.TransactionCount</td>
+                                <td class="text-right">
+                                    @if (category.ChangePercent.HasValue)
+                                    {
+                                        var changeColor = category.ChangePercent.Value > 0 ? Color.Error : Color.Success;
+                                        var changeIcon = category.ChangePercent.Value > 0 ? Icons.Material.Filled.TrendingUp : Icons.Material.Filled.TrendingDown;
+                                        
+                                        <div class="d-flex align-center justify-end gap-1">
+                                            <MudIcon Icon="@changeIcon" Color="@changeColor" Size="Size.Small" />
+                                            <MudText Color="@changeColor" Typo="Typo.body2">@Math.Abs(category.ChangePercent.Value).ToString("F1")%</MudText>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <MudText Typo="Typo.body2" Color="Color.Secondary">-</MudText>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </MudSimpleTable>
+                
+                @if (_report.CategorySummaries.Count > 10)
+                {
+                    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-2">
+                        Visar topp 10 av @_report.CategorySummaries.Count kategorier
+                    </MudText>
+                }
+            </MudPaper>
+        }
+
+        <!-- Top Merchants -->
+        @if (_report.TopMerchants.Any())
+        {
+            <MudPaper Class="pa-4 mb-4" Elevation="2">
+                <MudText Typo="Typo.h6" Class="mb-3">
+                    <MudIcon Icon="@Icons.Material.Filled.Store" Color="Color.Info" Size="Size.Small" />
+                    Största mottagare
+                </MudText>
+                
+                <MudSimpleTable Hover="true" Dense="true">
+                    <thead>
+                        <tr>
+                            <th>Mottagare</th>
+                            <th class="text-right">Totalt</th>
+                            <th class="text-right">Antal</th>
+                            <th class="text-right">Snitt</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var merchant in _report.TopMerchants)
+                        {
+                            <tr>
+                                <td>@merchant.Name</td>
+                                <td class="text-right">@merchant.TotalSpent.ToString("C0", SwedishCulture)</td>
+                                <td class="text-right">@merchant.TransactionCount</td>
+                                <td class="text-right">@merchant.AverageTransaction.ToString("C0", SwedishCulture)</td>
+                            </tr>
+                        }
+                    </tbody>
+                </MudSimpleTable>
+            </MudPaper>
+        }
+
+        <!-- Budget Performance -->
+        @if (_report.BudgetOutcomes.Any())
+        {
+            <MudPaper Class="pa-4 mb-4" Elevation="2">
+                <MudText Typo="Typo.h6" Class="mb-3">
+                    <MudIcon Icon="@Icons.Material.Filled.AccountBalance" Color="Color.Success" Size="Size.Small" />
+                    Budgetutfall
+                </MudText>
+                
+                <div class="d-flex flex-column gap-3">
+                    @foreach (var outcome in _report.BudgetOutcomes)
+                    {
+                        var progressColor = outcome.Status switch
+                        {
+                            "UnderBudget" => Color.Success,
+                            "OnTrack" => Color.Info,
+                            "OverBudget" => Color.Error,
+                            _ => Color.Default
+                        };
+                        
+                        var statusText = outcome.Status switch
+                        {
+                            "UnderBudget" => "Under budget",
+                            "OnTrack" => "Inom budget",
+                            "OverBudget" => "Över budget",
+                            _ => outcome.Status
+                        };
+                        
+                        <div>
+                            <div class="d-flex justify-space-between align-center mb-1">
+                                <div class="d-flex align-center gap-2">
+                                    <MudText Typo="Typo.body2">@outcome.CategoryName</MudText>
+                                    <MudChip T="string" Size="Size.Small" Color="@progressColor">@statusText</MudChip>
+                                </div>
+                                <MudText Typo="Typo.body2">
+                                    @outcome.ActualAmount.ToString("C0", SwedishCulture) / @outcome.BudgetedAmount.ToString("C0", SwedishCulture)
+                                </MudText>
+                            </div>
+                            <MudProgressLinear Color="@progressColor" 
+                                              Size="Size.Medium" 
+                                              Value="@Math.Min(100, (double)outcome.PercentageUsed)" />
+                            <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-1">
+                                @if (outcome.Difference >= 0)
+                                {
+                                    <text>@outcome.Difference.ToString("C0", SwedishCulture) kvar</text>
+                                }
+                                else
+                                {
+                                    <text>@Math.Abs(outcome.Difference).ToString("C0", SwedishCulture) över</text>
+                                }
+                            </MudText>
+                        </div>
+                    }
+                </div>
+            </MudPaper>
+        }
+
+        <!-- Month Comparison -->
+        @if (_report.PreviousMonthComparison != null)
+        {
+            <MudPaper Class="pa-4 mb-4" Elevation="2">
+                <MudText Typo="Typo.h6" Class="mb-3">
+                    <MudIcon Icon="@Icons.Material.Filled.CompareArrows" Color="Color.Tertiary" Size="Size.Small" />
+                    Jämförelse med förra månaden
+                </MudText>
+                
+                <div class="d-flex flex-wrap gap-4">
+                    <div>
+                        <MudText Typo="Typo.subtitle2" Color="Color.Secondary">Inkomstförändring</MudText>
+                        @{
+                            var incomeChangeColor = _report.PreviousMonthComparison.IncomeChange >= 0 ? Color.Success : Color.Error;
+                        }
+                        <MudText Typo="Typo.h6" Color="@incomeChangeColor">
+                            @(_report.PreviousMonthComparison.IncomeChange >= 0 ? "+" : "")@_report.PreviousMonthComparison.IncomeChange.ToString("C0", SwedishCulture)
+                        </MudText>
+                    </div>
+                    
+                    <div>
+                        <MudText Typo="Typo.subtitle2" Color="Color.Secondary">Utgiftsförändring</MudText>
+                        @{
+                            var expenseChangeColor = _report.PreviousMonthComparison.ExpenseChange <= 0 ? Color.Success : Color.Error;
+                        }
+                        <MudText Typo="Typo.h6" Color="@expenseChangeColor">
+                            @(_report.PreviousMonthComparison.ExpenseChange >= 0 ? "+" : "")@_report.PreviousMonthComparison.ExpenseChange.ToString("C0", SwedishCulture)
+                        </MudText>
+                    </div>
+                    
+                    <div>
+                        <MudText Typo="Typo.subtitle2" Color="Color.Secondary">Nettoförändring</MudText>
+                        @{
+                            var netChangeColor = _report.PreviousMonthComparison.NetFlowChange >= 0 ? Color.Success : Color.Error;
+                        }
+                        <MudText Typo="Typo.h6" Color="@netChangeColor">
+                            @(_report.PreviousMonthComparison.NetFlowChange >= 0 ? "+" : "")@_report.PreviousMonthComparison.NetFlowChange.ToString("C0", SwedishCulture)
+                        </MudText>
+                    </div>
+                    
+                    <div>
+                        <MudText Typo="Typo.subtitle2" Color="Color.Secondary">Trend</MudText>
+                        @{
+                            var trendIcon = _report.PreviousMonthComparison.TrendDirection switch
+                            {
+                                "Improving" => Icons.Material.Filled.TrendingUp,
+                                "Worsening" => Icons.Material.Filled.TrendingDown,
+                                _ => Icons.Material.Filled.TrendingFlat
+                            };
+                            var trendColor = _report.PreviousMonthComparison.TrendDirection switch
+                            {
+                                "Improving" => Color.Success,
+                                "Worsening" => Color.Error,
+                                _ => Color.Default
+                            };
+                            var trendText = _report.PreviousMonthComparison.TrendDirection switch
+                            {
+                                "Improving" => "Förbättras",
+                                "Worsening" => "Försämras",
+                                _ => "Stabil"
+                            };
+                        }
+                        <div class="d-flex align-center gap-1">
+                            <MudIcon Icon="@trendIcon" Color="@trendColor" />
+                            <MudText Typo="Typo.h6" Color="@trendColor">@trendText</MudText>
+                        </div>
+                    </div>
+                </div>
+            </MudPaper>
+        }
+
+        <!-- Statistics -->
+        <MudPaper Class="pa-4 mb-4" Elevation="2">
+            <MudText Typo="Typo.h6" Class="mb-3">
+                <MudIcon Icon="@Icons.Material.Filled.QueryStats" Color="Color.Secondary" Size="Size.Small" />
+                Statistik
+            </MudText>
+            
+            <div class="d-flex flex-wrap gap-4">
+                <div>
+                    <MudText Typo="Typo.subtitle2" Color="Color.Secondary">Antal transaktioner</MudText>
+                    <MudText Typo="Typo.h6">@_report.TransactionCount</MudText>
+                </div>
+                
+                <div>
+                    <MudText Typo="Typo.subtitle2" Color="Color.Secondary">Snitt per dag</MudText>
+                    @{
+                        var daysInMonth = DateTime.DaysInMonth(_report.Year, _report.Month);
+                        var avgPerDay = _report.TotalExpenses / daysInMonth;
+                    }
+                    <MudText Typo="Typo.h6">@avgPerDay.ToString("C0", SwedishCulture)</MudText>
+                </div>
+                
+                <div>
+                    <MudText Typo="Typo.subtitle2" Color="Color.Secondary">Utgiftskategorier</MudText>
+                    <MudText Typo="Typo.h6">@_report.CategorySummaries.Count</MudText>
+                </div>
+            </div>
+        </MudPaper>
+    }
+    else if (!_loading)
+    {
+        <MudAlert Severity="Severity.Info" Class="mb-4">
+            Välj en månad ovan för att generera en rapport.
+        </MudAlert>
+    }
+}
+
+<style>
+    .primary-gradient {
+        background: linear-gradient(135deg, var(--mud-palette-primary) 0%, var(--mud-palette-primary-darken) 100%);
+    }
+    
+    .white-text {
+        color: white !important;
+    }
+    
+    .white-text-secondary {
+        color: rgba(255, 255, 255, 0.7) !important;
+    }
+</style>
+
+@code {
+    private bool _loading = false;
+    private MonthlyReportData? _report;
+    private int _selectedYear = DateTime.Now.Year;
+    private int _selectedMonth = DateTime.Now.Month > 1 ? DateTime.Now.Month - 1 : 12;
+    private static readonly System.Globalization.CultureInfo SwedishCulture = new("sv-SE");
+
+    protected override async Task OnInitializedAsync()
+    {
+        // If we're in the first month of the year, show December of last year
+        if (DateTime.Now.Month == 1)
+        {
+            _selectedYear = DateTime.Now.Year - 1;
+            _selectedMonth = 12;
+        }
+        
+        await LoadReportAsync();
+    }
+
+    private async Task LoadReportAsync()
+    {
+        // Don't load report for future months
+        var selectedDate = new DateTime(_selectedYear, _selectedMonth, 1);
+        if (selectedDate > DateTime.Today)
+        {
+            Snackbar.Add("Kan inte generera rapport för framtida månad", Severity.Warning);
+            return;
+        }
+
+        _loading = true;
+        StateHasChanged();
+
+        try
+        {
+            _report = await ReportService.GenerateMonthlyReportAsync(_selectedYear, _selectedMonth);
+            
+            if (_report.TransactionCount == 0)
+            {
+                Snackbar.Add("Ingen data hittades för vald månad", Severity.Info);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Fel vid generering av rapport: {ex.Message}", Severity.Error);
+            _report = null;
+        }
+        finally
+        {
+            _loading = false;
+            StateHasChanged();
+        }
+    }
+
+    private static string GetSwedishMonthName(int month)
+    {
+        string[] months = { "Januari", "Februari", "Mars", "April", "Maj", "Juni",
+                          "Juli", "Augusti", "September", "Oktober", "November", "December" };
+        return month >= 1 && month <= 12 ? months[month - 1] : "";
+    }
+}
