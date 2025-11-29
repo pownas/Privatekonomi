@@ -2070,4 +2070,255 @@ public class ReportService : IReportService
 
         return preferences;
     }
+
+    public async Task<HistoricalOverviewReport> GetHistoricalOverviewAsync(DateTime asOfDate, string? userId = null)
+    {
+        var report = new HistoricalOverviewReport
+        {
+            AsOfDate = asOfDate,
+            GeneratedAt = DateTime.UtcNow
+        };
+
+        // Get historical accounts (BankSources) with balances calculated as of the date
+        var bankSourcesQuery = _context.BankSources.AsQueryable();
+        if (!string.IsNullOrEmpty(userId))
+        {
+            bankSourcesQuery = bankSourcesQuery.Where(b => b.UserId == userId);
+        }
+        // Only include accounts that existed as of the date
+        bankSourcesQuery = bankSourcesQuery.Where(b => b.CreatedAt <= asOfDate && (b.ClosedDate == null || b.ClosedDate > asOfDate));
+        var bankSources = await bankSourcesQuery.Include(b => b.Transactions).ToListAsync();
+
+        foreach (var account in bankSources)
+        {
+            // Calculate balance as of the date by summing transactions up to that date
+            var transactionsUpToDate = account.Transactions
+                .Where(t => t.Date <= asOfDate)
+                .ToList();
+            var balance = account.InitialBalance + transactionsUpToDate.Sum(t => t.IsIncome ? t.Amount : -t.Amount);
+
+            report.Accounts.Add(new HistoricalAccountItem
+            {
+                AccountId = account.BankSourceId,
+                Name = account.Name,
+                AccountType = account.AccountType,
+                Balance = balance,
+                Currency = account.Currency,
+                Color = account.Color
+            });
+        }
+        report.TotalBankBalance = report.Accounts.Sum(a => a.Balance);
+
+        // Get investments as of the date using temporal tracking
+        var investmentsQuery = _context.Investments
+            .Where(i => i.ValidFrom <= asOfDate && (i.ValidTo == null || i.ValidTo > asOfDate));
+        if (!string.IsNullOrEmpty(userId))
+        {
+            investmentsQuery = investmentsQuery.Where(i => i.UserId == userId);
+        }
+        var investments = await investmentsQuery.ToListAsync();
+
+        foreach (var investment in investments)
+        {
+            // For historical prices, use the CurrentPrice recorded at that time
+            // In a more sophisticated implementation, you might have a price history table
+            var totalValue = investment.Quantity * investment.CurrentPrice;
+
+            report.Investments.Add(new HistoricalInvestmentItem
+            {
+                InvestmentId = investment.InvestmentId,
+                Name = investment.Name,
+                Type = investment.Type,
+                Quantity = investment.Quantity,
+                PriceAtDate = investment.CurrentPrice,
+                TotalValue = totalValue,
+                Currency = investment.Currency
+            });
+        }
+        report.TotalInvestments = report.Investments.Sum(i => i.TotalValue);
+
+        // Get assets as of the date using temporal tracking
+        var assetsQuery = _context.Assets
+            .Where(a => a.ValidFrom <= asOfDate && (a.ValidTo == null || a.ValidTo > asOfDate));
+        if (!string.IsNullOrEmpty(userId))
+        {
+            assetsQuery = assetsQuery.Where(a => a.UserId == userId);
+        }
+        var assets = await assetsQuery.ToListAsync();
+
+        foreach (var asset in assets)
+        {
+            report.Assets.Add(new HistoricalAssetItem
+            {
+                AssetId = asset.AssetId,
+                Name = asset.Name,
+                Type = asset.Type,
+                Value = asset.CurrentValue,
+                Currency = asset.Currency
+            });
+        }
+        report.TotalPhysicalAssets = report.Assets.Sum(a => a.Value);
+
+        // Get loans as of the date using temporal tracking
+        var loansQuery = _context.Loans
+            .Where(l => l.ValidFrom <= asOfDate && (l.ValidTo == null || l.ValidTo > asOfDate));
+        if (!string.IsNullOrEmpty(userId))
+        {
+            loansQuery = loansQuery.Where(l => l.UserId == userId);
+        }
+        var loans = await loansQuery.ToListAsync();
+
+        foreach (var loan in loans)
+        {
+            report.Loans.Add(new HistoricalLoanItem
+            {
+                LoanId = loan.LoanId,
+                Name = loan.Name,
+                Type = loan.Type,
+                Balance = loan.Amount,
+                InterestRate = loan.InterestRate,
+                Currency = loan.Currency
+            });
+        }
+        report.TotalLoans = report.Loans.Sum(l => l.Balance);
+
+        // Calculate totals
+        report.TotalAssets = report.TotalBankBalance + report.TotalInvestments + report.TotalPhysicalAssets;
+        report.TotalLiabilities = report.TotalLoans;
+        report.NetWorth = report.TotalAssets - report.TotalLiabilities;
+
+        // Get monthly income/expenses for the month containing asOfDate
+        var monthStart = new DateTime(asOfDate.Year, asOfDate.Month, 1);
+        var monthEnd = monthStart.AddMonths(1).AddDays(-1);
+
+        var monthTransactionsQuery = _context.Transactions
+            .Where(t => t.Date >= monthStart && t.Date <= monthEnd);
+        if (!string.IsNullOrEmpty(userId))
+        {
+            monthTransactionsQuery = monthTransactionsQuery.Where(t => t.UserId == userId);
+        }
+        var monthTransactions = await monthTransactionsQuery.ToListAsync();
+
+        report.MonthlyIncome = monthTransactions.Where(t => t.IsIncome).Sum(t => t.Amount);
+        report.MonthlyExpenses = monthTransactions.Where(t => !t.IsIncome).Sum(t => t.Amount);
+        report.TransactionCount = monthTransactions.Count;
+
+        // Calculate comparison with current values
+        var currentReport = await GetNetWorthReportAsync(userId);
+        report.Comparison = new HistoricalComparison
+        {
+            NetWorthChange = currentReport.NetWorth - report.NetWorth,
+            NetWorthChangePercent = report.NetWorth != 0 
+                ? ((currentReport.NetWorth - report.NetWorth) / Math.Abs(report.NetWorth)) * 100 
+                : 0,
+            TotalAssetsChange = currentReport.TotalAssets - report.TotalAssets,
+            TotalLiabilitiesChange = currentReport.TotalLiabilities - report.TotalLiabilities,
+            DaysElapsed = (int)(DateTime.Today - asOfDate.Date).TotalDays
+        };
+
+        return report;
+    }
+
+    public async Task<List<TimelineKeyDate>> GetTimelineKeyDatesAsync(string? userId = null, int limit = 12)
+    {
+        var keyDates = new List<TimelineKeyDate>();
+
+        // Get net worth snapshots for key dates
+        var snapshotsQuery = _context.NetWorthSnapshots.AsQueryable();
+        if (!string.IsNullOrEmpty(userId))
+        {
+            snapshotsQuery = snapshotsQuery.Where(s => s.UserId == userId);
+        }
+        var snapshots = await snapshotsQuery
+            .OrderByDescending(s => s.Date)
+            .Take(limit * 2) // Get more to find peaks/valleys
+            .ToListAsync();
+
+        if (snapshots.Any())
+        {
+            // Add month-end snapshots
+            var monthlySnapshots = snapshots
+                .GroupBy(s => new { s.Date.Year, s.Date.Month })
+                .Select(g => g.OrderByDescending(s => s.Date).First())
+                .OrderByDescending(s => s.Date)
+                .Take(limit);
+
+            foreach (var snapshot in monthlySnapshots)
+            {
+                var monthName = new System.Globalization.CultureInfo("sv-SE")
+                    .DateTimeFormat.GetMonthName(snapshot.Date.Month);
+                keyDates.Add(new TimelineKeyDate
+                {
+                    Date = snapshot.Date,
+                    Description = $"Slutet av {monthName} {snapshot.Date.Year}",
+                    EventType = "MonthEnd",
+                    NetWorth = snapshot.NetWorth
+                });
+            }
+
+            // Find peaks and valleys
+            if (snapshots.Count >= 3)
+            {
+                var maxSnapshot = snapshots.OrderByDescending(s => s.NetWorth).First();
+                var minSnapshot = snapshots.OrderBy(s => s.NetWorth).First();
+
+                if (!keyDates.Any(k => k.Date.Date == maxSnapshot.Date.Date))
+                {
+                    keyDates.Add(new TimelineKeyDate
+                    {
+                        Date = maxSnapshot.Date,
+                        Description = "Högsta nettoförmögenhet",
+                        EventType = "NetWorthPeak",
+                        NetWorth = maxSnapshot.NetWorth
+                    });
+                }
+
+                if (!keyDates.Any(k => k.Date.Date == minSnapshot.Date.Date))
+                {
+                    keyDates.Add(new TimelineKeyDate
+                    {
+                        Date = minSnapshot.Date,
+                        Description = "Lägsta nettoförmögenhet",
+                        EventType = "NetWorthLow",
+                        NetWorth = minSnapshot.NetWorth
+                    });
+                }
+            }
+        }
+        else
+        {
+            // If no snapshots, generate dates based on transaction history
+            var transactionsQuery = _context.Transactions.AsQueryable();
+            if (!string.IsNullOrEmpty(userId))
+            {
+                transactionsQuery = transactionsQuery.Where(t => t.UserId == userId);
+            }
+
+            var monthlyGroups = await transactionsQuery
+                .GroupBy(t => new { t.Date.Year, t.Date.Month })
+                .Select(g => new { g.Key.Year, g.Key.Month, Count = g.Count() })
+                .OrderByDescending(g => g.Year)
+                .ThenByDescending(g => g.Month)
+                .Take(limit)
+                .ToListAsync();
+
+            foreach (var group in monthlyGroups)
+            {
+                var date = new DateTime(group.Year, group.Month, DateTime.DaysInMonth(group.Year, group.Month));
+                var monthName = new System.Globalization.CultureInfo("sv-SE")
+                    .DateTimeFormat.GetMonthName(group.Month);
+                keyDates.Add(new TimelineKeyDate
+                {
+                    Date = date,
+                    Description = $"{monthName} {group.Year} ({group.Count} transaktioner)",
+                    EventType = "MonthEnd"
+                });
+            }
+        }
+
+        return keyDates
+            .OrderByDescending(k => k.Date)
+            .Take(limit)
+            .ToList();
+    }
 }
