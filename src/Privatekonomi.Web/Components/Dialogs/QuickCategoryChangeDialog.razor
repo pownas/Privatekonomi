@@ -1,0 +1,173 @@
+@using Privatekonomi.Core.Models
+@using Privatekonomi.Core.Services
+@inject ICategoryService CategoryService
+@inject ITransactionService TransactionService
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.Category" Class="mr-2" />
+            Ändra kategori
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        @if (_loading)
+        {
+            <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+        }
+        else
+        {
+            <MudText Typo="Typo.body2" Class="mb-4" Color="Color.Secondary">
+                Välj en ny kategori för transaktionen "@Transaction?.Description"
+            </MudText>
+
+            @if (_categories.Any())
+            {
+                <div class="d-flex flex-wrap gap-2">
+                    @foreach (var category in _categories.OrderBy(c => c.Name))
+                    {
+                        var isSelected = _selectedCategoryId == category.CategoryId;
+                        <MudChip T="string" 
+                                 Color="@(isSelected ? Color.Primary : Color.Default)"
+                                 Variant="@(isSelected ? Variant.Filled : Variant.Outlined)"
+                                 OnClick="@(() => SelectCategory(category.CategoryId))"
+                                 Style="@($"border-color: {category.Color}; {(isSelected ? $"background-color: {category.Color}; color: white;" : "")}")">
+                            <MudIcon Icon="@Icons.Material.Filled.Circle" Style="@($"color: {category.Color};")" Size="Size.Small" Class="mr-1" />
+                            @category.Name
+                        </MudChip>
+                    }
+                </div>
+
+                @if (_selectedCategoryId > 0)
+                {
+                    <MudDivider Class="my-4" />
+                    <MudSwitch @bind-Value="_createRule" 
+                              Label="Skapa regel för liknande transaktioner" 
+                              Color="Color.Primary" />
+                    @if (_createRule)
+                    {
+                        <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-2">
+                            En regel kommer att skapas så att framtida transaktioner med liknande beskrivning automatiskt kategoriseras.
+                        </MudText>
+                    }
+                }
+            }
+            else
+            {
+                <MudAlert Severity="Severity.Info">Inga kategorier tillgängliga. Skapa kategorier först.</MudAlert>
+            }
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel" Variant="Variant.Text">Avbryt</MudButton>
+        <MudButton OnClick="Submit" 
+                   Color="Color.Primary" 
+                   Variant="Variant.Filled"
+                   Disabled="@(_selectedCategoryId == 0 || _saving)">
+            @if (_saving)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+            }
+            Spara
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    public required IMudDialogInstance MudDialog { get; set; }
+
+    [Parameter]
+    public Transaction? Transaction { get; set; }
+
+    private bool _loading = true;
+    private bool _saving = false;
+    private List<Category> _categories = new();
+    private int _selectedCategoryId = 0;
+    private bool _createRule = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCategories();
+        
+        // Pre-select current category if any
+        if (Transaction?.TransactionCategories.Any() == true)
+        {
+            _selectedCategoryId = Transaction.TransactionCategories.First().CategoryId;
+        }
+    }
+
+    private async Task LoadCategories()
+    {
+        _loading = true;
+        try
+        {
+            _categories = (await CategoryService.GetAllCategoriesAsync()).ToList();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Fel vid laddning av kategorier: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void SelectCategory(int categoryId)
+    {
+        _selectedCategoryId = categoryId;
+    }
+
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+
+    private async Task Submit()
+    {
+        if (Transaction == null || _selectedCategoryId == 0)
+        {
+            Snackbar.Add("Välj en kategori", Severity.Warning);
+            return;
+        }
+
+        _saving = true;
+        try
+        {
+            // Update the transaction categories
+            Transaction.TransactionCategories.Clear();
+            Transaction.TransactionCategories.Add(new TransactionCategory
+            {
+                TransactionId = Transaction.TransactionId,
+                CategoryId = _selectedCategoryId,
+                Amount = Transaction.Amount,
+                Percentage = 100
+            });
+
+            await TransactionService.UpdateTransactionAsync(Transaction);
+            
+            var categoryName = _categories.FirstOrDefault(c => c.CategoryId == _selectedCategoryId)?.Name ?? "vald kategori";
+            Snackbar.Add($"Transaktion kategoriserad som '{categoryName}'", Severity.Success);
+            
+            // If user wants to create a rule, return that info
+            if (_createRule)
+            {
+                MudDialog.Close(DialogResult.Ok(new { CategoryId = _selectedCategoryId, CreateRule = true, Transaction = Transaction }));
+            }
+            else
+            {
+                MudDialog.Close(DialogResult.Ok(new { CategoryId = _selectedCategoryId, CreateRule = false }));
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Fel vid uppdatering: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+}

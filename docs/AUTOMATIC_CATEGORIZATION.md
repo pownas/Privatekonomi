@@ -77,6 +77,26 @@ Användare kan hantera kategoriseringsregler via webbgränssnittet:
 5. Ta bort regler genom att klicka på radera-ikonen
 6. Aktivera/inaktivera regler utan att ta bort dem
 
+### 3.1 Skapa regel från transaktion
+
+Du kan snabbt skapa en ny kategoriseringsregel direkt från en transaktion:
+
+1. Öppna en transaktion genom att klicka på den i transaktionslistan
+2. I detaljvyn, klicka på **Skapa regel**-ikonen (✨) bredvid kategorisektionen
+3. Mönstret förfylls automatiskt från transaktionens beskrivning eller betalningsmottagare
+4. Justera mönster, matchningstyp och kategori efter behov
+5. Spara regeln
+
+### 3.2 Ändra kategori direkt
+
+Från transaktionsdetaljvyn kan du snabbt ändra kategorin:
+
+1. Öppna en transaktion genom att klicka på den i transaktionslistan
+2. Klicka på **Ändra kategori**-ikonen (📂) bredvid kategorisektionen
+3. Välj ny kategori från listan
+4. Alternativt, markera "Skapa regel för liknande transaktioner" för automatisering
+5. Spara ändringen
+
 ### 4. API för Kategoriseringsregler
 
 För integration och automatisering finns följande API-endpoints:
