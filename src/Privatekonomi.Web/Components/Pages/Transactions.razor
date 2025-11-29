@@ -4,6 +4,8 @@
 @using Privatekonomi.Web.Components.Dialogs
 @inject ITransactionService TransactionService
 @inject IHouseholdService HouseholdService
+@inject ICategoryService CategoryService
+@inject ICategoryRuleService CategoryRuleService
 @inject IExportService ExportService
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
@@ -43,6 +45,112 @@
             </MudButtonGroup>
         </MudItem>
     </MudGrid>
+
+    <!-- Enhanced Filter Panel -->
+    <MudExpansionPanels Class="mb-4">
+        <MudExpansionPanel Text="Filter och sökning" Icon="@Icons.Material.Filled.FilterList" @bind-Expanded="_filterPanelExpanded">
+            <MudGrid Spacing="2">
+                <MudItem xs="12" md="4">
+                    <MudTextField @bind-Value="_searchString" 
+                                  @bind-Value:after="ApplyFilter"
+                                  Placeholder="Sök efter beskrivning, tagg..." 
+                                  Adornment="Adornment.Start" 
+                                  AdornmentIcon="@Icons.Material.Filled.Search" 
+                                  IconSize="Size.Medium" 
+                                  Variant="Variant.Outlined"
+                                  aria-label="Sök i transaktioner"
+                                  Immediate="true" />
+                </MudItem>
+                <MudItem xs="12" md="4">
+                    <MudSelect T="int?" 
+                              @bind-Value="_selectedCategoryId" 
+                              @bind-Value:after="ApplyFilter"
+                              Label="Kategori" 
+                              Clearable="true"
+                              Variant="Variant.Outlined"
+                              aria-label="Filtrera efter kategori">
+                        @foreach (var category in _categories)
+                        {
+                            <MudSelectItem Value="@((int?)category.CategoryId)">
+                                <div class="d-flex align-center gap-2">
+                                    <div style="@($"width: 12px; height: 12px; background-color: {category.Color}; border-radius: 50%;")"></div>
+                                    @category.Name
+                                </div>
+                            </MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" md="4">
+                    <MudSelect T="int?" 
+                              @bind-Value="_selectedHouseholdId" 
+                              @bind-Value:after="ApplyFilter"
+                              Label="Hushåll" 
+                              Clearable="true"
+                              Variant="Variant.Outlined"
+                              aria-label="Filtrera efter hushåll">
+                        @foreach (var household in _households)
+                        {
+                            <MudSelectItem Value="@((int?)household.HouseholdId)">@household.Name</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="6" md="3">
+                    <MudNumericField @bind-Value="_minAmount" 
+                                    @bind-Value:after="ApplyFilter"
+                                    Label="Min belopp" 
+                                    Variant="Variant.Outlined"
+                                    Adornment="Adornment.End"
+                                    AdornmentText="kr"
+                                    Clearable="true"
+                                    aria-label="Minsta belopp" />
+                </MudItem>
+                <MudItem xs="6" md="3">
+                    <MudNumericField @bind-Value="_maxAmount" 
+                                    @bind-Value:after="ApplyFilter"
+                                    Label="Max belopp" 
+                                    Variant="Variant.Outlined"
+                                    Adornment="Adornment.End"
+                                    AdornmentText="kr"
+                                    Clearable="true"
+                                    aria-label="Största belopp" />
+                </MudItem>
+                <MudItem xs="6" md="3">
+                    <MudDatePicker @bind-Date="_dateFrom" 
+                                   @bind-Date:after="ApplyFilter"
+                                   Label="Från datum" 
+                                   Variant="Variant.Outlined"
+                                   Clearable="true"
+                                   aria-label="Från datum" />
+                </MudItem>
+                <MudItem xs="6" md="3">
+                    <MudDatePicker @bind-Date="_dateTo" 
+                                   @bind-Date:after="ApplyFilter"
+                                   Label="Till datum" 
+                                   Variant="Variant.Outlined"
+                                   Clearable="true"
+                                   aria-label="Till datum" />
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudSelect T="string" 
+                              @bind-Value="_transactionTypeFilter" 
+                              @bind-Value:after="ApplyFilter"
+                              Label="Transaktionstyp" 
+                              Clearable="true"
+                              Variant="Variant.Outlined"
+                              aria-label="Filtrera efter transaktionstyp">
+                        <MudSelectItem Value="@("income")">Inkomster</MudSelectItem>
+                        <MudSelectItem Value="@("expense")">Utgifter</MudSelectItem>
+                        <MudSelectItem Value="@("uncategorized")">Okategoriserade</MudSelectItem>
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" md="6" Class="d-flex align-end">
+                    <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="ClearFilters" StartIcon="@Icons.Material.Filled.Clear">
+                        Rensa filter
+                    </MudButton>
+                </MudItem>
+            </MudGrid>
+        </MudExpansionPanel>
+    </MudExpansionPanels>
 
     @if (_loading)
     {
@@ -148,27 +256,7 @@
                      Height="600px"
                      SortMode="SortMode.Multiple">
             <ToolBarContent>
-                <MudTextField @bind-Value="_searchString" 
-                              @bind-Value:after="ApplyFilter"
-                              Placeholder="Sök transaktion..." 
-                              Adornment="Adornment.Start" 
-                              AdornmentIcon="@Icons.Material.Filled.Search" 
-                              IconSize="Size.Medium" 
-                              Class="mt-0 mr-2"
-                              aria-label="Sök i transaktioner"></MudTextField>
-                <MudSelect T="int?" 
-                          @bind-Value="_selectedHouseholdId" 
-                          @bind-Value:after="ApplyFilter"
-                          Label="Filtrera efter hushåll" 
-                          Clearable="true" 
-                          Style="min-width: 200px;" 
-                          Class="mt-0"
-                          aria-label="Filtrera transaktioner efter hushåll">
-                    @foreach (var household in _households)
-                    {
-                        <MudSelectItem Value="@((int?)household.HouseholdId)">@household.Name</MudSelectItem>
-                    }
-                </MudSelect>
+                <MudText Typo="Typo.subtitle1" Class="mr-4">@_filteredTransactions.Count() transaktioner</MudText>
                 <MudSpacer />
                 <MudTooltip Text="Tät/luftig layout">
                     <MudIconButton Icon="@Icons.Material.Filled.DensityMedium" 
@@ -254,6 +342,33 @@
                         </div>
                     </CellTemplate>
                 </TemplateColumn>
+                <TemplateColumn Title="Åtgärder" Sortable="false" CellStyle="width: 150px;">
+                    <CellTemplate>
+                        <div class="d-flex gap-1">
+                            <MudTooltip Text="Snabbkategorisera">
+                                <MudIconButton Icon="@Icons.Material.Filled.Category" 
+                                             Size="Size.Small" 
+                                             Color="Color.Primary"
+                                             OnClick="@(() => QuickCategorize(context.Item))"
+                                             aria-label="Snabbkategorisera transaktion" />
+                            </MudTooltip>
+                            <MudTooltip Text="Skapa kategoriseringsregel">
+                                <MudIconButton Icon="@Icons.Material.Filled.AutoAwesome" 
+                                             Size="Size.Small" 
+                                             Color="Color.Secondary"
+                                             OnClick="@(() => CreateRuleFromTransaction(context.Item))"
+                                             aria-label="Skapa kategoriseringsregel" />
+                            </MudTooltip>
+                            <MudTooltip Text="Redigera">
+                                <MudIconButton Icon="@Icons.Material.Filled.Edit" 
+                                             Size="Size.Small" 
+                                             Color="Color.Default"
+                                             OnClick="@(() => EditTransaction(context.Item))"
+                                             aria-label="Redigera transaktion" />
+                            </MudTooltip>
+                        </div>
+                    </CellTemplate>
+                </TemplateColumn>
             </Columns>
         </MudDataGrid>
     }
@@ -268,8 +383,16 @@
     private IEnumerable<Transaction> _filteredTransactions = new List<Transaction>();
     private HashSet<Transaction> _selectedTransactions = new();
     private List<Household> _households = new();
+    private List<Category> _categories = new();
     private string _searchString = "";
     private int? _selectedHouseholdId = null;
+    private int? _selectedCategoryId = null;
+    private decimal? _minAmount = null;
+    private decimal? _maxAmount = null;
+    private DateTime? _dateFrom = null;
+    private DateTime? _dateTo = null;
+    private string? _transactionTypeFilter = null;
+    private bool _filterPanelExpanded = false;
     private DotNetObjectReference<Transactions>? _dotNetHelper;
     private Stack<BulkOperationSnapshot> _undoStack = new();
 
@@ -339,6 +462,8 @@
         _loading = true;
         var households = await HouseholdService.GetAllHouseholdsAsync();
         _households = households.ToList();
+        var categories = await CategoryService.GetAllCategoriesAsync();
+        _categories = categories.ToList();
         _transactions = await TransactionService.GetAllTransactionsAsync();
         ApplyFilter();
         _loading = false;
@@ -358,20 +483,64 @@
                 return false;
         }
         
+        // Filter by category
+        if (_selectedCategoryId.HasValue)
+        {
+            if (!transaction.TransactionCategories.Any(tc => tc.CategoryId == _selectedCategoryId.Value))
+                return false;
+        }
+        
+        // Filter by amount range
+        if (_minAmount.HasValue && transaction.Amount < _minAmount.Value)
+            return false;
+        if (_maxAmount.HasValue && transaction.Amount > _maxAmount.Value)
+            return false;
+        
+        // Filter by date range
+        if (_dateFrom.HasValue && transaction.Date < _dateFrom.Value)
+            return false;
+        if (_dateTo.HasValue && transaction.Date > _dateTo.Value)
+            return false;
+        
+        // Filter by transaction type
+        if (!string.IsNullOrEmpty(_transactionTypeFilter))
+        {
+            if (_transactionTypeFilter == "income" && !transaction.IsIncome)
+                return false;
+            if (_transactionTypeFilter == "expense" && transaction.IsIncome)
+                return false;
+            if (_transactionTypeFilter == "uncategorized" && transaction.TransactionCategories.Any())
+                return false;
+        }
+        
         // Filter by search string
-        if (string.IsNullOrWhiteSpace(_searchString))
-            return true;
-        if (transaction.Description.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
-            return true;
-        if (transaction.TransactionCategories.Any(tc => tc.Category.Name.Contains(_searchString, StringComparison.OrdinalIgnoreCase)))
-            return true;
-        if (transaction.BankSource != null && transaction.BankSource.Name.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
-            return true;
-        if (!string.IsNullOrWhiteSpace(transaction.Tags) && transaction.Tags.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
-            return true;
-        if (!string.IsNullOrWhiteSpace(transaction.Notes) && transaction.Notes.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
-            return true;
-        return false;
+        if (!string.IsNullOrWhiteSpace(_searchString))
+        {
+            if (!transaction.Description.Contains(_searchString, StringComparison.OrdinalIgnoreCase) &&
+                !transaction.TransactionCategories.Any(tc => tc.Category.Name.Contains(_searchString, StringComparison.OrdinalIgnoreCase)) &&
+                !(transaction.BankSource != null && transaction.BankSource.Name.Contains(_searchString, StringComparison.OrdinalIgnoreCase)) &&
+                !(transaction.Tags?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) == true) &&
+                !(transaction.Notes?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) == true) &&
+                !(transaction.Payee?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) == true))
+            {
+                return false;
+            }
+        }
+        
+        return true;
+    }
+
+    private void ClearFilters()
+    {
+        _searchString = "";
+        _selectedHouseholdId = null;
+        _selectedCategoryId = null;
+        _minAmount = null;
+        _maxAmount = null;
+        _dateFrom = null;
+        _dateTo = null;
+        _transactionTypeFilter = null;
+        ApplyFilter();
     }
 
     private async Task ViewTransactionDetails(Transaction transaction)
@@ -440,6 +609,92 @@
             await TransactionService.DeleteTransactionAsync(id);
             Snackbar.Add("Transaktion borttagen", Severity.Success);
             await LoadData();
+        }
+    }
+
+    private async Task QuickCategorize(Transaction transaction)
+    {
+        var parameters = new DialogParameters<QuickCategorizeDialog>
+        {
+            { x => x.Transaction, transaction }
+        };
+
+        var dialog = await DialogService.ShowAsync<QuickCategorizeDialog>("Snabbkategorisera", parameters, new DialogOptions 
+        { 
+            MaxWidth = MaxWidth.Medium, 
+            FullWidth = true 
+        });
+        
+        var result = await dialog.Result;
+        
+        if (result is not null && !result.Canceled && result.Data is QuickCategorizeDialog.QuickCategorizeResult categorizeResult)
+        {
+            try
+            {
+                // Update the transaction category
+                var categories = new List<TransactionCategory>
+                {
+                    new TransactionCategory
+                    {
+                        TransactionId = transaction.TransactionId,
+                        CategoryId = categorizeResult.CategoryId,
+                        Amount = transaction.Amount,
+                        Percentage = 100
+                    }
+                };
+
+                await TransactionService.UpdateTransactionCategoriesAsync(transaction.TransactionId, categories);
+                
+                // Optionally create a rule
+                if (categorizeResult.CreateRule)
+                {
+                    var pattern = categorizeResult.RulePattern ?? transaction.Description;
+                    var rule = new CategoryRule
+                    {
+                        Pattern = pattern,
+                        MatchType = PatternMatchType.Contains,
+                        CategoryId = categorizeResult.CategoryId,
+                        Field = MatchField.Both,
+                        Priority = 50,
+                        IsActive = true,
+                        Description = $"Skapad från transaktion: {transaction.Description}"
+                    };
+
+                    await CategoryRuleService.CreateRuleAsync(rule);
+                    Snackbar.Add("Transaktion kategoriserad och regel skapad!", Severity.Success);
+                }
+                else
+                {
+                    Snackbar.Add("Transaktion kategoriserad!", Severity.Success);
+                }
+
+                await LoadData();
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Fel vid kategorisering: {ex.Message}", Severity.Error);
+            }
+        }
+    }
+
+    private async Task CreateRuleFromTransaction(Transaction transaction)
+    {
+        var parameters = new DialogParameters<CreateRuleFromTransactionDialog>
+        {
+            { x => x.Transaction, transaction }
+        };
+
+        var dialog = await DialogService.ShowAsync<CreateRuleFromTransactionDialog>("Skapa Kategoriseringsregel", parameters, new DialogOptions 
+        { 
+            MaxWidth = MaxWidth.Medium, 
+            FullWidth = true 
+        });
+        
+        var result = await dialog.Result;
+        
+        if (result is not null && !result.Canceled)
+        {
+            Snackbar.Add("Kategoriseringsregel skapad!", Severity.Success);
         }
     }
 
