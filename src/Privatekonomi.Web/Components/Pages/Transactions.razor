@@ -516,18 +516,37 @@
         // Filter by search string
         if (!string.IsNullOrWhiteSpace(_searchString))
         {
-            if (!transaction.Description.Contains(_searchString, StringComparison.OrdinalIgnoreCase) &&
-                !transaction.TransactionCategories.Any(tc => tc.Category.Name.Contains(_searchString, StringComparison.OrdinalIgnoreCase)) &&
-                !(transaction.BankSource != null && transaction.BankSource.Name.Contains(_searchString, StringComparison.OrdinalIgnoreCase)) &&
-                !(transaction.Tags?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) == true) &&
-                !(transaction.Notes?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) == true) &&
-                !(transaction.Payee?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) == true))
+            var matchesSearch = MatchesSearchString(transaction);
+            if (!matchesSearch)
             {
                 return false;
             }
         }
         
         return true;
+    }
+
+    private bool MatchesSearchString(Transaction transaction)
+    {
+        if (transaction.Description.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+            
+        if (transaction.TransactionCategories.Any(tc => tc.Category.Name.Contains(_searchString, StringComparison.OrdinalIgnoreCase)))
+            return true;
+            
+        if (transaction.BankSource?.Name?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) == true)
+            return true;
+            
+        if (transaction.Tags?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) == true)
+            return true;
+            
+        if (transaction.Notes?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) == true)
+            return true;
+            
+        if (transaction.Payee?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) == true)
+            return true;
+            
+        return false;
     }
 
     private void ClearFilters()
