@@ -119,6 +119,11 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
     public DbSet<BudgetAlertSettings> BudgetAlertSettings { get; set; }
     public DbSet<BudgetFreeze> BudgetFreezes { get; set; }
     
+    // Budget Suggestions
+    public DbSet<BudgetSuggestion> BudgetSuggestions { get; set; }
+    public DbSet<BudgetSuggestionItem> BudgetSuggestionItems { get; set; }
+    public DbSet<BudgetAdjustment> BudgetAdjustments { get; set; }
+    
     // Reminders
     public DbSet<Reminder> Reminders { get; set; }
     public DbSet<ReminderSettings> ReminderSettings { get; set; }
@@ -499,6 +504,78 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
             
             // Ignore computed property
             entity.Ignore(e => e.MonthlyAmount);
+        });
+
+        // Budget Suggestion configuration
+        modelBuilder.Entity<BudgetSuggestion>(entity =>
+        {
+            entity.HasKey(e => e.BudgetSuggestionId);
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(200);
+            entity.Property(e => e.TotalIncome).HasPrecision(18, 2);
+            entity.Property(e => e.DistributionModel).IsRequired();
+            entity.Property(e => e.CreatedAt).IsRequired();
+            
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.HasOne(e => e.Household)
+                .WithMany()
+                .HasForeignKey(e => e.HouseholdId)
+                .OnDelete(DeleteBehavior.SetNull);
+            
+            entity.HasOne(e => e.AppliedBudget)
+                .WithMany()
+                .HasForeignKey(e => e.AppliedBudgetId)
+                .OnDelete(DeleteBehavior.SetNull);
+            
+            entity.HasIndex(e => e.UserId);
+            entity.HasIndex(e => e.IsAccepted);
+        });
+
+        modelBuilder.Entity<BudgetSuggestionItem>(entity =>
+        {
+            entity.HasKey(e => e.BudgetSuggestionItemId);
+            entity.Property(e => e.SuggestedAmount).HasPrecision(18, 2);
+            entity.Property(e => e.AdjustedAmount).HasPrecision(18, 2);
+            entity.Property(e => e.Percentage).HasPrecision(5, 2);
+            entity.Property(e => e.RecurrencePeriodMonths).IsRequired().HasDefaultValue(1);
+            
+            entity.HasOne(e => e.BudgetSuggestion)
+                .WithMany(s => s.Items)
+                .HasForeignKey(e => e.BudgetSuggestionId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.HasOne(e => e.Category)
+                .WithMany()
+                .HasForeignKey(e => e.CategoryId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<BudgetAdjustment>(entity =>
+        {
+            entity.HasKey(e => e.BudgetAdjustmentId);
+            entity.Property(e => e.PreviousAmount).HasPrecision(18, 2);
+            entity.Property(e => e.NewAmount).HasPrecision(18, 2);
+            entity.Property(e => e.Reason).HasMaxLength(500);
+            entity.Property(e => e.AdjustedAt).IsRequired();
+            entity.Property(e => e.Type).IsRequired();
+            
+            entity.HasOne(e => e.BudgetSuggestion)
+                .WithMany(s => s.Adjustments)
+                .HasForeignKey(e => e.BudgetSuggestionId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.HasOne(e => e.Category)
+                .WithMany()
+                .HasForeignKey(e => e.CategoryId)
+                .OnDelete(DeleteBehavior.Restrict);
+            
+            entity.HasOne(e => e.TransferToCategory)
+                .WithMany()
+                .HasForeignKey(e => e.TransferToCategoryId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         // Goal configuration

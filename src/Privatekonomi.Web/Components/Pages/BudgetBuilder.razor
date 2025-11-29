@@ -1,0 +1,736 @@
+@page "/budgets/builder"
+@page "/economy/budgets/builder"
+@rendermode InteractiveServer
+@inject IBudgetSuggestionService SuggestionService
+@inject IBudgetService BudgetService
+@inject ICategoryService CategoryService
+@inject ITransactionService TransactionService
+@inject IHouseholdService HouseholdService
+@inject ISnackbar Snackbar
+@inject NavigationManager Navigation
+
+<PageTitle>Budgetbyggare - Privatekonomi</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-4">
+    <MudIcon Icon="@Icons.Material.Filled.AutoAwesome" Color="Color.Primary" Class="mr-2" />
+    Budgetbyggare
+</MudText>
+
+<MudText Typo="Typo.body1" Color="Color.Secondary" Class="mb-4">
+    Skapa en budget med hjälp av smarta fördelningsmodeller som 50/30/20-regeln. Justera och finjustera efter dina behov.
+</MudText>
+
+<MudStepper @bind-ActiveIndex="_activeStep" Linear="false" Color="Color.Primary" Class="mb-4">
+    <MudStep Title="Välj modell" Icon="@Icons.Material.Filled.Category">
+        <MudPaper Class="pa-4">
+            <MudText Typo="Typo.h6" Class="mb-3">Steg 1: Välj fördelningsmodell</MudText>
+            
+            <MudGrid>
+                <MudItem xs="12" md="6">
+                    <MudNumericField @bind-Value="_totalIncome"
+                                   Label="Månadsinkomst (netto)"
+                                   Variant="Variant.Outlined"
+                                   Format="N0"
+                                   Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                                   Adornment="Adornment.Start"
+                                   AdornmentText="kr"
+                                   Min="0"
+                                   Step="1000M"
+                                   Class="mb-3" />
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudSelect @bind-Value="_selectedHouseholdId"
+                              Label="Hushåll (valfritt)"
+                              Variant="Variant.Outlined"
+                              Clearable="true"
+                              Class="mb-3">
+                        @foreach (var household in _households)
+                        {
+                            <MudSelectItem Value="@((int?)household.HouseholdId)">@household.Name</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+            </MudGrid>
+            
+            <MudDivider Class="my-4" />
+            
+            <MudText Typo="Typo.subtitle1" Class="mb-3">Välj en fördelningsmodell:</MudText>
+            
+            <MudGrid>
+                @foreach (var model in _availableModels)
+                {
+                    <MudItem xs="12" md="6" lg="4">
+                        <MudCard Class="@GetCardClass(model.Model)" @onclick="() => SelectModel(model.Model)">
+                            <MudCardHeader>
+                                <CardHeaderContent>
+                                    <MudText Typo="Typo.h6">@model.Name</MudText>
+                                </CardHeaderContent>
+                                <CardHeaderActions>
+                                    @if (_selectedModel == model.Model)
+                                    {
+                                        <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Primary" />
+                                    }
+                                </CardHeaderActions>
+                            </MudCardHeader>
+                            <MudCardContent>
+                                <MudText Typo="Typo.body2">@model.Description</MudText>
+                            </MudCardContent>
+                        </MudCard>
+                    </MudItem>
+                }
+            </MudGrid>
+            
+            <div class="d-flex justify-end mt-4">
+                <MudButton Variant="Variant.Filled"
+                          Color="Color.Primary"
+                          OnClick="GenerateSuggestion"
+                          Disabled="@(_totalIncome <= 0)"
+                          StartIcon="@Icons.Material.Filled.AutoAwesome">
+                    Skapa förslag
+                </MudButton>
+            </div>
+        </MudPaper>
+    </MudStep>
+    
+    <MudStep Title="Justera förslag" Icon="@Icons.Material.Filled.Edit">
+        @if (_currentSuggestion != null)
+        {
+            <MudPaper Class="pa-4">
+                <MudText Typo="Typo.h6" Class="mb-3">Steg 2: Justera ditt budgetförslag</MudText>
+                
+                @* Summary Cards *@
+                <MudGrid Class="mb-4">
+                    <MudItem xs="12" md="3">
+                        <MudPaper Class="pa-3" Elevation="2">
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">Total inkomst</MudText>
+                            <MudText Typo="Typo.h5">@_currentSuggestion.TotalIncome.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))</MudText>
+                        </MudPaper>
+                    </MudItem>
+                    <MudItem xs="12" md="3">
+                        <MudPaper Class="pa-3" Elevation="2" Style="background-color: var(--mud-palette-success-lighten);">
+                            <MudText Typo="Typo.body2">Behov (Needs)</MudText>
+                            <MudText Typo="Typo.h5">@GetCategoryTotal(BudgetAllocationCategory.Needs).ToString("C0", new System.Globalization.CultureInfo("sv-SE"))</MudText>
+                            <MudText Typo="Typo.caption">@GetCategoryPercentage(BudgetAllocationCategory.Needs).ToString("F1")%</MudText>
+                        </MudPaper>
+                    </MudItem>
+                    <MudItem xs="12" md="3">
+                        <MudPaper Class="pa-3" Elevation="2" Style="background-color: var(--mud-palette-info-lighten);">
+                            <MudText Typo="Typo.body2">Önskemål (Wants)</MudText>
+                            <MudText Typo="Typo.h5">@GetCategoryTotal(BudgetAllocationCategory.Wants).ToString("C0", new System.Globalization.CultureInfo("sv-SE"))</MudText>
+                            <MudText Typo="Typo.caption">@GetCategoryPercentage(BudgetAllocationCategory.Wants).ToString("F1")%</MudText>
+                        </MudPaper>
+                    </MudItem>
+                    <MudItem xs="12" md="3">
+                        <MudPaper Class="pa-3" Elevation="2" Style="background-color: var(--mud-palette-warning-lighten);">
+                            <MudText Typo="Typo.body2">Sparande (Savings)</MudText>
+                            <MudText Typo="Typo.h5">@GetCategoryTotal(BudgetAllocationCategory.Savings).ToString("C0", new System.Globalization.CultureInfo("sv-SE"))</MudText>
+                            <MudText Typo="Typo.caption">@GetCategoryPercentage(BudgetAllocationCategory.Savings).ToString("F1")%</MudText>
+                        </MudPaper>
+                    </MudItem>
+                </MudGrid>
+                
+                @* Transfer Section *@
+                <MudExpansionPanels Class="mb-4">
+                    <MudExpansionPanel Text="Överför mellan kategorier" Icon="@Icons.Material.Filled.SwapHoriz">
+                        <MudGrid>
+                            <MudItem xs="12" md="4">
+                                <MudSelect @bind-Value="_transferFromCategory" Label="Från kategori" Variant="Variant.Outlined">
+                                    @foreach (var item in _currentSuggestion.Items.Where(i => i.AdjustedAmount > 0))
+                                    {
+                                        <MudSelectItem Value="@item.CategoryId">@item.Category?.Name (@item.AdjustedAmount.ToString("C0", new System.Globalization.CultureInfo("sv-SE")))</MudSelectItem>
+                                    }
+                                </MudSelect>
+                            </MudItem>
+                            <MudItem xs="12" md="4">
+                                <MudSelect @bind-Value="_transferToCategory" Label="Till kategori" Variant="Variant.Outlined">
+                                    @foreach (var item in _currentSuggestion.Items)
+                                    {
+                                        <MudSelectItem Value="@item.CategoryId">@item.Category?.Name</MudSelectItem>
+                                    }
+                                </MudSelect>
+                            </MudItem>
+                            <MudItem xs="12" md="2">
+                                <MudNumericField @bind-Value="_transferAmount"
+                                               Label="Belopp"
+                                               Variant="Variant.Outlined"
+                                               Format="N0"
+                                               Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                                               Adornment="Adornment.Start"
+                                               AdornmentText="kr"
+                                               Min="0" />
+                            </MudItem>
+                            <MudItem xs="12" md="2" Class="d-flex align-center">
+                                <MudButton Variant="Variant.Filled"
+                                          Color="Color.Primary"
+                                          OnClick="TransferBetweenCategories"
+                                          Disabled="@(_transferFromCategory == 0 || _transferToCategory == 0 || _transferAmount <= 0)">
+                                    Överför
+                                </MudButton>
+                            </MudItem>
+                        </MudGrid>
+                    </MudExpansionPanel>
+                </MudExpansionPanels>
+                
+                @* Category Items Table *@
+                <MudTable Items="@_currentSuggestion.Items.OrderByDescending(i => i.AdjustedAmount)"
+                         Dense="true" Hover="true" Striped="true" Class="mb-4">
+                    <HeaderContent>
+                        <MudTh>Kategori</MudTh>
+                        <MudTh>Typ</MudTh>
+                        <MudTh>Ursprungligt förslag</MudTh>
+                        <MudTh>Justerat belopp</MudTh>
+                        <MudTh>Andel</MudTh>
+                        <MudTh>Åtgärder</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd>
+                            <MudChip T="string"
+                                    Style="@($"background-color: {context.Category?.Color ?? "#9E9E9E"}; color: white;")"
+                                    Size="Size.Small">
+                                @context.Category?.Name
+                            </MudChip>
+                        </MudTd>
+                        <MudTd>
+                            <MudChip T="string" 
+                                    Size="Size.Small"
+                                    Color="@GetAllocationCategoryColor(context.AllocationCategory)">
+                                @GetAllocationCategoryName(context.AllocationCategory)
+                            </MudChip>
+                        </MudTd>
+                        <MudTd>@context.SuggestedAmount.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))</MudTd>
+                        <MudTd>
+                            <MudNumericField @bind-Value="context.AdjustedAmount"
+                                           Variant="Variant.Text"
+                                           Format="N0"
+                                           Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                                           Adornment="Adornment.Start"
+                                           AdornmentText="kr"
+                                           Min="0"
+                                           Style="max-width: 150px;"
+                                           Immediate="true"
+                                           OnBlur="@(() => UpdateItemAmount(context))" />
+                        </MudTd>
+                        <MudTd>
+                            <MudProgressLinear Value="@((double)context.Percentage)"
+                                             Color="@GetAllocationCategoryColor(context.AllocationCategory)"
+                                             Size="Size.Small"
+                                             Class="my-1" />
+                            <MudText Typo="Typo.caption">@context.Percentage.ToString("F1")%</MudText>
+                        </MudTd>
+                        <MudTd>
+                            @if (context.IsManuallyAdjusted)
+                            {
+                                <MudIconButton Icon="@Icons.Material.Filled.Undo"
+                                             Size="Size.Small"
+                                             OnClick="@(() => ResetItem(context))"
+                                             Title="Återställ till ursprungligt förslag" />
+                            }
+                        </MudTd>
+                    </RowTemplate>
+                </MudTable>
+                
+                @* Unallocated amount *@
+                @{
+                    var totalAllocated = _currentSuggestion.Items.Sum(i => i.AdjustedAmount);
+                    var unallocated = _currentSuggestion.TotalIncome - totalAllocated;
+                }
+                @if (Math.Abs(unallocated) > 0.01m)
+                {
+                    <MudAlert Severity="@(unallocated > 0 ? Severity.Warning : Severity.Error)" Class="mb-4">
+                        @if (unallocated > 0)
+                        {
+                            <span>Du har @unallocated.ToString("C0", new System.Globalization.CultureInfo("sv-SE")) kvar att fördela.</span>
+                        }
+                        else
+                        {
+                            <span>Du har fördelat @((-unallocated).ToString("C0", new System.Globalization.CultureInfo("sv-SE"))) mer än din inkomst!</span>
+                        }
+                    </MudAlert>
+                }
+                else
+                {
+                    <MudAlert Severity="Severity.Success" Class="mb-4">
+                        Perfekt! Du har fördelat exakt hela din månadsinkomst.
+                    </MudAlert>
+                }
+                
+                <div class="d-flex gap-2 justify-space-between">
+                    <MudButton Variant="Variant.Outlined" OnClick="@(() => _activeStep = 0)">
+                        Tillbaka
+                    </MudButton>
+                    <MudButton Variant="Variant.Filled"
+                              Color="Color.Primary"
+                              OnClick="@(() => _activeStep = 2)"
+                              StartIcon="@Icons.Material.Filled.Preview">
+                        Förhandsgranska
+                    </MudButton>
+                </div>
+            </MudPaper>
+        }
+        else
+        {
+            <MudAlert Severity="Severity.Info">
+                Skapa ett förslag först genom att välja en modell i steg 1.
+            </MudAlert>
+        }
+    </MudStep>
+    
+    <MudStep Title="Granska effekter" Icon="@Icons.Material.Filled.Assessment">
+        @if (_currentSuggestion != null && _effects != null)
+        {
+            <MudPaper Class="pa-4">
+                <MudText Typo="Typo.h6" Class="mb-3">Steg 3: Effekter av dina justeringar</MudText>
+                
+                @if (_effects.AdjustmentsCount > 0)
+                {
+                    <MudAlert Severity="Severity.Info" Class="mb-4">
+                        Du har gjort @_effects.AdjustmentsCount justeringar till det ursprungliga förslaget.
+                    </MudAlert>
+                }
+                
+                @* Effect Summary *@
+                <MudGrid Class="mb-4">
+                    <MudItem xs="12" md="4">
+                        <MudPaper Class="pa-3" Elevation="2">
+                            <MudText Typo="Typo.subtitle1" Class="mb-2">Behov (Needs)</MudText>
+                            <MudText Typo="Typo.body2">Ursprungligt: @_effects.NeedsOriginal.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))</MudText>
+                            <MudText Typo="Typo.body2">Justerat: @_effects.NeedsAdjusted.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))</MudText>
+                            <MudText Typo="Typo.body2" Color="@(_effects.NeedsPercentageChange >= 0 ? Color.Success : Color.Error)">
+                                @(_effects.NeedsPercentageChange >= 0 ? "+" : "")@_effects.NeedsPercentageChange.ToString("F1")%
+                            </MudText>
+                        </MudPaper>
+                    </MudItem>
+                    <MudItem xs="12" md="4">
+                        <MudPaper Class="pa-3" Elevation="2">
+                            <MudText Typo="Typo.subtitle1" Class="mb-2">Önskemål (Wants)</MudText>
+                            <MudText Typo="Typo.body2">Ursprungligt: @_effects.WantsOriginal.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))</MudText>
+                            <MudText Typo="Typo.body2">Justerat: @_effects.WantsAdjusted.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))</MudText>
+                            <MudText Typo="Typo.body2" Color="@(_effects.WantsPercentageChange >= 0 ? Color.Success : Color.Error)">
+                                @(_effects.WantsPercentageChange >= 0 ? "+" : "")@_effects.WantsPercentageChange.ToString("F1")%
+                            </MudText>
+                        </MudPaper>
+                    </MudItem>
+                    <MudItem xs="12" md="4">
+                        <MudPaper Class="pa-3" Elevation="2">
+                            <MudText Typo="Typo.subtitle1" Class="mb-2">Sparande (Savings)</MudText>
+                            <MudText Typo="Typo.body2">Ursprungligt: @_effects.SavingsOriginal.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))</MudText>
+                            <MudText Typo="Typo.body2">Justerat: @_effects.SavingsAdjusted.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))</MudText>
+                            <MudText Typo="Typo.body2" Color="@(_effects.SavingsPercentageChange >= 0 ? Color.Success : Color.Error)">
+                                @(_effects.SavingsPercentageChange >= 0 ? "+" : "")@_effects.SavingsPercentageChange.ToString("F1")%
+                            </MudText>
+                        </MudPaper>
+                    </MudItem>
+                </MudGrid>
+                
+                @* Category Effects Chart (simplified view) *@
+                <MudText Typo="Typo.subtitle1" Class="mb-2">Förändringar per kategori</MudText>
+                <MudTable Items="@_effects.CategoryEffects.Where(c => c.Difference != 0).OrderByDescending(c => Math.Abs(c.Difference))"
+                         Dense="true" Hover="true">
+                    <HeaderContent>
+                        <MudTh>Kategori</MudTh>
+                        <MudTh>Ursprungligt</MudTh>
+                        <MudTh>Justerat</MudTh>
+                        <MudTh>Förändring</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd>@context.CategoryName</MudTd>
+                        <MudTd>@context.OriginalAmount.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))</MudTd>
+                        <MudTd>@context.AdjustedAmount.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))</MudTd>
+                        <MudTd>
+                            <MudText Color="@(context.Difference >= 0 ? Color.Success : Color.Error)">
+                                @(context.Difference >= 0 ? "+" : "")@context.Difference.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))
+                                (@(context.PercentageChange >= 0 ? "+" : "")@context.PercentageChange.ToString("F1")%)
+                            </MudText>
+                        </MudTd>
+                    </RowTemplate>
+                </MudTable>
+                
+                <MudDivider Class="my-4" />
+                
+                @* Budget Settings *@
+                <MudText Typo="Typo.subtitle1" Class="mb-3">Skapa budget från förslaget</MudText>
+                <MudGrid>
+                    <MudItem xs="12" md="4">
+                        <MudTextField @bind-Value="_budgetStartDateString"
+                                    Label="Startdatum (ÅÅÅÅ-MM-DD)"
+                                    Variant="Variant.Outlined"
+                                    Placeholder="2025-01-01" />
+                    </MudItem>
+                    <MudItem xs="12" md="4">
+                        <MudTextField @bind-Value="_budgetEndDateString"
+                                    Label="Slutdatum (ÅÅÅÅ-MM-DD)"
+                                    Variant="Variant.Outlined"
+                                    Placeholder="2025-01-31" />
+                    </MudItem>
+                    <MudItem xs="12" md="4">
+                        <MudSelect @bind-Value="_budgetPeriod" Label="Budgetperiod" Variant="Variant.Outlined">
+                            <MudSelectItem Value="@BudgetPeriod.Monthly">Månadsbudget</MudSelectItem>
+                            <MudSelectItem Value="@BudgetPeriod.Yearly">Årsbudget</MudSelectItem>
+                        </MudSelect>
+                    </MudItem>
+                </MudGrid>
+                
+                <div class="d-flex gap-2 justify-space-between mt-4">
+                    <MudButton Variant="Variant.Outlined" OnClick="@(() => _activeStep = 1)">
+                        Tillbaka
+                    </MudButton>
+                    <MudButton Variant="Variant.Filled"
+                              Color="Color.Primary"
+                              OnClick="AcceptAndCreateBudget"
+                              StartIcon="@Icons.Material.Filled.Check">
+                        Skapa Budget
+                    </MudButton>
+                </div>
+            </MudPaper>
+        }
+        else
+        {
+            <MudAlert Severity="Severity.Info">
+                Skapa och justera ett förslag först.
+            </MudAlert>
+        }
+    </MudStep>
+</MudStepper>
+
+@* Pending Suggestions Section *@
+@if (_pendingSuggestions.Any())
+{
+    <MudPaper Class="pa-4 mt-4">
+        <MudText Typo="Typo.h6" Class="mb-3">
+            <MudIcon Icon="@Icons.Material.Filled.History" Class="mr-2" />
+            Tidigare förslag (ej godkända)
+        </MudText>
+        
+        <MudTable Items="_pendingSuggestions" Dense="true" Hover="true">
+            <HeaderContent>
+                <MudTh>Namn</MudTh>
+                <MudTh>Modell</MudTh>
+                <MudTh>Inkomst</MudTh>
+                <MudTh>Skapad</MudTh>
+                <MudTh>Åtgärder</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd>@context.Name</MudTd>
+                <MudTd>@GetModelDisplayName(context.DistributionModel)</MudTd>
+                <MudTd>@context.TotalIncome.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))</MudTd>
+                <MudTd>@context.CreatedAt.ToLocalTime().ToString("g")</MudTd>
+                <MudTd>
+                    <MudIconButton Icon="@Icons.Material.Filled.OpenInNew"
+                                 Size="Size.Small"
+                                 Color="Color.Primary"
+                                 OnClick="@(() => LoadSuggestion(context))"
+                                 Title="Fortsätt redigera" />
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                 Size="Size.Small"
+                                 Color="Color.Error"
+                                 OnClick="@(() => DeleteSuggestion(context))"
+                                 Title="Ta bort" />
+                </MudTd>
+            </RowTemplate>
+        </MudTable>
+    </MudPaper>
+}
+
+@code {
+    private int _activeStep = 0;
+    private decimal _totalIncome = 30000m;
+    private int? _selectedHouseholdId;
+    private BudgetDistributionModel _selectedModel = BudgetDistributionModel.FiftyThirtyTwenty;
+    private List<(BudgetDistributionModel Model, string Name, string Description)> _availableModels = new();
+    private List<Household> _households = new();
+    private BudgetSuggestion? _currentSuggestion;
+    private BudgetSuggestionEffects? _effects;
+    private List<BudgetSuggestion> _pendingSuggestions = new();
+    
+    // Transfer fields
+    private int _transferFromCategory;
+    private int _transferToCategory;
+    private decimal _transferAmount;
+    
+    // Budget creation fields
+    private string _budgetStartDateString = DateTime.Now.ToString("yyyy-MM-dd");
+    private string _budgetEndDateString = DateTime.Now.AddMonths(1).AddDays(-1).ToString("yyyy-MM-dd");
+    private BudgetPeriod _budgetPeriod = BudgetPeriod.Monthly;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _availableModels = SuggestionService.GetAvailableModels().ToList();
+        _households = (await HouseholdService.GetAllHouseholdsAsync()).ToList();
+        _pendingSuggestions = (await SuggestionService.GetPendingSuggestionsAsync()).ToList();
+        
+        // Try to estimate income from transactions
+        await EstimateIncomeFromHistory();
+    }
+
+    private async Task EstimateIncomeFromHistory()
+    {
+        try
+        {
+            var endDate = DateTime.Today;
+            var startDate = endDate.AddMonths(-3);
+            var transactions = await TransactionService.GetTransactionsByDateRangeAsync(startDate, endDate);
+            var incomeTransactions = transactions.Where(t => t.IsIncome);
+            
+            if (incomeTransactions.Any())
+            {
+                _totalIncome = Math.Round(incomeTransactions.Sum(t => t.Amount) / 3, 0);
+            }
+        }
+        catch
+        {
+            // Keep default if estimation fails
+        }
+    }
+
+    private void SelectModel(BudgetDistributionModel model)
+    {
+        _selectedModel = model;
+    }
+
+    private string GetCardClass(BudgetDistributionModel model)
+    {
+        return _selectedModel == model 
+            ? "cursor-pointer mud-elevation-4 border-primary border-2" 
+            : "cursor-pointer hover-elevation-4";
+    }
+
+    private async Task GenerateSuggestion()
+    {
+        try
+        {
+            _currentSuggestion = await SuggestionService.GenerateSuggestionAsync(
+                _totalIncome,
+                _selectedModel,
+                householdId: _selectedHouseholdId);
+            
+            await CalculateEffects();
+            _pendingSuggestions = (await SuggestionService.GetPendingSuggestionsAsync()).ToList();
+            _activeStep = 1;
+            
+            Snackbar.Add("Förslag skapat!", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Kunde inte skapa förslag: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task CalculateEffects()
+    {
+        if (_currentSuggestion == null) return;
+        
+        try
+        {
+            _effects = await SuggestionService.CalculateEffectsAsync(_currentSuggestion.BudgetSuggestionId);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Kunde inte beräkna effekter: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task UpdateItemAmount(BudgetSuggestionItem item)
+    {
+        if (_currentSuggestion == null) return;
+        
+        try
+        {
+            await SuggestionService.AdjustSuggestionItemAsync(
+                _currentSuggestion.BudgetSuggestionId,
+                item.CategoryId,
+                item.AdjustedAmount);
+            
+            // Recalculate percentages locally
+            foreach (var i in _currentSuggestion.Items)
+            {
+                i.Percentage = _currentSuggestion.TotalIncome > 0 
+                    ? (i.AdjustedAmount / _currentSuggestion.TotalIncome) * 100 
+                    : 0;
+            }
+            
+            await CalculateEffects();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Kunde inte uppdatera: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task ResetItem(BudgetSuggestionItem item)
+    {
+        if (_currentSuggestion == null) return;
+        
+        try
+        {
+            await SuggestionService.AdjustSuggestionItemAsync(
+                _currentSuggestion.BudgetSuggestionId,
+                item.CategoryId,
+                item.SuggestedAmount,
+                "Återställd till ursprungligt förslag");
+            
+            item.AdjustedAmount = item.SuggestedAmount;
+            item.IsManuallyAdjusted = false;
+            
+            // Recalculate percentages
+            foreach (var i in _currentSuggestion.Items)
+            {
+                i.Percentage = _currentSuggestion.TotalIncome > 0 
+                    ? (i.AdjustedAmount / _currentSuggestion.TotalIncome) * 100 
+                    : 0;
+            }
+            
+            await CalculateEffects();
+            Snackbar.Add("Kategori återställd", Severity.Info);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Kunde inte återställa: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task TransferBetweenCategories()
+    {
+        if (_currentSuggestion == null) return;
+        
+        try
+        {
+            await SuggestionService.TransferBetweenItemsAsync(
+                _currentSuggestion.BudgetSuggestionId,
+                _transferFromCategory,
+                _transferToCategory,
+                _transferAmount);
+            
+            // Reload suggestion
+            _currentSuggestion = await SuggestionService.GetSuggestionByIdAsync(_currentSuggestion.BudgetSuggestionId);
+            await CalculateEffects();
+            
+            // Reset transfer fields
+            _transferFromCategory = 0;
+            _transferToCategory = 0;
+            _transferAmount = 0;
+            
+            Snackbar.Add("Överföring genomförd", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Överföring misslyckades: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task AcceptAndCreateBudget()
+    {
+        if (_currentSuggestion == null) return;
+        
+        if (!DateTime.TryParse(_budgetStartDateString, out var startDate) ||
+            !DateTime.TryParse(_budgetEndDateString, out var endDate))
+        {
+            Snackbar.Add("Ogiltigt datumformat", Severity.Error);
+            return;
+        }
+        
+        if (endDate < startDate)
+        {
+            Snackbar.Add("Slutdatum måste vara efter startdatum", Severity.Error);
+            return;
+        }
+        
+        try
+        {
+            var budget = await SuggestionService.AcceptSuggestionAsync(
+                _currentSuggestion.BudgetSuggestionId,
+                startDate,
+                endDate,
+                _budgetPeriod);
+            
+            Snackbar.Add("Budget skapad!", Severity.Success);
+            Navigation.NavigateTo("/budgets");
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Kunde inte skapa budget: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task LoadSuggestion(BudgetSuggestion suggestion)
+    {
+        _currentSuggestion = await SuggestionService.GetSuggestionByIdAsync(suggestion.BudgetSuggestionId);
+        _totalIncome = suggestion.TotalIncome;
+        _selectedModel = suggestion.DistributionModel;
+        await CalculateEffects();
+        _activeStep = 1;
+    }
+
+    private async Task DeleteSuggestion(BudgetSuggestion suggestion)
+    {
+        try
+        {
+            await SuggestionService.DeleteSuggestionAsync(suggestion.BudgetSuggestionId);
+            _pendingSuggestions = (await SuggestionService.GetPendingSuggestionsAsync()).ToList();
+            
+            if (_currentSuggestion?.BudgetSuggestionId == suggestion.BudgetSuggestionId)
+            {
+                _currentSuggestion = null;
+                _effects = null;
+                _activeStep = 0;
+            }
+            
+            Snackbar.Add("Förslag borttaget", Severity.Info);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Kunde inte ta bort förslag: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private decimal GetCategoryTotal(BudgetAllocationCategory category)
+    {
+        return _currentSuggestion?.Items
+            .Where(i => i.AllocationCategory == category)
+            .Sum(i => i.AdjustedAmount) ?? 0;
+    }
+
+    private decimal GetCategoryPercentage(BudgetAllocationCategory category)
+    {
+        if (_currentSuggestion == null || _currentSuggestion.TotalIncome == 0) return 0;
+        return (GetCategoryTotal(category) / _currentSuggestion.TotalIncome) * 100;
+    }
+
+    private Color GetAllocationCategoryColor(BudgetAllocationCategory category)
+    {
+        return category switch
+        {
+            BudgetAllocationCategory.Needs => Color.Success,
+            BudgetAllocationCategory.Wants => Color.Info,
+            BudgetAllocationCategory.Savings => Color.Warning,
+            BudgetAllocationCategory.Giving => Color.Secondary,
+            _ => Color.Default
+        };
+    }
+
+    private string GetAllocationCategoryName(BudgetAllocationCategory category)
+    {
+        return category switch
+        {
+            BudgetAllocationCategory.Needs => "Behov",
+            BudgetAllocationCategory.Wants => "Önskemål",
+            BudgetAllocationCategory.Savings => "Sparande",
+            BudgetAllocationCategory.Giving => "Välgörenhet",
+            _ => "Övrigt"
+        };
+    }
+
+    private string GetModelDisplayName(BudgetDistributionModel model)
+    {
+        return model switch
+        {
+            BudgetDistributionModel.FiftyThirtyTwenty => "50/30/20",
+            BudgetDistributionModel.ZeroBased => "Zero-based",
+            BudgetDistributionModel.Envelope => "Kuvertbudget",
+            BudgetDistributionModel.SwedishFamily => "Svenska Familjehushåll",
+            BudgetDistributionModel.SwedishSingle => "Svenska Singelhushåll",
+            BudgetDistributionModel.EightyTwenty => "80/20",
+            BudgetDistributionModel.SeventyTwentyTen => "70/20/10",
+            _ => "Anpassad"
+        };
+    }
+}
