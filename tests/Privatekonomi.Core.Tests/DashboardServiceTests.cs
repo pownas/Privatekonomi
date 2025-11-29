@@ -129,6 +129,9 @@ public class DashboardServiceTests
         _context.BankSources.Add(account);
         await _context.SaveChangesAsync();
 
+        // Use fixed date for deterministic tests
+        var transactionDate = new DateTime(2025, 1, 15, 0, 0, 0, DateTimeKind.Utc);
+
         // Add income transaction
         var incomeTransaction = new Transaction
         {
@@ -136,7 +139,7 @@ public class DashboardServiceTests
             Description = "Salary",
             Amount = 25000,
             IsIncome = true,
-            Date = DateTime.Now
+            Date = transactionDate
         };
 
         // Add expense transaction
@@ -146,7 +149,7 @@ public class DashboardServiceTests
             Description = "Rent",
             Amount = 8000,
             IsIncome = false,
-            Date = DateTime.Now
+            Date = transactionDate
         };
 
         _context.Transactions.AddRange(incomeTransaction, expenseTransaction);

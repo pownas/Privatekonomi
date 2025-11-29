@@ -262,7 +262,8 @@ public class DashboardService : IDashboardService
     private async Task<(decimal changeFromPrevious, decimal percentageChange)> CalculateBalanceChangeAsync(
         List<BankSource> accounts, decimal currentBalance)
     {
-        var firstDayOfCurrentMonth = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+        var now = DateTime.UtcNow;
+        var firstDayOfCurrentMonth = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
         var firstDayOfPreviousMonth = firstDayOfCurrentMonth.AddMonths(-1);
         
         // Calculate previous month end balance
