@@ -141,4 +141,61 @@ public class TestDataSeederTests : IDisposable
                 $"Transaction date {transaction.Date:yyyy-MM-dd HH:mm:ss} should be before {expectedMaxDate:yyyy-MM-dd HH:mm:ss}");
         }
     }
+
+    [Fact]
+    public void SeedProductionReferenceData_SeedsChallengeTemplates()
+    {
+        // Act
+        TestDataSeeder.SeedProductionReferenceData(_context);
+        
+        // Assert
+        var templates = _context.ChallengeTemplates.ToList();
+        
+        // Verify that challenge templates were seeded
+        Assert.NotEmpty(templates);
+        
+        // Verify that at least some expected templates exist
+        Assert.Contains(templates, t => t.Name == "No Spend Weekend");
+        Assert.Contains(templates, t => t.Name == "Matlåda varje dag");
+        Assert.Contains(templates, t => t.Type == ChallengeType.NoSpendWeekend);
+        Assert.Contains(templates, t => t.Type == ChallengeType.LunchBox);
+        
+        // Verify all templates are active by default
+        Assert.All(templates, t => Assert.True(t.IsActive));
+    }
+
+    [Fact]
+    public void SeedProductionReferenceData_DoesNotDuplicateTemplates()
+    {
+        // Act - Seed twice
+        TestDataSeeder.SeedProductionReferenceData(_context);
+        var firstCount = _context.ChallengeTemplates.Count();
+        
+        TestDataSeeder.SeedProductionReferenceData(_context);
+        var secondCount = _context.ChallengeTemplates.Count();
+        
+        // Assert - Count should be the same after second seeding
+        Assert.Equal(firstCount, secondCount);
+    }
+
+    [Fact]
+    public void SeedProductionReferenceData_TemplatesHaveRequiredProperties()
+    {
+        // Act
+        TestDataSeeder.SeedProductionReferenceData(_context);
+        
+        // Assert
+        var templates = _context.ChallengeTemplates.ToList();
+        
+        foreach (var template in templates)
+        {
+            // Verify each template has required properties
+            Assert.False(string.IsNullOrEmpty(template.Name), "Template should have a name");
+            Assert.False(string.IsNullOrEmpty(template.Description), "Template should have a description");
+            Assert.False(string.IsNullOrEmpty(template.Icon), "Template should have an icon");
+            Assert.True(template.DurationDays > 0, "Template should have a positive duration");
+            Assert.True(template.Difficulty >= DifficultyLevel.VeryEasy && template.Difficulty <= DifficultyLevel.VeryHard, 
+                "Template should have a valid difficulty level");
+        }
+    }
 }
