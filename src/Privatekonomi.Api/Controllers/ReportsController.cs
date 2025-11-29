@@ -11,17 +11,20 @@ public class ReportsController : ControllerBase
     private readonly ITransactionService _transactionService;
     private readonly IBankSourceService _bankSourceService;
     private readonly IReportService _reportService;
+    private readonly ICurrentUserService _currentUserService;
     private readonly ILogger<ReportsController> _logger;
 
     public ReportsController(
         ITransactionService transactionService,
         IBankSourceService bankSourceService,
         IReportService reportService,
+        ICurrentUserService currentUserService,
         ILogger<ReportsController> logger)
     {
         _transactionService = transactionService;
         _bankSourceService = bankSourceService;
         _reportService = reportService;
+        _currentUserService = currentUserService;
         _logger = logger;
     }
 
@@ -165,9 +168,8 @@ public class ReportsController : ControllerBase
                 return BadRequest(new { error = "Kan inte generera rapport för framtida månad" });
             }
 
-            // TODO: Get userId from authentication context
-            // For now, we'll pass null to get data for all users (or could use a default user)
-            string? userId = null;
+            // Get userId from authentication context (null if not authenticated, allowing anonymous access for demo)
+            var userId = _currentUserService.UserId;
 
             var reportData = await _reportService.GenerateMonthlyReportAsync(year, monthNum, userId, householdId);
 
@@ -199,8 +201,8 @@ public class ReportsController : ControllerBase
     {
         try
         {
-            // TODO: Get userId from authentication context
-            string? userId = null;
+            // Get userId from authentication context (null if not authenticated, allowing anonymous access for demo)
+            var userId = _currentUserService.UserId;
 
             var reports = await _reportService.GetMonthlyReportsAsync(userId, householdId, limit);
 

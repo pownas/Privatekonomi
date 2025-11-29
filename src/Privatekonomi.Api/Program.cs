@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Privatekonomi.Core.Data;
 using Privatekonomi.Core.Services;
 using Privatekonomi.Api.Middleware;
+using Privatekonomi.Api.Services;
 using Privatekonomi.Core.Configuration;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -76,6 +77,10 @@ builder.Services.AddScoped<ISalaryHistoryService, SalaryHistoryService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<INotificationPreferenceService, NotificationPreferenceService>();
 builder.Services.AddScoped<IDashboardLayoutService, DashboardLayoutService>();
+
+// HTTP context accessor for current user service
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ICurrentUserService, ApiCurrentUserService>();
 
 // Register bank API services and dependencies
 builder.Services.AddBankApiServices(builder.Configuration);
