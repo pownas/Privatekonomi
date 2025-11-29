@@ -1,6 +1,8 @@
 @using MudBlazor
 @inject IBudgetService BudgetService
+@inject IBudgetAlertService BudgetAlertService
 @inject ICategoryService CategoryService
+@inject ITransactionService TransactionService
 @inject ISnackbar Snackbar
 
 <MudContainer MaxWidth="MaxWidth.Medium" Class="onboarding-step">
@@ -32,9 +34,18 @@
             </MudAlert>
             
             <MudPaper Elevation="0" Class="pa-4 mb-4" Style="background-color: var(--mud-palette-background-grey);">
-                <MudText Typo="Typo.h6" GutterBottom="true" Class="mb-3">
-                    Månadsinkomst: @_monthlyIncome.ToString("C", new System.Globalization.CultureInfo("sv-SE"))
-                </MudText>
+                <MudText Typo="Typo.subtitle1" Class="mb-2">Ange din månadsinkomst:</MudText>
+                <MudNumericField @bind-Value="_monthlyIncome"
+                                Label="Månadsinkomst (netto)"
+                                Variant="Variant.Outlined"
+                                Format="N0"
+                                Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                                Adornment="Adornment.Start"
+                                AdornmentText="kr"
+                                Min="0"
+                                Step="1000M"
+                                OnBlur="RecalculateBudget"
+                                Class="mb-3" />
                 
                 <MudGrid Spacing="2" Class="mb-4">
                     <MudItem xs="12" md="4">
@@ -135,7 +146,12 @@
                 </MudButton>
                 <MudButton Variant="Variant.Filled" 
                            Color="Color.Primary"
-                           OnClick="SaveBudget">
+                           OnClick="SaveBudget"
+                           Disabled="_saving">
+                    @if (_saving)
+                    {
+                        <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                    }
                     Spara och aktivera budget
                 </MudButton>
             </div>
@@ -148,45 +164,99 @@
     public EventCallback OnNext { get; set; }
 
     private bool _loading = true;
-    private decimal _monthlyIncome = 30000m; // Simulated from imported transactions
+    private bool _saving = false;
+    private decimal _monthlyIncome = 30000m;
     private List<BudgetCategoryItem> _budgetCategories = new();
+    private Dictionary<string, int> _categoryNameToId = new();
     private bool _enableBudgetAlerts = true;
 
     private class BudgetCategoryItem
     {
         public string Name { get; set; } = "";
         public decimal Amount { get; set; }
+        public int CategoryId { get; set; }
     }
 
     protected override async Task OnInitializedAsync()
     {
-        // Simulate loading
-        await Task.Delay(500);
-        
-        // In a real implementation, this would:
-        // 1. Calculate average monthly income from imported transactions
-        // 2. Apply BudgetTemplateService.ApplyFiftyThirtyTwentyTemplate()
-        // 3. Get actual categories from CategoryService
-        
-        // For demo purposes, create sample budget
+        try
+        {
+            // Try to estimate income from imported transactions
+            await EstimateIncomeFromHistory();
+            
+            // Load actual categories from the database
+            var categories = await CategoryService.GetAllCategoriesAsync();
+            _categoryNameToId = categories.ToDictionary(c => c.Name.ToLower(), c => c.CategoryId);
+            
+            // Create budget proposal based on 50/30/20 rule
+            CreateBudgetProposal();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Kunde inte ladda data: {ex.Message}", MudBlazor.Severity.Error);
+            // Fall back to default budget
+            CreateBudgetProposal();
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task EstimateIncomeFromHistory()
+    {
+        try
+        {
+            const int monthsToAnalyze = 3;
+            var endDate = DateTime.Today;
+            var startDate = endDate.AddMonths(-monthsToAnalyze);
+            var transactions = await TransactionService.GetTransactionsByDateRangeAsync(startDate, endDate);
+            var incomeTransactions = transactions.Where(t => t.IsIncome);
+            
+            if (incomeTransactions.Any())
+            {
+                _monthlyIncome = Math.Round(incomeTransactions.Sum(t => t.Amount) / monthsToAnalyze, 0);
+            }
+        }
+        catch
+        {
+            // Keep default if estimation fails
+        }
+    }
+
+    private void CreateBudgetProposal()
+    {
         _budgetCategories = new List<BudgetCategoryItem>
         {
             // Needs (50%)
-            new BudgetCategoryItem { Name = "Boende", Amount = _monthlyIncome * 0.50m * 0.40m },
-            new BudgetCategoryItem { Name = "Mat & Livsmedel", Amount = _monthlyIncome * 0.50m * 0.35m },
-            new BudgetCategoryItem { Name = "Transport", Amount = _monthlyIncome * 0.50m * 0.15m },
-            new BudgetCategoryItem { Name = "Försäkringar", Amount = _monthlyIncome * 0.50m * 0.10m },
+            new BudgetCategoryItem { Name = "Boende", Amount = _monthlyIncome * 0.50m * 0.40m, CategoryId = GetCategoryId("boende") },
+            new BudgetCategoryItem { Name = "Mat & Dryck", Amount = _monthlyIncome * 0.50m * 0.35m, CategoryId = GetCategoryId("mat & dryck") },
+            new BudgetCategoryItem { Name = "Transport", Amount = _monthlyIncome * 0.50m * 0.15m, CategoryId = GetCategoryId("transport") },
+            new BudgetCategoryItem { Name = "Hälsa", Amount = _monthlyIncome * 0.50m * 0.10m, CategoryId = GetCategoryId("hälsa") },
             
             // Wants (30%)
-            new BudgetCategoryItem { Name = "Nöje & Underhållning", Amount = _monthlyIncome * 0.30m * 0.50m },
-            new BudgetCategoryItem { Name = "Shopping", Amount = _monthlyIncome * 0.30m * 0.30m },
-            new BudgetCategoryItem { Name = "Restaurang & Café", Amount = _monthlyIncome * 0.30m * 0.20m },
+            new BudgetCategoryItem { Name = "Nöje", Amount = _monthlyIncome * 0.30m * 0.50m, CategoryId = GetCategoryId("nöje") },
+            new BudgetCategoryItem { Name = "Shopping", Amount = _monthlyIncome * 0.30m * 0.30m, CategoryId = GetCategoryId("shopping") },
+            new BudgetCategoryItem { Name = "Restaurang", Amount = _monthlyIncome * 0.30m * 0.20m, CategoryId = GetCategoryId("restaurang") },
             
             // Savings (20%)
-            new BudgetCategoryItem { Name = "Sparande", Amount = _monthlyIncome * 0.20m }
+            new BudgetCategoryItem { Name = "Sparande", Amount = _monthlyIncome * 0.20m, CategoryId = GetCategoryId("sparande") }
         };
-        
-        _loading = false;
+    }
+
+    private int GetCategoryId(string categoryName)
+    {
+        if (_categoryNameToId.TryGetValue(categoryName, out var id))
+        {
+            return id;
+        }
+        // Return 0 if category not found - will be filtered out when creating budget
+        return 0;
+    }
+
+    private void RecalculateBudget()
+    {
+        CreateBudgetProposal();
     }
 
     private string GetCategoryIcon(string categoryName)
@@ -196,7 +266,7 @@
             var s when s.Contains("boende") => Icons.Material.Filled.Home,
             var s when s.Contains("mat") => Icons.Material.Filled.Restaurant,
             var s when s.Contains("transport") => Icons.Material.Filled.DirectionsCar,
-            var s when s.Contains("försäkring") => Icons.Material.Filled.Security,
+            var s when s.Contains("hälsa") => Icons.Material.Filled.Security,
             var s when s.Contains("nöje") => Icons.Material.Filled.Celebration,
             var s when s.Contains("shopping") => Icons.Material.Filled.ShoppingBag,
             var s when s.Contains("restaurang") => Icons.Material.Filled.Restaurant,
@@ -207,21 +277,65 @@
 
     private async Task SaveBudget()
     {
+        if (_monthlyIncome <= 0)
+        {
+            Snackbar.Add("Ange en månadsinkomst för att skapa en budget", MudBlazor.Severity.Warning);
+            return;
+        }
+
+        _saving = true;
         try
         {
-            // In a real implementation, this would:
-            // 1. Create a new Budget entity
-            // 2. Add BudgetCategory entries for each category
-            // 3. Enable budget alerts if selected
-            // 4. Call BudgetService.CreateBudgetAsync()
-            
-            Snackbar.Add("Budget sparad! Du kan justera den senare under Budget.", MudBlazor.Severity.Success);
+            // Calculate start and end date for current month
+            var now = DateTime.Now;
+            var startDate = new DateTime(now.Year, now.Month, 1);
+            var endDate = startDate.AddMonths(1).AddDays(-1);
+
+            // Create budget entity
+            var budget = new Budget
+            {
+                Name = $"Budget {startDate:yyyy-MM}",
+                Description = "Budget skapad via onboarding med 50/30/20-regeln",
+                StartDate = startDate,
+                EndDate = endDate,
+                Period = BudgetPeriod.Monthly,
+                TemplateType = BudgetTemplateType.FiftyThirtyTwenty,
+                BudgetCategories = _budgetCategories
+                    .Where(bc => bc.CategoryId > 0 && bc.Amount > 0)
+                    .Select(bc => new BudgetCategory
+                    {
+                        CategoryId = bc.CategoryId,
+                        PlannedAmount = bc.Amount,
+                        RecurrencePeriodMonths = 1
+                    })
+                    .ToList()
+            };
+
+            // Save budget
+            await BudgetService.CreateBudgetAsync(budget);
+
+            // Enable budget alerts if selected
+            if (_enableBudgetAlerts)
+            {
+                var settings = await BudgetAlertService.GetOrCreateSettingsAsync();
+                settings.EnableAlert75 = true;
+                settings.EnableAlert90 = true;
+                settings.EnableAlert100 = true;
+                settings.EnableForecastWarnings = true;
+                await BudgetAlertService.UpdateSettingsAsync(settings);
+            }
+
+            Snackbar.Add("Budget skapad! Du kan justera den senare under Budget.", MudBlazor.Severity.Success);
             await Task.Delay(500);
             await OnNext.InvokeAsync();
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Ett fel uppstod: {ex.Message}", MudBlazor.Severity.Error);
+            Snackbar.Add($"Ett fel uppstod vid skapande av budget: {ex.Message}", MudBlazor.Severity.Error);
+        }
+        finally
+        {
+            _saving = false;
         }
     }
 
