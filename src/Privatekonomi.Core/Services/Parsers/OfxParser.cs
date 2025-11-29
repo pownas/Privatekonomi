@@ -12,6 +12,17 @@ namespace Privatekonomi.Core.Services.Parsers;
 /// </summary>
 public class OfxParser : ICsvParser
 {
+    private const int MaxDescriptionLength = 500;
+    
+    // Self-closing tags in OFX format that contain data values
+    private static readonly HashSet<string> SelfClosingTags = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "DTSERVER", "DTSTART", "DTEND", "DTASOF", "DTPOSTED", "DTUSER",
+        "TRNTYPE", "TRNAMT", "FITID", "NAME", "MEMO", "CHECKNUM", "REFNUM",
+        "BALAMT", "CURDEF", "ACCTID", "ACCTTYPE", "BANKID", "BRANCHID",
+        "LANGUAGE", "INTU.BID", "CODE", "SEVERITY", "MESSAGE"
+    };
+
     public string BankName => "OFX (Allmän)";
 
     public bool CanParse(string content)
@@ -105,8 +116,7 @@ public class OfxParser : ICsvParser
         }
         
         // Parse amount
-        var amountStr = trnAmtElement.Value.Trim().Replace(",", ".");
-        if (!decimal.TryParse(amountStr, NumberStyles.Any, CultureInfo.InvariantCulture, out var amount))
+        if (!TryParseAmount(trnAmtElement.Value, out var amount))
         {
             return null;
         }
@@ -116,37 +126,11 @@ public class OfxParser : ICsvParser
         var memo = stmtTrn.Element("MEMO")?.Value?.Trim() ?? string.Empty;
         var description = BuildDescription(name, memo);
         
-        if (string.IsNullOrWhiteSpace(description))
-        {
-            description = "Transaktion utan beskrivning";
-        }
-        
-        // Determine if income based on amount sign
-        var isIncome = amount > 0;
-        
-        // Get transaction type for additional context
+        // Determine if income based on amount sign and transaction type
         var trnType = trnTypeElement?.Value?.Trim().ToUpper() ?? string.Empty;
-        if (trnType == "CREDIT" || trnType == "DEP" || trnType == "INT" || trnType == "DIV")
-        {
-            isIncome = true;
-        }
-        else if (trnType == "DEBIT" || trnType == "PAYMENT" || trnType == "FEE" || trnType == "SRVCHG")
-        {
-            isIncome = false;
-        }
+        var isIncome = DetermineIsIncome(amount, trnType);
         
-        return new Transaction
-        {
-            Date = date,
-            Amount = Math.Abs(amount),
-            IsIncome = isIncome,
-            Description = description.Length > 500 ? description.Substring(0, 500) : description,
-            Imported = true,
-            ImportSource = "OFX Import",
-            Currency = "SEK",
-            CreatedAt = DateTime.UtcNow,
-            ValidFrom = DateTime.UtcNow
-        };
+        return CreateTransaction(date, Math.Abs(amount), isIncome, description);
     }
 
     private string ConvertOfxToXml(string ofxContent)
@@ -172,13 +156,6 @@ public class OfxParser : ICsvParser
         var lines = ofxContent.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
         
         var tagStack = new Stack<string>();
-        var selfClosingTags = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-        {
-            "DTSERVER", "DTSTART", "DTEND", "DTASOF", "DTPOSTED", "DTUSER",
-            "TRNTYPE", "TRNAMT", "FITID", "NAME", "MEMO", "CHECKNUM", "REFNUM",
-            "BALAMT", "CURDEF", "ACCTID", "ACCTTYPE", "BANKID", "BRANCHID",
-            "LANGUAGE", "INTU.BID", "CODE", "SEVERITY", "MESSAGE"
-        };
         
         foreach (var line in lines)
         {
@@ -208,7 +185,7 @@ public class OfxParser : ICsvParser
                     // Self-closing tag with value
                     result.AppendLine($"<{tagName}>{value}</{tagName}>");
                 }
-                else if (selfClosingTags.Contains(tagName))
+                else if (SelfClosingTags.Contains(tagName))
                 {
                     // Known data tag without value - add empty closing tag
                     result.AppendLine($"<{tagName}></{tagName}>");
@@ -329,44 +306,15 @@ public class OfxParser : ICsvParser
             return null;
         }
         
-        var amountStr = amount.Replace(",", ".");
-        if (!decimal.TryParse(amountStr, NumberStyles.Any, CultureInfo.InvariantCulture, out var parsedAmount))
+        if (!TryParseAmount(amount, out var parsedAmount))
         {
             return null;
         }
         
         var description = BuildDescription(name ?? string.Empty, memo ?? string.Empty);
-        if (string.IsNullOrWhiteSpace(description))
-        {
-            description = "Transaktion utan beskrivning";
-        }
+        var isIncome = DetermineIsIncome(parsedAmount, trnType?.ToUpper() ?? string.Empty);
         
-        var isIncome = parsedAmount > 0;
-        if (!string.IsNullOrEmpty(trnType))
-        {
-            var type = trnType.ToUpper();
-            if (type == "CREDIT" || type == "DEP" || type == "INT" || type == "DIV")
-            {
-                isIncome = true;
-            }
-            else if (type == "DEBIT" || type == "PAYMENT" || type == "FEE" || type == "SRVCHG")
-            {
-                isIncome = false;
-            }
-        }
-        
-        return new Transaction
-        {
-            Date = parsedDate,
-            Amount = Math.Abs(parsedAmount),
-            IsIncome = isIncome,
-            Description = description.Length > 500 ? description.Substring(0, 500) : description,
-            Imported = true,
-            ImportSource = "OFX Import",
-            Currency = "SEK",
-            CreatedAt = DateTime.UtcNow,
-            ValidFrom = DateTime.UtcNow
-        };
+        return CreateTransaction(parsedDate, Math.Abs(parsedAmount), isIncome, description);
     }
 
     private string? ExtractSgmlValue(string content, string tagName)
@@ -442,5 +390,68 @@ public class OfxParser : ICsvParser
         {
             return memo;
         }
+    }
+    
+    private static bool TryParseAmount(string amountStr, out decimal amount)
+    {
+        amount = 0;
+        if (string.IsNullOrEmpty(amountStr))
+        {
+            return false;
+        }
+        
+        var normalized = amountStr.Trim().Replace(",", ".");
+        return decimal.TryParse(normalized, NumberStyles.Any, CultureInfo.InvariantCulture, out amount);
+    }
+    
+    private static bool DetermineIsIncome(decimal amount, string transactionType)
+    {
+        // Default based on amount sign
+        var isIncome = amount > 0;
+        
+        // Override based on transaction type if available
+        if (!string.IsNullOrEmpty(transactionType))
+        {
+            if (transactionType == "CREDIT" || transactionType == "DEP" || 
+                transactionType == "INT" || transactionType == "DIV")
+            {
+                isIncome = true;
+            }
+            else if (transactionType == "DEBIT" || transactionType == "PAYMENT" || 
+                     transactionType == "FEE" || transactionType == "SRVCHG")
+            {
+                isIncome = false;
+            }
+        }
+        
+        return isIncome;
+    }
+    
+    private static Transaction CreateTransaction(DateTime date, decimal amount, bool isIncome, string description)
+    {
+        // Ensure description is not empty
+        if (string.IsNullOrWhiteSpace(description))
+        {
+            description = "Transaktion utan beskrivning";
+        }
+        
+        // Truncate description if too long
+        if (description.Length > MaxDescriptionLength)
+        {
+            description = description.Substring(0, MaxDescriptionLength);
+        }
+        
+        return new Transaction
+        {
+            Date = date,
+            Amount = amount,
+            IsIncome = isIncome,
+            Description = description,
+            Imported = true,
+            ImportSource = "OFX Import",
+            Currency = "SEK",
+            CreatedAt = DateTime.UtcNow,
+            ValidFrom = DateTime.UtcNow
+        };
     }
 }

@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using Microsoft.AspNetCore.Mvc;
 using Privatekonomi.Core.Models;
 using Privatekonomi.Core.Services;
@@ -10,7 +11,7 @@ public class ImportController : ControllerBase
 {
     private readonly ICsvImportService _csvImportService;
     private readonly ILogger<ImportController> _logger;
-    private static readonly Dictionary<string, (byte[] Content, string FileName, long FileSize)> _tempFiles = new();
+    private static readonly ConcurrentDictionary<string, (byte[] Content, string FileName, long FileSize)> _tempFiles = new();
 
     public ImportController(ICsvImportService csvImportService, ILogger<ImportController> logger)
     {
@@ -117,6 +118,11 @@ public class ImportController : ControllerBase
                 return BadRequest(new { error = "Filen kunde inte hittas. Vänligen ladda upp filen igen." });
             }
 
+            // Get authenticated user's ID from the HttpContext
+            var userId = User.Identity?.IsAuthenticated == true 
+                ? User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value 
+                : null;
+
             // Import transactions with job tracking
             using var memoryStream = new MemoryStream(fileData.Content);
             var (result, importJob) = await _csvImportService.ImportWithJobAsync(
@@ -124,11 +130,11 @@ public class ImportController : ControllerBase
                 request.Bank, 
                 fileData.FileName, 
                 fileData.FileSize,
-                userId: null, // TODO: Get from authenticated user
+                userId: userId,
                 request.SkipDuplicates);
 
             // Remove temp file
-            _tempFiles.Remove(request.FileId);
+            _tempFiles.TryRemove(request.FileId, out _);
 
             if (!result.Success)
             {
@@ -216,7 +222,7 @@ public class ImportController : ControllerBase
             var oldestKeys = _tempFiles.Keys.Take(_tempFiles.Count - 100).ToList();
             foreach (var key in oldestKeys)
             {
-                _tempFiles.Remove(key);
+                _tempFiles.TryRemove(key, out _);
             }
         }
     }
