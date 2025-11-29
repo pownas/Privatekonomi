@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Privatekonomi.Core.Data;
 using Privatekonomi.Core.Models;
 using Privatekonomi.Core.Services.Parsers;
+using System.Text.Json;
 
 namespace Privatekonomi.Core.Services;
 
@@ -16,7 +17,8 @@ public class CsvImportService : ICsvImportService
         _parsers = new List<ICsvParser>
         {
             new SwedbankParser(),
-            new IcaBankenParser()
+            new IcaBankenParser(),
+            new OfxParser()
         };
     }
 
@@ -84,7 +86,7 @@ public class CsvImportService : ICsvImportService
             {
                 RowNumber = 0,
                 ErrorType = "ParseError",
-                ErrorMessage = $"Fel vid parsning av CSV-fil: {ex.Message}"
+                ErrorMessage = $"Fel vid parsning av fil: {ex.Message}"
             });
         }
 
@@ -106,10 +108,18 @@ public class CsvImportService : ICsvImportService
             var bankSource = await _context.BankSources
                 .FirstOrDefaultAsync(b => b.Name.Equals(bankName, StringComparison.OrdinalIgnoreCase));
 
-            // Import transactions
+            // Determine file type based on bank/parser
+            var fileType = bankName.Contains("OFX", StringComparison.OrdinalIgnoreCase) ? "OFX" : "CSV";
+            var importSource = $"{bankName} {fileType} (manuell)";
+
+            // Import transactions with source set to 'manual'
             foreach (var transaction in result.Transactions)
             {
                 transaction.BankSourceId = bankSource?.BankSourceId;
+                transaction.Imported = true;
+                transaction.ImportSource = importSource;
+                transaction.CreatedAt = DateTime.UtcNow;
+                transaction.ValidFrom = DateTime.UtcNow;
                 _context.Transactions.Add(transaction);
             }
 
@@ -129,11 +139,146 @@ public class CsvImportService : ICsvImportService
 
         return result;
     }
+    
+    /// <summary>
+    /// Import transactions and create an ImportJob record for tracking.
+    /// </summary>
+    public async Task<(CsvImportResult Result, ImportJob Job)> ImportWithJobAsync(
+        Stream stream, 
+        string bankName, 
+        string fileName, 
+        long fileSize, 
+        string? userId = null,
+        bool skipDuplicates = true)
+    {
+        // Create import job
+        var importJob = new ImportJob
+        {
+            BankName = bankName,
+            FileType = bankName.Contains("OFX", StringComparison.OrdinalIgnoreCase) ? "OFX" : "CSV",
+            FileName = fileName,
+            FileSize = fileSize,
+            Source = "manual",
+            UserId = userId,
+            Status = "Processing",
+            CreatedAt = DateTime.UtcNow,
+            StartedAt = DateTime.UtcNow
+        };
+        
+        _context.ImportJobs.Add(importJob);
+        await _context.SaveChangesAsync();
+        
+        try
+        {
+            var result = await PreviewCsvAsync(stream, bankName);
+            
+            importJob.TotalRows = result.TotalRows;
+            importJob.DuplicateCount = result.DuplicateCount;
+            importJob.ErrorCount = result.ErrorCount;
+            
+            if (!result.Success || result.Transactions.Count == 0)
+            {
+                importJob.Status = result.Transactions.Count == 0 && result.Success ? "Completed" : "Failed";
+                importJob.ErrorMessages = result.Errors.Any() 
+                    ? JsonSerializer.Serialize(result.Errors) 
+                    : null;
+                importJob.CompletedAt = DateTime.UtcNow;
+                await _context.SaveChangesAsync();
+                return (result, importJob);
+            }
+
+            // Get BankSource by name
+            var bankSource = await _context.BankSources
+                .FirstOrDefaultAsync(b => b.Name.Equals(bankName, StringComparison.OrdinalIgnoreCase));
+
+            var importSource = $"{bankName} {importJob.FileType} (manuell)";
+
+            // Import transactions with source set to 'manual'
+            foreach (var transaction in result.Transactions)
+            {
+                transaction.BankSourceId = bankSource?.BankSourceId;
+                transaction.Imported = true;
+                transaction.ImportSource = importSource;
+                transaction.UserId = userId;
+                transaction.CreatedAt = DateTime.UtcNow;
+                transaction.ValidFrom = DateTime.UtcNow;
+                _context.Transactions.Add(transaction);
+            }
+
+            await _context.SaveChangesAsync();
+            
+            importJob.ImportedCount = result.Transactions.Count;
+            importJob.Status = "Completed";
+            importJob.CompletedAt = DateTime.UtcNow;
+            
+            if (result.Errors.Any())
+            {
+                importJob.ErrorMessages = JsonSerializer.Serialize(result.Errors);
+            }
+            
+            await _context.SaveChangesAsync();
+            
+            result.Success = true;
+            return (result, importJob);
+        }
+        catch (Exception ex)
+        {
+            importJob.Status = "Failed";
+            importJob.CompletedAt = DateTime.UtcNow;
+            importJob.ErrorMessages = JsonSerializer.Serialize(new[]
+            {
+                new CsvImportError
+                {
+                    RowNumber = 0,
+                    ErrorType = "ImportError",
+                    ErrorMessage = ex.Message
+                }
+            });
+            
+            await _context.SaveChangesAsync();
+            
+            var failedResult = new CsvImportResult
+            {
+                Success = false,
+                Errors = { new CsvImportError { RowNumber = 0, ErrorType = "ImportError", ErrorMessage = ex.Message } }
+            };
+            
+            return (failedResult, importJob);
+        }
+    }
+    
+    /// <summary>
+    /// Get an import job by ID.
+    /// </summary>
+    public async Task<ImportJob?> GetImportJobAsync(int importJobId)
+    {
+        return await _context.ImportJobs.FindAsync(importJobId);
+    }
+    
+    /// <summary>
+    /// Get all import jobs for a user.
+    /// </summary>
+    public async Task<List<ImportJob>> GetUserImportJobsAsync(string userId)
+    {
+        return await _context.ImportJobs
+            .Where(j => j.UserId == userId)
+            .OrderByDescending(j => j.CreatedAt)
+            .ToListAsync();
+    }
 
     private ICsvParser? GetParser(string bankName)
     {
-        return _parsers.FirstOrDefault(p => 
+        // First try exact match
+        var parser = _parsers.FirstOrDefault(p => 
             p.BankName.Equals(bankName, StringComparison.OrdinalIgnoreCase));
+        
+        // If not found and it's OFX, use the OFX parser
+        if (parser == null && bankName.Contains("OFX", StringComparison.OrdinalIgnoreCase))
+        {
+            parser = _parsers.FirstOrDefault(p => p is OfxParser);
+        }
+        
+        return parser;
     }
 
     private List<CsvImportError> ValidateTransaction(Transaction transaction, int rowNumber)

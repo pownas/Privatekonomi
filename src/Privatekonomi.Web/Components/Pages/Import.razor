@@ -52,12 +52,23 @@ else if (_currentStep == ImportStep.BankSelection)
         {
             <MudRadioGroup @bind-Value="_selectedBank">
                 <MudRadio Value="@("ICA-banken")" Color="Color.Primary">
-                    <MudText>ICA-banken</MudText>
+                    <MudText>ICA-banken (CSV)</MudText>
                 </MudRadio>
                 <MudRadio Value="@("Swedbank")" Color="Color.Primary">
-                    <MudText>Swedbank</MudText>
+                    <MudText>Swedbank (CSV)</MudText>
+                </MudRadio>
+                <MudRadio Value="@("OFX (Allmän)")" Color="Color.Primary">
+                    <MudText>OFX/QFX (Allmänt bankformat)</MudText>
                 </MudRadio>
             </MudRadioGroup>
+            
+            @if (_selectedBank == "OFX (Allmän)")
+            {
+                <MudAlert Severity="Severity.Info" Class="mt-4">
+                    <MudText>OFX (Open Financial Exchange) och QFX är standardformat som stöds av de flesta banker.</MudText>
+                    <MudText Class="mt-2">Kontrollera med din bank hur du exporterar kontoutdrag i OFX-format.</MudText>
+                </MudAlert>
+            }
         }
         else if (_importType == ImportType.Investments)
         {
@@ -105,11 +116,11 @@ else if (_currentStep == ImportStep.FileSelection)
             </MudAlert>
         }
         
-        <MudFileUpload T="IBrowserFile" FilesChanged="OnFileSelected" Accept=".csv">
+        <MudFileUpload T="IBrowserFile" FilesChanged="OnFileSelected" Accept="@GetAcceptedFileTypes()">
             <ActivatorContent>
                 <MudPaper Outlined="true" Class="pa-8 d-flex flex-column align-center justify-center" Style="min-height: 200px; cursor: pointer;">
                     <MudIcon Icon="@Icons.Material.Filled.CloudUpload" Size="Size.Large" Class="mb-2" />
-                    <MudText Typo="Typo.h6">Dra och släpp CSV-fil här</MudText>
+                    <MudText Typo="Typo.h6">Dra och släpp @GetFileTypeDescription() här</MudText>
                     <MudText Typo="Typo.body2" Class="mt-2">eller</MudText>
                     <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="mt-2">
                         Välj fil från dator
@@ -126,7 +137,7 @@ else if (_currentStep == ImportStep.FileSelection)
         }
         
         <MudText Typo="Typo.caption" Class="mt-4">
-            Tillåtna format: .csv<br/>
+            Tillåtna format: @GetAllowedFormatsText()<br/>
             Max storlek: 10 MB
         </MudText>
         
@@ -589,6 +600,33 @@ else if (_currentStep == ImportStep.Complete)
             len = len / 1024;
         }
         return $"{len:0.##} {sizes[order]}";
+    }
+    
+    private string GetAcceptedFileTypes()
+    {
+        if (_importType == ImportType.Transactions && _selectedBank == "OFX (Allmän)")
+        {
+            return ".ofx,.qfx";
+        }
+        return ".csv";
+    }
+    
+    private string GetFileTypeDescription()
+    {
+        if (_importType == ImportType.Transactions && _selectedBank == "OFX (Allmän)")
+        {
+            return "OFX/QFX-fil";
+        }
+        return "CSV-fil";
+    }
+    
+    private string GetAllowedFormatsText()
+    {
+        if (_importType == ImportType.Transactions && _selectedBank == "OFX (Allmän)")
+        {
+            return ".ofx, .qfx";
+        }
+        return ".csv";
     }
 
     private class PreviewTransaction
