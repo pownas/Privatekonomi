@@ -2,6 +2,9 @@
 @using Privatekonomi.Core.Services
 @inject IDialogService DialogService
 @inject IReceiptService ReceiptService
+@inject ICategoryService CategoryService
+@inject ITransactionService TransactionService
+@inject ISnackbar Snackbar
 
 <MudDialog>
     <DialogContent>
@@ -144,7 +147,23 @@
                 <!-- Kategorier -->
                 <MudItem xs="12">
                     <MudPaper Class="pa-3" Elevation="2">
-                        <MudText Typo="Typo.h6" Class="mb-3">Kategorier</MudText>
+                        <div class="d-flex justify-space-between align-center mb-3">
+                            <MudText Typo="Typo.h6">Kategorier</MudText>
+                            <MudStack Row="true" Spacing="1">
+                                <MudTooltip Text="Ändra kategori">
+                                    <MudIconButton Icon="@Icons.Material.Filled.Category" 
+                                                  Color="Color.Primary" 
+                                                  Size="Size.Small"
+                                                  OnClick="ChangeCategory" />
+                                </MudTooltip>
+                                <MudTooltip Text="Skapa regel från denna transaktion">
+                                    <MudIconButton Icon="@Icons.Material.Filled.AutoAwesome" 
+                                                  Color="Color.Secondary" 
+                                                  Size="Size.Small"
+                                                  OnClick="CreateRuleFromTransaction" />
+                                </MudTooltip>
+                            </MudStack>
+                        </div>
                         @if (Transaction.TransactionCategories.Any())
                         {
                             <MudStack Row="true" Spacing="2" Wrap="Wrap.Wrap">
@@ -412,6 +431,68 @@
             "Scanned" => "Skannat",
             _ => receiptType
         };
+    }
+
+    private async Task ChangeCategory()
+    {
+        if (Transaction == null) return;
+
+        var parameters = new DialogParameters<QuickCategoryChangeDialog>
+        {
+            { x => x.Transaction, Transaction }
+        };
+
+        var options = new DialogOptions 
+        { 
+            MaxWidth = MaxWidth.Small, 
+            FullWidth = true,
+            CloseButton = true,
+            CloseOnEscapeKey = true
+        };
+
+        var dialog = await DialogService.ShowAsync<QuickCategoryChangeDialog>("Ändra kategori", parameters, options);
+        var result = await dialog.Result;
+        
+        if (result is not null && !result.Canceled)
+        {
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+    }
+
+    private async Task CreateRuleFromTransaction()
+    {
+        if (Transaction == null) return;
+
+        // Use the transaction description or payee as the initial pattern
+        var initialPattern = !string.IsNullOrWhiteSpace(Transaction.Payee) 
+            ? Transaction.Payee 
+            : Transaction.Description;
+        
+        // Get the current category if any
+        int? currentCategoryId = Transaction.TransactionCategories.FirstOrDefault()?.CategoryId;
+
+        var parameters = new DialogParameters<CreateRuleDialog>
+        {
+            { x => x.InitialPattern, initialPattern },
+            { x => x.InitialPayee, Transaction.Payee },
+            { x => x.InitialCategoryId, currentCategoryId }
+        };
+
+        var options = new DialogOptions 
+        { 
+            MaxWidth = MaxWidth.Medium, 
+            FullWidth = true,
+            CloseButton = true,
+            CloseOnEscapeKey = true
+        };
+
+        var dialog = await DialogService.ShowAsync<CreateRuleDialog>("Skapa kategoriseringsregel", parameters, options);
+        var result = await dialog.Result;
+        
+        if (result is not null && !result.Canceled)
+        {
+            Snackbar.Add("Regel skapad! Framtida liknande transaktioner kategoriseras automatiskt.", Severity.Success);
+        }
     }
 
     private async Task EditTransaction()
