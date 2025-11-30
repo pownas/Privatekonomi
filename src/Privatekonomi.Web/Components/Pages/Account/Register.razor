@@ -95,8 +95,23 @@
     {
         "empty" => "E-post och lösenord krävs.",
         "passwordmismatch" => "Lösenorden matchar inte.",
-        "passwordtooshort" => "Lösenordet måste vara minst 6 tecken.",
-        "create" => $"Kunde inte skapa konto: {Details ?? "Okänt fel"}",
+        "create" => GetCreateErrorMessage(),
         _ => null
     };
+
+    private string GetCreateErrorMessage()
+    {
+        if (string.IsNullOrEmpty(Details))
+            return "Kunde inte skapa konto: Okänt fel";
+        
+        // Translate common Identity error codes to Swedish
+        return Details switch
+        {
+            var d when d.Contains("PasswordTooShort") => "Lösenordet måste vara minst 6 tecken.",
+            var d when d.Contains("DuplicateUserName") => "E-postadressen är redan registrerad.",
+            var d when d.Contains("DuplicateEmail") => "E-postadressen är redan registrerad.",
+            var d when d.Contains("InvalidEmail") => "Ogiltig e-postadress.",
+            _ => $"Kunde inte skapa konto: {Details}"
+        };
+    }
 }

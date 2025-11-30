@@ -358,11 +358,6 @@ app.MapPost("/Account/PerformRegister", async (
         return Results.Redirect("/Account/Register?error=passwordmismatch");
     }
 
-    if (password.Length < 6)
-    {
-        return Results.Redirect("/Account/Register?error=passwordtooshort");
-    }
-
     var user = new ApplicationUser
     {
         UserName = email,
@@ -388,23 +383,16 @@ app.MapPost("/Account/PerformRegister", async (
     }
 });
 
-app.MapPost("/Account/PerformLogout", async (
-    SignInManager<ApplicationUser> signInManager,
-    ILogger<Program> logger) =>
+// Local function for logout logic
+async Task<IResult> PerformLogoutAsync(SignInManager<ApplicationUser> signInManager, ILogger<Program> logger)
 {
     await signInManager.SignOutAsync();
     logger.LogInformation("User logged out.");
     return Results.Redirect("/Account/Login");
-});
+}
 
-app.MapGet("/Account/PerformLogout", async (
-    SignInManager<ApplicationUser> signInManager,
-    ILogger<Program> logger) =>
-{
-    await signInManager.SignOutAsync();
-    logger.LogInformation("User logged out.");
-    return Results.Redirect("/Account/Login");
-});
+app.MapPost("/Account/PerformLogout", PerformLogoutAsync);
+app.MapGet("/Account/PerformLogout", PerformLogoutAsync);
 
 // Map SignalR hubs
 app.MapHub<Privatekonomi.Web.Hubs.BudgetAlertHub>("/hubs/budgetalert");

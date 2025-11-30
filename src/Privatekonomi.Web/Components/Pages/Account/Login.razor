@@ -38,7 +38,10 @@
                           autocomplete="current-password"
                           Required="true" />
             
-            <MudCheckBox Name="RememberMe" @bind-Value="RememberMe" Label="Kom ihåg mig" Class="mb-4" />
+            <div class="mb-4">
+                <input type="hidden" name="RememberMe" value="@(RememberMe ? "true" : "false")" />
+                <MudCheckBox @bind-Value="RememberMe" Label="Kom ihåg mig" />
+            </div>
             
             <MudButton ButtonType="ButtonType.Submit" 
                        Variant="Variant.Filled" 
