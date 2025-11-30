@@ -308,4 +308,138 @@ public class TransactionsControllerTests
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
+
+    [Fact]
+    public async Task QuickCategorize_ValidRequest_ReturnsOkAndCategorizes()
+    {
+        // Arrange
+        var factory = CreateFactory("Test_QuickCategorize_" + Guid.NewGuid());
+        var client = factory.CreateClient();
+        
+        using var scope = factory.Services.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<PrivatekonomyContext>();
+
+        // Create a category
+        var category = new Category { Name = "Matvaror", Color = "#4CAF50" };
+        context.Categories.Add(category);
+        await context.SaveChangesAsync();
+
+        // Create transaction
+        var transaction = await CreateTestTransactionAsync(factory.Services);
+
+        var request = new QuickCategorizeRequest
+        {
+            CategoryId = category.CategoryId,
+            CreateRule = false
+        };
+
+        // Act
+        var response = await client.PostAsJsonAsync(
+            $"/api/transactions/{transaction.TransactionId}/categorize",
+            request);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var result = await response.Content.ReadFromJsonAsync<QuickCategorizeResponse>();
+        Assert.NotNull(result);
+        Assert.NotNull(result.Transaction);
+        Assert.Null(result.CreatedRule);
+    }
+
+    [Fact]
+    public async Task QuickCategorize_WithCreateRule_CreatesRuleAndCategorizes()
+    {
+        // Arrange
+        var factory = CreateFactory("Test_QuickCategorize_Rule_" + Guid.NewGuid());
+        var client = factory.CreateClient();
+        
+        using var scope = factory.Services.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<PrivatekonomyContext>();
+
+        // Create a category
+        var category = new Category { Name = "Transport", Color = "#2196F3" };
+        context.Categories.Add(category);
+        await context.SaveChangesAsync();
+
+        // Create transaction
+        var transaction = await CreateTestTransactionAsync(factory.Services);
+
+        var request = new QuickCategorizeRequest
+        {
+            CategoryId = category.CategoryId,
+            CreateRule = true,
+            RulePattern = "Test Payee"
+        };
+
+        // Act
+        var response = await client.PostAsJsonAsync(
+            $"/api/transactions/{transaction.TransactionId}/categorize",
+            request);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var result = await response.Content.ReadFromJsonAsync<QuickCategorizeResponse>();
+        Assert.NotNull(result);
+        Assert.NotNull(result.Transaction);
+        Assert.NotNull(result.CreatedRule);
+        Assert.Equal("Test Payee", result.CreatedRule!.Pattern);
+        Assert.Equal(category.CategoryId, result.CreatedRule.CategoryId);
+    }
+
+    [Fact]
+    public async Task QuickCategorize_TransactionNotFound_ReturnsNotFound()
+    {
+        // Arrange
+        var factory = CreateFactory("Test_QuickCategorize_NotFound_" + Guid.NewGuid());
+        var client = factory.CreateClient();
+        
+        using var scope = factory.Services.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<PrivatekonomyContext>();
+
+        // Create a category
+        var category = new Category { Name = "Underhållning", Color = "#9C27B0" };
+        context.Categories.Add(category);
+        await context.SaveChangesAsync();
+
+        var request = new QuickCategorizeRequest
+        {
+            CategoryId = category.CategoryId,
+            CreateRule = false
+        };
+
+        // Act
+        var response = await client.PostAsJsonAsync(
+            "/api/transactions/999999/categorize", // Non-existent ID
+            request);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task QuickCategorize_CategoryNotFound_ReturnsNotFound()
+    {
+        // Arrange
+        var factory = CreateFactory("Test_QuickCategorize_CategoryNotFound_" + Guid.NewGuid());
+        var client = factory.CreateClient();
+        
+        // Create transaction
+        var transaction = await CreateTestTransactionAsync(factory.Services);
+
+        var request = new QuickCategorizeRequest
+        {
+            CategoryId = 999999, // Non-existent category
+            CreateRule = false
+        };
+
+        // Act
+        var response = await client.PostAsJsonAsync(
+            $"/api/transactions/{transaction.TransactionId}/categorize",
+            request);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
 }

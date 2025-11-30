@@ -1,0 +1,237 @@
+@using Privatekonomi.Core.Models
+@using Privatekonomi.Core.Services
+@inject ICategoryService CategoryService
+@inject ICategoryRuleService CategoryRuleService
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.AutoAwesome" Class="mr-2" />
+            Skapa Kategoriseringsregel
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudAlert Severity="Severity.Info" Dense="true" Class="mb-4">
+            Skapa en regel baserad på transaktionen "<strong>@Transaction?.Description</strong>" för att automatiskt kategorisera liknande transaktioner.
+        </MudAlert>
+
+        @if (_loading)
+        {
+            <div class="d-flex justify-center pa-4">
+                <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+            </div>
+        }
+        else
+        {
+            <MudGrid>
+                <MudItem xs="12">
+                    <MudTextField @bind-Value="_pattern" 
+                                  Label="Mönster" 
+                                  Variant="Variant.Outlined" 
+                                  Required="true"
+                                  HelperText="Text att matcha mot (t.ex. 'ICA', 'Spotify')"
+                                  MaxLength="500" />
+                </MudItem>
+                
+                <MudItem xs="12" md="6">
+                    <MudSelect @bind-Value="_matchType" 
+                              Label="Matchningstyp" 
+                              Variant="Variant.Outlined">
+                        <MudSelectItem Value="@PatternMatchType.Contains">Innehåller</MudSelectItem>
+                        <MudSelectItem Value="@PatternMatchType.Exact">Exakt matchning</MudSelectItem>
+                        <MudSelectItem Value="@PatternMatchType.StartsWith">Börjar med</MudSelectItem>
+                        <MudSelectItem Value="@PatternMatchType.EndsWith">Slutar med</MudSelectItem>
+                        <MudSelectItem Value="@PatternMatchType.Regex">Reguljärt uttryck (Regex)</MudSelectItem>
+                    </MudSelect>
+                </MudItem>
+                
+                <MudItem xs="12" md="6">
+                    <MudSelect @bind-Value="_field" 
+                              Label="Fält att matcha" 
+                              Variant="Variant.Outlined">
+                        <MudSelectItem Value="@MatchField.Both">Beskrivning och Betalningsmottagare</MudSelectItem>
+                        <MudSelectItem Value="@MatchField.Description">Endast Beskrivning</MudSelectItem>
+                        <MudSelectItem Value="@MatchField.Payee">Endast Betalningsmottagare</MudSelectItem>
+                    </MudSelect>
+                </MudItem>
+                
+                <MudItem xs="12">
+                    <MudText Typo="Typo.subtitle2" Class="mb-2">Kategori:</MudText>
+                    <div class="d-flex flex-wrap gap-2" style="max-height: 200px; overflow-y: auto;">
+                        @foreach (var category in _categories.OrderBy(c => c.Name))
+                        {
+                            var isSelected = _selectedCategoryId == category.CategoryId;
+                            <MudChip T="string" 
+                                     Color="@(isSelected ? Color.Primary : Color.Default)"
+                                     Variant="@(isSelected ? Variant.Filled : Variant.Outlined)"
+                                     OnClick="@(() => _selectedCategoryId = category.CategoryId)"
+                                     Style="@($"border-color: {category.Color}; {(isSelected ? $"background-color: {category.Color}; color: white;" : "")}")">
+                                <MudIcon Icon="@Icons.Material.Filled.Circle" Style="@($"color: {category.Color};")" Size="Size.Small" Class="mr-1" />
+                                @category.Name
+                            </MudChip>
+                        }
+                    </div>
+                </MudItem>
+                
+                <MudItem xs="12" md="4">
+                    <MudNumericField @bind-Value="_priority" 
+                                    Label="Prioritet" 
+                                    Variant="Variant.Outlined"
+                                    HelperText="Högre nummer = högre prioritet" />
+                </MudItem>
+                
+                <MudItem xs="12" md="4">
+                    <MudSwitch @bind-Value="_isActive" 
+                              Label="Aktiv" 
+                              Color="Color.Primary" />
+                </MudItem>
+                
+                <MudItem xs="12" md="4">
+                    <MudSwitch @bind-Value="_caseSensitive" 
+                              Label="Skiftlägeskänslig" 
+                              Color="Color.Primary" />
+                </MudItem>
+                
+                <MudItem xs="12">
+                    <MudTextField @bind-Value="_description" 
+                                  Label="Beskrivning (valfritt)" 
+                                  Variant="Variant.Outlined"
+                                  Lines="2"
+                                  HelperText="En beskrivning av regeln"
+                                  MaxLength="500" />
+                </MudItem>
+            </MudGrid>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel" Variant="Variant.Text">Avbryt</MudButton>
+        <MudButton OnClick="Save" 
+                   Color="Color.Primary" 
+                   Variant="Variant.Filled"
+                   Disabled="@(_saving || string.IsNullOrWhiteSpace(_pattern) || !_selectedCategoryId.HasValue)">
+            @if (_saving)
+            {
+                <MudProgressCircular Class="mr-2" Size="Size.Small" Indeterminate="true" />
+                <span>Sparar...</span>
+            }
+            else
+            {
+                <span>Skapa Regel</span>
+            }
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    public required IMudDialogInstance MudDialog { get; set; }
+
+    [Parameter]
+    public Transaction? Transaction { get; set; }
+
+    private bool _loading = true;
+    private bool _saving = false;
+    private List<Category> _categories = new();
+    
+    // Form fields
+    private string _pattern = string.Empty;
+    private PatternMatchType _matchType = PatternMatchType.Contains;
+    private MatchField _field = MatchField.Both;
+    private int? _selectedCategoryId;
+    private int _priority = 50;
+    private bool _isActive = true;
+    private bool _caseSensitive = false;
+    private string _description = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCategories();
+        
+        // Initialize pattern from transaction
+        if (Transaction != null)
+        {
+            _pattern = Transaction.Description;
+            _description = $"Skapad från transaktion: {Transaction.Description}";
+            
+            // Pre-select the category if transaction already has one
+            if (Transaction.TransactionCategories?.Any() == true)
+            {
+                _selectedCategoryId = Transaction.TransactionCategories.First().CategoryId;
+            }
+        }
+    }
+
+    private async Task LoadCategories()
+    {
+        _loading = true;
+        try
+        {
+            _categories = (await CategoryService.GetAllCategoriesAsync()).ToList();
+            
+            // If no category selected, try to select the first one
+            if (!_selectedCategoryId.HasValue && _categories.Any())
+            {
+                _selectedCategoryId = _categories.First().CategoryId;
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Fel vid laddning av kategorier: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+
+    private async Task Save()
+    {
+        if (string.IsNullOrWhiteSpace(_pattern))
+        {
+            Snackbar.Add("Mönster är obligatoriskt", Severity.Error);
+            return;
+        }
+
+        if (!_selectedCategoryId.HasValue)
+        {
+            Snackbar.Add("Kategori måste väljas", Severity.Error);
+            return;
+        }
+
+        try
+        {
+            _saving = true;
+
+            var rule = new CategoryRule
+            {
+                Pattern = _pattern,
+                MatchType = _matchType,
+                CategoryId = _selectedCategoryId.Value,
+                Field = _field,
+                Priority = _priority,
+                IsActive = _isActive,
+                CaseSensitive = _caseSensitive,
+                Description = string.IsNullOrWhiteSpace(_description) ? null : _description
+            };
+
+            var createdRule = await CategoryRuleService.CreateRuleAsync(rule);
+            
+            Snackbar.Add("Kategoriseringsregel skapad!", Severity.Success);
+            MudDialog.Close(DialogResult.Ok(createdRule));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Fel vid skapande av regel: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+}
