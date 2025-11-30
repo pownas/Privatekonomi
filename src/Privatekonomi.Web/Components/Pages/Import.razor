@@ -3,11 +3,13 @@
 @rendermode InteractiveServer
 @inject ISnackbar Snackbar
 @inject NavigationManager Navigation
-@inject HttpClient Http
+@inject ICsvImportService CsvImportService
 @inject IInvestmentService InvestmentService
 @inject IBankSourceService BankSourceService
+@inject ICurrentUserService CurrentUserService
 @using Privatekonomi.Web.Services
 @using System.Globalization
+@using Privatekonomi.Core.Models
 
 <PageTitle>Importera - Privatekonomi</PageTitle>
 
@@ -332,7 +334,7 @@ else if (_currentStep == ImportStep.Complete)
     private IBrowserFile? _selectedFile;
     private bool _uploading = false;
     private bool _confirming = false;
-    private string _fileId = string.Empty;
+    private CsvImportResult? _previewResult;
     private List<PreviewTransaction>? _previewData;
     private SummaryData? _summary;
     private ImportResultData? _importResult;
@@ -392,7 +394,7 @@ else if (_currentStep == ImportStep.Complete)
         _currentStep = ImportStep.FileSelection;
         _previewData = null;
         _summary = null;
-        _fileId = string.Empty;
+        _previewResult = null;
     }
 
     private void OnFileSelected(IBrowserFile file)
@@ -448,42 +450,46 @@ else if (_currentStep == ImportStep.Complete)
 
         try
         {
+            const long maxFileSize = 10 * 1024 * 1024; // 10 MB
+            
             // Validate file size
-            if (_selectedFile.Size > 10 * 1024 * 1024)
+            if (_selectedFile.Size > maxFileSize)
             {
                 Snackbar.Add("Filen är för stor. Max storlek är 10 MB.", Severity.Error);
                 return;
             }
 
-            // Create multipart form data
-            using var content = new MultipartFormDataContent();
-            var fileContent = new StreamContent(_selectedFile.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024));
-            fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("text/csv");
-            content.Add(fileContent, "file", _selectedFile.Name);
-            content.Add(new StringContent(_selectedBank), "bankName");
-
-            // Upload to API
-            var response = await Http.PostAsync("api/import/upload", content);
+            // Use CsvImportService directly instead of HTTP API call
+            using var stream = _selectedFile.OpenReadStream(maxFileSize);
+            _previewResult = await CsvImportService.PreviewCsvAsync(stream, _selectedBank);
             
-            if (response.IsSuccessStatusCode)
+            if (_previewResult.Success)
             {
-                var result = await response.Content.ReadFromJsonAsync<PreviewResponse>();
+                _previewData = _previewResult.Transactions.Take(5).Select(t => new PreviewTransaction
+                {
+                    Date = t.Date.ToString("yyyy-MM-dd"),
+                    Amount = t.Amount,
+                    Description = t.Description,
+                    IsIncome = t.IsIncome
+                }).ToList();
                 
-                if (result != null && result.Success)
+                _summary = new SummaryData
                 {
-                    _fileId = result.FileId;
-                    _previewData = result.Preview;
-                    _summary = result.Summary;
-                    _currentStep = ImportStep.Preview;
-                }
-                else
-                {
-                    Snackbar.Add("Kunde inte läsa CSV-filen. Kontrollera formatet.", Severity.Error);
-                }
+                    TotalRows = _previewResult.TotalRows,
+                    ValidTransactions = _previewResult.ImportedCount,
+                    Duplicates = _previewResult.DuplicateCount,
+                    Errors = _previewResult.ErrorCount,
+                    TotalAmount = _previewResult.Summary.TotalAmount,
+                    IncomeAmount = _previewResult.Summary.IncomeAmount,
+                    ExpenseAmount = _previewResult.Summary.ExpenseAmount
+                };
+                _currentStep = ImportStep.Preview;
             }
             else
             {
-                var errorMessage = await ApiErrorHandler.GetErrorMessageAsync(response);
+                var errorMessage = _previewResult.Errors.Any() 
+                    ? _previewResult.Errors.First().ErrorMessage 
+                    : "Kunde inte läsa CSV-filen. Kontrollera formatet.";
                 Snackbar.Add(errorMessage, Severity.Error);
             }
         }
@@ -499,37 +505,44 @@ else if (_currentStep == ImportStep.Complete)
 
     private async Task ConfirmImport()
     {
+        if (_selectedFile == null) return;
+        
         _confirming = true;
 
         try
         {
-            var request = new ConfirmImportRequest
-            {
-                FileId = _fileId,
-                Bank = _selectedBank,
-                SkipDuplicates = true
-            };
-
-            var response = await Http.PostAsJsonAsync("api/import/confirm", request);
+            const long maxFileSize = 10 * 1024 * 1024; // 10 MB
             
-            if (response.IsSuccessStatusCode)
+            // Get current user ID
+            var userId = CurrentUserService.UserId;
+            
+            // Re-read the file and import using CsvImportService directly
+            using var stream = _selectedFile.OpenReadStream(maxFileSize);
+            (CsvImportResult result, ImportJob importJob) = await CsvImportService.ImportWithJobAsync(
+                stream, 
+                _selectedBank, 
+                _selectedFile.Name, 
+                _selectedFile.Size,
+                userId,
+                skipDuplicates: true);
+            
+            if (result.Success)
             {
-                var result = await response.Content.ReadFromJsonAsync<ImportResultData>();
-                
-                if (result != null && result.Success)
+                _importResult = new ImportResultData
                 {
-                    _importResult = result;
-                    _currentStep = ImportStep.Complete;
-                    Snackbar.Add($"{result.Imported} transaktioner importerade!", Severity.Success);
-                }
-                else
-                {
-                    Snackbar.Add("Import misslyckades", Severity.Error);
-                }
+                    Success = true,
+                    Imported = result.ImportedCount,
+                    Duplicates = result.DuplicateCount,
+                    Errors = result.ErrorCount
+                };
+                _currentStep = ImportStep.Complete;
+                Snackbar.Add($"{result.ImportedCount} transaktioner importerade!", Severity.Success);
             }
             else
             {
-                var errorMessage = await ApiErrorHandler.GetErrorMessageAsync(response);
+                var errorMessage = result.Errors.Any() 
+                    ? result.Errors.First().ErrorMessage 
+                    : "Import misslyckades";
                 Snackbar.Add(errorMessage, Severity.Error);
             }
         }
@@ -555,7 +568,7 @@ else if (_currentStep == ImportStep.Complete)
         _summary = null;
         _importResult = null;
         _investmentImportResult = null;
-        _fileId = string.Empty;
+        _previewResult = null;
     }
 
     private void GoToTransactions()
@@ -637,14 +650,6 @@ else if (_currentStep == ImportStep.Complete)
         public bool IsIncome { get; set; }
     }
 
-    private class PreviewResponse
-    {
-        public bool Success { get; set; }
-        public string FileId { get; set; } = string.Empty;
-        public List<PreviewTransaction> Preview { get; set; } = new();
-        public SummaryData Summary { get; set; } = new();
-    }
-
     private class SummaryData
     {
         public int TotalRows { get; set; }
@@ -654,13 +659,6 @@ else if (_currentStep == ImportStep.Complete)
         public decimal TotalAmount { get; set; }
         public decimal IncomeAmount { get; set; }
         public decimal ExpenseAmount { get; set; }
-    }
-
-    private class ConfirmImportRequest
-    {
-        public string FileId { get; set; } = string.Empty;
-        public string Bank { get; set; } = string.Empty;
-        public bool SkipDuplicates { get; set; } = true;
     }
 
     private class ImportResultData
