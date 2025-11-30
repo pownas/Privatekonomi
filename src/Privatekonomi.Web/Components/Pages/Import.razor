@@ -326,6 +326,8 @@ else if (_currentStep == ImportStep.Complete)
         Investments
     }
 
+    private const long MaxFileSize = 10 * 1024 * 1024; // 10 MB
+    
     private ImportStep _currentStep = ImportStep.TypeSelection;
     private ImportType _importType = ImportType.None;
     
@@ -404,11 +406,9 @@ else if (_currentStep == ImportStep.Complete)
 
     private async Task ImportInvestmentFile()
     {
-        if (_selectedFile == null) return;
+        if (_selectedFile is null) return;
 
-        const long maxFileSize = 10 * 1024 * 1024; // 10 MB
-
-        if (_selectedFile.Size > maxFileSize)
+        if (_selectedFile.Size > MaxFileSize)
         {
             Snackbar.Add("Filen är för stor. Max storlek är 10 MB.", Severity.Error);
             return;
@@ -418,7 +418,7 @@ else if (_currentStep == ImportStep.Complete)
 
         try
         {
-            using var stream = _selectedFile.OpenReadStream(maxFileSize);
+            using var stream = _selectedFile.OpenReadStream(MaxFileSize);
             _investmentImportResult = await InvestmentService.ImportFromCsvAsync(stream, _selectedBankId);
 
             if (_investmentImportResult.Success)
@@ -444,23 +444,21 @@ else if (_currentStep == ImportStep.Complete)
 
     private async Task UploadAndPreview()
     {
-        if (_selectedFile == null) return;
+        if (_selectedFile is null) return;
 
         _uploading = true;
 
         try
         {
-            const long maxFileSize = 10 * 1024 * 1024; // 10 MB
-            
             // Validate file size
-            if (_selectedFile.Size > maxFileSize)
+            if (_selectedFile.Size > MaxFileSize)
             {
                 Snackbar.Add("Filen är för stor. Max storlek är 10 MB.", Severity.Error);
                 return;
             }
 
             // Use CsvImportService directly instead of HTTP API call
-            using var stream = _selectedFile.OpenReadStream(maxFileSize);
+            using var stream = _selectedFile.OpenReadStream(MaxFileSize);
             _previewResult = await CsvImportService.PreviewCsvAsync(stream, _selectedBank);
             
             if (_previewResult.Success)
@@ -505,19 +503,17 @@ else if (_currentStep == ImportStep.Complete)
 
     private async Task ConfirmImport()
     {
-        if (_selectedFile == null) return;
+        if (_selectedFile is null) return;
         
         _confirming = true;
 
         try
         {
-            const long maxFileSize = 10 * 1024 * 1024; // 10 MB
-            
             // Get current user ID
             var userId = CurrentUserService.UserId;
             
             // Re-read the file and import using CsvImportService directly
-            using var stream = _selectedFile.OpenReadStream(maxFileSize);
+            using var stream = _selectedFile.OpenReadStream(MaxFileSize);
             (CsvImportResult result, ImportJob importJob) = await CsvImportService.ImportWithJobAsync(
                 stream, 
                 _selectedBank, 
