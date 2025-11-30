@@ -78,6 +78,64 @@ public interface IReportService
     /// Save report preferences for a user
     /// </summary>
     Task<ReportPreference> SaveReportPreferencesAsync(ReportPreference preferences);
+
+    /// <summary>
+    /// Get a historical overview of economic state at a specific date.
+    /// Used for "time travel" feature to view past economic status.
+    /// </summary>
+    /// <param name="asOfDate">The date to retrieve historical data for</param>
+    /// <param name="userId">Optional user ID filter</param>
+    /// <returns>Historical overview report for the specified date</returns>
+    Task<HistoricalOverviewReport> GetHistoricalOverviewAsync(DateTime asOfDate, string? userId = null);
+
+    /// <summary>
+    /// Get key dates where economic data changed significantly.
+    /// Used for timeline navigation suggestions.
+    /// </summary>
+    /// <param name="userId">Optional user ID filter</param>
+    /// <param name="limit">Maximum number of dates to return</param>
+    /// <returns>List of significant dates with brief descriptions</returns>
+    Task<List<TimelineKeyDate>> GetTimelineKeyDatesAsync(string? userId = null, int limit = 12);
+
+    /// <summary>
+    /// Get the date of the user's earliest financial activity (first transaction).
+    /// Used to show "your journey started" information.
+    /// </summary>
+    /// <param name="userId">Optional user ID filter</param>
+    /// <returns>The journey start info with earliest transaction date and total days tracked</returns>
+    Task<JourneyStartInfo?> GetJourneyStartInfoAsync(string? userId = null);
+}
+
+/// <summary>
+/// Information about when the user's financial journey started
+/// </summary>
+public class JourneyStartInfo
+{
+    /// <summary>
+    /// Date of the earliest recorded transaction
+    /// </summary>
+    public DateTime StartDate { get; set; }
+    
+    /// <summary>
+    /// Number of days since the journey started
+    /// </summary>
+    public int DaysTracked { get; set; }
+    
+    /// <summary>
+    /// Total number of transactions recorded
+    /// </summary>
+    public int TotalTransactions { get; set; }
+}
+
+/// <summary>
+/// Key date for timeline navigation
+/// </summary>
+public class TimelineKeyDate
+{
+    public DateTime Date { get; set; }
+    public string Description { get; set; } = string.Empty;
+    public string EventType { get; set; } = string.Empty; // "NetWorthPeak", "NetWorthLow", "MajorPurchase", "MonthEnd"
+    public decimal? NetWorth { get; set; }
 }
 
 public class CashFlowReport

@@ -1,0 +1,497 @@
+@page "/economy/timeline"
+@page "/timeline"
+@rendermode InteractiveServer
+@inject IReportService ReportService
+@inject ISnackbar Snackbar
+@inject NavigationManager Navigation
+
+<PageTitle>Ekonomisk Tidsresa - Privatekonomi</PageTitle>
+
+<div class="d-flex flex-column flex-md-row justify-space-between align-start align-md-center mb-4 gap-2">
+    <div>
+        <MudText Typo="Typo.h4">
+            <MudIcon Icon="@Icons.Material.Filled.History" Color="Color.Primary" Class="mr-2" aria-hidden="true" />
+            Ekonomisk Tidsresa
+        </MudText>
+        <MudText Typo="Typo.body2" Color="Color.Secondary">
+            Se hur din ekonomi såg ut vid ett specifikt datum i historien.
+        </MudText>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+        <MudButton Href="/"
+                   Variant="Variant.Outlined"
+                   Color="Color.Primary"
+                   StartIcon="@Icons.Material.Filled.Dashboard"
+                   Size="Size.Small">
+            Dashboard
+        </MudButton>
+        <MudButton Href="/economy/balance-sheet"
+                   Variant="Variant.Outlined"
+                   Color="Color.Primary"
+                   StartIcon="@Icons.Material.Filled.AccountBalanceWallet"
+                   Size="Size.Small">
+            Balansräkning
+        </MudButton>
+    </div>
+</div>
+
+<MudPaper Class="pa-4 mb-4" Elevation="2">
+    <MudGrid>
+        <MudItem xs="12" md="6">
+            <MudDatePicker Label="Välj datum att resa till"
+                           @bind-Date="_selectedDate"
+                           MaxDate="@DateTime.Today"
+                           DateFormat="yyyy-MM-dd"
+                           Variant="Variant.Outlined"
+                           AdornmentIcon="@Icons.Material.Filled.CalendarMonth"
+                           Margin="Margin.Dense" />
+        </MudItem>
+        <MudItem xs="12" md="6" Class="d-flex align-center gap-2">
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.History"
+                       OnClick="@LoadHistoricalData"
+                       Disabled="@(!_selectedDate.HasValue || _loading)">
+                Visa Historik
+            </MudButton>
+            <MudButtonGroup Color="Color.Default" Variant="Variant.Outlined" Size="Size.Small">
+                <MudButton OnClick="@(() => SetQuickDate(1))">1 mån</MudButton>
+                <MudButton OnClick="@(() => SetQuickDate(3))">3 mån</MudButton>
+                <MudButton OnClick="@(() => SetQuickDate(6))">6 mån</MudButton>
+                <MudButton OnClick="@(() => SetQuickDate(12))">1 år</MudButton>
+                <MudButton OnClick="@(() => SetQuickDate(24))">2 år</MudButton>
+            </MudButtonGroup>
+        </MudItem>
+    </MudGrid>
+</MudPaper>
+
+@if (_keyDates.Any())
+{
+    <MudPaper Class="pa-4 mb-4" Elevation="1">
+        <MudText Typo="Typo.subtitle1" Class="mb-2">
+            <MudIcon Icon="@Icons.Material.Filled.Timeline" Size="Size.Small" Class="mr-1" />
+            Viktiga Datum
+        </MudText>
+        <div class="d-flex flex-wrap gap-2">
+            @foreach (var keyDate in _keyDates.Take(8))
+            {
+                <MudChip T="string"
+                         Color="@GetChipColor(keyDate.EventType)"
+                         Variant="Variant.Outlined"
+                         Size="Size.Small"
+                         OnClick="@(() => SelectKeyDate(keyDate.Date))">
+                    @keyDate.Date.ToString("yyyy-MM-dd") - @keyDate.Description
+                </MudChip>
+            }
+        </div>
+    </MudPaper>
+}
+
+@if (_journeyStart != null)
+{
+    <MudPaper Class="pa-4 mb-4" Elevation="1" Style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+        <div class="d-flex align-center gap-3">
+            <MudAvatar Color="Color.Surface" Size="Size.Large">
+                <MudIcon Icon="@Icons.Material.Filled.RocketLaunch" Color="Color.Primary" />
+            </MudAvatar>
+            <div>
+                <MudText Typo="Typo.h6" Style="color: white;">
+                    Din ekonomiska resa började @_journeyStart.StartDate.ToString("d MMMM yyyy", _culture)
+                </MudText>
+                <MudText Typo="Typo.body2" Style="color: rgba(255,255,255,0.8);">
+                    @_journeyStart.DaysTracked dagar av ekonomisk historik • @_journeyStart.TotalTransactions transaktioner registrerade
+                </MudText>
+            </div>
+            <MudSpacer />
+            <MudButton Variant="Variant.Outlined" 
+                       Style="color: white; border-color: white;"
+                       Size="Size.Small"
+                       OnClick="@(() => GoToJourneyStart())">
+                Resa till start
+            </MudButton>
+        </div>
+    </MudPaper>
+}
+
+@if (_loading)
+{
+    <div class="d-flex flex-column align-center pa-6">
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Large" />
+        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-4">Laddar historisk data...</MudText>
+    </div>
+}
+else if (_report != null)
+{
+    <!-- Date Banner -->
+    <MudAlert Severity="Severity.Info" Class="mb-4">
+        <MudIcon Icon="@Icons.Material.Filled.History" Class="mr-2" />
+        Visar ekonomisk ställning per @_report.AsOfDate.ToString("d MMMM yyyy", new System.Globalization.CultureInfo("sv-SE"))
+        @if (_report.Comparison != null && _report.Comparison.DaysElapsed > 0)
+        {
+            <text> (@_report.Comparison.DaysElapsed dagar sedan)</text>
+        }
+    </MudAlert>
+
+    <!-- Net Worth Summary -->
+    <MudPaper Class="pa-4 mb-4" Elevation="3">
+        <MudGrid>
+            <MudItem xs="12" md="4" Class="text-center">
+                <MudText Typo="Typo.h6" Color="Color.Secondary">Nettoförmögenhet</MudText>
+                <MudText Typo="Typo.h3" Color="@(_report.NetWorth >= 0 ? Color.Success : Color.Error)" Class="font-weight-bold">
+                    @_report.NetWorth.ToString("C0", _culture)
+                </MudText>
+                @if (_report.Comparison != null)
+                {
+                    <MudText Typo="Typo.body2" Color="@GetChangeColor(_report.Comparison.NetWorthChange)">
+                        @(_report.Comparison.NetWorthChange > 0 ? "+" : "")@_report.Comparison.NetWorthChange.ToString("C0", _culture)
+                        (@_report.Comparison.NetWorthChangePercent.ToString("+0.0%;-0.0%;0%")) sedan dess
+                    </MudText>
+                }
+            </MudItem>
+            <MudItem xs="12" md="4" Class="text-center">
+                <MudText Typo="Typo.h6" Color="Color.Success">Tillgångar</MudText>
+                <MudText Typo="Typo.h4">@_report.TotalAssets.ToString("C0", _culture)</MudText>
+                @if (_report.Comparison != null)
+                {
+                    <MudText Typo="Typo.body2" Color="@GetChangeColor(_report.Comparison.TotalAssetsChange)">
+                        @(_report.Comparison.TotalAssetsChange > 0 ? "+" : "")@_report.Comparison.TotalAssetsChange.ToString("C0", _culture)
+                    </MudText>
+                }
+            </MudItem>
+            <MudItem xs="12" md="4" Class="text-center">
+                <MudText Typo="Typo.h6" Color="Color.Error">Skulder</MudText>
+                <MudText Typo="Typo.h4">@_report.TotalLiabilities.ToString("C0", _culture)</MudText>
+                @if (_report.Comparison != null)
+                {
+                    <MudText Typo="Typo.body2" Color="@GetChangeColor(-_report.Comparison.TotalLiabilitiesChange)">
+                        @(_report.Comparison.TotalLiabilitiesChange > 0 ? "+" : "")@_report.Comparison.TotalLiabilitiesChange.ToString("C0", _culture)
+                    </MudText>
+                }
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+
+    <!-- Monthly Cash Flow -->
+    <MudPaper Class="pa-4 mb-4" Elevation="2">
+        <MudText Typo="Typo.h6" Class="mb-3">
+            <MudIcon Icon="@Icons.Material.Filled.TrendingUp" Class="mr-1" />
+            Kassaflöde för @_report.AsOfDate.ToString("MMMM yyyy", _culture)
+        </MudText>
+        <MudGrid>
+            <MudItem xs="12" md="4">
+                <div class="d-flex align-center gap-2">
+                    <MudAvatar Color="Color.Success" Size="Size.Small">
+                        <MudIcon Icon="@Icons.Material.Filled.Add" Size="Size.Small" />
+                    </MudAvatar>
+                    <div>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">Inkomster</MudText>
+                        <MudText Typo="Typo.h6">@_report.MonthlyIncome.ToString("C0", _culture)</MudText>
+                    </div>
+                </div>
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <div class="d-flex align-center gap-2">
+                    <MudAvatar Color="Color.Error" Size="Size.Small">
+                        <MudIcon Icon="@Icons.Material.Filled.Remove" Size="Size.Small" />
+                    </MudAvatar>
+                    <div>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">Utgifter</MudText>
+                        <MudText Typo="Typo.h6">@_report.MonthlyExpenses.ToString("C0", _culture)</MudText>
+                    </div>
+                </div>
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <div class="d-flex align-center gap-2">
+                    <MudAvatar Color="@(_report.MonthlyNetFlow >= 0 ? Color.Success : Color.Error)" Size="Size.Small">
+                        <MudIcon Icon="@(_report.MonthlyNetFlow >= 0 ? Icons.Material.Filled.TrendingUp : Icons.Material.Filled.TrendingDown)" Size="Size.Small" />
+                    </MudAvatar>
+                    <div>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">Netto</MudText>
+                        <MudText Typo="Typo.h6" Color="@(_report.MonthlyNetFlow >= 0 ? Color.Success : Color.Error)">
+                            @_report.MonthlyNetFlow.ToString("C0", _culture)
+                        </MudText>
+                    </div>
+                </div>
+            </MudItem>
+        </MudGrid>
+        <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-2">
+            Baserat på @_report.TransactionCount transaktioner
+        </MudText>
+    </MudPaper>
+
+    <MudGrid>
+        <!-- Assets Column -->
+        <MudItem xs="12" md="6">
+            <MudText Typo="Typo.h5" Class="mb-3" Color="Color.Success">
+                <MudIcon Icon="@Icons.Material.Filled.TrendingUp" /> Tillgångar
+            </MudText>
+
+            <!-- Bank Accounts -->
+            @if (_report.Accounts.Any())
+            {
+                <MudPaper Class="pa-4 mb-3">
+                    <MudText Typo="Typo.h6" Class="mb-2">Bankkonton</MudText>
+                    <MudDivider Class="mb-2" />
+                    @foreach (var account in _report.Accounts)
+                    {
+                        <div class="d-flex justify-space-between mb-2">
+                            <div class="d-flex align-center gap-2">
+                                @if (!string.IsNullOrEmpty(account.Color))
+                                {
+                                    <div style="width: 8px; height: 8px; border-radius: 50%; background-color: @account.Color;"></div>
+                                }
+                                <div>
+                                    <MudText>@account.Name</MudText>
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">@GetAccountTypeLabel(account.AccountType)</MudText>
+                                </div>
+                            </div>
+                            <MudText Color="@(account.Balance >= 0 ? Color.Default : Color.Error)">
+                                @account.Balance.ToString("C0", _culture)
+                            </MudText>
+                        </div>
+                    }
+                    <MudDivider Class="my-2" />
+                    <div class="d-flex justify-space-between">
+                        <MudText Typo="Typo.subtitle1" Class="font-weight-bold">Totalt:</MudText>
+                        <MudText Typo="Typo.subtitle1" Class="font-weight-bold">@_report.TotalBankBalance.ToString("C0", _culture)</MudText>
+                    </div>
+                </MudPaper>
+            }
+
+            <!-- Investments -->
+            @if (_report.Investments.Any())
+            {
+                <MudPaper Class="pa-4 mb-3">
+                    <MudText Typo="Typo.h6" Class="mb-2">Investeringar</MudText>
+                    <MudDivider Class="mb-2" />
+                    @foreach (var investment in _report.Investments)
+                    {
+                        <div class="d-flex justify-space-between mb-2">
+                            <div>
+                                <MudText>@investment.Name</MudText>
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                    @investment.Type - @investment.Quantity st à @investment.PriceAtDate.ToString("N2") @investment.Currency
+                                </MudText>
+                            </div>
+                            <MudText>@investment.TotalValue.ToString("C0", _culture)</MudText>
+                        </div>
+                    }
+                    <MudDivider Class="my-2" />
+                    <div class="d-flex justify-space-between">
+                        <MudText Typo="Typo.subtitle1" Class="font-weight-bold">Totalt:</MudText>
+                        <MudText Typo="Typo.subtitle1" Class="font-weight-bold">@_report.TotalInvestments.ToString("C0", _culture)</MudText>
+                    </div>
+                </MudPaper>
+            }
+
+            <!-- Physical Assets -->
+            @if (_report.Assets.Any())
+            {
+                <MudPaper Class="pa-4 mb-3">
+                    <MudText Typo="Typo.h6" Class="mb-2">Fysiska Tillgångar</MudText>
+                    <MudDivider Class="mb-2" />
+                    @foreach (var asset in _report.Assets)
+                    {
+                        <div class="d-flex justify-space-between mb-2">
+                            <div>
+                                <MudText>@asset.Name</MudText>
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">@asset.Type</MudText>
+                            </div>
+                            <MudText>@asset.Value.ToString("C0", _culture)</MudText>
+                        </div>
+                    }
+                    <MudDivider Class="my-2" />
+                    <div class="d-flex justify-space-between">
+                        <MudText Typo="Typo.subtitle1" Class="font-weight-bold">Totalt:</MudText>
+                        <MudText Typo="Typo.subtitle1" Class="font-weight-bold">@_report.TotalPhysicalAssets.ToString("C0", _culture)</MudText>
+                    </div>
+                </MudPaper>
+            }
+
+            @if (!_report.Accounts.Any() && !_report.Investments.Any() && !_report.Assets.Any())
+            {
+                <MudPaper Class="pa-4 mb-3">
+                    <MudText Color="Color.Secondary">Inga tillgångar registrerade vid detta datum.</MudText>
+                </MudPaper>
+            }
+        </MudItem>
+
+        <!-- Liabilities Column -->
+        <MudItem xs="12" md="6">
+            <MudText Typo="Typo.h5" Class="mb-3" Color="Color.Error">
+                <MudIcon Icon="@Icons.Material.Filled.TrendingDown" /> Skulder
+            </MudText>
+
+            @if (_report.Loans.Any())
+            {
+                <MudPaper Class="pa-4 mb-3">
+                    <MudText Typo="Typo.h6" Class="mb-2">Lån</MudText>
+                    <MudDivider Class="mb-2" />
+                    @foreach (var loan in _report.Loans)
+                    {
+                        <div class="d-flex justify-space-between mb-2">
+                            <div>
+                                <MudText>@loan.Name</MudText>
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                    @loan.Type - @loan.InterestRate.ToString("0.00")% ränta
+                                </MudText>
+                            </div>
+                            <MudText Color="Color.Error">@loan.Balance.ToString("C0", _culture)</MudText>
+                        </div>
+                    }
+                    <MudDivider Class="my-2" />
+                    <div class="d-flex justify-space-between">
+                        <MudText Typo="Typo.subtitle1" Class="font-weight-bold">Totalt:</MudText>
+                        <MudText Typo="Typo.subtitle1" Class="font-weight-bold" Color="Color.Error">@_report.TotalLoans.ToString("C0", _culture)</MudText>
+                    </div>
+                </MudPaper>
+            }
+            else
+            {
+                <MudPaper Class="pa-4 mb-3">
+                    <div class="d-flex flex-column align-center">
+                        <MudIcon Icon="@Icons.Material.Filled.ThumbUp" Color="Color.Success" Size="Size.Large" />
+                        <MudText Color="Color.Secondary" Class="mt-2">Inga skulder vid detta datum</MudText>
+                    </div>
+                </MudPaper>
+            }
+        </MudItem>
+    </MudGrid>
+}
+else if (!_loading && !_selectedDate.HasValue)
+{
+    <MudPaper Class="pa-6" Elevation="1">
+        <div class="d-flex flex-column align-center">
+            <MudIcon Icon="@Icons.Material.Filled.History" Color="Color.Primary" Style="font-size: 4rem;" />
+            <MudText Typo="Typo.h5" Class="mt-4">Välj ett datum för att resa tillbaka i tiden</MudText>
+            <MudText Typo="Typo.body1" Color="Color.Secondary" Class="mt-2 text-center">
+                Välj ett historiskt datum för att se hur din ekonomi såg ut då.
+                Du kan se kontosaldon, nettoförmögenhet, investeringar och skulder
+                som de var vid det valda tillfället.
+            </MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-4">
+                Använd snabbknapparna ovan för att hoppa 1, 3, 6, 12 eller 24 månader bakåt i tiden.
+            </MudText>
+        </div>
+    </MudPaper>
+}
+
+@code {
+    private bool _loading = false;
+    private DateTime? _selectedDate;
+    private HistoricalOverviewReport? _report;
+    private List<TimelineKeyDate> _keyDates = new();
+    private JourneyStartInfo? _journeyStart;
+    private System.Globalization.CultureInfo _culture = new("sv-SE");
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadKeyDates();
+        await LoadJourneyStart();
+    }
+
+    private async Task LoadKeyDates()
+    {
+        try
+        {
+            _keyDates = await ReportService.GetTimelineKeyDatesAsync(limit: 12);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Kunde inte ladda viktiga datum: {ex.Message}", Severity.Warning);
+        }
+    }
+
+    private async Task LoadJourneyStart()
+    {
+        try
+        {
+            _journeyStart = await ReportService.GetJourneyStartInfoAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Kunde inte ladda resans startdatum: {ex.Message}", Severity.Warning);
+        }
+    }
+
+    private void GoToJourneyStart()
+    {
+        if (_journeyStart != null)
+        {
+            _selectedDate = _journeyStart.StartDate;
+            _ = LoadHistoricalData();
+        }
+    }
+
+    private async Task LoadHistoricalData()
+    {
+        if (!_selectedDate.HasValue)
+        {
+            Snackbar.Add("Välj ett datum först", Severity.Warning);
+            return;
+        }
+
+        _loading = true;
+        StateHasChanged();
+
+        try
+        {
+            _report = await ReportService.GetHistoricalOverviewAsync(_selectedDate.Value);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Kunde inte ladda historisk data: {ex.Message}", Severity.Error);
+            _report = null;
+        }
+        finally
+        {
+            _loading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void SetQuickDate(int monthsBack)
+    {
+        _selectedDate = DateTime.Today.AddMonths(-monthsBack);
+        _ = LoadHistoricalData();
+    }
+
+    private void SelectKeyDate(DateTime date)
+    {
+        _selectedDate = date;
+        _ = LoadHistoricalData();
+    }
+
+    private Color GetChipColor(string eventType)
+    {
+        return eventType switch
+        {
+            "NetWorthPeak" => Color.Success,
+            "NetWorthLow" => Color.Warning,
+            "MajorPurchase" => Color.Info,
+            _ => Color.Default
+        };
+    }
+
+    private Color GetChangeColor(decimal change)
+    {
+        if (change > 0) return Color.Success;
+        if (change < 0) return Color.Error;
+        return Color.Default;
+    }
+
+    private string GetAccountTypeLabel(string accountType)
+    {
+        return accountType.ToLowerInvariant() switch
+        {
+            "checking" => "Lönekonto",
+            "savings" => "Sparkonto",
+            "credit_card" => "Kreditkort",
+            "investment" => "Investeringskonto",
+            "cash" => "Kontanter",
+            "loan" => "Lån",
+            "pension" => "Pension",
+            _ => accountType
+        };
+    }
+}
