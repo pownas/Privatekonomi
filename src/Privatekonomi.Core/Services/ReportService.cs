@@ -2321,4 +2321,31 @@ public class ReportService : IReportService
             .Take(limit)
             .ToList();
     }
+
+    public async Task<JourneyStartInfo?> GetJourneyStartInfoAsync(string? userId = null)
+    {
+        var transactionsQuery = _context.Transactions.AsQueryable();
+        if (!string.IsNullOrEmpty(userId))
+        {
+            transactionsQuery = transactionsQuery.Where(t => t.UserId == userId);
+        }
+
+        var earliestTransaction = await transactionsQuery
+            .OrderBy(t => t.Date)
+            .FirstOrDefaultAsync();
+
+        if (earliestTransaction == null)
+        {
+            return null;
+        }
+
+        var totalTransactions = await transactionsQuery.CountAsync();
+
+        return new JourneyStartInfo
+        {
+            StartDate = earliestTransaction.Date,
+            DaysTracked = (int)(DateTime.Today - earliestTransaction.Date.Date).TotalDays,
+            TotalTransactions = totalTransactions
+        };
+    }
 }

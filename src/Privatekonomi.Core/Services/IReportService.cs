@@ -96,6 +96,35 @@ public interface IReportService
     /// <param name="limit">Maximum number of dates to return</param>
     /// <returns>List of significant dates with brief descriptions</returns>
     Task<List<TimelineKeyDate>> GetTimelineKeyDatesAsync(string? userId = null, int limit = 12);
+
+    /// <summary>
+    /// Get the date of the user's earliest financial activity (first transaction).
+    /// Used to show "your journey started" information.
+    /// </summary>
+    /// <param name="userId">Optional user ID filter</param>
+    /// <returns>The journey start info with earliest transaction date and total days tracked</returns>
+    Task<JourneyStartInfo?> GetJourneyStartInfoAsync(string? userId = null);
+}
+
+/// <summary>
+/// Information about when the user's financial journey started
+/// </summary>
+public class JourneyStartInfo
+{
+    /// <summary>
+    /// Date of the earliest recorded transaction
+    /// </summary>
+    public DateTime StartDate { get; set; }
+    
+    /// <summary>
+    /// Number of days since the journey started
+    /// </summary>
+    public int DaysTracked { get; set; }
+    
+    /// <summary>
+    /// Total number of transactions recorded
+    /// </summary>
+    public int TotalTransactions { get; set; }
 }
 
 /// <summary>

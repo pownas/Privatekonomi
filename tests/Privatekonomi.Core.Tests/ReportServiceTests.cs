@@ -1693,5 +1693,89 @@ public class ReportServiceTests : IDisposable
         Assert.NotEmpty(keyDates);
     }
 
+    [Fact]
+    public async Task GetJourneyStartInfoAsync_WithNoTransactions_ReturnsNull()
+    {
+        // Act
+        var journeyStart = await _reportService.GetJourneyStartInfoAsync(TestUserId);
+
+        // Assert
+        Assert.Null(journeyStart);
+    }
+
+    [Fact]
+    public async Task GetJourneyStartInfoAsync_WithTransactions_ReturnsCorrectStartDate()
+    {
+        // Arrange - Add transactions with different dates
+        var earliestDate = new DateTime(2023, 9, 15);
+        var laterDate = new DateTime(2024, 3, 20);
+        
+        _context.Transactions.Add(new Transaction
+        {
+            Amount = 1000m,
+            Description = "Earlier transaction",
+            Date = earliestDate,
+            IsIncome = true,
+            UserId = TestUserId,
+            CreatedAt = DateTime.UtcNow,
+            ValidFrom = DateTime.UtcNow
+        });
+        _context.Transactions.Add(new Transaction
+        {
+            Amount = 2000m,
+            Description = "Later transaction",
+            Date = laterDate,
+            IsIncome = false,
+            UserId = TestUserId,
+            CreatedAt = DateTime.UtcNow,
+            ValidFrom = DateTime.UtcNow
+        });
+        await _context.SaveChangesAsync();
+
+        // Act
+        var journeyStart = await _reportService.GetJourneyStartInfoAsync(TestUserId);
+
+        // Assert
+        Assert.NotNull(journeyStart);
+        Assert.Equal(earliestDate.Date, journeyStart.StartDate.Date);
+        Assert.Equal(2, journeyStart.TotalTransactions);
+        Assert.True(journeyStart.DaysTracked >= 0);
+    }
+
+    [Fact]
+    public async Task GetJourneyStartInfoAsync_WithUserFilter_ReturnsOnlyUserTransactions()
+    {
+        // Arrange - Add transactions for different users
+        _context.Transactions.Add(new Transaction
+        {
+            Amount = 1000m,
+            Description = "User 1 transaction",
+            Date = new DateTime(2023, 1, 1),
+            IsIncome = true,
+            UserId = TestUserId,
+            CreatedAt = DateTime.UtcNow,
+            ValidFrom = DateTime.UtcNow
+        });
+        _context.Transactions.Add(new Transaction
+        {
+            Amount = 2000m,
+            Description = "User 2 transaction - earlier",
+            Date = new DateTime(2022, 6, 15),
+            IsIncome = true,
+            UserId = "other-user-456",
+            CreatedAt = DateTime.UtcNow,
+            ValidFrom = DateTime.UtcNow
+        });
+        await _context.SaveChangesAsync();
+
+        // Act
+        var journeyStart = await _reportService.GetJourneyStartInfoAsync(TestUserId);
+
+        // Assert
+        Assert.NotNull(journeyStart);
+        Assert.Equal(new DateTime(2023, 1, 1).Date, journeyStart.StartDate.Date);
+        Assert.Equal(1, journeyStart.TotalTransactions);
+    }
+
     #endregion
 }

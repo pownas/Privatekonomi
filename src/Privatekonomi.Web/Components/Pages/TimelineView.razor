@@ -87,6 +87,32 @@
     </MudPaper>
 }
 
+@if (_journeyStart != null)
+{
+    <MudPaper Class="pa-4 mb-4" Elevation="1" Style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+        <div class="d-flex align-center gap-3">
+            <MudAvatar Color="Color.Surface" Size="Size.Large">
+                <MudIcon Icon="@Icons.Material.Filled.RocketLaunch" Color="Color.Primary" />
+            </MudAvatar>
+            <div>
+                <MudText Typo="Typo.h6" Style="color: white;">
+                    Din ekonomiska resa började @_journeyStart.StartDate.ToString("d MMMM yyyy", _culture)
+                </MudText>
+                <MudText Typo="Typo.body2" Style="color: rgba(255,255,255,0.8);">
+                    @_journeyStart.DaysTracked dagar av ekonomisk historik • @_journeyStart.TotalTransactions transaktioner registrerade
+                </MudText>
+            </div>
+            <MudSpacer />
+            <MudButton Variant="Variant.Outlined" 
+                       Style="color: white; border-color: white;"
+                       Size="Size.Small"
+                       OnClick="@(() => GoToJourneyStart())">
+                Resa till start
+            </MudButton>
+        </div>
+    </MudPaper>
+}
+
 @if (_loading)
 {
     <div class="d-flex flex-column align-center pa-6">
@@ -355,11 +381,13 @@ else if (!_loading && !_selectedDate.HasValue)
     private DateTime? _selectedDate;
     private HistoricalOverviewReport? _report;
     private List<TimelineKeyDate> _keyDates = new();
+    private JourneyStartInfo? _journeyStart;
     private System.Globalization.CultureInfo _culture = new("sv-SE");
 
     protected override async Task OnInitializedAsync()
     {
         await LoadKeyDates();
+        await LoadJourneyStart();
     }
 
     private async Task LoadKeyDates()
@@ -371,6 +399,27 @@ else if (!_loading && !_selectedDate.HasValue)
         catch (Exception ex)
         {
             Snackbar.Add($"Kunde inte ladda viktiga datum: {ex.Message}", Severity.Warning);
+        }
+    }
+
+    private async Task LoadJourneyStart()
+    {
+        try
+        {
+            _journeyStart = await ReportService.GetJourneyStartInfoAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Kunde inte ladda resans startdatum: {ex.Message}", Severity.Warning);
+        }
+    }
+
+    private void GoToJourneyStart()
+    {
+        if (_journeyStart != null)
+        {
+            _selectedDate = _journeyStart.StartDate;
+            _ = LoadHistoricalData();
         }
     }
 
