@@ -1397,4 +1397,301 @@ public class ReportServiceTests : IDisposable
         Assert.Equal("updated@example.com", result.EmailAddress);
         Assert.False(result.IsEnabled);
     }
+
+    #region Historical Overview Tests
+
+    [Fact]
+    public async Task GetHistoricalOverviewAsync_WithNoData_ReturnsZeroValues()
+    {
+        // Arrange
+        var asOfDate = DateTime.Today.AddMonths(-1);
+
+        // Act
+        var report = await _reportService.GetHistoricalOverviewAsync(asOfDate, TestUserId);
+
+        // Assert
+        Assert.NotNull(report);
+        Assert.Equal(asOfDate.Date, report.AsOfDate.Date);
+        Assert.Equal(0, report.NetWorth);
+        Assert.Equal(0, report.TotalAssets);
+        Assert.Equal(0, report.TotalLiabilities);
+        Assert.Empty(report.Accounts);
+        Assert.Empty(report.Investments);
+        Assert.Empty(report.Assets);
+        Assert.Empty(report.Loans);
+    }
+
+    [Fact]
+    public async Task GetHistoricalOverviewAsync_WithBankAccounts_CalculatesHistoricalBalance()
+    {
+        // Arrange
+        var asOfDate = DateTime.Today.AddMonths(-1);
+        var bankSource = new BankSource
+        {
+            Name = "Test Bank Account",
+            AccountType = "savings",
+            Currency = "SEK",
+            InitialBalance = 10000m,
+            UserId = TestUserId,
+            CreatedAt = DateTime.UtcNow.AddMonths(-3)
+        };
+        _context.BankSources.Add(bankSource);
+        await _context.SaveChangesAsync();
+
+        // Add a transaction before the as-of date
+        var transaction1 = new Transaction
+        {
+            Amount = 1000m,
+            Description = "Deposit",
+            Date = asOfDate.AddDays(-10),
+            IsIncome = true,
+            BankSourceId = bankSource.BankSourceId,
+            UserId = TestUserId,
+            CreatedAt = DateTime.UtcNow.AddMonths(-2),
+            ValidFrom = DateTime.UtcNow.AddMonths(-2)
+        };
+        _context.Transactions.Add(transaction1);
+        
+        // Add a transaction after the as-of date (should not be included)
+        var transaction2 = new Transaction
+        {
+            Amount = 500m,
+            Description = "Later Deposit",
+            Date = DateTime.Today,
+            IsIncome = true,
+            BankSourceId = bankSource.BankSourceId,
+            UserId = TestUserId,
+            CreatedAt = DateTime.UtcNow,
+            ValidFrom = DateTime.UtcNow
+        };
+        _context.Transactions.Add(transaction2);
+        await _context.SaveChangesAsync();
+
+        // Act
+        var report = await _reportService.GetHistoricalOverviewAsync(asOfDate, TestUserId);
+
+        // Assert
+        Assert.NotNull(report);
+        Assert.Single(report.Accounts);
+        // Should include initial balance + transaction before as-of date
+        Assert.Equal(11000m, report.Accounts[0].Balance); // 10000 + 1000
+    }
+
+    [Fact]
+    public async Task GetHistoricalOverviewAsync_WithLoans_CalculatesLiabilities()
+    {
+        // Arrange
+        var asOfDate = DateTime.Today.AddMonths(-1);
+        var loan = new Loan
+        {
+            Name = "Test Loan",
+            Type = "Privatlån",
+            Amount = 50000m,
+            InterestRate = 5.5m,
+            Currency = "SEK",
+            UserId = TestUserId,
+            CreatedAt = DateTime.UtcNow.AddMonths(-6),
+            ValidFrom = DateTime.UtcNow.AddMonths(-6)
+        };
+        _context.Loans.Add(loan);
+        await _context.SaveChangesAsync();
+
+        // Act
+        var report = await _reportService.GetHistoricalOverviewAsync(asOfDate, TestUserId);
+
+        // Assert
+        Assert.NotNull(report);
+        Assert.Single(report.Loans);
+        Assert.Equal(50000m, report.TotalLoans);
+        Assert.Equal(50000m, report.TotalLiabilities);
+        Assert.Equal(-50000m, report.NetWorth);
+    }
+
+    [Fact]
+    public async Task GetHistoricalOverviewAsync_WithInvestments_CalculatesAssets()
+    {
+        // Arrange
+        var asOfDate = DateTime.Today.AddMonths(-1);
+        var investment = new Investment
+        {
+            Name = "Test Stock",
+            Type = "Aktie",
+            Quantity = 100,
+            PurchasePrice = 50m,
+            CurrentPrice = 60m,
+            PurchaseDate = DateTime.UtcNow.AddMonths(-6),
+            LastUpdated = DateTime.UtcNow.AddMonths(-2),
+            UserId = TestUserId,
+            CreatedAt = DateTime.UtcNow.AddMonths(-6),
+            ValidFrom = DateTime.UtcNow.AddMonths(-6)
+        };
+        _context.Investments.Add(investment);
+        await _context.SaveChangesAsync();
+
+        // Act
+        var report = await _reportService.GetHistoricalOverviewAsync(asOfDate, TestUserId);
+
+        // Assert
+        Assert.NotNull(report);
+        Assert.Single(report.Investments);
+        Assert.Equal(6000m, report.TotalInvestments); // 100 * 60
+    }
+
+    [Fact]
+    public async Task GetHistoricalOverviewAsync_IncludesMonthlyTransactions()
+    {
+        // Arrange
+        var asOfDate = new DateTime(2025, 1, 15);
+        
+        // Add income transaction in the same month
+        var incomeTransaction = new Transaction
+        {
+            Amount = 30000m,
+            Description = "Salary",
+            Date = new DateTime(2025, 1, 5),
+            IsIncome = true,
+            UserId = TestUserId,
+            CreatedAt = DateTime.UtcNow,
+            ValidFrom = DateTime.UtcNow
+        };
+        _context.Transactions.Add(incomeTransaction);
+        
+        // Add expense transaction in the same month
+        var expenseTransaction = new Transaction
+        {
+            Amount = 5000m,
+            Description = "Rent",
+            Date = new DateTime(2025, 1, 10),
+            IsIncome = false,
+            UserId = TestUserId,
+            CreatedAt = DateTime.UtcNow,
+            ValidFrom = DateTime.UtcNow
+        };
+        _context.Transactions.Add(expenseTransaction);
+        await _context.SaveChangesAsync();
+
+        // Act
+        var report = await _reportService.GetHistoricalOverviewAsync(asOfDate, TestUserId);
+
+        // Assert
+        Assert.Equal(30000m, report.MonthlyIncome);
+        Assert.Equal(5000m, report.MonthlyExpenses);
+        Assert.Equal(25000m, report.MonthlyNetFlow);
+        Assert.Equal(2, report.TransactionCount);
+    }
+
+    [Fact]
+    public async Task GetHistoricalOverviewAsync_IncludesComparisonWithCurrentValues()
+    {
+        // Arrange
+        var asOfDate = DateTime.Today.AddMonths(-1);
+        
+        // Add an asset
+        var asset = new Asset
+        {
+            Name = "Test Asset",
+            Type = "Property",
+            CurrentValue = 100000m,
+            PurchaseValue = 80000m,
+            UserId = TestUserId,
+            CreatedAt = DateTime.UtcNow.AddMonths(-2),
+            ValidFrom = DateTime.UtcNow.AddMonths(-2)
+        };
+        _context.Assets.Add(asset);
+        await _context.SaveChangesAsync();
+
+        // Act
+        var report = await _reportService.GetHistoricalOverviewAsync(asOfDate, TestUserId);
+
+        // Assert
+        Assert.NotNull(report.Comparison);
+        Assert.True(report.Comparison.DaysElapsed > 0);
+    }
+
+    [Fact]
+    public async Task GetTimelineKeyDatesAsync_WithNoData_ReturnsEmptyList()
+    {
+        // Act
+        var keyDates = await _reportService.GetTimelineKeyDatesAsync(TestUserId, 12);
+
+        // Assert
+        Assert.NotNull(keyDates);
+        Assert.Empty(keyDates);
+    }
+
+    [Fact]
+    public async Task GetTimelineKeyDatesAsync_WithTransactions_ReturnsMonthlyDates()
+    {
+        // Arrange - Add transactions in different months
+        for (int i = 1; i <= 3; i++)
+        {
+            var transaction = new Transaction
+            {
+                Amount = 1000m * i,
+                Description = $"Transaction {i}",
+                Date = DateTime.Today.AddMonths(-i),
+                IsIncome = true,
+                UserId = TestUserId,
+                CreatedAt = DateTime.UtcNow,
+                ValidFrom = DateTime.UtcNow
+            };
+            _context.Transactions.Add(transaction);
+        }
+        await _context.SaveChangesAsync();
+
+        // Act
+        var keyDates = await _reportService.GetTimelineKeyDatesAsync(TestUserId, 12);
+
+        // Assert
+        Assert.NotNull(keyDates);
+        Assert.NotEmpty(keyDates);
+        Assert.True(keyDates.Count <= 12);
+    }
+
+    [Fact]
+    public async Task GetTimelineKeyDatesAsync_WithSnapshots_IncludesPeaksAndValleys()
+    {
+        // Arrange - Add net worth snapshots
+        var snapshots = new List<NetWorthSnapshot>
+        {
+            new NetWorthSnapshot
+            {
+                Date = DateTime.Today.AddMonths(-3),
+                NetWorth = 100000m,
+                TotalAssets = 120000m,
+                TotalLiabilities = 20000m,
+                UserId = TestUserId,
+                CreatedAt = DateTime.UtcNow
+            },
+            new NetWorthSnapshot
+            {
+                Date = DateTime.Today.AddMonths(-2),
+                NetWorth = 150000m, // Peak
+                TotalAssets = 170000m,
+                TotalLiabilities = 20000m,
+                UserId = TestUserId,
+                CreatedAt = DateTime.UtcNow
+            },
+            new NetWorthSnapshot
+            {
+                Date = DateTime.Today.AddMonths(-1),
+                NetWorth = 80000m, // Valley
+                TotalAssets = 100000m,
+                TotalLiabilities = 20000m,
+                UserId = TestUserId,
+                CreatedAt = DateTime.UtcNow
+            }
+        };
+        _context.NetWorthSnapshots.AddRange(snapshots);
+        await _context.SaveChangesAsync();
+
+        // Act
+        var keyDates = await _reportService.GetTimelineKeyDatesAsync(TestUserId, 12);
+
+        // Assert
+        Assert.NotNull(keyDates);
+        Assert.NotEmpty(keyDates);
+    }
+
+    #endregion
 }
