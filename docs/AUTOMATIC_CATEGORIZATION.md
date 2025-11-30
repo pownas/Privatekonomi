@@ -99,21 +99,24 @@ Från transaktionsdetaljvyn kan du snabbt ändra kategorin:
 
 ### 4. API för Kategoriseringsregler
 
-För integration och automatisering finns följande API-endpoints:
+För integration och automatisering finns följande API-endpoints. Både `/api/categoryrules` och `/api/rules` stöds för kompatibilitet.
 
 #### Hämta alla regler
 ```http
 GET /api/categoryrules
+GET /api/rules
 ```
 
 #### Hämta aktiva regler
 ```http
 GET /api/categoryrules/active
+GET /api/rules/active
 ```
 
 #### Skapa ny regel
 ```http
 POST /api/categoryrules
+POST /api/rules
 Content-Type: application/json
 
 {
@@ -131,6 +134,7 @@ Content-Type: application/json
 #### Uppdatera regel
 ```http
 PUT /api/categoryrules/{id}
+PUT /api/rules/{id}
 Content-Type: application/json
 
 {
@@ -143,11 +147,13 @@ Content-Type: application/json
 #### Ta bort regel
 ```http
 DELETE /api/categoryrules/{id}
+DELETE /api/rules/{id}
 ```
 
 #### Testa regel
 ```http
 POST /api/categoryrules/test
+POST /api/rules/test
 Content-Type: application/json
 
 {
