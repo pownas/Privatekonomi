@@ -296,8 +296,115 @@ app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
-// Add Identity endpoints
+// Add Identity API endpoints (token-based auth for mobile/API clients)
 app.MapGroup("/Account").MapIdentityApi<ApplicationUser>();
+
+// Add custom cookie-based login/logout endpoints for Blazor Server
+app.MapPost("/Account/PerformLogin", async (
+    HttpContext context,
+    SignInManager<ApplicationUser> signInManager,
+    ILogger<Program> logger) =>
+{
+    var form = await context.Request.ReadFormAsync();
+    var email = form["Email"].ToString();
+    var password = form["Password"].ToString();
+    var rememberMe = form["RememberMe"].ToString() == "on" || form["RememberMe"].ToString() == "true";
+    var returnUrl = form["ReturnUrl"].ToString();
+
+    if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
+    {
+        return Results.Redirect("/Account/Login?error=empty");
+    }
+
+    var result = await signInManager.PasswordSignInAsync(email, password, rememberMe, lockoutOnFailure: false);
+
+    if (result.Succeeded)
+    {
+        logger.LogInformation("User {Email} logged in.", email);
+        return Results.Redirect(string.IsNullOrEmpty(returnUrl) ? "/" : returnUrl);
+    }
+    else if (result.IsLockedOut)
+    {
+        logger.LogWarning("User {Email} account locked out.", email);
+        return Results.Redirect("/Account/Login?error=lockedout");
+    }
+    else
+    {
+        logger.LogWarning("Invalid login attempt for {Email}.", email);
+        return Results.Redirect("/Account/Login?error=invalid");
+    }
+});
+
+app.MapPost("/Account/PerformRegister", async (
+    HttpContext context,
+    UserManager<ApplicationUser> userManager,
+    SignInManager<ApplicationUser> signInManager,
+    ILogger<Program> logger) =>
+{
+    var form = await context.Request.ReadFormAsync();
+    var firstName = form["FirstName"].ToString();
+    var lastName = form["LastName"].ToString();
+    var email = form["Email"].ToString();
+    var password = form["Password"].ToString();
+    var confirmPassword = form["ConfirmPassword"].ToString();
+
+    if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
+    {
+        return Results.Redirect("/Account/Register?error=empty");
+    }
+
+    if (password != confirmPassword)
+    {
+        return Results.Redirect("/Account/Register?error=passwordmismatch");
+    }
+
+    if (password.Length < 6)
+    {
+        return Results.Redirect("/Account/Register?error=passwordtooshort");
+    }
+
+    var user = new ApplicationUser
+    {
+        UserName = email,
+        Email = email,
+        FirstName = firstName,
+        LastName = lastName,
+        CreatedAt = DateTime.UtcNow
+    };
+
+    var result = await userManager.CreateAsync(user, password);
+
+    if (result.Succeeded)
+    {
+        logger.LogInformation("User {Email} created a new account.", email);
+        await signInManager.SignInAsync(user, isPersistent: false);
+        return Results.Redirect("/onboarding");
+    }
+    else
+    {
+        var errors = string.Join(",", result.Errors.Select(e => e.Code));
+        logger.LogWarning("Failed to create user {Email}: {Errors}", email, errors);
+        return Results.Redirect($"/Account/Register?error=create&details={Uri.EscapeDataString(errors)}");
+    }
+});
+
+app.MapPost("/Account/PerformLogout", async (
+    SignInManager<ApplicationUser> signInManager,
+    ILogger<Program> logger) =>
+{
+    await signInManager.SignOutAsync();
+    logger.LogInformation("User logged out.");
+    return Results.Redirect("/Account/Login");
+});
+
+app.MapGet("/Account/PerformLogout", async (
+    SignInManager<ApplicationUser> signInManager,
+    ILogger<Program> logger) =>
+{
+    await signInManager.SignOutAsync();
+    logger.LogInformation("User logged out.");
+    return Results.Redirect("/Account/Login");
+});
 
 // Map SignalR hubs
 app.MapHub<Privatekonomi.Web.Hubs.BudgetAlertHub>("/hubs/budgetalert");
