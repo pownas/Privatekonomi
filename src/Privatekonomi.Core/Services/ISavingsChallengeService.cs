@@ -16,6 +16,11 @@ public interface ISavingsChallengeService
     Task<IEnumerable<SavingsChallenge>> GetCompletedChallengesAsync();
     Task<IEnumerable<SavingsChallenge>> GetChallengesByTypeAsync(ChallengeType type);
     
+    // Challenge templates
+    Task<IEnumerable<ChallengeTemplate>> GetAllTemplatesAsync();
+    Task<ChallengeTemplate?> GetTemplateByIdAsync(int id);
+    Task<SavingsChallenge> CreateChallengeFromTemplateAsync(int templateId);
+    
     // Progress tracking
     Task<SavingsChallengeProgress> RecordProgressAsync(int challengeId, DateTime date, bool completed, decimal amountSaved, string? notes = null);
     Task<IEnumerable<SavingsChallengeProgress>> GetChallengeProgressAsync(int challengeId);

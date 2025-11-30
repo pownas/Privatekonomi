@@ -1,0 +1,264 @@
+@using Privatekonomi.Core.Models
+@using Privatekonomi.Web.Components.Dialogs
+@inject IDialogService DialogService
+@inject ITransactionService TransactionService
+@inject ISnackbar Snackbar
+
+<MudTable Items="@Transactions" Dense="@Dense" Hover="true" Striped="@Striped" FixedHeader="@FixedHeader" Height="@Height">
+    <HeaderContent>
+        @if (ShowDate)
+        {
+            <MudTh>Datum</MudTh>
+        }
+        @if (ShowTime)
+        {
+            <MudTh>Tid</MudTh>
+        }
+        <MudTh>Beskrivning</MudTh>
+        @if (ShowCategory)
+        {
+            <MudTh>Kategori</MudTh>
+        }
+        @if (ShowTags)
+        {
+            <MudTh>Taggar</MudTh>
+        }
+        @if (ShowBank)
+        {
+            <MudTh>Bank</MudTh>
+        }
+        @if (ShowHousehold)
+        {
+            <MudTh>Hushåll</MudTh>
+        }
+        <MudTh Style="text-align: right">Belopp</MudTh>
+        @if (ShowActions)
+        {
+            <MudTh Style="text-align: right">Åtgärder</MudTh>
+        }
+    </HeaderContent>
+    <RowTemplate>
+        @if (ShowDate)
+        {
+            <MudTd DataLabel="Datum" Style="cursor: pointer;" @onclick="@(() => ViewTransactionDetails(context))">
+                @context.Date.ToString("yyyy-MM-dd")
+            </MudTd>
+        }
+        @if (ShowTime)
+        {
+            <MudTd DataLabel="Tid" Style="cursor: pointer;" @onclick="@(() => ViewTransactionDetails(context))">
+                @context.Date.ToString("HH:mm")
+            </MudTd>
+        }
+        <MudTd DataLabel="Beskrivning" Style="cursor: pointer;" @onclick="@(() => ViewTransactionDetails(context))">
+            <div>
+                @context.Description
+                @if (context.Receipts != null && context.Receipts.Any())
+                {
+                    <MudChip T="string" Size="Size.Small" Color="Color.Success" Icon="@Icons.Material.Filled.Receipt" Variant="Variant.Text" Class="ml-1">
+                        @context.Receipts.Count
+                    </MudChip>
+                }
+                @if (!string.IsNullOrWhiteSpace(context.Notes) && ShowNotePreview)
+                {
+                    <div class="mt-1">
+                        <MudText Typo="Typo.caption" Color="Color.Secondary" Style="font-style: italic;">
+                            <MudIcon Icon="@Icons.Material.Filled.StickyNote2" Size="Size.Small" Style="vertical-align: middle;" />
+                            @(context.Notes.Length > 50 ? context.Notes.Substring(0, 50) + "..." : context.Notes)
+                        </MudText>
+                    </div>
+                }
+            </div>
+        </MudTd>
+        @if (ShowCategory)
+        {
+            <MudTd DataLabel="Kategori" Style="cursor: pointer;" @onclick="@(() => ViewTransactionDetails(context))">
+                @if (context.TransactionCategories.Any())
+                {
+                    @foreach (var tc in context.TransactionCategories)
+                    {
+                        <MudChip T="string" 
+                                Size="Size.Small" 
+                                Variant="Variant.Filled"
+                                Style="@($"background-color: {tc.Category.Color}; color: white; margin: 2px;")">
+                            @tc.Category.Name
+                        </MudChip>
+                    }
+                }
+                else
+                {
+                    <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Default">
+                        Okategoriserad
+                    </MudChip>
+                }
+            </MudTd>
+        }
+        @if (ShowTags)
+        {
+            <MudTd DataLabel="Taggar" Style="cursor: pointer;" @onclick="@(() => ViewTransactionDetails(context))">
+                @if (!string.IsNullOrEmpty(context.Tags))
+                {
+                    @foreach (var tag in context.Tags.Split(',', StringSplitOptions.RemoveEmptyEntries))
+                    {
+                        <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Outlined" Class="mr-1">
+                            @tag.Trim()
+                        </MudChip>
+                    }
+                }
+            </MudTd>
+        }
+        @if (ShowBank)
+        {
+            <MudTd DataLabel="Bank" Style="cursor: pointer;" @onclick="@(() => ViewTransactionDetails(context))">
+                @if (context.BankSource != null)
+                {
+                    <MudChip T="string" Size="Size.Small" Variant="Variant.Filled"
+                            Style="@($"background-color: {context.BankSource.Color}; color: white;")">
+                        @context.BankSource.Name
+                    </MudChip>
+                }
+                else
+                {
+                    <MudText Typo="Typo.body2" Color="Color.Default">-</MudText>
+                }
+            </MudTd>
+        }
+        @if (ShowHousehold)
+        {
+            <MudTd DataLabel="Hushåll" Style="cursor: pointer;" @onclick="@(() => ViewTransactionDetails(context))">
+                @if (context.Household != null)
+                {
+                    <MudChip T="string" Size="Size.Small" Color="Color.Secondary" Variant="Variant.Outlined">
+                        <MudIcon Icon="@Icons.Material.Filled.Home" Size="Size.Small" /> @context.Household.Name
+                    </MudChip>
+                }
+                else
+                {
+                    <MudText Typo="Typo.caption" Color="Color.Default">Personlig</MudText>
+                }
+            </MudTd>
+        }
+        <MudTd DataLabel="Belopp" Style="text-align: right; cursor: pointer;" @onclick="@(() => ViewTransactionDetails(context))">
+            <MudText Typo="Typo.body1" Style="@($"font-weight: 600; color: {(context.IsIncome ? "#2e7d32" : "#d32f2f")};")">
+                @(context.IsIncome ? "+" : "")@context.Amount.ToString("N2", _svCulture) kr
+            </MudText>
+        </MudTd>
+        @if (ShowActions)
+        {
+            <MudTd DataLabel="Åtgärder" Style="text-align: right">
+                @if (CustomActions != null)
+                {
+                    @CustomActions(context)
+                }
+            </MudTd>
+        }
+    </RowTemplate>
+</MudTable>
+
+@code {
+    [Parameter]
+    public IEnumerable<Transaction> Transactions { get; set; } = new List<Transaction>();
+
+    [Parameter]
+    public bool Dense { get; set; } = false;
+
+    [Parameter]
+    public bool Striped { get; set; } = true;
+
+    [Parameter]
+    public bool FixedHeader { get; set; } = false;
+
+    [Parameter]
+    public string? Height { get; set; }
+
+    [Parameter]
+    public bool ShowDate { get; set; } = true;
+
+    [Parameter]
+    public bool ShowTime { get; set; } = false;
+
+    [Parameter]
+    public bool ShowCategory { get; set; } = true;
+
+    [Parameter]
+    public bool ShowTags { get; set; } = false;
+
+    [Parameter]
+    public bool ShowBank { get; set; } = false;
+
+    [Parameter]
+    public bool ShowHousehold { get; set; } = false;
+
+    [Parameter]
+    public bool ShowActions { get; set; } = false;
+
+    [Parameter]
+    public bool ShowNotePreview { get; set; } = false;
+
+    [Parameter]
+    public RenderFragment<Transaction>? CustomActions { get; set; }
+
+    [Parameter]
+    public EventCallback OnTransactionUpdated { get; set; }
+
+    private readonly System.Globalization.CultureInfo _svCulture = new("sv-SE");
+
+    private async Task ViewTransactionDetails(Transaction transaction)
+    {
+        var parameters = new DialogParameters<TransactionDetailsDialog>
+        {
+            { x => x.Transaction, transaction },
+            { x => x.OnEdit, EventCallback.Factory.Create<Transaction>(this, EditTransactionFromDetails) },
+            { x => x.OnDelete, EventCallback.Factory.Create<Transaction>(this, DeleteTransactionFromDetails) }
+        };
+
+        var dialog = await DialogService.ShowAsync<TransactionDetailsDialog>("Transaktionsdetaljer", parameters, new DialogOptions 
+        { 
+            MaxWidth = MaxWidth.Large, 
+            FullWidth = true 
+        });
+        
+        var result = await dialog.Result;
+        
+        if (result is not null && !result.Canceled)
+        {
+            await OnTransactionUpdated.InvokeAsync();
+        }
+    }
+
+    private async Task EditTransactionFromDetails(Transaction transaction)
+    {
+        var parameters = new DialogParameters<EditTransactionDialog>
+        {
+            { x => x.Transaction, transaction }
+        };
+
+        var dialog = await DialogService.ShowAsync<EditTransactionDialog>("Redigera transaktion", parameters, new DialogOptions 
+        { 
+            MaxWidth = MaxWidth.Large, 
+            FullWidth = true 
+        });
+        
+        var result = await dialog.Result;
+        
+        if (result is not null && !result.Canceled)
+        {
+            await OnTransactionUpdated.InvokeAsync();
+        }
+    }
+
+    private async Task DeleteTransactionFromDetails(Transaction transaction)
+    {
+        var result = await DialogService.ShowMessageBox(
+            "Bekräfta borttagning",
+            "Är du säker på att du vill ta bort denna transaktion?",
+            yesText: "Ja", cancelText: "Avbryt");
+
+        if (result == true)
+        {
+            await TransactionService.DeleteTransactionAsync(transaction.TransactionId);
+            Snackbar.Add("Transaktion borttagen", Severity.Success);
+            await OnTransactionUpdated.InvokeAsync();
+        }
+    }
+}

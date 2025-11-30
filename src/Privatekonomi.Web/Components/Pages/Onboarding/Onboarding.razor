@@ -1,0 +1,94 @@
+@page "/onboarding"
+@page "/onboarding/{Step:int}"
+@rendermode InteractiveServer
+@inject IOnboardingService OnboardingService
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject ISnackbar Snackbar
+
+<PageTitle>Välkommen - Privatekonomi</PageTitle>
+
+<link rel="stylesheet" href="css/onboarding.css" />
+
+<div class="onboarding-container">
+    @if (_currentStep == 0)
+    {
+        <OnboardingWelcome OnNext="NextStep" />
+    }
+    else if (_currentStep == 1)
+    {
+        <OnboardingBankSelection OnNext="NextStep" OnSkip="NextStep" />
+    }
+    else if (_currentStep == 2)
+    {
+        <OnboardingConsent OnNext="NextStep" />
+    }
+    else if (_currentStep == 3)
+    {
+        <OnboardingTransactionImport OnNext="NextStep" />
+    }
+    else if (_currentStep == 4)
+    {
+        <OnboardingBudgetProposal OnNext="NextStep" />
+    }
+    else if (_currentStep == 5)
+    {
+        <OnboardingCompletion OnComplete="CompleteOnboarding" />
+    }
+</div>
+
+@code {
+    [Parameter]
+    public int? Step { get; set; }
+
+    private int _currentStep = 0;
+    private string? _userId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        
+        if (!user.Identity?.IsAuthenticated ?? true)
+        {
+            Navigation.NavigateTo("/Account/Login");
+            return;
+        }
+
+        _userId = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        
+        if (string.IsNullOrEmpty(_userId))
+        {
+            Navigation.NavigateTo("/Account/Login");
+            return;
+        }
+
+        // Check if already completed onboarding
+        var hasCompleted = await OnboardingService.HasCompletedOnboardingAsync(_userId);
+        if (hasCompleted)
+        {
+            Navigation.NavigateTo("/");
+            return;
+        }
+
+        // Set initial step
+        _currentStep = Step ?? 0;
+    }
+
+    private void NextStep()
+    {
+        _currentStep++;
+        Navigation.NavigateTo($"/onboarding/{_currentStep}");
+        StateHasChanged();
+    }
+
+    private async Task CompleteOnboarding()
+    {
+        if (!string.IsNullOrEmpty(_userId))
+        {
+            await OnboardingService.CompleteOnboardingAsync(_userId);
+            Snackbar.Add("Välkommen till Privatekonomi! Din onboarding är klar.", MudBlazor.Severity.Success);
+            Navigation.NavigateTo("/");
+        }
+    }
+}

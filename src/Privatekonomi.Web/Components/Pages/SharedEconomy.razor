@@ -1,0 +1,496 @@
+@page "/family/households/{HouseholdId:int}/economy"
+@page "/households/{HouseholdId:int}/economy"
+@using Privatekonomi.Core.Models
+@using Privatekonomi.Core.Services
+@inject IHouseholdService HouseholdService
+@inject IBudgetService BudgetService
+@inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<PageTitle>Delad Ekonomi - @(household?.Name ?? "Hushåll")</PageTitle>
+
+@if (household == null)
+{
+    <MudProgressLinear Color="Color.Primary" Indeterminate="true" />
+}
+else
+{
+    <MudBreadcrumbs Items="breadcrumbs" Class="mb-4" />
+    
+    <MudText Typo="Typo.h4" Class="mb-2">
+        <MudIcon Icon="@Icons.Material.Filled.AccountBalance" Color="Color.Primary" Class="mr-2" aria-hidden="true" />
+        Delad Ekonomi: @household.Name
+    </MudText>
+    <MudText Typo="Typo.body1" Color="Color.Secondary" Class="mb-4">
+        Hantera gemensamma budgetar, mål och skuldbalansering mellan medlemmar
+    </MudText>
+
+    <MudTabs Elevation="2" Rounded="true" Color="Color.Primary" Class="mt-4">
+        <!-- Gemensamma Budgetar Tab -->
+        <MudTabPanel Text="Gemensamma Budgetar" Icon="@Icons.Material.Filled.AccountBalanceWallet">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenCreateBudgetDialog" Class="my-4">
+                Skapa gemensam budget
+            </MudButton>
+
+            @if (!sharedBudgets.Any())
+            {
+                <MudAlert Severity="Severity.Info" Class="mt-4">
+                    Inga gemensamma budgetar ännu. Skapa en gemensam budget för att fördela utgifter mellan medlemmar.
+                </MudAlert>
+            }
+            else
+            {
+                <MudGrid Class="mt-4">
+                    @foreach (var budget in sharedBudgets)
+                    {
+                        <MudItem xs="12" md="6">
+                            <MudCard>
+                                <MudCardHeader>
+                                    <CardHeaderContent>
+                                        <MudText Typo="Typo.h6">@budget.Name</MudText>
+                                        <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                            @budget.StartDate.ToString("yyyy-MM-dd") - @budget.EndDate.ToString("yyyy-MM-dd")
+                                        </MudText>
+                                    </CardHeaderContent>
+                                </MudCardHeader>
+                                <MudCardContent>
+                                    @if (!string.IsNullOrEmpty(budget.Description))
+                                    {
+                                        <MudText Typo="Typo.body2" Class="mb-2">@budget.Description</MudText>
+                                    }
+                                    
+                                    <MudText Typo="Typo.subtitle2" Class="mt-3 mb-2">Medlemsfördelning:</MudText>
+                                    @if (budget.HouseholdBudgetShares.Any())
+                                    {
+                                        @foreach (var share in budget.HouseholdBudgetShares)
+                                        {
+                                            <MudText Typo="Typo.body2" Class="ml-2">
+                                                • @share.HouseholdMember?.Name: <strong>@share.SharePercentage.ToString("N0")%</strong>
+                                            </MudText>
+                                        }
+                                    }
+                                </MudCardContent>
+                                <MudCardActions>
+                                    <MudButton Variant="Variant.Text" Color="Color.Primary" OnClick="@(() => NavigationManager.NavigateTo($"/budgets"))">
+                                        Visa detaljer
+                                    </MudButton>
+                                </MudCardActions>
+                            </MudCard>
+                        </MudItem>
+                    }
+                </MudGrid>
+            }
+        </MudTabPanel>
+
+        <!-- Skuldbalansering Tab -->
+        <MudTabPanel Text="Skuldbalansering" Icon="@Icons.Material.Filled.Receipt">
+            <MudStack Row="true" Class="my-4">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenCreateDebtDialog">
+                    Registrera skuld
+                </MudButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Calculate" OnClick="CalculateOptimalSettlement">
+                    Beräkna optimal balansering
+                </MudButton>
+            </MudStack>
+
+            <!-- Member Balance Summary -->
+            @if (memberBalances.Any())
+            {
+                <MudPaper Class="pa-4 mb-4">
+                    <MudText Typo="Typo.h6" Class="mb-3">Medlemsbalanser</MudText>
+                    <MudGrid>
+                        @foreach (var balance in memberBalances)
+                        {
+                            var member = household.Members.FirstOrDefault(m => m.HouseholdMemberId == balance.Key);
+                            @if (member != null)
+                            {
+                                <MudItem xs="12" sm="6" md="4">
+                                    <MudPaper Class="pa-3" Elevation="0" Style="@GetBalanceStyle(balance.Value)">
+                                        <MudText Typo="Typo.subtitle1">@member.Name</MudText>
+                                        <MudText Typo="Typo.h6" Color="@GetBalanceColor(balance.Value)">
+                                            @(balance.Value >= 0 ? "+" : "")@balance.Value.ToString("N2") kr
+                                        </MudText>
+                                        <MudText Typo="Typo.caption">
+                                            @(balance.Value > 0 ? "Ska få tillbaka" : balance.Value < 0 ? "Ska betala" : "Balanserad")
+                                        </MudText>
+                                    </MudPaper>
+                                </MudItem>
+                            }
+                        }
+                    </MudGrid>
+                </MudPaper>
+            }
+
+            <!-- Pending Debts -->
+            <MudText Typo="Typo.h6" Class="mb-3">Pågående skulder</MudText>
+            @if (!pendingDebts.Any())
+            {
+                <MudAlert Severity="Severity.Success" Class="mt-4">
+                    Inga pågående skulder. Alla är balanserade! 🎉
+                </MudAlert>
+            }
+            else
+            {
+                <MudTable Items="@pendingDebts" Class="mt-4" Hover="true" Dense="true">
+                    <HeaderContent>
+                        <MudTh>Gäldenär</MudTh>
+                        <MudTh>Borgenär</MudTh>
+                        <MudTh>Belopp</MudTh>
+                        <MudTh>Beskrivning</MudTh>
+                        <MudTh>Datum</MudTh>
+                        <MudTh>Åtgärder</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="Gäldenär">@context.DebtorMember?.Name</MudTd>
+                        <MudTd DataLabel="Borgenär">@context.CreditorMember?.Name</MudTd>
+                        <MudTd DataLabel="Belopp"><strong>@context.Amount.ToString("N2") kr</strong></MudTd>
+                        <MudTd DataLabel="Beskrivning">@context.Description</MudTd>
+                        <MudTd DataLabel="Datum">@context.CreatedDate.ToString("yyyy-MM-dd")</MudTd>
+                        <MudTd DataLabel="Åtgärder">
+                            <MudTooltip Text="Markera som betald">
+                                <MudIconButton Icon="@Icons.Material.Filled.Check" Color="Color.Success" Size="Size.Small" 
+                                              OnClick="@(() => SettleDebt(context.DebtSettlementId))" />
+                            </MudTooltip>
+                            <MudTooltip Text="Avbryt">
+                                <MudIconButton Icon="@Icons.Material.Filled.Close" Color="Color.Error" Size="Size.Small" 
+                                              OnClick="@(() => CancelDebt(context.DebtSettlementId))" />
+                            </MudTooltip>
+                        </MudTd>
+                    </RowTemplate>
+                </MudTable>
+            }
+
+            <!-- Settled Debts -->
+            <MudText Typo="Typo.h6" Class="mt-6 mb-3">Avslutade skulder</MudText>
+            @if (!settledDebts.Any())
+            {
+                <MudAlert Severity="Severity.Info" Class="mt-4">Inga avslutade skulder ännu.</MudAlert>
+            }
+            else
+            {
+                <MudTable Items="@settledDebts" Class="mt-4" Hover="true" Dense="true">
+                    <HeaderContent>
+                        <MudTh>Gäldenär</MudTh>
+                        <MudTh>Borgenär</MudTh>
+                        <MudTh>Belopp</MudTh>
+                        <MudTh>Beskrivning</MudTh>
+                        <MudTh>Avslutad</MudTh>
+                        <MudTh>Notering</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="Gäldenär">@context.DebtorMember?.Name</MudTd>
+                        <MudTd DataLabel="Borgenär">@context.CreditorMember?.Name</MudTd>
+                        <MudTd DataLabel="Belopp">@context.Amount.ToString("N2") kr</MudTd>
+                        <MudTd DataLabel="Beskrivning">@context.Description</MudTd>
+                        <MudTd DataLabel="Avslutad">@context.SettledDate?.ToString("yyyy-MM-dd")</MudTd>
+                        <MudTd DataLabel="Notering">@context.SettlementNote</MudTd>
+                    </RowTemplate>
+                </MudTable>
+            }
+        </MudTabPanel>
+    </MudTabs>
+}
+
+<!-- Create Shared Budget Dialog -->
+<MudDialog @bind-Visible="showCreateBudgetDialog" Options="dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Skapa gemensam budget</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudTextField @bind-Value="newBudget.Name" Label="Namn" Required="true" />
+        <MudTextField @bind-Value="newBudget.Description" Label="Beskrivning" Lines="3" />
+        <MudDatePicker @bind-Date="budgetStartDate" Label="Startdatum" Required="true" />
+        <MudDatePicker @bind-Date="budgetEndDate" Label="Slutdatum" Required="true" />
+        <MudSelect @bind-Value="newBudget.Period" Label="Period" Required="true">
+            <MudSelectItem Value="@BudgetPeriod.Monthly">Månadsvis</MudSelectItem>
+            <MudSelectItem Value="@BudgetPeriod.Yearly">Årsvis</MudSelectItem>
+        </MudSelect>
+        
+        <MudText Typo="Typo.subtitle2" Class="mt-4 mb-2">Fördelning mellan medlemmar (totalt 100%):</MudText>
+        @foreach (var member in household?.Members.Where(m => m.IsActive) ?? Enumerable.Empty<HouseholdMember>())
+        {
+            <MudNumericField @bind-Value="budgetContributions[member.HouseholdMemberId]" 
+                           Label="@($"{member.Name} (%)")" 
+                           Min="0" Max="100" />
+        }
+        @if (budgetContributions.Any())
+        {
+            var total = budgetContributions.Values.Sum();
+            <MudText Typo="Typo.body2" Color="@(Math.Abs(total - 100) < 0.01m ? Color.Success : Color.Error)" Class="mt-2">
+                Total: @total.ToString("N0")%
+            </MudText>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="CloseCreateBudgetDialog">Avbryt</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="CreateSharedBudget">Skapa</MudButton>
+    </DialogActions>
+</MudDialog>
+
+<!-- Create Debt Dialog -->
+<MudDialog @bind-Visible="showCreateDebtDialog" Options="dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Registrera skuld</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudSelect @bind-Value="newDebtorId" Label="Gäldenär (Ska betala)" Required="true">
+            @foreach (var member in household?.Members.Where(m => m.IsActive) ?? Enumerable.Empty<HouseholdMember>())
+            {
+                <MudSelectItem Value="@member.HouseholdMemberId">@member.Name</MudSelectItem>
+            }
+        </MudSelect>
+        <MudSelect @bind-Value="newCreditorId" Label="Borgenär (Ska få betalt)" Required="true">
+            @foreach (var member in household?.Members.Where(m => m.IsActive) ?? Enumerable.Empty<HouseholdMember>())
+            {
+                <MudSelectItem Value="@member.HouseholdMemberId">@member.Name</MudSelectItem>
+            }
+        </MudSelect>
+        <MudNumericField @bind-Value="newDebtAmount" Label="Belopp (kr)" Min="0.01m" Required="true" />
+        <MudTextField @bind-Value="newDebtDescription" Label="Beskrivning" Lines="2" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="CloseCreateDebtDialog">Avbryt</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="CreateDebt">Registrera</MudButton>
+    </DialogActions>
+</MudDialog>
+
+<!-- Settlement Note Dialog -->
+<MudDialog @bind-Visible="showSettlementDialog" Options="dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Markera skuld som betald</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudTextField @bind-Value="settlementNote" Label="Notering (valfritt)" 
+                     Placeholder="T.ex. 'Betald via Swish'" Lines="2" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="CloseSettlementDialog">Avbryt</MudButton>
+        <MudButton Color="Color.Success" Variant="Variant.Filled" OnClick="ConfirmSettlement">Markera som betald</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [Parameter]
+    public int HouseholdId { get; set; }
+
+    private string _userId = string.Empty;
+    private Household? household;
+    private List<Budget> sharedBudgets = new();
+    private List<DebtSettlement> pendingDebts = new();
+    private List<DebtSettlement> settledDebts = new();
+    private Dictionary<int, decimal> memberBalances = new();
+    
+    private bool showCreateBudgetDialog = false;
+    private bool showCreateDebtDialog = false;
+    private bool showSettlementDialog = false;
+    private int? settlementDebtId = null;
+    private string settlementNote = "";
+    
+    private Budget newBudget = new Budget();
+    private DateTime? budgetStartDate = DateTime.Now;
+    private DateTime? budgetEndDate = DateTime.Now.AddMonths(1);
+    private Dictionary<int, decimal> budgetContributions = new();
+    
+    private int newDebtorId = 0;
+    private int newCreditorId = 0;
+    private decimal newDebtAmount = 0;
+    private string newDebtDescription = "";
+    
+    private DialogOptions dialogOptions = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true };
+
+    private List<BreadcrumbItem> breadcrumbs = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        _userId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
+        
+        await LoadData();
+        
+        breadcrumbs = new List<BreadcrumbItem>
+        {
+            new BreadcrumbItem("Hushåll", href: "/households"),
+            new BreadcrumbItem(household?.Name ?? "Laddar...", href: $"/households/{HouseholdId}"),
+            new BreadcrumbItem("Delad Ekonomi", href: null, disabled: true)
+        };
+    }
+
+    private async Task LoadData()
+    {
+        household = await HouseholdService.GetHouseholdByIdAsync(HouseholdId);
+        if (household != null)
+        {
+            sharedBudgets = (await HouseholdService.GetHouseholdBudgetsAsync(HouseholdId)).ToList();
+            pendingDebts = (await HouseholdService.GetHouseholdDebtsAsync(HouseholdId, DebtSettlementStatus.Pending)).ToList();
+            settledDebts = (await HouseholdService.GetHouseholdDebtsAsync(HouseholdId, DebtSettlementStatus.Settled)).ToList();
+            memberBalances = await HouseholdService.GetMemberDebtBalanceAsync(HouseholdId);
+            
+            // Initialize budget contributions with equal split
+            budgetContributions.Clear();
+            var activeMembers = household.Members.Where(m => m.IsActive).ToList();
+            if (activeMembers.Any())
+            {
+                var equalShare = 100m / activeMembers.Count;
+                foreach (var member in activeMembers)
+                {
+                    budgetContributions[member.HouseholdMemberId] = Math.Round(equalShare, 2);
+                }
+            }
+        }
+    }
+
+    private void OpenCreateBudgetDialog()
+    {
+        newBudget = new Budget
+        {
+            HouseholdId = HouseholdId,
+            Period = BudgetPeriod.Monthly
+        };
+        budgetStartDate = DateTime.Now;
+        budgetEndDate = DateTime.Now.AddMonths(1);
+        showCreateBudgetDialog = true;
+    }
+
+    private void CloseCreateBudgetDialog()
+    {
+        showCreateBudgetDialog = false;
+    }
+
+    private async Task CreateSharedBudget()
+    {
+        try
+        {
+            if (budgetStartDate.HasValue && budgetEndDate.HasValue)
+            {
+                newBudget.StartDate = budgetStartDate.Value;
+                newBudget.EndDate = budgetEndDate.Value;
+            }
+            
+            // Set the user ID for ownership
+            newBudget.UserId = _userId;
+            
+            await HouseholdService.CreateSharedBudgetAsync(newBudget, budgetContributions);
+            await LoadData();
+            CloseCreateBudgetDialog();
+        }
+        catch (Exception ex)
+        {
+            // In production, show snackbar notification
+            Console.WriteLine($"Error creating budget: {ex.Message}");
+        }
+    }
+
+    private void OpenCreateDebtDialog()
+    {
+        newDebtorId = 0;
+        newCreditorId = 0;
+        newDebtAmount = 0;
+        newDebtDescription = "";
+        showCreateDebtDialog = true;
+    }
+
+    private void CloseCreateDebtDialog()
+    {
+        showCreateDebtDialog = false;
+    }
+
+    private async Task CreateDebt()
+    {
+        try
+        {
+            await HouseholdService.CreateDebtAsync(HouseholdId, newDebtorId, newCreditorId, newDebtAmount, newDebtDescription);
+            await LoadData();
+            CloseCreateDebtDialog();
+        }
+        catch (Exception ex)
+        {
+            // In production, show snackbar notification
+            Console.WriteLine($"Error creating debt: {ex.Message}");
+        }
+    }
+
+    private void SettleDebt(int debtId)
+    {
+        settlementDebtId = debtId;
+        settlementNote = "";
+        showSettlementDialog = true;
+    }
+
+    private void CloseSettlementDialog()
+    {
+        showSettlementDialog = false;
+        settlementDebtId = null;
+    }
+
+    private async Task ConfirmSettlement()
+    {
+        if (settlementDebtId.HasValue)
+        {
+            try
+            {
+                await HouseholdService.SettleDebtAsync(settlementDebtId.Value, settlementNote);
+                await LoadData();
+                CloseSettlementDialog();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error settling debt: {ex.Message}");
+            }
+        }
+    }
+
+    private async Task CancelDebt(int debtId)
+    {
+        try
+        {
+            await HouseholdService.CancelDebtAsync(debtId);
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error cancelling debt: {ex.Message}");
+        }
+    }
+
+    private async Task CalculateOptimalSettlement()
+    {
+        try
+        {
+            var settlements = await HouseholdService.CalculateOptimalSettlementAsync(HouseholdId);
+            var settlementList = settlements.ToList();
+            
+            if (settlementList.Any())
+            {
+                // Save the calculated settlements
+                foreach (var settlement in settlementList)
+                {
+                    await HouseholdService.CreateDebtAsync(
+                        HouseholdId, 
+                        settlement.DebtorMemberId, 
+                        settlement.CreditorMemberId, 
+                        settlement.Amount, 
+                        settlement.Description);
+                }
+                await LoadData();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error calculating settlement: {ex.Message}");
+        }
+    }
+
+    private Color GetBalanceColor(decimal balance)
+    {
+        if (balance > 0) return Color.Success;
+        if (balance < 0) return Color.Error;
+        return Color.Default;
+    }
+
+    private string GetBalanceStyle(decimal balance)
+    {
+        if (balance > 0) return "background-color: rgba(76, 175, 80, 0.1);";
+        if (balance < 0) return "background-color: rgba(244, 67, 54, 0.1);";
+        return "background-color: rgba(158, 158, 158, 0.1);";
+    }
+}

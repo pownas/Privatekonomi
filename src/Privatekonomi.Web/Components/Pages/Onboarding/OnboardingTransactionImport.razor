@@ -1,0 +1,185 @@
+@using MudBlazor
+@inject ITransactionService TransactionService
+@inject ICategoryService CategoryService
+@inject ISnackbar Snackbar
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class="onboarding-step">
+    <MudPaper Elevation="3" Class="pa-8">
+        <MudText Typo="Typo.h4" GutterBottom="true" Class="mb-2">
+            <MudIcon Icon="@Icons.Material.Filled.History" Color="Color.Primary" Class="mr-2" />
+            Importera transaktioner
+        </MudText>
+        
+        <MudText Typo="Typo.body1" Color="Color.Secondary" Class="mb-6">
+            Importera dina transaktioner för de senaste 12-18 månaderna så att vi kan analysera ditt spenderingsmönster
+        </MudText>
+        
+        <MudDivider Class="mb-6" />
+        
+        @if (_importing)
+        {
+            <div class="text-center pa-6">
+                <MudProgressCircular Indeterminate="true" Size="Size.Large" />
+                <MudText Typo="Typo.body1" Class="mt-4">
+                    Importerar och kategoriserar transaktioner...
+                </MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                    Detta kan ta en stund
+                </MudText>
+            </div>
+        }
+        else if (_importCompleted)
+        {
+            <MudAlert Severity="Severity.Success" Class="mb-4">
+                <MudText Typo="Typo.body1">
+                    <strong>Import klar!</strong> Vi har importerat @_transactionCount transaktioner.
+                </MudText>
+            </MudAlert>
+            
+            <MudPaper Elevation="0" Class="pa-4 mb-4" Style="background-color: var(--mud-palette-background-grey);">
+                <MudText Typo="Typo.h6" GutterBottom="true" Class="mb-3">
+                    Snabb granskning av kategorier
+                </MudText>
+                
+                <MudText Typo="Typo.body2" Class="mb-3">
+                    Vi har automatiskt kategoriserat dina transaktioner. Här är en översikt:
+                </MudText>
+                
+                <MudSimpleTable Dense="true" Hover="true" Class="mb-3">
+                    <thead>
+                        <tr>
+                            <th>Kategori</th>
+                            <th style="text-align: right;">Antal</th>
+                            <th style="text-align: right;">Belopp</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var summary in _categorySummaries.OrderByDescending(s => Math.Abs(s.Amount)).Take(5))
+                        {
+                            <tr>
+                                <td>@summary.CategoryName</td>
+                                <td style="text-align: right;">@summary.Count</td>
+                                <td style="text-align: right;">@summary.Amount.ToString("C", new System.Globalization.CultureInfo("sv-SE"))</td>
+                            </tr>
+                        }
+                    </tbody>
+                </MudSimpleTable>
+                
+                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                    Du kan justera kategoriseringen senare under Transaktioner
+                </MudText>
+            </MudPaper>
+            
+            <div class="d-flex justify-end">
+                <MudButton Variant="Variant.Filled" 
+                           Color="Color.Primary"
+                           OnClick="@(() => OnNext.InvokeAsync())">
+                    Fortsätt till budget
+                </MudButton>
+            </div>
+        }
+        else
+        {
+            <MudAlert Severity="Severity.Info" Class="mb-4">
+                <MudText Typo="Typo.body2">
+                    <strong>Observera:</strong> Detta är en simulerad import för demonstration. 
+                    I en riktig miljö skulle vi hämta dina faktiska transaktioner från din bank via PSD2.
+                </MudText>
+            </MudAlert>
+            
+            <MudPaper Elevation="0" Class="pa-4 mb-4" Style="background-color: var(--mud-palette-background-grey);">
+                <MudText Typo="Typo.h6" GutterBottom="true">
+                    Vad händer vid import?
+                </MudText>
+                <MudList T="string" Dense="true">
+                    <MudListItem Icon="@Icons.Material.Filled.CloudDownload">
+                        Hämtar transaktioner från de senaste 12-18 månaderna
+                    </MudListItem>
+                    <MudListItem Icon="@Icons.Material.Filled.Category">
+                        Kategoriserar automatiskt baserat på mottagare och belopp
+                    </MudListItem>
+                    <MudListItem Icon="@Icons.Material.Filled.Analytics">
+                        Analyserar spenderingsmönster för budgetförslag
+                    </MudListItem>
+                </MudList>
+            </MudPaper>
+            
+            <div class="d-flex justify-space-between">
+                <MudButton Variant="Variant.Text" 
+                           Color="Color.Default"
+                           OnClick="SkipImport">
+                    Hoppa över
+                </MudButton>
+                <MudButton Variant="Variant.Filled" 
+                           Color="Color.Primary"
+                           OnClick="StartImport">
+                    Börja importera
+                </MudButton>
+            </div>
+        }
+    </MudPaper>
+</MudContainer>
+
+@code {
+    [Parameter]
+    public EventCallback OnNext { get; set; }
+
+    private bool _importing = false;
+    private bool _importCompleted = false;
+    private int _transactionCount = 0;
+    private List<CategorySummary> _categorySummaries = new();
+
+    private class CategorySummary
+    {
+        public string CategoryName { get; set; } = "";
+        public int Count { get; set; }
+        public decimal Amount { get; set; }
+    }
+
+    private async Task StartImport()
+    {
+        _importing = true;
+        StateHasChanged();
+        
+        try
+        {
+            // Simulate import delay
+            await Task.Delay(2000);
+            
+            // In a real implementation, this would:
+            // 1. Call bank API to fetch transactions
+            // 2. Store transactions in database
+            // 3. Apply automatic categorization rules
+            // 4. Generate summary statistics
+            
+            // For demo purposes, we'll create sample data
+            _transactionCount = 156; // Simulated count
+            
+            _categorySummaries = new List<CategorySummary>
+            {
+                new CategorySummary { CategoryName = "Mat & Livsmedel", Count = 45, Amount = -15234.50m },
+                new CategorySummary { CategoryName = "Boende", Count = 12, Amount = -48000.00m },
+                new CategorySummary { CategoryName = "Transport", Count = 23, Amount = -4567.80m },
+                new CategorySummary { CategoryName = "Nöje & Underhållning", Count = 18, Amount = -3456.20m },
+                new CategorySummary { CategoryName = "Lön", Count = 12, Amount = 360000.00m }
+            };
+            
+            _importCompleted = true;
+            Snackbar.Add("Transaktioner importerade och kategoriserade!", MudBlazor.Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Ett fel uppstod vid import: {ex.Message}", MudBlazor.Severity.Error);
+        }
+        finally
+        {
+            _importing = false;
+        }
+    }
+
+    private void SkipImport()
+    {
+        Snackbar.Add("Import överhoppad. Du kan lägga till transaktioner manuellt senare.", MudBlazor.Severity.Info);
+        OnNext.InvokeAsync();
+    }
+}

@@ -1,15 +1,19 @@
+@page "/settings/notifications"
 @page "/notifications"
 @using Privatekonomi.Core.Models
 @using Privatekonomi.Core.Services
 @inject INotificationService NotificationService
 @inject ICurrentUserService CurrentUserService
 @inject NavigationManager NavigationManager
+@inject HttpClient HttpClient
+@inject ILogger<Notifications> Logger
+@inject ISnackbar Snackbar
 
 <PageTitle>Notifikationer</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
     <MudText Typo="Typo.h4" GutterBottom="true">
-        <MudIcon Icon="@Icons.Material.Filled.Notifications" Class="mr-2" />
+        <MudIcon Icon="@Icons.Material.Filled.Notifications" Color="Color.Primary" Class="mr-2" aria-hidden="true" />
         Notifikationer
     </MudText>
 
@@ -76,11 +80,11 @@
         {
             @foreach (var notification in _notifications)
             {
-                <MudPaper Class="pa-3 mb-2" Elevation="1">
-                    <div class="d-flex align-center" style="cursor: pointer;" @onclick="@(() => HandleNotificationClick(notification))">
+                <MudPaper Class="pa-3 mb-2" Elevation="1" Style="@(notification.SnoozeUntil.HasValue && notification.SnoozeUntil.Value > DateTime.UtcNow ? "opacity: 0.7;" : "")">
+                    <div class="d-flex align-start">
                         <MudIcon Icon="@GetNotificationIcon(notification.Type)" 
                                  Color="@GetNotificationColor(notification.Priority)" 
-                                 Class="mr-3" />
+                                 Class="mr-3 mt-1" />
                         <div style="flex: 1;">
                             <MudText Typo="Typo.subtitle1" Style="@(notification.IsRead ? "" : "font-weight: bold;")">
                                 @notification.Title
@@ -94,10 +98,57 @@
                                 {
                                     <text> - Läst @notification.ReadAt.Value.ToString("g")</text>
                                 }
+                                @if (notification.SnoozeUntil.HasValue && notification.SnoozeUntil.Value > DateTime.UtcNow)
+                                {
+                                    <text> - 💤 Snoozad till @notification.SnoozeUntil.Value.ToLocalTime().ToString("g")</text>
+                                }
+                                @if (notification.SnoozeCount > 0)
+                                {
+                                    var snoozeText = notification.SnoozeCount == 1 ? "snooze" : "snooze";
+                                    <text> (@notification.SnoozeCount @snoozeText)</text>
+                                }
                             </MudText>
+                            
+                            @* Quick actions for bill reminders *@
+                            @if (IsBillReminder(notification) && !notification.IsRead)
+                            {
+                                <div class="d-flex gap-2 mt-2">
+                                    <MudButton Size="Size.Small" 
+                                               Variant="Variant.Outlined" 
+                                               Color="Color.Success"
+                                               StartIcon="@Icons.Material.Filled.CheckCircle"
+                                               OnClick="@(() => MarkReminderAsCompleted(notification))">
+                                        Markera som betald
+                                    </MudButton>
+                                    <MudMenu Label="Snooze" 
+                                             Size="Size.Small" 
+                                             Variant="Variant.Outlined"
+                                             StartIcon="@Icons.Material.Filled.Snooze">
+                                        <MudMenuItem OnClick="@(() => SnoozeNotification(notification, SnoozeDuration.OneHour))">
+                                            1 timme
+                                        </MudMenuItem>
+                                        <MudMenuItem OnClick="@(() => SnoozeNotification(notification, SnoozeDuration.OneDay))">
+                                            1 dag
+                                        </MudMenuItem>
+                                        <MudMenuItem OnClick="@(() => SnoozeNotification(notification, SnoozeDuration.OneWeek))">
+                                            1 vecka
+                                        </MudMenuItem>
+                                    </MudMenu>
+                                    @if (notification.ActionUrl?.Contains("/bills/") == true)
+                                    {
+                                        <MudButton Size="Size.Small"
+                                                   Variant="Variant.Outlined"
+                                                   Color="Color.Primary"
+                                                   StartIcon="@Icons.Material.Filled.Receipt"
+                                                   OnClick="@(() => CreateTransaction(notification))">
+                                            Skapa transaktion
+                                        </MudButton>
+                                    }
+                                </div>
+                            }
                         </div>
-                        <div class="d-flex gap-2">
-                            @if (!notification.IsRead)
+                        <div class="d-flex flex-column gap-2">
+                            @if (!notification.IsRead && !IsBillReminder(notification))
                             {
                                 <MudIconButton Icon="@Icons.Material.Filled.Done" 
                                                Size="Size.Small"
@@ -254,5 +305,94 @@
             NotificationPriority.Low => Color.Info,
             _ => Color.Default
         };
+    }
+
+    private bool IsBillReminder(Notification notification)
+    {
+        return notification.Type is SystemNotificationType.UpcomingBill 
+            or SystemNotificationType.BillDue 
+            or SystemNotificationType.BillOverdue;
+    }
+
+    private async Task SnoozeNotification(Notification notification, SnoozeDuration duration)
+    {
+        var userId = CurrentUserService.UserId;
+        if (userId != null)
+        {
+            try
+            {
+                // Call API to snooze
+                var response = await HttpClient.PostAsJsonAsync($"api/notifications/{notification.NotificationId}/snooze", 
+                    new { Duration = duration });
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    // Update local state
+                    var snoozeUntil = duration switch
+                    {
+                        SnoozeDuration.OneHour => DateTime.UtcNow.AddHours(1),
+                        SnoozeDuration.OneDay => DateTime.UtcNow.AddDays(1),
+                        SnoozeDuration.OneWeek => DateTime.UtcNow.AddDays(7),
+                        _ => DateTime.UtcNow.AddHours(1)
+                    };
+                    
+                    notification.SnoozeUntil = snoozeUntil;
+                    notification.SnoozeCount++;
+                    StateHasChanged();
+                    Snackbar.Add("Påminnelse snoozad", Severity.Success);
+                }
+                else
+                {
+                    Snackbar.Add("Kunde inte snooze påminnelsen", Severity.Error);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Error snoozing notification {NotificationId}", notification.NotificationId);
+                Snackbar.Add("Ett fel uppstod vid snoozing av påminnelsen", Severity.Error);
+            }
+        }
+    }
+
+    private async Task MarkReminderAsCompleted(Notification notification)
+    {
+        var userId = CurrentUserService.UserId;
+        if (userId != null)
+        {
+            try
+            {
+                // Call API to complete reminder
+                var response = await HttpClient.PostAsync($"api/notifications/{notification.NotificationId}/complete", null);
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    notification.IsRead = true;
+                    notification.ReadAt = DateTime.UtcNow;
+                    _unreadCount--;
+                    StateHasChanged();
+                    Snackbar.Add("Påminnelse markerad som betald", Severity.Success);
+                }
+                else
+                {
+                    Snackbar.Add("Kunde inte markera påminnelsen som betald", Severity.Error);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Error completing reminder {NotificationId}", notification.NotificationId);
+                Snackbar.Add("Ett fel uppstod vid markering av påminnelsen", Severity.Error);
+            }
+        }
+    }
+
+    private void CreateTransaction(Notification notification)
+    {
+        // Navigate to create transaction with pre-filled data from bill
+        if (!string.IsNullOrEmpty(notification.ActionUrl))
+        {
+            // Extract bill ID from action URL
+            var billId = notification.ActionUrl.Split('/').LastOrDefault();
+            NavigationManager.NavigateTo($"/transactions/create?billId={billId}");
+        }
     }
 }

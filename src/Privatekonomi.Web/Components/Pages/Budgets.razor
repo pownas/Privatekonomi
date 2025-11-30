@@ -1,6 +1,9 @@
+@page "/economy/budgets"
 @page "/budgets"
 @rendermode InteractiveServer
+@using Privatekonomi.Web.Components.Shared
 @inject IBudgetService BudgetService
+@inject IBudgetAlertService BudgetAlertService
 @inject ICategoryService CategoryService
 @inject IHouseholdService HouseholdService
 @inject ISnackbar Snackbar
@@ -8,9 +11,56 @@
 
 <PageTitle>Budget - Privatekonomi</PageTitle>
 
+@* Budget Alerts Section *@
+@if (_activeAlerts.Any())
+{
+    <MudPaper Class="pa-4 mb-4" Elevation="2">
+        <MudText Typo="Typo.h6" Class="mb-3">
+            <MudIcon Icon="@Icons.Material.Filled.NotificationsActive" Color="Color.Error" Class="mr-2" />
+            Aktiva Budgetvarningar (@_activeAlerts.Count())
+        </MudText>
+        
+        @foreach (var alert in _activeAlerts.Take(3))
+        {
+            var budgetCategory = _budgets
+                .SelectMany(b => b.BudgetCategories)
+                .FirstOrDefault(bc => bc.BudgetCategoryId == alert.BudgetCategoryId);
+            
+            if (budgetCategory != null)
+            {
+                <BudgetAlertCard Alert="@alert" 
+                               BudgetCategory="@budgetCategory"
+                               OnAlertAcknowledged="@LoadAlertsAsync" />
+            }
+        }
+        
+        @if (_activeAlerts.Count() > 3)
+        {
+            <MudText Typo="Typo.body2" Class="mt-2">
+                Och @(_activeAlerts.Count() - 3) fler varningar...
+            </MudText>
+        }
+    </MudPaper>
+}
+
 <div class="d-flex justify-space-between align-center mb-4">
-    <MudText Typo="Typo.h4">Budgethantering</MudText>
+    <MudText Typo="Typo.h4">
+        <MudIcon Icon="@Icons.Material.Filled.PieChart" Color="Color.Primary" Class="mr-2" aria-hidden="true" />
+        Budgethantering
+    </MudText>
     <div class="d-flex gap-2">
+        <MudButton Variant="Variant.Outlined" 
+                   Color="Color.Default" 
+                   StartIcon="@Icons.Material.Filled.Settings"
+                   Href="/budgets/settings">
+            Inställningar
+        </MudButton>
+        <MudButton Variant="Variant.Outlined" 
+                   Color="Color.Info" 
+                   StartIcon="@Icons.Material.Filled.AutoAwesome"
+                   Href="/budgets/builder">
+            Budgetbyggare
+        </MudButton>
         <MudButton Variant="Variant.Outlined" 
                    Color="Color.Secondary" 
                    StartIcon="@Icons.Material.Filled.AutoMode"
@@ -90,6 +140,8 @@
                 <MudSelect @bind-Value="_selectedTemplate" Label="Välj budgetmall" Variant="Variant.Outlined" 
                            T="BudgetTemplateType" Class="mb-3">
                     <MudSelectItem Value="@BudgetTemplateType.Custom">Anpassad (tom mall)</MudSelectItem>
+                    <MudSelectItem Value="@BudgetTemplateType.SwedishFamily">Svenska Familjehushåll (Rekommenderad)</MudSelectItem>
+                    <MudSelectItem Value="@BudgetTemplateType.SwedishSingle">Svenska Singelhushåll (Rekommenderad)</MudSelectItem>
                     <MudSelectItem Value="@BudgetTemplateType.FiftyThirtyTwenty">50/30/20-regeln</MudSelectItem>
                     <MudSelectItem Value="@BudgetTemplateType.ZeroBased">Zero-based budgeting</MudSelectItem>
                     <MudSelectItem Value="@BudgetTemplateType.Envelope">Kuvertbudget</MudSelectItem>
@@ -128,20 +180,68 @@
         <MudDivider Class="my-4" />
 
         <MudText Typo="Typo.h6" Class="mb-3">Budgetposter per kategori</MudText>
+        <MudAlert Severity="Severity.Success" Class="mb-3" Icon="@Icons.Material.Filled.Lightbulb">
+            <MudText Typo="Typo.body2" Class="mb-2"><strong>Tips för en lyckad hushållsbudget:</strong></MudText>
+            <ul style="margin: 0; padding-left: 20px;">
+                <li><strong>Se sparande som en månadskostnad</strong> - Sparandet ska alltid dras i början av månaden så att det inte bortprioriteras.</li>
+                <li><strong>Dela upp matkostnader</strong> - Separera mat du handlar i butik från mat du handlar på restaurang för bättre kontroll.</li>
+                <li><strong>Gör varje månad kostnadsneutral</strong> - För årskostnader (t.ex. fritidsaktiviteter 2400 kr/år = 200 kr/månad), använd periodväljaren nedan.</li>
+            </ul>
+        </MudAlert>
+        <MudAlert Severity="Severity.Info" Class="mb-3">
+            För varje kategori kan du ange en periodkostnad (månadsvis, varannan månad, kvartal, halvår eller helår). 
+            Systemet beräknar automatiskt månadskostnaden som läggs till i budgeten.
+        </MudAlert>
         <MudGrid>
             @foreach (var category in _categories)
             {
-                <MudItem xs="12" sm="6" md="4">
-                    <MudNumericField @bind-Value="@_categoryBudgets[category.CategoryId]"
-                                    Label="@category.Name"
-                                    Variant="Variant.Outlined"
-                                    Format="N2"
-                                    Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
-                                    Adornment="Adornment.Start"
-                                    AdornmentText="kr"
-                                    Min="0"
-                                    Step="100M"
-                                    HideSpinButtons="false" />
+                <MudItem xs="12">
+                    <MudPaper Class="pa-3 mb-2" Elevation="1">
+                        <MudGrid>
+                            <MudItem xs="12" sm="4">
+                                <MudText Typo="Typo.subtitle2" Class="mb-2">
+                                    <MudChip T="string" 
+                                            Style="@($"background-color: {category.Color}; color: white;")" 
+                                            Size="Size.Small">
+                                        @category.Name
+                                    </MudChip>
+                                </MudText>
+                            </MudItem>
+                            <MudItem xs="12" sm="4">
+                                <MudSelect @bind-Value="@_categoryPeriods[category.CategoryId]" 
+                                          Label="Period" 
+                                          Variant="Variant.Outlined"
+                                          dense="true">
+                                    <MudSelectItem Value="@(1)">Månad</MudSelectItem>
+                                    <MudSelectItem Value="@(2)">Varannan månad</MudSelectItem>
+                                    <MudSelectItem Value="@(3)">Kvartal (3 mån)</MudSelectItem>
+                                    <MudSelectItem Value="@(6)">Halvår (6 mån)</MudSelectItem>
+                                    <MudSelectItem Value="@(12)">Helår (12 mån)</MudSelectItem>
+                                </MudSelect>
+                            </MudItem>
+                            <MudItem xs="12" sm="4">
+                                <MudNumericField @bind-Value="@_categoryBudgets[category.CategoryId]"
+                                                Label="@GetPeriodLabel(_categoryPeriods[category.CategoryId])"
+                                                Variant="Variant.Outlined"
+                                                Format="N2"
+                                                Culture="@(new System.Globalization.CultureInfo("sv-SE"))"
+                                                Adornment="Adornment.Start"
+                                                AdornmentText="kr"
+                                                Min="0"
+                                                Step="100M"
+                                                HideSpinButtons="false"
+                                                dense="true" />
+                            </MudItem>
+                            @if (_categoryBudgets[category.CategoryId] > 0 && _categoryPeriods[category.CategoryId] > 1)
+                            {
+                                <MudItem xs="12">
+                                    <MudAlert Severity="Severity.Success" dense="true">
+                                        Månadskostnad: @((_categoryBudgets[category.CategoryId] / _categoryPeriods[category.CategoryId]).ToString("C", new System.Globalization.CultureInfo("sv-SE")))
+                                    </MudAlert>
+                                </MudItem>
+                            }
+                        </MudGrid>
+                    </MudPaper>
                 </MudItem>
             }
         </MudGrid>
@@ -231,15 +331,15 @@
                             @if (_budgetActualAmounts.ContainsKey(budget.BudgetId))
                             {
                                 var actualAmounts = _budgetActualAmounts[budget.BudgetId];
-                                var totalPlanned = budget.BudgetCategories.Sum(bc => bc.PlannedAmount);
+                                var totalPlannedMonthly = budget.BudgetCategories.Sum(bc => bc.MonthlyAmount);
                                 var totalActual = actualAmounts.Values.Sum();
                                 
                                 <div class="mb-4">
                                     <MudText Typo="Typo.h6" Class="mb-2">Sammanfattning</MudText>
                                     <MudGrid>
                                         <MudItem xs="12" sm="4">
-                                            <MudText Typo="Typo.body2">Total Planerad:</MudText>
-                                            <MudText Typo="Typo.h6">@totalPlanned.ToString("C", new System.Globalization.CultureInfo("sv-SE"))</MudText>
+                                            <MudText Typo="Typo.body2">Total Månadskostnad:</MudText>
+                                            <MudText Typo="Typo.h6">@totalPlannedMonthly.ToString("C", new System.Globalization.CultureInfo("sv-SE"))</MudText>
                                         </MudItem>
                                         <MudItem xs="12" sm="4">
                                             <MudText Typo="Typo.body2">Faktiskt Utfall:</MudText>
@@ -247,8 +347,8 @@
                                         </MudItem>
                                         <MudItem xs="12" sm="4">
                                             <MudText Typo="Typo.body2">Kvar att Spendera:</MudText>
-                                            <MudText Typo="Typo.h6" Color="@(totalPlanned - totalActual >= 0 ? Color.Success : Color.Error)">
-                                                @((totalPlanned - totalActual).ToString("C", new System.Globalization.CultureInfo("sv-SE")))
+                                            <MudText Typo="Typo.h6" Color="@(totalPlannedMonthly - totalActual >= 0 ? Color.Success : Color.Error)">
+                                                @((totalPlannedMonthly - totalActual).ToString("C", new System.Globalization.CultureInfo("sv-SE")))
                                             </MudText>
                                         </MudItem>
                                     </MudGrid>
@@ -257,10 +357,12 @@
                                 <MudDivider Class="mb-3" />
                                 
                                 <MudText Typo="Typo.h6" Class="mb-3">Budgetposter per kategori</MudText>
-                                <MudTable Items="@budget.BudgetCategories" Dense="true" Hover="true" Striped="true">
+                                <MudTable Items="@budget.BudgetCategories" dense="true" Hover="true" Striped="true">
                                     <HeaderContent>
                                         <MudTh>Kategori</MudTh>
-                                        <MudTh>Planerat</MudTh>
+                                        <MudTh>Period</MudTh>
+                                        <MudTh>Periodbelopp</MudTh>
+                                        <MudTh>Månadskostnad</MudTh>
                                         <MudTh>Faktiskt</MudTh>
                                         <MudTh>Differens</MudTh>
                                         <MudTh>Progress</MudTh>
@@ -273,7 +375,31 @@
                                                 @context.Category.Name
                                             </MudChip>
                                         </MudTd>
-                                        <MudTd>@context.PlannedAmount.ToString("C", new System.Globalization.CultureInfo("sv-SE"))</MudTd>
+                                        <MudTd>
+                                            @if (context.RecurrencePeriodMonths > 1)
+                                            {
+                                                <MudChip T="string" Color="Color.Info" Size="Size.Small">
+                                                    @GetPeriodText(context.RecurrencePeriodMonths)
+                                                </MudChip>
+                                            }
+                                            else
+                                            {
+                                                <span>Månad</span>
+                                            }
+                                        </MudTd>
+                                        <MudTd>
+                                            @if (context.RecurrencePeriodMonths > 1)
+                                            {
+                                                @context.PlannedAmount.ToString("C", new System.Globalization.CultureInfo("sv-SE"))
+                                            }
+                                            else
+                                            {
+                                                <span>-</span>
+                                            }
+                                        </MudTd>
+                                        <MudTd>
+                                            <strong>@context.MonthlyAmount.ToString("C", new System.Globalization.CultureInfo("sv-SE"))</strong>
+                                        </MudTd>
                                         <MudTd>
                                             @{
                                                 var actual = actualAmounts.ContainsKey(context.CategoryId) ? actualAmounts[context.CategoryId] : 0;
@@ -283,7 +409,7 @@
                                         <MudTd>
                                             @{
                                                 var actual = actualAmounts.ContainsKey(context.CategoryId) ? actualAmounts[context.CategoryId] : 0;
-                                                var diff = context.PlannedAmount - actual;
+                                                var diff = context.MonthlyAmount - actual;
                                             }
                                             <MudText Color="@(diff >= 0 ? Color.Success : Color.Error)">
                                                 @diff.ToString("C", new System.Globalization.CultureInfo("sv-SE"))
@@ -292,7 +418,7 @@
                                         <MudTd>
                                             @{
                                                 var actual = actualAmounts.ContainsKey(context.CategoryId) ? actualAmounts[context.CategoryId] : 0;
-                                                var percentage = context.PlannedAmount > 0 ? (double)(actual / context.PlannedAmount) * 100 : 0;
+                                                var percentage = context.MonthlyAmount > 0 ? (double)(actual / context.MonthlyAmount) * 100 : 0;
                                                 var progressColor = percentage <= 75 ? Color.Success : percentage <= 100 ? Color.Warning : Color.Error;
                                             }
                                             <MudProgressLinear Color="@progressColor" 
@@ -326,12 +452,14 @@
     private bool _showCreateForm = false;
     private Budget? _editingBudget = null;
     private IEnumerable<Budget> _budgets = new List<Budget>();
+    private IEnumerable<BudgetAlert> _activeAlerts = new List<BudgetAlert>();
     private IEnumerable<Category> _categories = new List<Category>();
     private IEnumerable<Household> _households = new List<Household>();
     private Budget _newBudget = new();
     private string _newBudgetStartDateString = DateTime.Now.ToString("yyyy-MM-dd");
     private string _newBudgetEndDateString = DateTime.Now.AddMonths(1).ToString("yyyy-MM-dd");
     private Dictionary<int, decimal> _categoryBudgets = new();
+    private Dictionary<int, int> _categoryPeriods = new(); // New: track recurrence period for each category
     private Dictionary<int, Dictionary<int, decimal>> _budgetActualAmounts = new();
     private BudgetTemplateType _selectedTemplate = BudgetTemplateType.Custom;
     private decimal _totalIncome = 30000m; // Default Swedish median income
@@ -339,6 +467,7 @@
     protected override async Task OnInitializedAsync()
     {
         await LoadData();
+        await LoadAlertsAsync();
     }
 
     private async Task LoadData()
@@ -348,8 +477,9 @@
         _budgets = await BudgetService.GetAllBudgetsAsync();
         _households = await HouseholdService.GetAllHouseholdsAsync();
         
-        // Initialize category budgets dictionary
+        // Initialize category budgets and periods dictionaries
         _categoryBudgets = _categories.ToDictionary(c => c.CategoryId, c => 0m);
+        _categoryPeriods = _categories.ToDictionary(c => c.CategoryId, c => 1); // Default to monthly
         
         // Load actual amounts for all budgets
         foreach (var budget in _budgets)
@@ -374,6 +504,7 @@
             _newBudgetStartDateString = DateTime.Now.ToString("yyyy-MM-dd");
             _newBudgetEndDateString = DateTime.Now.AddMonths(1).ToString("yyyy-MM-dd");
             _categoryBudgets = _categories.ToDictionary(c => c.CategoryId, c => 0m);
+            _categoryPeriods = _categories.ToDictionary(c => c.CategoryId, c => 1);
             _selectedTemplate = BudgetTemplateType.Custom;
         }
     }
@@ -399,11 +530,13 @@
         _newBudgetStartDateString = budget.StartDate.ToString("yyyy-MM-dd");
         _newBudgetEndDateString = budget.EndDate.ToString("yyyy-MM-dd");
         
-        // Pre-fill category budgets
+        // Pre-fill category budgets and periods
         _categoryBudgets = _categories.ToDictionary(c => c.CategoryId, c => 0m);
+        _categoryPeriods = _categories.ToDictionary(c => c.CategoryId, c => 1);
         foreach (var bc in budget.BudgetCategories)
         {
             _categoryBudgets[bc.CategoryId] = bc.PlannedAmount;
+            _categoryPeriods[bc.CategoryId] = bc.RecurrencePeriodMonths;
         }
         
         _selectedTemplate = budget.TemplateType ?? BudgetTemplateType.Custom;
@@ -414,6 +547,19 @@
         _showCreateForm = false;
         _editingBudget = null;
         _newBudget = new Budget();
+    }
+    
+    private string GetPeriodLabel(int months)
+    {
+        return months switch
+        {
+            1 => "Belopp/månad",
+            2 => "Belopp/varannan månad",
+            3 => "Belopp/kvartal",
+            6 => "Belopp/halvår",
+            12 => "Belopp/år",
+            _ => "Belopp"
+        };
     }
 
     private async Task SaveEditedBudget()
@@ -459,7 +605,7 @@
             existingBudget.HouseholdId = _newBudget.HouseholdId;
             existingBudget.TemplateType = _selectedTemplate;
 
-            // Update budget categories
+            // Update budget categories with recurrence periods
             existingBudget.BudgetCategories.Clear();
             existingBudget.BudgetCategories = _categoryBudgets
                 .Where(kvp => kvp.Value > 0)
@@ -467,7 +613,8 @@
                 {
                     BudgetId = existingBudget.BudgetId,
                     CategoryId = kvp.Key,
-                    PlannedAmount = kvp.Value
+                    PlannedAmount = kvp.Value,
+                    RecurrencePeriodMonths = _categoryPeriods[kvp.Key]
                 })
                 .ToList();
 
@@ -534,13 +681,14 @@
             _newBudget.StartDate = startDate;
             _newBudget.EndDate = endDate;
             
-            // Add budget categories with non-zero amounts
+            // Add budget categories with non-zero amounts and their recurrence periods
             _newBudget.BudgetCategories = _categoryBudgets
                 .Where(kvp => kvp.Value > 0)
                 .Select(kvp => new BudgetCategory
                 {
                     CategoryId = kvp.Key,
-                    PlannedAmount = kvp.Value
+                    PlannedAmount = kvp.Value,
+                    RecurrencePeriodMonths = _categoryPeriods[kvp.Key]
                 })
                 .ToList();
 
@@ -588,6 +736,19 @@
         var now = DateTime.Now;
         return budget.StartDate <= now && budget.EndDate >= now;
     }
+    
+    private string GetPeriodText(int months)
+    {
+        return months switch
+        {
+            1 => "Månad",
+            2 => "Varannan månad",
+            3 => "Kvartal",
+            6 => "Halvår",
+            12 => "Helår",
+            _ => $"{months} månader"
+        };
+    }
 
     private async Task CreateNextMonthBudgets()
     {
@@ -608,6 +769,18 @@
         catch (Exception ex)
         {
             Snackbar.Add($"Fel vid skapande av nästa månads budgetar: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task LoadAlertsAsync()
+    {
+        try
+        {
+            _activeAlerts = await BudgetAlertService.GetActiveAlertsAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Kunde inte ladda budgetvarningar: {ex.Message}", Severity.Error);
         }
     }
 }

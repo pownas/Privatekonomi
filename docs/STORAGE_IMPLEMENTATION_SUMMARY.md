@@ -157,7 +157,6 @@ Implementerade stöd för att växla mellan olika lagringsmetoder (InMemory, SQL
 - docs/STORAGE_GUIDE.md
 - docs/STORAGE_QUICKSTART.md
 - appsettings.Production.example.json
-- appsettings.RaspberryPi.example.json
 
 **Modifierade filer (9):**
 - src/Privatekonomi.Core/Privatekonomi.Core.csproj

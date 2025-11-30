@@ -8,13 +8,13 @@
 # for the Privatekonomi project in GitHub Codespaces.
 #
 # Summary of setup performed:
-# 1. Install .NET 9 SDK (required for this project)
-# 2. Install .NET Aspire workload
-# 3. Configure PATH for .NET tools
-# 4. Restore project dependencies
-# 5. Clean and rebuild solution
-# 6. Install Entity Framework CLI tools
-# 7. Configure HTTPS development certificates
+# 1. Install .NET 10 SDK (required for this project)
+# 2. Configure PATH for .NET tools (Codespaces)
+# 3. Restore project dependencies
+# 4. Clean and rebuild solution
+# 5. Install Entity Framework CLI tools
+# 6. Configure HTTPS development certificates
+# 7. Make helper scripts executable
 # 8. Verify installation and test readiness
 #
 # Created: October 23, 2025
@@ -62,9 +62,9 @@ check_codespace() {
     fi
 }
 
-# Step 1: Install .NET 9 SDK
-install_dotnet_9() {
-    log_section "Installing .NET 9 SDK"
+# Step 1: Install .NET 10 SDK
+install_dotnet_10() {
+    log_section "Installing .NET 10 SDK"
     
     log_info "Checking current .NET installation..."
     if command -v dotnet &> /dev/null; then
@@ -72,46 +72,28 @@ install_dotnet_9() {
         log_info "Installed SDKs:"
         dotnet --list-sdks
         
-        # Check if .NET 9 is already installed
-        if dotnet --list-sdks | grep -q "9\."; then
-            log_success ".NET 9 SDK is already installed"
+        # Check if .NET 10 is already installed
+        if dotnet --list-sdks | grep -q "10\."; then
+            log_success ".NET 10 SDK is already installed"
             return 0
         fi
     else
         log_warning ".NET not found in PATH"
     fi
     
-    log_info "Installing .NET 9 SDK using Microsoft's installation script..."
-    curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --version latest --channel 9.0
+    log_info "Installing .NET 10 SDK using Microsoft's installation script..."
+    curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --version latest --channel 10.0
     
     log_info "Configuring PATH for .NET..."
     export PATH="$HOME/.dotnet:$PATH"
     echo 'export PATH="$HOME/.dotnet:$PATH"' >> ~/.bashrc
     
-    log_info "Verifying .NET 9 installation..."
+    log_info "Verifying .NET 10 installation..."
     dotnet --list-sdks
-    log_success ".NET 9 SDK installation completed"
+    log_success ".NET 10 SDK installation completed"
 }
 
-# Step 2: Install Aspire workload
-install_aspire_workload() {
-    log_section "Installing .NET Aspire Workload"
-    
-    log_info "Checking if Aspire workload is already installed..."
-    if dotnet workload list | grep -q "aspire"; then
-        log_success "Aspire workload is already installed"
-    else
-        log_info "Installing Aspire workload..."
-        dotnet workload install aspire
-        log_success "Aspire workload installed successfully"
-    fi
-    
-    log_info "Verifying Aspire workload installation..."
-    dotnet workload list
-    log_success "Aspire workload installation completed"
-}
-
-# Step 3: Restore and build project
+# Step 2: Restore and build project
 setup_project() {
     log_section "Setting up Project Dependencies"
     
@@ -127,16 +109,35 @@ setup_project() {
     log_success "Project setup completed"
 }
 
-# Step 4: Install Entity Framework CLI tools
+# Step 3: Install Entity Framework CLI tools
 install_ef_tools() {
     log_section "Installing Entity Framework CLI Tools"
     
     log_info "Checking if Entity Framework tools are already installed..."
     if dotnet tool list --global | grep -q "dotnet-ef"; then
         log_success "Entity Framework tools are already installed"
-    else
-        log_info "Installing Entity Framework global tools..."
-        dotnet tool install --global dotnet-ef
+        # Verify it's working
+        if dotnet ef --version &> /dev/null; then
+            return 0
+        else
+            log_warning "dotnet-ef is installed but not working, attempting to reinstall..."
+            dotnet tool uninstall --global dotnet-ef 2>/dev/null || true
+        fi
+    fi
+    
+    log_info "Installing Entity Framework global tools..."
+    if ! dotnet tool install --global dotnet-ef; then
+        log_warning "Installation failed, clearing NuGet cache and retrying..."
+        dotnet nuget locals all --clear
+        
+        # Try with explicit version matching .NET SDK
+        local dotnet_version=$(dotnet --version | cut -d'.' -f1)
+        log_info "Attempting installation with version ${dotnet_version}.0.0..."
+        if ! dotnet tool install --global dotnet-ef --version ${dotnet_version}.0.0; then
+            log_error "Failed to install Entity Framework tools after cache clear"
+            log_error "Try manually: dotnet tool install --global dotnet-ef --version ${dotnet_version}.0.0"
+            return 1
+        fi
     fi
     
     log_info "Verifying Entity Framework tools installation..."
@@ -151,7 +152,7 @@ install_ef_tools() {
     log_success "Entity Framework tools installation completed"
 }
 
-# Step 5: Configure HTTPS development certificates
+# Step 4: Configure HTTPS development certificates
 configure_dev_certs() {
     log_section "Configuring HTTPS Development Certificates"
     
@@ -171,7 +172,7 @@ configure_dev_certs() {
     log_success "HTTPS development certificates configuration completed"
 }
 
-# Step 6: Make scripts executable
+# Step 5: Make scripts executable
 setup_scripts() {
     log_section "Setting up Project Scripts"
     
@@ -182,16 +183,13 @@ setup_scripts() {
     log_success "Project scripts are now executable"
 }
 
-# Step 7: Verify installation
+# Step 6: Verify installation
 verify_installation() {
     log_section "Verifying Installation"
     
     log_info "Checking .NET installation..."
     dotnet --version
     dotnet --list-sdks
-    
-    log_info "Checking Aspire workload..."
-    dotnet workload list | grep aspire || log_warning "Aspire workload not found"
     
     log_info "Checking Entity Framework tools..."
     dotnet tool list --global | grep dotnet-ef || log_warning "EF tools not found in global tools"
@@ -209,7 +207,7 @@ verify_installation() {
     log_success "All verifications completed successfully!"
 }
 
-# Step 8: Display usage information
+# Step 7: Display usage information
 show_usage_info() {
     log_section "Installation Complete - Usage Information"
     
@@ -237,10 +235,10 @@ show_usage_info() {
     echo -e "  • ${YELLOW}Privatekonomi.ServiceDefaults${NC} - Shared service configurations"
     echo -e ""
     echo -e "${BLUE}Installed Tools:${NC}"
-    echo -e "  • .NET 9 SDK"
-    echo -e "  • .NET Aspire workload"
+    echo -e "  • .NET 10 SDK"
     echo -e "  • Entity Framework CLI tools"
     echo -e "  • HTTPS development certificates (trusted)"
+    echo -e "${BLUE}Aspire hanteras via projektets NuGet-paket – ingen separat workload krävs längre.${NC}"
     echo -e ""
     echo -e "${GREEN}Ready to start coding! Run ${YELLOW}./app-start.sh${GREEN} to launch the application! 🚀${NC}"
 }
@@ -251,8 +249,7 @@ main() {
     log_info "Starting automated environment setup..."
     
     check_codespace
-    install_dotnet_9
-    install_aspire_workload
+    install_dotnet_10
     setup_project
     install_ef_tools
     configure_dev_certs

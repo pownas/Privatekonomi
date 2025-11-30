@@ -1,0 +1,122 @@
+@inject IJSRuntime JSRuntime
+@inject ILogger<UpdateNotification> _logger
+@implements IAsyncDisposable
+
+@if (ShowUpdateNotification)
+{
+    <div class="update-notification">
+        <MudAlert Severity="Severity.Info" 
+                  Icon="@Icons.Material.Filled.SystemUpdate" 
+                  Elevation="4"
+                  CloseIconClicked="@(() => ShowUpdateNotification = false)">
+            <div class="d-flex align-items-center gap-3">
+                <div class="flex-grow-1">
+                    <MudText Typo="Typo.body1"><strong>Ny version tillgänglig!</strong></MudText>
+                    <MudText Typo="Typo.body2">Uppdatera för att få de senaste funktionerna</MudText>
+                </div>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" OnClick="ApplyUpdate">
+                    Uppdatera nu
+                </MudButton>
+            </div>
+        </MudAlert>
+    </div>
+}
+
+@code {
+    private bool ShowUpdateNotification { get; set; } = false;
+    private DotNetObjectReference<UpdateNotification>? objRef;
+    private bool _hasRendered = false;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !_hasRendered)
+        {
+            _hasRendered = true;
+            objRef = DotNetObjectReference.Create(this);
+            
+            try
+            {
+                // Register callback with JavaScript
+                await JSRuntime.InvokeVoidAsync("eval", @"
+                    window.blazorPwaCallbacks = window.blazorPwaCallbacks || {};
+                    window.blazorPwaCallbacks.onUpdateAvailable = () => {
+                        if (window.blazorPwaCallbacks.updateNotificationRef) {
+                            window.blazorPwaCallbacks.updateNotificationRef.invokeMethodAsync('OnUpdateAvailable');
+                        }
+                    };
+                    window.blazorPwaCallbacks.updateNotificationRef = arguments[0];
+                ", objRef);
+            }
+            catch (Exception ex)
+            {
+                // Log at debug level to avoid noise while maintaining graceful degradation
+                _logger.LogDebug(ex, "PWA JavaScript not available for UpdateNotification");
+            }
+        }
+    }
+
+    [JSInvokable]
+    public async Task OnUpdateAvailable()
+    {
+        ShowUpdateNotification = true;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task ApplyUpdate()
+    {
+        ShowUpdateNotification = false;
+        await JSRuntime.InvokeVoidAsync("pwaManager.applyUpdate");
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (objRef != null)
+        {
+            try
+            {
+                await JSRuntime.InvokeVoidAsync("eval", @"
+                    if (window.blazorPwaCallbacks) {
+                        delete window.blazorPwaCallbacks.onUpdateAvailable;
+                        delete window.blazorPwaCallbacks.updateNotificationRef;
+                    }
+                ");
+            }
+            catch
+            {
+                // Silently fail if JS is not available during disposal
+            }
+            objRef.Dispose();
+        }
+    }
+}
+
+<style>
+    .update-notification {
+        position: fixed;
+        top: 80px;
+        right: 20px;
+        z-index: 9999;
+        max-width: 450px;
+        animation: slideIn 0.3s ease-out;
+    }
+
+    @@media (max-width: 600px) {
+        .update-notification {
+            top: 70px;
+            right: 10px;
+            left: 10px;
+            max-width: none;
+        }
+    }
+
+    @@keyframes slideIn {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+</style>

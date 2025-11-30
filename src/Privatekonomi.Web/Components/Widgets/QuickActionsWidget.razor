@@ -1,0 +1,68 @@
+@using Privatekonomi.Core.Models
+@inject NavigationManager Navigation
+
+<WidgetBase Title="Snabbåtgärder" Configuration="@Configuration" ShowHeader="true">
+    <ChildContent>
+        <MudGrid Spacing="2">
+            <MudItem xs="6" sm="6">
+                <MudButton Variant="Variant.Outlined" 
+                           Color="Color.Primary"
+                           FullWidth="true"
+                           StartIcon="@Icons.Material.Filled.Add"
+                           OnClick="@(() => Navigation.NavigateTo("/transactions/new"))">
+                    Transaktion
+                </MudButton>
+            </MudItem>
+            <MudItem xs="6" sm="6">
+                <MudButton Variant="Variant.Outlined" 
+                           Color="Color.Secondary"
+                           FullWidth="true"
+                           StartIcon="@Icons.Material.Filled.Flag"
+                           OnClick="@(() => Navigation.NavigateTo("/goals"))">
+                    Sparmål
+                </MudButton>
+            </MudItem>
+            <MudItem xs="6" sm="6">
+                <MudButton Variant="Variant.Outlined" 
+                           Color="Color.Tertiary"
+                           FullWidth="true"
+                           StartIcon="@Icons.Material.Filled.PieChart"
+                           OnClick="@(() => Navigation.NavigateTo("/budgets"))">
+                    Budget
+                </MudButton>
+            </MudItem>
+            <MudItem xs="6" sm="6">
+                <MudButton Variant="Variant.Outlined" 
+                           Color="Color.Info"
+                           FullWidth="true"
+                           StartIcon="@Icons.Material.Filled.Receipt"
+                           OnClick="@(() => Navigation.NavigateTo("/bills"))">
+                    Räkning
+                </MudButton>
+            </MudItem>
+            <MudItem xs="6" sm="6">
+                <MudButton Variant="Variant.Outlined" 
+                           Color="Color.Success"
+                           FullWidth="true"
+                           StartIcon="@Icons.Material.Filled.AccountBalance"
+                           OnClick="@(() => Navigation.NavigateTo("/investments"))">
+                    Investering
+                </MudButton>
+            </MudItem>
+            <MudItem xs="6" sm="6">
+                <MudButton Variant="Variant.Outlined" 
+                           Color="Color.Warning"
+                           FullWidth="true"
+                           StartIcon="@Icons.Material.Filled.MonetizationOn"
+                           OnClick="@(() => Navigation.NavigateTo("/loans"))">
+                    Lån
+                </MudButton>
+            </MudItem>
+        </MudGrid>
+    </ChildContent>
+</WidgetBase>
+
+@code {
+    [Parameter]
+    public WidgetConfiguration? Configuration { get; set; }
+}

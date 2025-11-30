@@ -118,4 +118,45 @@ public class RealtimeNotificationService : INotificationService
 
     public Task SendDigestNotificationsAsync()
         => _innerService.SendDigestNotificationsAsync();
+
+    public async Task SnoozeNotificationAsync(int notificationId, string userId, SnoozeDuration duration)
+    {
+        await _innerService.SnoozeNotificationAsync(notificationId, userId, duration);
+        
+        // Update unread count for the user
+        try
+        {
+            var count = await _innerService.GetUnreadCountAsync(userId);
+            await _broadcaster.UpdateUnreadCountAsync(userId, count);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to update unread count for user {UserId}", userId);
+        }
+    }
+
+    public async Task MarkReminderAsCompletedAsync(int notificationId, string userId)
+    {
+        await _innerService.MarkReminderAsCompletedAsync(notificationId, userId);
+        
+        // Update unread count for the user
+        try
+        {
+            var count = await _innerService.GetUnreadCountAsync(userId);
+            await _broadcaster.UpdateUnreadCountAsync(userId, count);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to update unread count for user {UserId}", userId);
+        }
+    }
+
+    public Task<List<Notification>> GetActiveNotificationsAsync(string userId, bool unreadOnly = false)
+        => _innerService.GetActiveNotificationsAsync(userId, unreadOnly);
+
+    public Task ProcessReminderFollowUpsAsync()
+        => _innerService.ProcessReminderFollowUpsAsync();
+
+    public Task<bool> ShouldEscalateReminderAsync(int notificationId)
+        => _innerService.ShouldEscalateReminderAsync(notificationId);
 }

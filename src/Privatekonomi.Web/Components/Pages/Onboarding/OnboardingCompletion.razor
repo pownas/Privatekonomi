@@ -1,0 +1,115 @@
+@using MudBlazor
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class="onboarding-step">
+    <MudPaper Elevation="3" Class="pa-8 text-center">
+        <div class="mb-6">
+            <MudIcon Icon="@Icons.Material.Filled.CheckCircle" 
+                     Color="Color.Success" 
+                     Size="Size.Large" 
+                     Style="font-size: 120px;" />
+        </div>
+        
+        <MudText Typo="Typo.h3" GutterBottom="true" Class="mb-4">
+            Du är klar!
+        </MudText>
+        
+        <MudText Typo="Typo.h6" Color="Color.Secondary" Class="mb-6">
+            Välkommen till Privatekonomi. Här är din månad i korthet:
+        </MudText>
+        
+        <MudDivider Class="mb-6" />
+        
+        <MudGrid Spacing="4" Class="mb-6">
+            <MudItem xs="12" md="4">
+                <MudCard Elevation="2">
+                    <MudCardContent Class="pa-4">
+                        <MudIcon Icon="@Icons.Material.Filled.TrendingUp" 
+                                 Color="Color.Success" 
+                                 Size="Size.Large" 
+                                 Class="mb-2" />
+                        <MudText Typo="Typo.h6" GutterBottom="true">Inkomster</MudText>
+                        <MudText Typo="Typo.h4">30 000 kr</MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">Denna månad</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            
+            <MudItem xs="12" md="4">
+                <MudCard Elevation="2">
+                    <MudCardContent Class="pa-4">
+                        <MudIcon Icon="@Icons.Material.Filled.TrendingDown" 
+                                 Color="Color.Error" 
+                                 Size="Size.Large" 
+                                 Class="mb-2" />
+                        <MudText Typo="Typo.h6" GutterBottom="true">Utgifter</MudText>
+                        <MudText Typo="Typo.h4">24 000 kr</MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">Denna månad</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            
+            <MudItem xs="12" md="4">
+                <MudCard Elevation="2">
+                    <MudCardContent Class="pa-4">
+                        <MudIcon Icon="@Icons.Material.Filled.Savings" 
+                                 Color="Color.Primary" 
+                                 Size="Size.Large" 
+                                 Class="mb-2" />
+                        <MudText Typo="Typo.h6" GutterBottom="true">Sparande</MudText>
+                        <MudText Typo="Typo.h4">6 000 kr</MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">Kvar att spara (20%)</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+        
+        <MudPaper Elevation="0" Class="pa-4 mb-6 text-left" Style="background-color: var(--mud-palette-background-grey);">
+            <MudText Typo="Typo.h6" GutterBottom="true" Class="mb-3">
+                <MudIcon Icon="@Icons.Material.Filled.Lightbulb" Color="Color.Warning" Class="mr-2" />
+                Nästa steg
+            </MudText>
+            
+            <MudList T="string" Dense="true">
+                <MudListItem Icon="@Icons.Material.Filled.Dashboard">
+                    <MudText>Utforska din dashboard för en fullständig översikt</MudText>
+                </MudListItem>
+                <MudListItem Icon="@Icons.Material.Filled.Receipt">
+                    <MudText>Lägg till fler transaktioner manuellt eller via CSV-import</MudText>
+                </MudListItem>
+                <MudListItem Icon="@Icons.Material.Filled.TrendingUp">
+                    <MudText>Sätt upp sparmål för att nå dina finansiella mål</MudText>
+                </MudListItem>
+                <MudListItem Icon="@Icons.Material.Filled.Notifications">
+                    <MudText>Aktivera notifikationer för budgetvarningar</MudText>
+                </MudListItem>
+                <MudListItem Icon="@Icons.Material.Filled.AccountBalance">
+                    <MudText>Koppla fler bankkonton för automatisk synkronisering</MudText>
+                </MudListItem>
+            </MudList>
+        </MudPaper>
+        
+        <MudAlert Severity="Severity.Success" Class="mb-6">
+            <MudText Typo="Typo.body2">
+                <strong>Tips:</strong> Kolla in anpassningsbara widgets på dashboard för att personalisera din vy!
+            </MudText>
+        </MudAlert>
+        
+        <MudButton Variant="Variant.Filled" 
+                   Color="Color.Primary" 
+                   Size="Size.Large"
+                   OnClick="@(() => OnComplete.InvokeAsync())"
+                   StartIcon="@Icons.Material.Filled.Dashboard"
+                   FullWidth="true">
+            Gå till Dashboard
+        </MudButton>
+        
+        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-4">
+            Du kan när som helst ändra inställningar, budget och preferenser i menyn
+        </MudText>
+    </MudPaper>
+</MudContainer>
+
+@code {
+    [Parameter]
+    public EventCallback OnComplete { get; set; }
+}

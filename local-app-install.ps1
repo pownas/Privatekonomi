@@ -6,13 +6,13 @@
 # for the Privatekonomi project on Windows/PowerShell.
 #
 # Summary of setup performed:
-# 1. Install .NET 9 SDK (required for this project)
-# 2. Install .NET Aspire workload
-# 3. Restore project dependencies
-# 4. Clean and rebuild solution
-# 5. Install Entity Framework CLI tools
-# 6. Configure HTTPS development certificates
-# 7. Verify installation and test readiness
+# 1. Install .NET 10 SDK (required for this project)
+# 2. Restore project dependencies
+# 3. Clean and rebuild solution
+# 4. Install Entity Framework CLI tools
+# 5. Configure HTTPS development certificates
+# 6. Verify installation and test readiness
+# 7. Display usage information
 #
 # Created: October 23, 2025
 # Based on: GitHub Copilot chat session for local development prerequisites
@@ -50,6 +50,23 @@ function Write-LogSection {
     Write-Host ""
 }
 
+function Get-DotNetDevCertificate {
+    try {
+        $certificates = Get-ChildItem -Path Cert:\CurrentUser\My -ErrorAction Stop |
+            Where-Object {
+                $_.FriendlyName -eq ".NET Core HTTPS Development Certificate" -or
+                $_.Subject -like "*CN=localhost*"
+            } |
+            Sort-Object -Property NotAfter -Descending
+
+        return $certificates | Select-Object -First 1
+    }
+    catch {
+        Write-LogWarning "Unable to inspect existing HTTPS development certificates: $($_.Exception.Message)"
+        return $null
+    }
+}
+
 # Check if running with appropriate permissions
 function Test-AdminPrivileges {
     Write-LogSection "Checking Administrator Privileges"
@@ -60,16 +77,16 @@ function Test-AdminPrivileges {
     
     if (-not $isAdmin) {
         Write-LogWarning "This script is not running as Administrator"
-        Write-LogWarning "Some operations (like installing workloads) may require elevated privileges"
+        Write-LogWarning "Some operations may require elevated privileges"
         Write-LogWarning "Consider running PowerShell as Administrator if you encounter issues"
     } else {
         Write-LogInfo "Running with Administrator privileges"
     }
 }
 
-# Step 1: Install .NET 9 SDK
-function Install-DotNet9 {
-    Write-LogSection "Installing .NET 9 SDK"
+# Step 1: Install .NET 10 SDK
+function Install-DotNet10 {
+    Write-LogSection "Installing .NET 10 SDK"
     
     Write-LogInfo "Checking current .NET installation..."
     try {
@@ -78,10 +95,10 @@ function Install-DotNet9 {
         Write-LogInfo "Installed SDKs:"
         dotnet --list-sdks
         
-        # Check if .NET 9 is already installed
+        # Check if .NET 10 is already installed
         $sdks = dotnet --list-sdks | Out-String
-        if ($sdks -match "9\.") {
-            Write-LogSuccess ".NET 9 SDK is already installed"
+        if ($sdks -match "10\.") {
+            Write-LogSuccess ".NET 10 SDK is already installed"
             return
         }
     }
@@ -89,7 +106,7 @@ function Install-DotNet9 {
         Write-LogWarning ".NET not found in PATH"
     }
     
-    Write-LogInfo "Downloading and installing .NET 9 SDK..."
+    Write-LogInfo "Downloading and installing .NET 10 SDK..."
     try {
         # Download the .NET install script
         $installScript = Invoke-WebRequest -Uri "https://dot.net/v1/dotnet-install.ps1" -UseBasicParsing
@@ -97,7 +114,7 @@ function Install-DotNet9 {
         $installScript.Content | Out-File -FilePath $scriptPath -Encoding UTF8
         
         # Run the installer
-        & $scriptPath -Channel 9.0 -InstallDir "$env:LOCALAPPDATA\Microsoft\dotnet"
+        & $scriptPath -Channel 10.0 -InstallDir "$env:LOCALAPPDATA\Microsoft\dotnet"
         
         # Add to PATH for current session
         $dotnetPath = "$env:LOCALAPPDATA\Microsoft\dotnet"
@@ -111,44 +128,18 @@ function Install-DotNet9 {
             [Environment]::SetEnvironmentVariable("PATH", "$dotnetPath;$userPath", "User")
         }
         
-        Write-LogInfo "Verifying .NET 9 installation..."
+        Write-LogInfo "Verifying .NET 10 installation..."
         dotnet --list-sdks
-        Write-LogSuccess ".NET 9 SDK installation completed"
+        Write-LogSuccess ".NET 10 SDK installation completed"
     }
     catch {
-        Write-LogError "Failed to install .NET 9 SDK: $($_.Exception.Message)"
-        Write-LogWarning "Please manually download and install .NET 9 SDK from: https://dotnet.microsoft.com/download/dotnet/9.0"
+        Write-LogError "Failed to install .NET 10 SDK: $($_.Exception.Message)"
+        Write-LogWarning "Please manually download and install .NET 10 SDK from: https://dotnet.microsoft.com/download/dotnet/10.0"
         throw
     }
 }
 
-# Step 2: Install Aspire workload
-function Install-AspireWorkload {
-    Write-LogSection "Installing .NET Aspire Workload"
-    
-    Write-LogInfo "Checking if Aspire workload is already installed..."
-    $workloadList = dotnet workload list | Out-String
-    if ($workloadList -match "aspire") {
-        Write-LogSuccess "Aspire workload is already installed"
-    }
-    else {
-        Write-LogInfo "Installing Aspire workload..."
-        try {
-            dotnet workload install aspire
-            Write-LogSuccess "Aspire workload installed successfully"
-        }
-        catch {
-            Write-LogError "Failed to install Aspire workload: $($_.Exception.Message)"
-            throw
-        }
-    }
-    
-    Write-LogInfo "Verifying Aspire workload installation..."
-    dotnet workload list
-    Write-LogSuccess "Aspire workload installation completed"
-}
-
-# Step 3: Restore and build project
+# Step 2: Restore and build project
 function Setup-Project {
     Write-LogSection "Setting up Project Dependencies"
     
@@ -176,7 +167,7 @@ function Setup-Project {
     }
 }
 
-# Step 4: Install Entity Framework CLI tools
+# Step 3: Install Entity Framework CLI tools
 function Install-EFTools {
     Write-LogSection "Installing Entity Framework CLI Tools"
     
@@ -184,14 +175,40 @@ function Install-EFTools {
     $globalTools = dotnet tool list --global | Out-String
     if ($globalTools -match "dotnet-ef") {
         Write-LogSuccess "Entity Framework tools are already installed"
-    }
-    else {
-        Write-LogInfo "Installing Entity Framework global tools..."
+        # Verify it's working
         try {
-            dotnet tool install --global dotnet-ef
+            dotnet ef --version | Out-Null
+            return
         }
         catch {
-            Write-LogError "Failed to install Entity Framework tools: $($_.Exception.Message)"
+            Write-LogWarning "dotnet-ef is installed but not working, attempting to reinstall..."
+            dotnet tool uninstall --global dotnet-ef 2>$null
+        }
+    }
+    
+    Write-LogInfo "Installing Entity Framework global tools..."
+    try {
+        dotnet tool install --global dotnet-ef 2>&1 | Out-Null
+        if ($LASTEXITCODE -ne 0) {
+            throw "Installation failed"
+        }
+    }
+    catch {
+        Write-LogWarning "Installation failed, clearing NuGet cache and retrying..."
+        dotnet nuget locals all --clear | Out-Null
+        
+        # Try with explicit version matching .NET SDK
+        $dotnetVersion = (dotnet --version).Split('.')[0]
+        Write-LogInfo "Attempting installation with version $dotnetVersion.0.0..."
+        try {
+            dotnet tool install --global dotnet-ef --version "$dotnetVersion.0.0"
+            if ($LASTEXITCODE -ne 0) {
+                throw "Installation failed after cache clear"
+            }
+        }
+        catch {
+            Write-LogError "Failed to install Entity Framework tools after cache clear"
+            Write-LogError "Try manually: dotnet tool install --global dotnet-ef --version $dotnetVersion.0.0"
             throw
         }
     }
@@ -213,26 +230,60 @@ function Install-EFTools {
     Write-LogSuccess "Entity Framework tools installation completed"
 }
 
-# Step 5: Configure HTTPS development certificates
+# Step 4: Configure HTTPS development certificates
 function Configure-DevCerts {
     Write-LogSection "Configuring HTTPS Development Certificates"
     
-    Write-LogInfo "Cleaning any existing development certificates..."
+    $renewalThresholdDays = 60
+    $shouldRenew = $true
+    $existingCert = Get-DotNetDevCertificate
+
+    Write-LogInfo "Checking existing HTTPS development certificate..."
     try {
-        dotnet dev-certs https --clean
+        $null = dotnet dev-certs https --check
     }
     catch {
-        Write-LogWarning "Failed to clean existing certificates (may not exist)"
+        Write-LogWarning "dotnet dev-certs check reported an issue: $($_.Exception.Message)"
     }
-    
-    Write-LogInfo "Generating new HTTPS development certificate..."
-    try {
-        dotnet dev-certs https --trust
+
+    if ($existingCert) {
+        $daysRemaining = [math]::Floor(($existingCert.NotAfter - (Get-Date)).TotalDays)
+        Write-LogInfo (("Existing certificate expires on {0:yyyy-MM-dd} (~{1} days remaining).") -f $existingCert.NotAfter, $daysRemaining)
+        if ($daysRemaining -ge $renewalThresholdDays) {
+            $shouldRenew = $false
+            Write-LogSuccess (("Certificate is valid for more than {0} days; keeping existing certificate.") -f $renewalThresholdDays)
+        }
+        elseif ($daysRemaining -ge 0) {
+            Write-LogWarning (("Certificate expires within {0} days; renewing certificate.") -f $renewalThresholdDays)
+        }
+        else {
+            Write-LogWarning "Certificate has already expired; renewing certificate."
+        }
     }
-    catch {
-        Write-LogWarning "Failed to trust certificate (may require manual trust)"
+    else {
+        Write-LogWarning "No existing HTTPS development certificate found; generating a new one."
     }
-    
+
+    if ($shouldRenew) {
+        Write-LogInfo "Cleaning existing HTTPS development certificates..."
+        try {
+            dotnet dev-certs https --clean
+        }
+        catch {
+            Write-LogWarning "Failed to clean existing certificates (may already be removed): $($_.Exception.Message)"
+        }
+
+        Write-LogInfo "Generating and trusting a new HTTPS development certificate..."
+        try {
+            dotnet dev-certs https --trust
+        }
+        catch {
+            Write-LogWarning "Failed to trust the new certificate (may require manual trust): $($_.Exception.Message)"
+        }
+
+        $existingCert = Get-DotNetDevCertificate
+    }
+
     Write-LogInfo "Verifying HTTPS certificate installation..."
     try {
         $certCheck = dotnet dev-certs https --check
@@ -240,17 +291,22 @@ function Configure-DevCerts {
             Write-LogSuccess "HTTPS development certificate is properly configured"
         }
         else {
-            Write-LogWarning "HTTPS certificate verification failed - applications may have SSL issues"
+            Write-LogWarning "HTTPS certificate verification reported issues"
         }
     }
     catch {
         Write-LogWarning "HTTPS certificate verification failed - applications may have SSL issues"
     }
-    
-    Write-LogSuccess "HTTPS development certificates configuration completed"
+
+    if ($existingCert) {
+        Write-LogSuccess (("HTTPS development certificates configuration completed (current cert valid until {0:yyyy-MM-dd}).") -f $existingCert.NotAfter)
+    }
+    else {
+        Write-LogSuccess "HTTPS development certificates configuration completed"
+    }
 }
 
-# Step 6: Verify installation
+# Step 5: Verify installation
 function Test-Installation {
     Write-LogSection "Verifying Installation"
     
@@ -258,15 +314,6 @@ function Test-Installation {
     try {
         dotnet --version
         dotnet --list-sdks
-        
-        Write-LogInfo "Checking Aspire workload..."
-        $workloadList = dotnet workload list | Out-String
-        if ($workloadList -match "aspire") {
-            Write-LogSuccess "Aspire workload is installed"
-        }
-        else {
-            Write-LogWarning "Aspire workload not found"
-        }
         
         Write-LogInfo "Checking Entity Framework tools..."
         $globalTools = dotnet tool list --global | Out-String
@@ -302,7 +349,7 @@ function Test-Installation {
     }
 }
 
-# Step 7: Display usage information
+# Step 6: Display usage information
 function Show-UsageInfo {
     Write-LogSection "Installation Complete - Usage Information"
     
@@ -331,10 +378,10 @@ function Show-UsageInfo {
     Write-Host "  • Privatekonomi.ServiceDefaults - Shared service configurations" -ForegroundColor Yellow
     Write-Host ""
     Write-Host "Installed Tools:" -ForegroundColor Blue
-    Write-Host "  • .NET 9 SDK"
-    Write-Host "  • .NET Aspire workload"
+    Write-Host "  • .NET 10 SDK"
     Write-Host "  • Entity Framework CLI tools"
     Write-Host "  • HTTPS development certificates (trusted)"
+    Write-Host "Aspire hanteras via projektets NuGet-paket – ingen separat workload krävs." -ForegroundColor Blue
     Write-Host ""
     Write-Host "Ready to start coding! Run " -NoNewline -ForegroundColor Green
     Write-Host ".\local-app-start.ps1" -NoNewline -ForegroundColor Yellow
@@ -348,8 +395,7 @@ function Main {
     
     try {
         Test-AdminPrivileges
-        Install-DotNet9
-        Install-AspireWorkload
+        Install-DotNet10
         Setup-Project
         Install-EFTools
         Configure-DevCerts

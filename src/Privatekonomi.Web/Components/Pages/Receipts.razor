@@ -1,3 +1,4 @@
+@page "/economy/receipts"
 @page "/receipts"
 @rendermode InteractiveServer
 @using Privatekonomi.Core.Models
@@ -12,10 +13,18 @@
 <PageTitle>Kvitton - Privatekonomi</PageTitle>
 
 <div class="d-flex justify-space-between align-center mb-4">
-    <MudText Typo="Typo.h4">Kvitton</MudText>
-    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="ToggleCreateForm">
-        Nytt Kvitto
-    </MudButton>
+    <MudText Typo="Typo.h4">
+        <MudIcon Icon="@Icons.Material.Filled.Receipt" Color="Color.Primary" Class="mr-2" aria-hidden="true" />
+        Kvitton
+    </MudText>
+    <div class="d-flex gap-2">
+        <MudButton Variant="Variant.Outlined" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Scanner" OnClick="OpenOcrScanDialog">
+            Skanna kvitto (OCR)
+        </MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="ToggleCreateForm">
+            Nytt Kvitto
+        </MudButton>
+    </div>
 </div>
 
 @if (_showCreateForm)
@@ -235,6 +244,7 @@ else
                 <MudTh>Butik</MudTh>
                 <MudTh>Belopp</MudTh>
                 <MudTh>Typ</MudTh>
+                <MudTh>Transaktion</MudTh>
                 <MudTh>Radposter</MudTh>
                 <MudTh>Åtgärder</MudTh>
             </HeaderContent>
@@ -247,14 +257,38 @@ else
                         @GetReceiptTypeLabel(context.ReceiptType)
                     </MudChip>
                 </MudTd>
+                <MudTd DataLabel="Transaktion">
+                    @if (context.Transaction != null)
+                    {
+                        <MudChip T="string" Size="Size.Small" Color="Color.Primary" Icon="@Icons.Material.Filled.Link">
+                            @context.Transaction.Description
+                        </MudChip>
+                    }
+                    else
+                    {
+                        <MudChip T="string" Size="Size.Small" Color="Color.Default" Variant="Variant.Outlined">
+                            Ej kopplad
+                        </MudChip>
+                    }
+                </MudTd>
                 <MudTd DataLabel="Radposter">@context.ReceiptLineItems.Count st</MudTd>
                 <MudTd>
                     <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small" Color="Color.Info" 
                                    OnClick="@(() => ViewReceipt(context))" title="Visa" />
+                    @if (context.Transaction == null)
+                    {
+                        <MudIconButton Icon="@Icons.Material.Filled.Link" Size="Size.Small" Color="Color.Success" 
+                                       OnClick="@(() => LinkReceiptToTransaction(context))" title="Länka till transaktion" />
+                    }
+                    else
+                    {
+                        <MudIconButton Icon="@Icons.Material.Filled.LinkOff" Size="Size.Small" Color="Color.Warning" 
+                                       OnClick="@(() => UnlinkReceiptFromTransaction(context))" title="Avlänka från transaktion" />
+                    }
                     <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Primary" 
-                                   OnClick="@(() => EditReceipt(context))" />
+                                   OnClick="@(() => EditReceipt(context))" title="Redigera" />
                     <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" 
-                                   OnClick="@(() => DeleteReceipt(context))" />
+                                   OnClick="@(() => DeleteReceipt(context))" title="Ta bort" />
                 </MudTd>
             </RowTemplate>
             <PagerContent>
@@ -586,6 +620,111 @@ else
         {
             Snackbar.Add($"Fel vid uppladdning av bild: {ex.Message}", Severity.Error);
             return null;
+        }
+    }
+
+    private async Task LinkReceiptToTransaction(Receipt receipt)
+    {
+        var transactions = (await TransactionService.GetAllTransactionsAsync()).ToList();
+        
+        var parameters = new DialogParameters<TransactionSelectorDialog>
+        {
+            { x => x.Transactions, transactions },
+            { x => x.ReceiptDate, receipt.ReceiptDate },
+            { x => x.ReceiptAmount, receipt.TotalAmount }
+        };
+
+        var options = new DialogOptions 
+        { 
+            MaxWidth = MaxWidth.Medium, 
+            FullWidth = true,
+            CloseButton = true,
+            CloseOnEscapeKey = true
+        };
+
+        var dialog = await DialogService.ShowAsync<TransactionSelectorDialog>("Välj transaktion att länka till", parameters, options);
+        var result = await dialog.Result;
+        
+        if (result is not null && !result.Canceled && result.Data is Transaction selectedTransaction)
+        {
+            try
+            {
+                await ReceiptService.LinkReceiptToTransactionAsync(receipt.ReceiptId, selectedTransaction.TransactionId, _userId);
+                Snackbar.Add($"Kvitto länkat till transaktion '{selectedTransaction.Description}'", Severity.Success);
+                await LoadData();
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Fel: {ex.Message}", Severity.Error);
+            }
+        }
+    }
+
+    private async Task UnlinkReceiptFromTransaction(Receipt receipt)
+    {
+        bool? confirm = await DialogService.ShowMessageBox(
+            "Bekräfta avlänkning",
+            $"Vill du avlänka kvittot från transaktionen '{receipt.Transaction?.Description}'?",
+            yesText: "Avlänka", cancelText: "Avbryt");
+
+        if (confirm == true)
+        {
+            try
+            {
+                await ReceiptService.UnlinkReceiptFromTransactionAsync(receipt.ReceiptId, _userId);
+                Snackbar.Add("Kvitto avlänkat från transaktion", Severity.Success);
+                await LoadData();
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Fel: {ex.Message}", Severity.Error);
+            }
+        }
+    }
+
+    private async Task OpenOcrScanDialog()
+    {
+        var options = new DialogOptions
+        {
+            MaxWidth = MaxWidth.Large,
+            FullWidth = true,
+            CloseButton = true,
+            CloseOnEscapeKey = true
+        };
+
+        var dialog = await DialogService.ShowAsync<OcrScanDialog>("Skanna kvitto med OCR", options);
+        var result = await dialog.Result;
+
+        if (result is not null && !result.Canceled && result.Data is OcrReceiptData ocrData)
+        {
+            // Populate the form with OCR data
+            _formReceipt = new Receipt
+            {
+                UserId = _userId,
+                Merchant = ocrData.Merchant ?? string.Empty,
+                TotalAmount = ocrData.TotalAmount ?? 0,
+                ReceiptDate = ocrData.Date ?? DateTime.Today,
+                ReceiptNumber = ocrData.ReceiptNumber,
+                PaymentMethod = ocrData.PaymentMethod,
+                ReceiptType = "Scanned",
+                Currency = "SEK"
+            };
+            _formReceiptDate = _formReceipt.ReceiptDate;
+
+            // Convert OCR line items to receipt line items
+            _formLineItems = ocrData.LineItems.Select(li => new ReceiptLineItem
+            {
+                Description = li.Description,
+                Quantity = li.Quantity ?? 1,
+                UnitPrice = li.UnitPrice ?? 0,
+                TotalPrice = li.TotalPrice ?? 0
+            }).ToList();
+
+            _selectedReceiptImage = null;
+            _editingReceipt = null;
+            _showCreateForm = true;
+
+            Snackbar.Add("OCR-data inläst! Granska och spara kvittot.", Severity.Success);
         }
     }
 }

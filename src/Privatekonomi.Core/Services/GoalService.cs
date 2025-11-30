@@ -8,11 +8,16 @@ public class GoalService : IGoalService
 {
     private readonly PrivatekonomyContext _context;
     private readonly ICurrentUserService? _currentUserService;
+    private readonly IGoalMilestoneService? _milestoneService;
 
-    public GoalService(PrivatekonomyContext context, ICurrentUserService? currentUserService = null)
+    public GoalService(
+        PrivatekonomyContext context, 
+        ICurrentUserService? currentUserService = null,
+        IGoalMilestoneService? milestoneService = null)
     {
         _context = context;
         _currentUserService = currentUserService;
+        _milestoneService = milestoneService;
     }
 
     public async Task<IEnumerable<Goal>> GetAllGoalsAsync()
@@ -57,6 +62,13 @@ public class GoalService : IGoalService
         
         _context.Goals.Add(goal);
         await _context.SaveChangesAsync();
+        
+        // Create automatic milestones for the new goal
+        if (_milestoneService != null)
+        {
+            await _milestoneService.CreateAutomaticMilestonesAsync(goal.GoalId);
+        }
+        
         return goal;
     }
 
@@ -113,6 +125,12 @@ public class GoalService : IGoalService
             goal.CurrentAmount = currentAmount;
             goal.UpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
+            
+            // Check and update milestones
+            if (_milestoneService != null)
+            {
+                await _milestoneService.CheckAndUpdateMilestonesAsync(id, currentAmount);
+            }
         }
         return goal!;
     }
@@ -124,5 +142,67 @@ public class GoalService : IGoalService
             .Where(g => g.Priority == priority)
             .OrderBy(g => g.TargetDate)
             .ToListAsync();
+    }
+
+    public async Task<bool> UpdateGoalPrioritiesAsync(Dictionary<int, int> goalPriorities)
+    {
+        foreach (var (goalId, priority) in goalPriorities)
+        {
+            var goal = await _context.Goals.FindAsync(goalId);
+            if (goal != null)
+            {
+                goal.Priority = priority;
+                goal.UpdatedAt = DateTime.UtcNow;
+            }
+        }
+        
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
+    public DateTime? CalculateCompletionDate(Goal goal, decimal monthlySavings)
+    {
+        if (monthlySavings <= 0)
+            return null;
+
+        var remainingAmount = goal.TargetAmount - goal.CurrentAmount;
+        if (remainingAmount <= 0)
+            return DateTime.UtcNow; // Already completed
+
+        var monthsToCompletion = (int)Math.Ceiling(remainingAmount / monthlySavings);
+        return DateTime.UtcNow.AddMonths(monthsToCompletion);
+    }
+
+    public int CalculateMonthsToCompletion(Goal goal, decimal monthlySavings)
+    {
+        if (monthlySavings <= 0)
+            return int.MaxValue;
+
+        var remainingAmount = goal.TargetAmount - goal.CurrentAmount;
+        if (remainingAmount <= 0)
+            return 0; // Already completed
+
+        return (int)Math.Ceiling(remainingAmount / monthlySavings);
+    }
+
+    public SavingsSimulationResult SimulateSavingsChange(Goal goal, decimal newMonthlySavings)
+    {
+        var currentMonthlySavings = goal.MonthlyAutoSavingsAmount;
+        var remainingAmount = goal.TargetAmount - goal.CurrentAmount;
+
+        var currentMonthsToCompletion = CalculateMonthsToCompletion(goal, currentMonthlySavings);
+        var newMonthsToCompletion = CalculateMonthsToCompletion(goal, newMonthlySavings);
+        
+        return new SavingsSimulationResult
+        {
+            CurrentMonthsToCompletion = currentMonthsToCompletion,
+            NewMonthsToCompletion = newMonthsToCompletion,
+            MonthsDifference = currentMonthsToCompletion - newMonthsToCompletion,
+            CurrentCompletionDate = CalculateCompletionDate(goal, currentMonthlySavings),
+            NewCompletionDate = CalculateCompletionDate(goal, newMonthlySavings),
+            CurrentMonthlySavings = currentMonthlySavings,
+            NewMonthlySavings = newMonthlySavings,
+            RemainingAmount = remainingAmount
+        };
     }
 }

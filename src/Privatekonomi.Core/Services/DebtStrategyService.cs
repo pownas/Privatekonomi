@@ -1,3 +1,4 @@
+using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Privatekonomi.Core.Data;
 using Privatekonomi.Core.Models;
@@ -221,10 +222,264 @@ public class DebtStrategyService : IDebtStrategyService
         return strategy;
     }
 
+    public byte[] ExportAmortizationScheduleToCsv(Loan loan, decimal extraMonthlyPayment = 0)
+    {
+        var schedule = GenerateAmortizationSchedule(loan, extraMonthlyPayment);
+        var csv = new StringBuilder();
+        
+        // Header with loan information
+        csv.AppendLine($"Amorteringsplan för: {loan.Name}");
+        csv.AppendLine($"Lånebelopp: {loan.Amount:N2} kr");
+        csv.AppendLine($"Ränta: {loan.InterestRate:F2}%");
+        csv.AppendLine($"Månatlig amortering: {loan.Amortization:N2} kr");
+        if (extraMonthlyPayment > 0)
+        {
+            csv.AppendLine($"Extra månatlig amortering: {extraMonthlyPayment:N2} kr");
+        }
+        csv.AppendLine();
+        
+        // Column headers
+        csv.AppendLine("Betalning,Datum,Ingående Saldo,Betalning,Ränta,Amortering,Utgående Saldo,Total Ränta");
+        
+        // Data rows
+        foreach (var entry in schedule)
+        {
+            csv.AppendLine($"{entry.PaymentNumber}," +
+                          $"{entry.PaymentDate:yyyy-MM-dd}," +
+                          $"{entry.BeginningBalance:F2}," +
+                          $"{entry.Payment:F2}," +
+                          $"{entry.Interest:F2}," +
+                          $"{entry.Principal:F2}," +
+                          $"{entry.EndingBalance:F2}," +
+                          $"{entry.TotalInterestPaid:F2}");
+        }
+        
+        // Summary
+        csv.AppendLine();
+        csv.AppendLine("Sammanfattning");
+        var lastEntry = schedule.LastOrDefault();
+        if (lastEntry != null)
+        {
+            csv.AppendLine($"Antal betalningar,{schedule.Count}");
+            csv.AppendLine($"Total ränta,{lastEntry.TotalInterestPaid:N2} kr");
+            csv.AppendLine($"Total kostnad,{(loan.Amount + lastEntry.TotalInterestPaid):N2} kr");
+            csv.AppendLine($"Betalt datum,{lastEntry.PaymentDate:yyyy-MM-dd}");
+        }
+        
+        // Use UTF-8 with BOM for proper Excel compatibility with Swedish characters
+        var preamble = Encoding.UTF8.GetPreamble();
+        var content = Encoding.UTF8.GetBytes(csv.ToString());
+        var result = new byte[preamble.Length + content.Length];
+        Buffer.BlockCopy(preamble, 0, result, 0, preamble.Length);
+        Buffer.BlockCopy(content, 0, result, preamble.Length, content.Length);
+        return result;
+    }
+
+    public byte[] ExportStrategyToCsv(DebtPayoffStrategy strategy, List<Loan> loans)
+    {
+        var csv = new StringBuilder();
+        
+        // Header with strategy information
+        csv.AppendLine($"Avbetalningsstrategi: {strategy.StrategyName}");
+        csv.AppendLine($"Beskrivning: {strategy.Description}");
+        csv.AppendLine($"Skuldfri datum: {strategy.DebtFreeDate:yyyy-MM-dd}");
+        csv.AppendLine($"Total ränta: {strategy.TotalInterestPaid:N2} kr");
+        csv.AppendLine($"Total kostnad: {strategy.TotalAmountPaid:N2} kr");
+        csv.AppendLine($"Antal månader: {strategy.TotalMonths}");
+        csv.AppendLine();
+        
+        // Payoff order
+        csv.AppendLine("Avbetalningsordning");
+        csv.AppendLine("Ordning,Lån,Belopp,Ränta,Betalt datum,Månader,Total ränta");
+        foreach (var plan in strategy.PayoffPlans.OrderBy(p => p.PayoffOrder))
+        {
+            var loan = loans.FirstOrDefault(l => l.LoanId == plan.LoanId);
+            var amount = loan?.Amount ?? 0;
+            var interestRate = loan?.InterestRate ?? 0;
+            
+            csv.AppendLine($"{plan.PayoffOrder}," +
+                          $"\"{plan.LoanName}\"," +
+                          $"{amount:F2}," +
+                          $"{interestRate:F2}%," +
+                          $"{plan.PayoffDate:yyyy-MM-dd}," +
+                          $"{plan.MonthsToPayoff}," +
+                          $"{plan.TotalInterestPaid:F2}");
+        }
+        
+        // Use UTF-8 with BOM for proper Excel compatibility with Swedish characters
+        var preamble = Encoding.UTF8.GetPreamble();
+        var content = Encoding.UTF8.GetBytes(csv.ToString());
+        var result = new byte[preamble.Length + content.Length];
+        Buffer.BlockCopy(preamble, 0, result, 0, preamble.Length);
+        Buffer.BlockCopy(content, 0, result, preamble.Length, content.Length);
+        return result;
+    }
+
+    public async Task<DetailedDebtPayoffStrategy> GenerateDetailedStrategy(string strategyType, decimal availableMonthlyPayment)
+    {
+        // Get loans ordered by strategy
+        var loans = strategyType.ToLower() == "snowball" 
+            ? await _context.Loans.OrderBy(l => l.Amount).ToListAsync()
+            : await _context.Loans.OrderByDescending(l => l.InterestRate).ToListAsync();
+
+        var detailedStrategy = new DetailedDebtPayoffStrategy
+        {
+            StrategyName = strategyType,
+            Description = strategyType.ToLower() == "snowball"
+                ? "Betala av minsta skulden först för psykologiska vinster och momentum"
+                : "Betala av skulden med högst ränta först för att minimera totala räntekostnader"
+        };
+
+        if (!loans.Any())
+            return detailedStrategy;
+
+        // Clone loans for simulation
+        var remainingLoans = loans.Select(l => new LoanSimulation
+        {
+            Loan = l,
+            Balance = l.Amount,
+            MinPayment = l.Amortization,
+            TotalInterestPaid = 0
+        }).ToList();
+
+        var currentDate = DateTime.Today;
+        var monthNumber = 1;
+        var totalInterestPaid = 0m;
+        var payoffOrder = 1;
+        var loanSummaries = new Dictionary<int, DetailedLoanSummary>();
+        
+        // Initialize loan summaries
+        foreach (var loan in loans)
+        {
+            loanSummaries[loan.LoanId] = new DetailedLoanSummary
+            {
+                LoanId = loan.LoanId,
+                LoanName = loan.Name,
+                OriginalAmount = loan.Amount,
+                InterestRate = loan.InterestRate,
+                PayoffOrder = 0,
+                TotalInterestPaid = 0,
+                TotalAmountPaid = 0
+            };
+        }
+
+        // Calculate available extra payment
+        var totalMinPayment = remainingLoans.Sum(l => l.MinPayment);
+        var availableExtra = availableMonthlyPayment - totalMinPayment;
+
+        if (availableExtra < 0)
+        {
+            detailedStrategy.DebtFreeDate = DateTime.MaxValue;
+            return detailedStrategy;
+        }
+
+        // Simulate month by month
+        while (remainingLoans.Any() && monthNumber <= 600) // Max 50 years
+        {
+            var monthlyPayment = new MonthlyStrategyPayment
+            {
+                MonthNumber = monthNumber,
+                PaymentDate = currentDate,
+                LoanPayments = new List<LoanPaymentDetail>()
+            };
+
+            var targetLoan = remainingLoans.First();
+            var loansToRemove = new List<LoanSimulation>();
+
+            // Process each loan
+            foreach (var loanSim in remainingLoans)
+            {
+                var monthlyRate = loanSim.Loan.InterestRate / 100 / 12;
+                var interest = loanSim.Balance * monthlyRate;
+                var isFocusLoan = loanSim == targetLoan;
+                
+                // Calculate payment
+                decimal payment;
+                decimal principal;
+                
+                if (isFocusLoan && availableExtra > 0)
+                {
+                    // Target loan gets minimum payment + extra
+                    payment = Math.Min(loanSim.MinPayment + availableExtra + interest, loanSim.Balance + interest);
+                    principal = Math.Min(payment - interest, loanSim.Balance);
+                }
+                else
+                {
+                    // Other loans get minimum payment only
+                    payment = Math.Min(loanSim.MinPayment + interest, loanSim.Balance + interest);
+                    principal = Math.Min(payment - interest, loanSim.Balance);
+                }
+
+                var beginningBalance = loanSim.Balance;
+                loanSim.Balance -= principal;
+                loanSim.TotalInterestPaid += interest;
+                totalInterestPaid += interest;
+
+                var loanPayment = new LoanPaymentDetail
+                {
+                    LoanId = loanSim.Loan.LoanId,
+                    LoanName = loanSim.Loan.Name,
+                    BeginningBalance = beginningBalance,
+                    Payment = payment,
+                    Principal = principal,
+                    Interest = interest,
+                    EndingBalance = loanSim.Balance,
+                    IsFocusLoan = isFocusLoan,
+                    IsPaidOff = false
+                };
+
+                // Update loan summary
+                var summary = loanSummaries[loanSim.Loan.LoanId];
+                summary.TotalInterestPaid += interest;
+                summary.TotalAmountPaid += payment;
+
+                // Check if loan is paid off
+                if (loanSim.Balance <= 0.01m)
+                {
+                    loanPayment.IsPaidOff = true;
+                    summary.PayoffOrder = payoffOrder++;
+                    summary.PayoffDate = currentDate;
+                    summary.MonthsToPayoff = monthNumber;
+                    loansToRemove.Add(loanSim);
+                    
+                    // Free up this loan's minimum payment for extra payments
+                    availableExtra += loanSim.MinPayment;
+                }
+
+                monthlyPayment.LoanPayments.Add(loanPayment);
+                monthlyPayment.TotalPayment += payment;
+                monthlyPayment.TotalPrincipal += principal;
+                monthlyPayment.TotalInterest += interest;
+            }
+
+            monthlyPayment.RemainingTotalDebt = remainingLoans.Sum(l => l.Balance);
+            detailedStrategy.MonthlySchedule.Add(monthlyPayment);
+
+            // Remove paid off loans
+            foreach (var loan in loansToRemove)
+            {
+                remainingLoans.Remove(loan);
+            }
+
+            currentDate = currentDate.AddMonths(1);
+            monthNumber++;
+        }
+
+        // Finalize strategy
+        detailedStrategy.DebtFreeDate = currentDate;
+        detailedStrategy.TotalInterestPaid = totalInterestPaid;
+        detailedStrategy.TotalAmountPaid = loans.Sum(l => l.Amount) + totalInterestPaid;
+        detailedStrategy.TotalMonths = monthNumber - 1;
+        detailedStrategy.LoanSummaries = loanSummaries.Values.OrderBy(s => s.PayoffOrder).ToList();
+
+        return detailedStrategy;
+    }
+
     private class LoanSimulation
     {
         public Loan Loan { get; set; } = null!;
         public decimal Balance { get; set; }
         public decimal MinPayment { get; set; }
+        public decimal TotalInterestPaid { get; set; }
     }
 }

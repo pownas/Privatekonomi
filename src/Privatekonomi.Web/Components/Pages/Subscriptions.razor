@@ -1,3 +1,4 @@
+@page "/economy/subscriptions"
 @page "/subscriptions"
 @rendermode InteractiveServer
 @using Privatekonomi.Core.Models
@@ -11,7 +12,10 @@
 <PageTitle>Abonnemang - Privatekonomi</PageTitle>
 
 <div class="d-flex justify-space-between align-center mb-4">
-    <MudText Typo="Typo.h4">📋 Smart Avtalshantering</MudText>
+    <MudText Typo="Typo.h4">
+        <MudIcon Icon="@Icons.Material.Filled.Autorenew" Color="Color.Primary" Class="mr-2" aria-hidden="true" />
+        📋 Smart Avtalshantering
+    </MudText>
     <div class="d-flex gap-2">
         <MudButton Variant="Variant.Outlined" Color="Color.Info" StartIcon="@Icons.Material.Filled.Search" OnClick="DetectSubscriptions">
             Upptäck Abonnemang
@@ -300,12 +304,12 @@ else
                                 @if (!string.IsNullOrEmpty(context.CancellationUrl))
                                 {
                                     <MudIconButton Icon="@Icons.Material.Filled.Cancel" Size="Size.Small" Color="Color.Error" 
-                                                   Href="@context.CancellationUrl" Target="_blank" Title="Säg upp" />
+                                                   Href="@context.CancellationUrl" Target="_blank" title="Säg upp" />
                                 }
                                 @if (!string.IsNullOrEmpty(context.ManagementUrl))
                                 {
                                     <MudIconButton Icon="@Icons.Material.Filled.Settings" Size="Size.Small" Color="Color.Info" 
-                                                   Href="@context.ManagementUrl" Target="_blank" Title="Hantera" />
+                                                   Href="@context.ManagementUrl" Target="_blank" title="Hantera" />
                                 }
                             </MudTd>
                             <MudTd>
@@ -541,7 +545,7 @@ else
                 var dialog = await DialogService.ShowAsync<ConfirmDetectedSubscriptionsDialog>("Upptäckta Abonnemang", parameters);
                 var result = await dialog.Result;
                 
-                if (!result.Canceled && result.Data is List<Subscription> confirmed)
+                if (!result!.Canceled && result.Data is List<Subscription> confirmed)
                 {
                     foreach (var sub in confirmed)
                     {

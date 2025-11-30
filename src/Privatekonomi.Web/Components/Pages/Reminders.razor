@@ -1,0 +1,446 @@
+@page "/reminders"
+@rendermode InteractiveServer
+@using Privatekonomi.Core.Models
+@using Privatekonomi.Core.Services
+@inject IReminderService ReminderService
+@inject ICurrentUserService CurrentUserService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+@inject NavigationManager NavigationManager
+
+<PageTitle>Påminnelser - Privatekonomi</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+    <div class="d-flex justify-space-between align-center mb-4">
+        <MudText Typo="Typo.h4">
+            <MudIcon Icon="@Icons.Material.Filled.Notifications" Color="Color.Primary" Class="mr-2" aria-hidden="true" />
+            Påminnelser
+        </MudText>
+        <MudButton Variant="Variant.Filled" 
+                   Color="Color.Primary" 
+                   StartIcon="@Icons.Material.Filled.Add" 
+                   OnClick="OpenCreateDialog">
+            Ny Påminnelse
+        </MudButton>
+    </div>
+
+    @if (_loading)
+    {
+        <div class="d-flex justify-center pa-8">
+            <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+        </div>
+    }
+    else
+    {
+        <!-- Statistics Cards -->
+        <MudGrid Class="mb-4">
+            <MudItem xs="12" sm="6" md="3">
+                <MudCard Elevation="2">
+                    <MudCardContent>
+                        <div class="d-flex align-center justify-space-between">
+                            <div>
+                                <MudText Typo="Typo.caption" Color="Color.Default">Aktiva</MudText>
+                                <MudText Typo="Typo.h5">@_statistics.TotalActive</MudText>
+                            </div>
+                            <MudIcon Icon="@Icons.Material.Filled.NotificationImportant" Color="Color.Primary" Size="Size.Large" />
+                        </div>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudCard Elevation="2">
+                    <MudCardContent>
+                        <div class="d-flex align-center justify-space-between">
+                            <div>
+                                <MudText Typo="Typo.caption" Color="Color.Default">Idag</MudText>
+                                <MudText Typo="Typo.h5">@_statistics.DueToday</MudText>
+                            </div>
+                            <MudIcon Icon="@Icons.Material.Filled.Today" Color="Color.Info" Size="Size.Large" />
+                        </div>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudCard Elevation="2">
+                    <MudCardContent>
+                        <div class="d-flex align-center justify-space-between">
+                            <div>
+                                <MudText Typo="Typo.caption" Color="Color.Default">Försenade</MudText>
+                                <MudText Typo="Typo.h5">@_statistics.OverdueCount</MudText>
+                            </div>
+                            <MudIcon Icon="@Icons.Material.Filled.EventBusy" Color="Color.Warning" Size="Size.Large" />
+                        </div>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudCard Elevation="2">
+                    <MudCardContent>
+                        <div class="d-flex align-center justify-space-between">
+                            <div>
+                                <MudText Typo="Typo.caption" Color="Color.Default">Slutförda</MudText>
+                                <MudText Typo="Typo.h5">@_statistics.TotalCompleted</MudText>
+                            </div>
+                            <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Size="Size.Large" />
+                        </div>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+
+        <!-- Filter Tabs -->
+        <MudPaper Class="pa-4 mb-4">
+            <MudTabs Elevation="0" Rounded="true" ActivePanelIndex="_activeTabIndex" ActivePanelIndexChanged="OnTabChanged">
+                <MudTabPanel Text="Aktiva" Icon="@Icons.Material.Filled.NotificationImportant" />
+                <MudTabPanel Text="Alla" Icon="@Icons.Material.Filled.List" />
+                <MudTabPanel Text="Slutförda" Icon="@Icons.Material.Filled.CheckCircle" />
+            </MudTabs>
+        </MudPaper>
+
+        <!-- Reminders List -->
+        <MudPaper Class="pa-4">
+            @if (!_filteredReminders.Any())
+            {
+                <MudAlert Severity="Severity.Info">
+                    Inga påminnelser att visa.
+                </MudAlert>
+            }
+            else
+            {
+                @foreach (var reminder in _filteredReminders)
+                {
+                    var isOverdue = reminder.Status == ReminderStatus.Active && reminder.ReminderDate < DateTime.UtcNow;
+                    var isSnoozed = reminder.Status == ReminderStatus.Snoozed && reminder.SnoozeUntil.HasValue && reminder.SnoozeUntil.Value > DateTime.UtcNow;
+                    
+                    <MudCard Class="mb-3" Elevation="2" Style="@(isSnoozed ? "opacity: 0.7;" : "")">
+                        <MudCardContent>
+                            <div class="d-flex align-start">
+                                <MudIcon Icon="@GetPriorityIcon(reminder.Priority)" 
+                                         Color="@GetPriorityColor(reminder.Priority)" 
+                                         Class="mr-3 mt-1" />
+                                <div style="flex: 1;">
+                                    <div class="d-flex align-center gap-2 mb-2">
+                                        <MudText Typo="Typo.h6" Style="@(reminder.Status == ReminderStatus.Completed ? "text-decoration: line-through;" : "")">
+                                            @reminder.Title
+                                        </MudText>
+                                        @if (isOverdue)
+                                        {
+                                            <MudChip T="string" Size="Size.Small" Color="Color.Error" Icon="@Icons.Material.Filled.Warning">Försenad</MudChip>
+                                        }
+                                        @if (isSnoozed)
+                                        {
+                                            <MudChip T="string" Size="Size.Small" Color="Color.Info" Icon="@Icons.Material.Filled.Snooze">Snoozad</MudChip>
+                                        }
+                                        @if (reminder.EscalationLevel > 0)
+                                        {
+                                            <MudChip T="string" Size="Size.Small" Color="Color.Warning" Icon="@Icons.Material.Filled.PriorityHigh">Eskalerad (Nivå @reminder.EscalationLevel)</MudChip>
+                                        }
+                                    </div>
+                                    
+                                    @if (!string.IsNullOrEmpty(reminder.Description))
+                                    {
+                                        <MudText Typo="Typo.body2" Color="Color.Default" Class="mb-2">
+                                            @reminder.Description
+                                        </MudText>
+                                    }
+                                    
+                                    <div class="d-flex align-center gap-2 flex-wrap">
+                                        <MudChip T="string" Size="Size.Small" Icon="@Icons.Material.Filled.Event">
+                                            @reminder.ReminderDate.ToLocalTime().ToString("g")
+                                        </MudChip>
+                                        
+                                        @if (reminder.Status == ReminderStatus.Snoozed && reminder.SnoozeUntil.HasValue)
+                                        {
+                                            <MudChip T="string" Size="Size.Small" Icon="@Icons.Material.Filled.Schedule" Color="Color.Info">
+                                                Snooze till: @reminder.SnoozeUntil.Value.ToLocalTime().ToString("g")
+                                            </MudChip>
+                                        }
+                                        
+                                        @if (reminder.SnoozeCount > 0)
+                                        {
+                                            <MudChip T="string" Size="Size.Small">
+                                                @reminder.SnoozeCount snooze(s)
+                                            </MudChip>
+                                        }
+                                        
+                                        @if (!string.IsNullOrEmpty(reminder.ReminderType))
+                                        {
+                                            <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">
+                                                @reminder.ReminderType
+                                            </MudChip>
+                                        }
+                                    </div>
+
+                                    <!-- Quick Actions -->
+                                    @if (reminder.Status == ReminderStatus.Active || reminder.Status == ReminderStatus.Snoozed)
+                                    {
+                                        <div class="d-flex gap-2 mt-3">
+                                            <MudButton Size="Size.Small" 
+                                                       Variant="Variant.Filled" 
+                                                       Color="Color.Success"
+                                                       StartIcon="@Icons.Material.Filled.CheckCircle"
+                                                       OnClick="@(() => MarkAsCompleted(reminder))">
+                                                Slutför
+                                            </MudButton>
+                                            
+                                            <MudMenu Label="Snooze" 
+                                                     Size="Size.Small" 
+                                                     Variant="Variant.Outlined"
+                                                     StartIcon="@Icons.Material.Filled.Snooze">
+                                                <MudMenuItem OnClick="@(() => SnoozeReminder(reminder, 60))">1 timme</MudMenuItem>
+                                                <MudMenuItem OnClick="@(() => SnoozeReminder(reminder, 1440))">1 dag</MudMenuItem>
+                                                <MudMenuItem OnClick="@(() => SnoozeReminder(reminder, 10080))">1 vecka</MudMenuItem>
+                                                <MudMenuItem OnClick="@(() => CustomSnooze(reminder))">Anpassad...</MudMenuItem>
+                                            </MudMenu>
+                                            
+                                            <MudButton Size="Size.Small" 
+                                                       Variant="Variant.Outlined"
+                                                       StartIcon="@Icons.Material.Filled.Edit"
+                                                       OnClick="@(() => EditReminder(reminder))">
+                                                Redigera
+                                            </MudButton>
+                                            
+                                            <MudButton Size="Size.Small" 
+                                                       Variant="Variant.Outlined"
+                                                       Color="Color.Secondary"
+                                                       StartIcon="@Icons.Material.Filled.Block"
+                                                       OnClick="@(() => DismissReminder(reminder))">
+                                                Avfärda
+                                            </MudButton>
+                                        </div>
+                                    }
+                                </div>
+                                
+                                <!-- Delete Button -->
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" 
+                                               Size="Size.Small"
+                                               Color="Color.Error"
+                                               OnClick="@(() => DeleteReminder(reminder))"
+                                               aria-label="Ta bort" />
+                            </div>
+                        </MudCardContent>
+                    </MudCard>
+                }
+            }
+        </MudPaper>
+    }
+</MudContainer>
+
+@code {
+    private List<Reminder> _reminders = new();
+    private List<Reminder> _filteredReminders = new();
+    private ReminderStatistics _statistics = new();
+    private bool _loading = true;
+    private int _activeTabIndex = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadReminders();
+    }
+
+    private async Task LoadReminders()
+    {
+        _loading = true;
+        try
+        {
+            var userId = CurrentUserService.UserId;
+            if (userId != null)
+            {
+                _reminders = await ReminderService.GetUserRemindersAsync(userId, activeOnly: false);
+                _statistics = await ReminderService.GetStatisticsAsync(userId);
+                FilterReminders();
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Ett fel uppstod: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void OnTabChanged(int index)
+    {
+        _activeTabIndex = index;
+        FilterReminders();
+    }
+
+    private void FilterReminders()
+    {
+        _filteredReminders = _activeTabIndex switch
+        {
+            0 => _reminders.Where(r => r.Status == ReminderStatus.Active || r.Status == ReminderStatus.Snoozed).ToList(),
+            1 => _reminders.ToList(),
+            2 => _reminders.Where(r => r.Status == ReminderStatus.Completed).ToList(),
+            _ => _reminders.ToList()
+        };
+    }
+
+    private async Task OpenCreateDialog()
+    {
+        var parameters = new DialogParameters
+        {
+            { "Reminder", new Reminder { UserId = CurrentUserService.UserId ?? "", ReminderDate = DateTime.Now.AddDays(1) } }
+        };
+
+        var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<ReminderDialog>("Ny Påminnelse", parameters, options);
+        var result = await dialog.Result;
+
+        if (result is not null && !result.Canceled)
+        {
+            await LoadReminders();
+            Snackbar.Add("Påminnelse skapad", Severity.Success);
+        }
+    }
+
+    private async Task EditReminder(Reminder reminder)
+    {
+        var parameters = new DialogParameters
+        {
+            { "Reminder", reminder }
+        };
+
+        var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<ReminderDialog>("Redigera Påminnelse", parameters, options);
+        var result = await dialog.Result;
+
+        if (result is not null && !result.Canceled)
+        {
+            await LoadReminders();
+            Snackbar.Add("Påminnelse uppdaterad", Severity.Success);
+        }
+    }
+
+    private async Task SnoozeReminder(Reminder reminder, int durationMinutes)
+    {
+        try
+        {
+            var userId = CurrentUserService.UserId;
+            if (userId != null)
+            {
+                await ReminderService.SnoozeReminderAsync(reminder.ReminderId, userId, durationMinutes);
+                await LoadReminders();
+                
+                var duration = durationMinutes switch
+                {
+                    60 => "1 timme",
+                    1440 => "1 dag",
+                    10080 => "1 vecka",
+                    _ => $"{durationMinutes} minuter"
+                };
+                
+                Snackbar.Add($"Påminnelse snoozad i {duration}", Severity.Success);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Kunde inte snooze påminnelsen: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task CustomSnooze(Reminder reminder)
+    {
+        var parameters = new DialogParameters
+        {
+            { "Reminder", reminder }
+        };
+
+        var options = new DialogOptions { MaxWidth = MaxWidth.Small };
+        var dialog = await DialogService.ShowAsync<CustomSnoozeDialog>("Anpassad Snooze", parameters, options);
+        var result = await dialog.Result;
+
+        if (result is not null && !result.Canceled && result.Data is int minutes)
+        {
+            await SnoozeReminder(reminder, minutes);
+        }
+    }
+
+    private async Task MarkAsCompleted(Reminder reminder)
+    {
+        try
+        {
+            var userId = CurrentUserService.UserId;
+            if (userId != null)
+            {
+                await ReminderService.MarkAsCompletedAsync(reminder.ReminderId, userId);
+                await LoadReminders();
+                Snackbar.Add("Påminnelse slutförd!", Severity.Success);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Kunde inte slutföra påminnelsen: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task DismissReminder(Reminder reminder)
+    {
+        try
+        {
+            var userId = CurrentUserService.UserId;
+            if (userId != null)
+            {
+                await ReminderService.DismissReminderAsync(reminder.ReminderId, userId);
+                await LoadReminders();
+                Snackbar.Add("Påminnelse avfärdad", Severity.Info);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Kunde inte avfärda påminnelsen: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task DeleteReminder(Reminder reminder)
+    {
+        bool? confirm = await DialogService.ShowMessageBox(
+            "Bekräfta borttagning",
+            "Är du säker på att du vill ta bort denna påminnelse?",
+            yesText: "Ta bort", cancelText: "Avbryt");
+
+        if (confirm == true)
+        {
+            try
+            {
+                var userId = CurrentUserService.UserId;
+                if (userId != null)
+                {
+                    await ReminderService.DeleteReminderAsync(reminder.ReminderId, userId);
+                    await LoadReminders();
+                    Snackbar.Add("Påminnelse borttagen", Severity.Success);
+                }
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Kunde inte ta bort påminnelsen: {ex.Message}", Severity.Error);
+            }
+        }
+    }
+
+    private string GetPriorityIcon(ReminderPriority priority)
+    {
+        return priority switch
+        {
+            ReminderPriority.Critical => Icons.Material.Filled.PriorityHigh,
+            ReminderPriority.High => Icons.Material.Filled.Warning,
+            ReminderPriority.Normal => Icons.Material.Filled.NotificationImportant,
+            ReminderPriority.Low => Icons.Material.Filled.Info,
+            _ => Icons.Material.Filled.Notifications
+        };
+    }
+
+    private Color GetPriorityColor(ReminderPriority priority)
+    {
+        return priority switch
+        {
+            ReminderPriority.Critical => Color.Error,
+            ReminderPriority.High => Color.Warning,
+            ReminderPriority.Normal => Color.Primary,
+            ReminderPriority.Low => Color.Info,
+            _ => Color.Default
+        };
+    }
+}

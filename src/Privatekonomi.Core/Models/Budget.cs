@@ -24,6 +24,7 @@ public class Budget : ITemporalEntity
     
     public Household? Household { get; set; }
     public ICollection<BudgetCategory> BudgetCategories { get; set; } = new List<BudgetCategory>();
+    public ICollection<HouseholdBudgetShare> HouseholdBudgetShares { get; set; } = new List<HouseholdBudgetShare>();
 }
 
 public enum BudgetPeriod
@@ -37,5 +38,7 @@ public enum BudgetTemplateType
     Custom = 0,
     ZeroBased = 1,
     FiftyThirtyTwenty = 2,
-    Envelope = 3
+    Envelope = 3,
+    SwedishFamily = 4,      // Swedish household budget for families (Länsförsäkringar style)
+    SwedishSingle = 5       // Swedish household budget for singles (Länsförsäkringar style)
 }

@@ -1,0 +1,517 @@
+@using Privatekonomi.Core.Models
+@using Privatekonomi.Core.Services
+@inject IDialogService DialogService
+@inject IReceiptService ReceiptService
+@inject ICategoryService CategoryService
+@inject ITransactionService TransactionService
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        @if (Transaction != null)
+        {
+            <MudGrid Spacing="3">
+                <!-- Huvuddetaljer -->
+                <MudItem xs="12">
+                    <MudPaper Class="pa-3" Elevation="2">
+                        <MudText Typo="Typo.h6" Class="mb-3">Transaktionsdetaljer</MudText>
+                        
+                        <MudGrid Spacing="2">
+                            <MudItem xs="12" sm="6">
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">Beskrivning</MudText>
+                                <MudText Typo="Typo.body1" Class="font-weight-medium">@Transaction.Description</MudText>
+                            </MudItem>
+                            
+                            <MudItem xs="12" sm="6">
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">Datum</MudText>
+                                <MudText Typo="Typo.body1" Class="font-weight-medium">@Transaction.Date.ToString("yyyy-MM-dd")</MudText>
+                            </MudItem>
+                            
+                            <MudItem xs="12" sm="6">
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">Belopp</MudText>
+                                <MudText Typo="Typo.h6" Style="@($"color: {(Transaction.IsIncome ? "#2e7d32" : "#d32f2f")};")">
+                                    @(Transaction.IsIncome ? "+" : "")@Transaction.Amount.ToString("N2", _svCulture) kr
+                                </MudText>
+                            </MudItem>
+                            
+                            <MudItem xs="12" sm="6">
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">Typ</MudText>
+                                <MudChip T="string" Size="Size.Small" Color="@(Transaction.IsIncome ? Color.Success : Color.Error)">
+                                    @(Transaction.IsIncome ? "Inkomst" : "Utgift")
+                                </MudChip>
+                            </MudItem>
+
+                            @if (!string.IsNullOrEmpty(Transaction.Payee))
+                            {
+                                <MudItem xs="12" sm="6">
+                                    <MudText Typo="Typo.body2" Color="Color.Secondary">Mottagare/Betalare</MudText>
+                                    <MudText Typo="Typo.body1" Class="font-weight-medium">@Transaction.Payee</MudText>
+                                </MudItem>
+                            }
+
+                            @if (Transaction.BankSource != null)
+                            {
+                                <MudItem xs="12" sm="6">
+                                    <MudText Typo="Typo.body2" Color="Color.Secondary">Bank</MudText>
+                                    <MudChip T="string" Size="Size.Small" Variant="Variant.Filled"
+                                             Style="@($"background-color: {Transaction.BankSource.Color}; color: white;")">
+                                        @Transaction.BankSource.Name
+                                    </MudChip>
+                                </MudItem>
+                            }
+                            
+                            @if (Transaction.Household != null)
+                            {
+                                <MudItem xs="12" sm="6">
+                                    <MudText Typo="Typo.body2" Color="Color.Secondary">Hushåll</MudText>
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Secondary" Variant="Variant.Outlined">
+                                        <MudIcon Icon="@Icons.Material.Filled.Home" Size="Size.Small" /> @Transaction.Household.Name
+                                    </MudChip>
+                                </MudItem>
+                            }
+
+                            @if (!string.IsNullOrEmpty(Transaction.PaymentMethod))
+                            {
+                                <MudItem xs="12" sm="6">
+                                    <MudText Typo="Typo.body2" Color="Color.Secondary">Betalningsmetod</MudText>
+                                    <MudText Typo="Typo.body1" Class="font-weight-medium">@Transaction.PaymentMethod</MudText>
+                                </MudItem>
+                            }
+
+                            <MudItem xs="12" sm="6">
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">Valuta</MudText>
+                                <MudText Typo="Typo.body1" Class="font-weight-medium">@Transaction.Currency</MudText>
+                            </MudItem>
+
+                            @if (Transaction.Pocket != null)
+                            {
+                                <MudItem xs="12" sm="6">
+                                    <MudText Typo="Typo.body2" Color="Color.Secondary">Sparficka</MudText>
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Info" Variant="Variant.Outlined">
+                                        <MudIcon Icon="@Icons.Material.Filled.AccountBalanceWallet" Size="Size.Small" /> @Transaction.Pocket.Name
+                                    </MudChip>
+                                </MudItem>
+                            }
+
+                            @if (!string.IsNullOrEmpty(Transaction.RecipientBankgiro))
+                            {
+                                <MudItem xs="12" sm="6">
+                                    <MudText Typo="Typo.body2" Color="Color.Secondary">Bankgiro</MudText>
+                                    <MudText Typo="Typo.body1" Class="font-weight-medium">@Transaction.RecipientBankgiro</MudText>
+                                </MudItem>
+                            }
+
+                            @if (!string.IsNullOrEmpty(Transaction.RecipientPlusgiro))
+                            {
+                                <MudItem xs="12" sm="6">
+                                    <MudText Typo="Typo.body2" Color="Color.Secondary">Plusgiro</MudText>
+                                    <MudText Typo="Typo.body1" Class="font-weight-medium">@Transaction.RecipientPlusgiro</MudText>
+                                </MudItem>
+                            }
+                        </MudGrid>
+                    </MudPaper>
+                </MudItem>
+
+                <!-- Status och egenskaper -->
+                <MudItem xs="12">
+                    <MudPaper Class="pa-3" Elevation="2">
+                        <MudText Typo="Typo.h6" Class="mb-3">Status</MudText>
+                        
+                        <MudStack Row="true" Spacing="2" Wrap="Wrap.Wrap">
+                            @if (Transaction.IsRecurring)
+                            {
+                                <MudChip T="string" Size="Size.Small" Color="Color.Info" Variant="Variant.Filled" Icon="@Icons.Material.Filled.Replay">
+                                    Återkommande
+                                </MudChip>
+                            }
+                            @if (Transaction.Cleared)
+                            {
+                                <MudChip T="string" Size="Size.Small" Color="Color.Success" Variant="Variant.Filled" Icon="@Icons.Material.Filled.CheckCircle">
+                                    Avstämd
+                                </MudChip>
+                            }
+                            @if (Transaction.IsLocked)
+                            {
+                                <MudChip T="string" Size="Size.Small" Color="Color.Warning" Variant="Variant.Filled" Icon="@Icons.Material.Filled.Lock">
+                                    Låst
+                                </MudChip>
+                            }
+                            @if (!Transaction.IsRecurring && !Transaction.Cleared && !Transaction.IsLocked)
+                            {
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">Inga särskilda statusar</MudText>
+                            }
+                        </MudStack>
+                    </MudPaper>
+                </MudItem>
+
+                <!-- Kategorier -->
+                <MudItem xs="12">
+                    <MudPaper Class="pa-3" Elevation="2">
+                        <div class="d-flex justify-space-between align-center mb-3">
+                            <MudText Typo="Typo.h6">Kategorier</MudText>
+                            <MudStack Row="true" Spacing="1">
+                                <MudTooltip Text="Ändra kategori">
+                                    <MudIconButton Icon="@Icons.Material.Filled.Category" 
+                                                  Color="Color.Primary" 
+                                                  Size="Size.Small"
+                                                  OnClick="ChangeCategory" />
+                                </MudTooltip>
+                                <MudTooltip Text="Skapa regel från denna transaktion">
+                                    <MudIconButton Icon="@Icons.Material.Filled.AutoAwesome" 
+                                                  Color="Color.Secondary" 
+                                                  Size="Size.Small"
+                                                  OnClick="CreateRuleFromTransaction" />
+                                </MudTooltip>
+                            </MudStack>
+                        </div>
+                        @if (Transaction.TransactionCategories.Any())
+                        {
+                            <MudStack Row="true" Spacing="2" Wrap="Wrap.Wrap">
+                                @foreach (var tc in Transaction.TransactionCategories)
+                                {
+                                    <MudChip T="string" Size="Size.Medium" Variant="Variant.Filled"
+                                             Style="@($"background-color: {tc.Category.Color}; color: white;")">
+                                        @tc.Category.Name
+                                        @if (Transaction.TransactionCategories.Count > 1)
+                                        {
+                                            <span style="margin-left: 8px; opacity: 0.8;">
+                                                (@tc.Percentage.ToString("N1")%)
+                                            </span>
+                                        }
+                                    </MudChip>
+                                }
+                            </MudStack>
+                        }
+                        else
+                        {
+                            <MudChip T="string" Size="Size.Medium" Variant="Variant.Outlined" Color="Color.Default">
+                                Okategoriserad
+                            </MudChip>
+                        }
+                    </MudPaper>
+                </MudItem>
+
+                <!-- Taggar och Noteringar -->
+                @if (!string.IsNullOrWhiteSpace(Transaction.Tags) || !string.IsNullOrWhiteSpace(Transaction.Notes))
+                {
+                    <MudItem xs="12">
+                        <MudPaper Class="pa-3" Elevation="2">
+                            <MudText Typo="Typo.h6" Class="mb-3">Ytterligare information</MudText>
+                            
+                            @if (!string.IsNullOrWhiteSpace(Transaction.Tags))
+                            {
+                                <div class="mb-3">
+                                    <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-2">Taggar</MudText>
+                                    <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
+                                        @foreach (var tag in Transaction.Tags.Split(',', StringSplitOptions.RemoveEmptyEntries))
+                                        {
+                                            <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Outlined">
+                                                @tag.Trim()
+                                            </MudChip>
+                                        }
+                                    </MudStack>
+                                </div>
+                            }
+                            
+                            @if (!string.IsNullOrWhiteSpace(Transaction.Notes))
+                            {
+                                <div>
+                                    <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-2">Noteringar</MudText>
+                                    <MudText Typo="Typo.body1" Style="white-space: pre-wrap;">@Transaction.Notes</MudText>
+                                </div>
+                            }
+                        </MudPaper>
+                    </MudItem>
+                }
+
+                <!-- Kvitton -->
+                @if (Transaction.Receipts != null && Transaction.Receipts.Any())
+                {
+                    <MudItem xs="12">
+                        <MudPaper Class="pa-3" Elevation="2">
+                            <MudText Typo="Typo.h6" Class="mb-3">
+                                <MudIcon Icon="@Icons.Material.Filled.Receipt" Class="mr-2" />
+                                Kvitton (@Transaction.Receipts.Count st)
+                            </MudText>
+                            
+                            <MudGrid Spacing="2">
+                                @foreach (var receipt in Transaction.Receipts)
+                                {
+                                    <MudItem xs="12" sm="6" md="4">
+                                        <MudCard Outlined="true" Class="cursor-pointer" @onclick="@(() => ViewReceipt(receipt))">
+                                            <MudCardHeader>
+                                                <CardHeaderContent>
+                                                    <MudText Typo="Typo.body2">@receipt.Merchant</MudText>
+                                                    <MudText Typo="Typo.caption" Color="Color.Secondary">@receipt.ReceiptDate.ToString("yyyy-MM-dd")</MudText>
+                                                </CardHeaderContent>
+                                                <CardHeaderActions>
+                                                    <MudChip T="string" Size="Size.Small" Color="@GetReceiptTypeColor(receipt.ReceiptType)">
+                                                        @GetReceiptTypeLabel(receipt.ReceiptType)
+                                                    </MudChip>
+                                                </CardHeaderActions>
+                                            </MudCardHeader>
+                                            <MudCardContent>
+                                                @if (!string.IsNullOrEmpty(receipt.ImagePath))
+                                                {
+                                                    <MudImage Src="@GetImageUrl(receipt.ImagePath)" 
+                                                             Alt="Kvittobild" 
+                                                             ObjectFit="ObjectFit.Cover"
+                                                             Class="rounded mb-2" 
+                                                             Style="width: 100%; height: 150px;" />
+                                                }
+                                                <MudText Typo="Typo.h6" Color="Color.Primary">@receipt.TotalAmount.ToString("C", _svCulture)</MudText>
+                                                @if (receipt.ReceiptLineItems.Any())
+                                                {
+                                                    <MudText Typo="Typo.caption" Color="Color.Secondary">@receipt.ReceiptLineItems.Count radposter</MudText>
+                                                }
+                                            </MudCardContent>
+                                        </MudCard>
+                                    </MudItem>
+                                }
+                            </MudGrid>
+                        </MudPaper>
+                    </MudItem>
+                }
+
+                <!-- Teknisk information -->
+                @if (Transaction.Imported || !string.IsNullOrEmpty(Transaction.ImportSource) || !string.IsNullOrEmpty(Transaction.OCR) || !string.IsNullOrEmpty(Transaction.InvoiceNumber) || Transaction.ValidFrom != default || Transaction.ValidTo.HasValue)
+                {
+                    <MudItem xs="12">
+                        <MudPaper Class="pa-3" Elevation="2">
+                            <MudText Typo="Typo.h6" Class="mb-3">Teknisk information</MudText>
+                            
+                            <MudGrid Spacing="2">
+                                <MudItem xs="12" sm="6">
+                                    <MudText Typo="Typo.body2" Color="Color.Secondary">Transaktions-ID</MudText>
+                                    <MudText Typo="Typo.body1" Class="font-weight-medium">@Transaction.TransactionId</MudText>
+                                </MudItem>
+
+                                @if (Transaction.Imported)
+                                {
+                                    <MudItem xs="12" sm="6">
+                                        <MudText Typo="Typo.body2" Color="Color.Secondary">Importerad</MudText>
+                                        <MudChip T="string" Size="Size.Small" Color="Color.Info" Variant="Variant.Outlined">
+                                            Ja
+                                        </MudChip>
+                                    </MudItem>
+                                }
+                                
+                                @if (!string.IsNullOrEmpty(Transaction.ImportSource))
+                                {
+                                    <MudItem xs="12" sm="6">
+                                        <MudText Typo="Typo.body2" Color="Color.Secondary">Importkälla</MudText>
+                                        <MudText Typo="Typo.body1" Class="font-weight-medium">@Transaction.ImportSource</MudText>
+                                    </MudItem>
+                                }
+                                
+                                @if (!string.IsNullOrEmpty(Transaction.OCR))
+                                {
+                                    <MudItem xs="12" sm="6">
+                                        <MudText Typo="Typo.body2" Color="Color.Secondary">OCR-nummer</MudText>
+                                        <MudText Typo="Typo.body1" Class="font-weight-medium">@Transaction.OCR</MudText>
+                                    </MudItem>
+                                }
+
+                                @if (!string.IsNullOrEmpty(Transaction.InvoiceNumber))
+                                {
+                                    <MudItem xs="12" sm="6">
+                                        <MudText Typo="Typo.body2" Color="Color.Secondary">Fakturanummer</MudText>
+                                        <MudText Typo="Typo.body1" Class="font-weight-medium">@Transaction.InvoiceNumber</MudText>
+                                    </MudItem>
+                                }
+
+                                @if (Transaction.ValidFrom != default)
+                                {
+                                    <MudItem xs="12" sm="6">
+                                        <MudText Typo="Typo.body2" Color="Color.Secondary">Giltig från</MudText>
+                                        <MudText Typo="Typo.body1" Class="font-weight-medium">@Transaction.ValidFrom.ToString("yyyy-MM-dd HH:mm")</MudText>
+                                    </MudItem>
+                                }
+
+                                @if (Transaction.ValidTo.HasValue)
+                                {
+                                    <MudItem xs="12" sm="6">
+                                        <MudText Typo="Typo.body2" Color="Color.Secondary">Giltig till</MudText>
+                                        <MudText Typo="Typo.body1" Class="font-weight-medium">@Transaction.ValidTo.Value.ToString("yyyy-MM-dd HH:mm")</MudText>
+                                    </MudItem>
+                                }
+
+                                <MudItem xs="12" sm="6">
+                                    <MudText Typo="Typo.body2" Color="Color.Secondary">Skapad</MudText>
+                                    <MudText Typo="Typo.body1" Class="font-weight-medium">@Transaction.CreatedAt.ToString("yyyy-MM-dd HH:mm")</MudText>
+                                </MudItem>
+                                
+                                @if (Transaction.UpdatedAt.HasValue)
+                                {
+                                    <MudItem xs="12" sm="6">
+                                        <MudText Typo="Typo.body2" Color="Color.Secondary">Uppdaterad</MudText>
+                                        <MudText Typo="Typo.body1" Class="font-weight-medium">@Transaction.UpdatedAt.Value.ToString("yyyy-MM-dd HH:mm")</MudText>
+                                    </MudItem>
+                                }
+                            </MudGrid>
+                        </MudPaper>
+                    </MudItem>
+                }
+            </MudGrid>
+        }
+        else
+        {
+            <MudAlert Severity="Severity.Warning">Transaktion saknas eller kunde inte laddas.</MudAlert>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudSpacer />
+        <MudButton OnClick="EditTransaction" Color="Color.Primary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Edit">Redigera</MudButton>
+        <MudButton OnClick="DeleteTransaction" Color="Color.Error" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Delete">Ta bort</MudButton>
+        <MudButton OnClick="Close" Variant="Variant.Text">Stäng</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    public required IMudDialogInstance MudDialog { get; set; }
+
+    [Parameter]
+    public Transaction? Transaction { get; set; }
+
+    [Parameter]
+    public EventCallback<Transaction> OnEdit { get; set; }
+
+    [Parameter]
+    public EventCallback<Transaction> OnDelete { get; set; }
+
+    private readonly System.Globalization.CultureInfo _svCulture = new("sv-SE");
+
+    private async Task ViewReceipt(Receipt receipt)
+    {
+        var parameters = new DialogParameters<ReceiptViewDialog>
+        {
+            { x => x.Receipt, receipt }
+        };
+
+        var options = new DialogOptions 
+        { 
+            MaxWidth = MaxWidth.Large, 
+            FullWidth = true,
+            CloseButton = true,
+            CloseOnEscapeKey = true
+        };
+
+        await DialogService.ShowAsync<ReceiptViewDialog>("Kvittodetaljer", parameters, options);
+    }
+
+    private string GetImageUrl(string imagePath)
+    {
+        if (string.IsNullOrEmpty(imagePath))
+            return string.Empty;
+        
+        if (imagePath.StartsWith("http://") || imagePath.StartsWith("https://"))
+            return imagePath;
+        
+        return $"/uploads/receipts/{imagePath}";
+    }
+
+    private Color GetReceiptTypeColor(string receiptType)
+    {
+        return receiptType switch
+        {
+            "Physical" => Color.Default,
+            "E-Receipt" => Color.Info,
+            "Scanned" => Color.Success,
+            _ => Color.Default
+        };
+    }
+
+    private string GetReceiptTypeLabel(string receiptType)
+    {
+        return receiptType switch
+        {
+            "Physical" => "Fysiskt",
+            "E-Receipt" => "E-kvitto",
+            "Scanned" => "Skannat",
+            _ => receiptType
+        };
+    }
+
+    private async Task ChangeCategory()
+    {
+        if (Transaction == null) return;
+
+        var parameters = new DialogParameters<QuickCategoryChangeDialog>
+        {
+            { x => x.Transaction, Transaction }
+        };
+
+        var options = new DialogOptions 
+        { 
+            MaxWidth = MaxWidth.Small, 
+            FullWidth = true,
+            CloseButton = true,
+            CloseOnEscapeKey = true
+        };
+
+        var dialog = await DialogService.ShowAsync<QuickCategoryChangeDialog>("Ändra kategori", parameters, options);
+        var result = await dialog.Result;
+        
+        if (result is not null && !result.Canceled)
+        {
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+    }
+
+    private async Task CreateRuleFromTransaction()
+    {
+        if (Transaction == null) return;
+
+        // Use the transaction description or payee as the initial pattern
+        var initialPattern = !string.IsNullOrWhiteSpace(Transaction.Payee) 
+            ? Transaction.Payee 
+            : Transaction.Description;
+        
+        // Get the current category if any
+        int? currentCategoryId = Transaction.TransactionCategories.FirstOrDefault()?.CategoryId;
+
+        var parameters = new DialogParameters<CreateRuleDialog>
+        {
+            { x => x.InitialPattern, initialPattern },
+            { x => x.InitialPayee, Transaction.Payee },
+            { x => x.InitialCategoryId, currentCategoryId }
+        };
+
+        var options = new DialogOptions 
+        { 
+            MaxWidth = MaxWidth.Medium, 
+            FullWidth = true,
+            CloseButton = true,
+            CloseOnEscapeKey = true
+        };
+
+        var dialog = await DialogService.ShowAsync<CreateRuleDialog>("Skapa kategoriseringsregel", parameters, options);
+        var result = await dialog.Result;
+        
+        if (result is not null && !result.Canceled)
+        {
+            Snackbar.Add("Regel skapad! Framtida liknande transaktioner kategoriseras automatiskt.", Severity.Success);
+        }
+    }
+
+    private async Task EditTransaction()
+    {
+        if (Transaction != null && OnEdit.HasDelegate)
+        {
+            await OnEdit.InvokeAsync(Transaction);
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+    }
+
+    private async Task DeleteTransaction()
+    {
+        if (Transaction != null && OnDelete.HasDelegate)
+        {
+            await OnDelete.InvokeAsync(Transaction);
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+    }
+
+    private void Close() => MudDialog.Close();
+}

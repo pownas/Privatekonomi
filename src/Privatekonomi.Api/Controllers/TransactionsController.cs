@@ -11,11 +11,19 @@ namespace Privatekonomi.Api.Controllers;
 public class TransactionsController : ControllerBase
 {
     private readonly ITransactionService _transactionService;
+    private readonly ICategoryRuleService _categoryRuleService;
+    private readonly ICategoryService _categoryService;
     private readonly ILogger<TransactionsController> _logger;
 
-    public TransactionsController(ITransactionService transactionService, ILogger<TransactionsController> logger)
+    public TransactionsController(
+        ITransactionService transactionService, 
+        ICategoryRuleService categoryRuleService,
+        ICategoryService categoryService,
+        ILogger<TransactionsController> logger)
     {
         _transactionService = transactionService;
+        _categoryRuleService = categoryRuleService;
+        _categoryService = categoryService;
         _logger = logger;
     }
 
@@ -188,6 +196,87 @@ public class TransactionsController : ControllerBase
     {
         var transactions = await _transactionService.GetTransactionsByHouseholdAndDateRangeAsync(householdId, from, to);
         return Ok(transactions);
+    }
+
+    /// <summary>
+    /// Quick categorize a transaction with a single category.
+    /// Optionally creates a categorization rule from the transaction.
+    /// </summary>
+    /// <param name="id">Transaction ID</param>
+    /// <param name="request">Quick categorize request with category ID and optional rule creation</param>
+    /// <returns>The updated transaction</returns>
+    [HttpPost("{id}/categorize")]
+    public async Task<ActionResult<QuickCategorizeResponse>> QuickCategorize(int id, [FromBody] QuickCategorizeRequest request)
+    {
+        // Get the transaction
+        var transaction = await _transactionService.GetTransactionByIdAsync(id);
+        if (transaction == null)
+        {
+            throw new NotFoundException("Transaction", id);
+        }
+
+        // Verify category exists
+        var category = await _categoryService.GetCategoryByIdAsync(request.CategoryId);
+        if (category == null)
+        {
+            throw new NotFoundException("Category", request.CategoryId);
+        }
+
+        // Update the transaction category
+        var categories = new List<TransactionCategory>
+        {
+            new TransactionCategory
+            {
+                TransactionId = id,
+                CategoryId = request.CategoryId,
+                Amount = transaction.Amount,
+                Percentage = 100
+            }
+        };
+
+        await _transactionService.UpdateTransactionCategoriesAsync(id, categories);
+
+        CategoryRule? createdRule = null;
+
+        // Optionally create a categorization rule
+        if (request.CreateRule)
+        {
+            var pattern = request.RulePattern ?? transaction.Description;
+            
+            // Create the rule
+            var rule = new CategoryRule
+            {
+                Pattern = pattern,
+                MatchType = PatternMatchType.Contains,
+                CategoryId = request.CategoryId,
+                Field = MatchField.Both,
+                Priority = 50,
+                IsActive = true,
+                Description = $"Skapad från transaktion: {transaction.Description}"
+            };
+
+            try
+            {
+                var userId = User?.Identity?.Name;
+                createdRule = await _categoryRuleService.CreateRuleAsync(rule, userId);
+                _logger.LogInformation("Created categorization rule {RuleId} from transaction {TransactionId}", 
+                    createdRule.CategoryRuleId, id);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to create rule from transaction {TransactionId}", id);
+                // Don't fail the categorization if rule creation fails
+            }
+        }
+
+        // Reload transaction with updated categories
+        var updatedTransaction = await _transactionService.GetTransactionByIdAsync(id);
+
+        return Ok(new QuickCategorizeResponse
+        {
+            Transaction = updatedTransaction!,
+            CreatedRule = createdRule
+        });
     }
 }
 

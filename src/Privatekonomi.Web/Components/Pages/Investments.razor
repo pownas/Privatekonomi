@@ -1,3 +1,4 @@
+@page "/investments/overview"
 @page "/investments"
 @rendermode InteractiveServer
 @inject IInvestmentService InvestmentService
@@ -7,7 +8,10 @@
 
 <PageTitle>Aktier & Fonder - Privatekonomi</PageTitle>
 
-<MudText Typo="Typo.h4" Class="mb-4">Aktier & Fonder</MudText>
+<MudText Typo="Typo.h4" Class="mb-4">
+    <MudIcon Icon="@Icons.Material.Filled.ShowChart" Color="Color.Primary" Class="mr-2" aria-hidden="true" />
+    Aktier & Fonder
+</MudText>
 
 @if (_loading)
 {
@@ -158,7 +162,7 @@ else
                         Exportera
                     </MudButton>
                     <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Upload" 
-                               Href="/import-investments" Size="Size.Small">
+                               Href="/settings/import" Size="Size.Small">
                         Importera
                     </MudButton>
                     <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" 

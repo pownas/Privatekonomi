@@ -213,7 +213,7 @@ Services are registered in `Program.cs` of each project. Follow existing pattern
 3. Register service in `Program.cs`
 4. Add unit tests in `tests/Privatekonomi.Core.Tests/`
 5. Create UI component in `Privatekonomi.Web/Components/Pages/`
-6. Update documentation (README, wiki, docs as appropriate)
+6. Update documentation (README, /docs/ as appropriate)
 
 ### Adding a New API Endpoint
 
@@ -258,9 +258,9 @@ See example files:
 - `docs/DEVELOPER_QUICKSTART.md` - Developer setup guide
 - `docs/AUTOMATIC_CATEGORIZATION.md` - Transaction categorization
 - `docs/DARK_MODE_IMPLEMENTATION.md` - UI theming guide
-- `wiki/ASPIRE_GUIDE.md` - .NET Aspire integration
-- `wiki/CSV_IMPORT_GUIDE.md` - Import functionality
-- `wiki/PSD2_API_GUIDE.md` - Bank integration
+- `docs/ASPIRE_GUIDE.md` - .NET Aspire integration
+- `docs/CSV_IMPORT_GUIDE.md` - Import functionality
+- `docs/PSD2_API_GUIDE.md` - Bank integration
 
 ### External Resources
 
@@ -288,7 +288,7 @@ See example files:
 
 ## Getting Help
 
-- Check existing documentation in `docs/` and `wiki/`
+- Check existing documentation in `docs/`
 - Look at similar implementations in the codebase
 - Review test files for usage examples
-- Check `ISSUE_EXAMPLES.md` for common issue patterns
+- Check `docs/ISSUE_EXAMPLES.md` for common issue patterns

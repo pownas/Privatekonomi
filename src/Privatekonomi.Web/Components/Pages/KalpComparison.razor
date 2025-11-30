@@ -1,0 +1,610 @@
+@page "/economy/budgets/kalp-comparison"
+@page "/budgets/kalp-comparison"
+@rendermode InteractiveServer
+@inject IKalpService KalpService
+@inject IBudgetService BudgetService
+@inject ILoanService LoanService
+@inject ISnackbar Snackbar
+@using System.Globalization
+
+<PageTitle>KALP Kalkyl - Privatekonomi</PageTitle>
+
+<div class="d-flex justify-space-between align-center mb-4">
+    <div>
+        <MudText Typo="Typo.h4">KALP - Kvar att leva på</MudText>
+        <MudText Typo="Typo.body2" Color="Color.Secondary">
+            Beräkna hur mycket pengar du har kvar att leva på efter fasta utgifter och lån
+        </MudText>
+    </div>
+</div>
+
+<MudGrid>
+    <!-- Left column - Input form -->
+    <MudItem xs="12" md="6">
+        <MudPaper Class="pa-4 mb-4">
+            <MudText Typo="Typo.h6" Class="mb-3">
+                <MudIcon Icon="@Icons.Material.Filled.AccountBalance" Class="mr-2" />
+                Inkomster
+            </MudText>
+            
+            <MudNumericField @bind-Value="_monthlyIncome" 
+                           Label="Total månadsinkomst (efter skatt)" 
+                           Variant="Variant.Outlined"
+                           Format="N0"
+                           Culture="@SwedishCulture"
+                           Adornment="Adornment.Start"
+                           AdornmentText="kr"
+                           Min="0"
+                           Class="mb-3"
+                           HelperText="Din totala nettoinkomst per månad" />
+        </MudPaper>
+
+        <MudPaper Class="pa-4 mb-4">
+            <MudText Typo="Typo.h6" Class="mb-3">
+                <MudIcon Icon="@Icons.Material.Filled.Home" Class="mr-2" />
+                Fasta utgifter (kr/månad)
+            </MudText>
+            
+            <MudExpansionPanels MultiExpansion="true">
+                <MudExpansionPanel Text="Boende" isexpanded="true">
+                    <MudNumericField @bind-Value="Hyra" 
+                                   Label="Hyra eller boendekostnad" 
+                                   Variant="Variant.Outlined"
+                                   Format="N0"
+                                   Culture="@SwedishCulture"
+                                   Adornment="Adornment.Start"
+                                   AdornmentText="kr"
+                                   Min="0"
+                                   Class="mb-3" />
+                    
+                    <MudNumericField @bind-Value="El" 
+                                   Label="Hushållsel" 
+                                   Variant="Variant.Outlined"
+                                   Format="N0"
+                                   Culture="@SwedishCulture"
+                                   Adornment="Adornment.Start"
+                                   AdornmentText="kr"
+                                   Min="0"
+                                   Class="mb-3" />
+                    
+                    <MudNumericField @bind-Value="Vatten" 
+                                   Label="Vatten och avlopp" 
+                                   Variant="Variant.Outlined"
+                                   Format="N0"
+                                   Culture="@SwedishCulture"
+                                   Adornment="Adornment.Start"
+                                   AdornmentText="kr"
+                                   Min="0"
+                                   Class="mb-3" />
+                </MudExpansionPanel>
+                
+                <MudExpansionPanel Text="Försäkringar">
+                    <MudNumericField @bind-Value="Hemforsakring" 
+                                   Label="Hemförsäkring" 
+                                   Variant="Variant.Outlined"
+                                   Format="N0"
+                                   Culture="@SwedishCulture"
+                                   Adornment="Adornment.Start"
+                                   AdornmentText="kr"
+                                   Min="0"
+                                   Class="mb-3" />
+                    
+                    <MudNumericField @bind-Value="OvrigaForsakringar" 
+                                   Label="Övriga försäkringar" 
+                                   Variant="Variant.Outlined"
+                                   Format="N0"
+                                   Culture="@SwedishCulture"
+                                   Adornment="Adornment.Start"
+                                   AdornmentText="kr"
+                                   Min="0"
+                                   Class="mb-3" />
+                </MudExpansionPanel>
+                
+                <MudExpansionPanel Text="Abonnemang & Telefoni">
+                    <MudNumericField @bind-Value="Internet" 
+                                   Label="Internet" 
+                                   Variant="Variant.Outlined"
+                                   Format="N0"
+                                   Culture="@SwedishCulture"
+                                   Adornment="Adornment.Start"
+                                   AdornmentText="kr"
+                                   Min="0"
+                                   Class="mb-3" />
+                    
+                    <MudNumericField @bind-Value="Mobiltelefon" 
+                                   Label="Mobiltelefon" 
+                                   Variant="Variant.Outlined"
+                                   Format="N0"
+                                   Culture="@SwedishCulture"
+                                   Adornment="Adornment.Start"
+                                   AdornmentText="kr"
+                                   Min="0"
+                                   Class="mb-3" />
+                    
+                    <MudNumericField @bind-Value="Streaming" 
+                                   Label="Streaming & media" 
+                                   Variant="Variant.Outlined"
+                                   Format="N0"
+                                   Culture="@SwedishCulture"
+                                   Adornment="Adornment.Start"
+                                   AdornmentText="kr"
+                                   Min="0"
+                                   Class="mb-3" />
+                </MudExpansionPanel>
+                
+                <MudExpansionPanel Text="Transport">
+                    <MudNumericField @bind-Value="Kollektivtrafik" 
+                                   Label="Kollektivtrafik" 
+                                   Variant="Variant.Outlined"
+                                   Format="N0"
+                                   Culture="@SwedishCulture"
+                                   Adornment="Adornment.Start"
+                                   AdornmentText="kr"
+                                   Min="0"
+                                   Class="mb-3" />
+                    
+                    <MudNumericField @bind-Value="Bilkostnader" 
+                                   Label="Bilkostnader (försäkring, skatt)" 
+                                   Variant="Variant.Outlined"
+                                   Format="N0"
+                                   Culture="@SwedishCulture"
+                                   Adornment="Adornment.Start"
+                                   AdornmentText="kr"
+                                   Min="0"
+                                   Class="mb-3" />
+                </MudExpansionPanel>
+                
+                <MudExpansionPanel Text="Övrigt">
+                    <MudNumericField @bind-Value="AndraFastaUtgifter" 
+                                   Label="Andra fasta utgifter" 
+                                   Variant="Variant.Outlined"
+                                   Format="N0"
+                                   Culture="@SwedishCulture"
+                                   Adornment="Adornment.Start"
+                                   AdornmentText="kr"
+                                   Min="0"
+                                   Class="mb-3" />
+                </MudExpansionPanel>
+            </MudExpansionPanels>
+        </MudPaper>
+
+        <MudPaper Class="pa-4 mb-4">
+            <MudText Typo="Typo.h6" Class="mb-3">
+                <MudIcon Icon="@Icons.Material.Filled.CreditCard" Class="mr-2" />
+                Lån och amorteringar
+            </MudText>
+            
+            @foreach (var loan in _loans)
+            {
+                <MudCard Class="mb-3" Elevation="2">
+                    <MudCardContent>
+                        <div class="d-flex align-center gap-2 mb-2">
+                            <MudIcon Icon="@Icons.Material.Filled.Payment" />
+                            <MudText Typo="Typo.subtitle1">Lån @(_loans.IndexOf(loan) + 1)</MudText>
+                            <MudSpacer />
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" 
+                                         Size="Size.Small" 
+                                         Color="Color.Error"
+                                         OnClick="@(() => RemoveLoan(loan))" />
+                        </div>
+                        <MudGrid>
+                            <MudItem xs="12" sm="6">
+                                <MudTextField @bind-Value="loan.LoanName" 
+                                            Label="Lånenamn" 
+                                            Variant="Variant.Outlined" />
+                            </MudItem>
+                            <MudItem xs="12" sm="6">
+                                <MudSelect @bind-Value="loan.LoanType" 
+                                         Label="Lånetyp" 
+                                         Variant="Variant.Outlined">
+                                    <MudSelectItem Value="@("Bolån")">Bolån</MudSelectItem>
+                                    <MudSelectItem Value="@("CSN-lån")">CSN-lån</MudSelectItem>
+                                    <MudSelectItem Value="@("Privatlån")">Privatlån</MudSelectItem>
+                                    <MudSelectItem Value="@("Kreditkort")">Kreditkort</MudSelectItem>
+                                    <MudSelectItem Value="@("Billån")">Billån</MudSelectItem>
+                                    <MudSelectItem Value="@("Övrigt")">Övrigt</MudSelectItem>
+                                </MudSelect>
+                            </MudItem>
+                            <MudItem xs="12">
+                                <MudNumericField @bind-Value="loan.MonthlyPayment" 
+                                               Label="Månadskostnad (amortering + ränta)" 
+                                               Variant="Variant.Outlined"
+                                               Format="N0"
+                                               Culture="@SwedishCulture"
+                                               Adornment="Adornment.Start"
+                                               AdornmentText="kr"
+                                               Min="0" />
+                            </MudItem>
+                        </MudGrid>
+                    </MudCardContent>
+                </MudCard>
+            }
+            
+            <MudButton Variant="Variant.Outlined" 
+                     Color="Color.Primary" 
+                     StartIcon="@Icons.Material.Filled.Add"
+                     OnClick="AddLoan"
+                     FullWidth="true">
+                Lägg till lån
+            </MudButton>
+        </MudPaper>
+
+        <MudPaper Class="pa-4 mb-4">
+            <MudText Typo="Typo.h6" Class="mb-3">
+                <MudIcon Icon="@Icons.Material.Filled.Groups" Class="mr-2" />
+                Hushållssammansättning (valfritt)
+            </MudText>
+            <MudText Typo="Typo.caption" Class="mb-3" Color="Color.Secondary">
+                För att jämföra mot Konsumentverkets rekommendationer
+            </MudText>
+            
+            @foreach (var member in _householdMembers)
+            {
+                <MudCard Class="mb-3" Elevation="2">
+                    <MudCardContent>
+                        <div class="d-flex align-center gap-2 mb-2">
+                            <MudIcon Icon="@Icons.Material.Filled.Person" />
+                            <MudText Typo="Typo.subtitle1">Medlem @(_householdMembers.IndexOf(member) + 1)</MudText>
+                            <MudSpacer />
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" 
+                                         Size="Size.Small" 
+                                         Color="Color.Error"
+                                         OnClick="@(() => RemoveMember(member))" />
+                        </div>
+                        <MudGrid>
+                            <MudItem xs="12" sm="6">
+                                <MudNumericField @bind-Value="member.Age" 
+                                               Label="Ålder" 
+                                               Variant="Variant.Outlined"
+                                               Min="0"
+                                               Max="120" />
+                            </MudItem>
+                            <MudItem xs="12" sm="6">
+                                <MudCheckBox @bind-Value="member.HasLunchOutOnWeekdays" 
+                                           Label="Lunch ute på vardagar"
+                                           Color="Color.Primary" />
+                            </MudItem>
+                        </MudGrid>
+                    </MudCardContent>
+                </MudCard>
+            }
+            
+            <MudButton Variant="Variant.Outlined" 
+                     Color="Color.Secondary" 
+                     StartIcon="@Icons.Material.Filled.PersonAdd"
+                     OnClick="AddMember"
+                     FullWidth="true">
+                Lägg till medlem
+            </MudButton>
+        </MudPaper>
+        
+        <MudButton Variant="Variant.Filled" 
+                 Color="Color.Primary" 
+                 StartIcon="@Icons.Material.Filled.Calculate"
+                 OnClick="CalculateKalp"
+                 FullWidth="true"
+                 Size="Size.Large">
+            Beräkna KALP
+        </MudButton>
+    </MudItem>
+    
+    <!-- Right column - Results -->
+    <MudItem xs="12" md="6">
+        @if (_kalpResult != null)
+        {
+            <MudPaper Class="pa-4 mb-4">
+                <MudText Typo="Typo.h6" Class="mb-3">
+                    <MudIcon Icon="@Icons.Material.Filled.Assessment" Class="mr-2" />
+                    KALP Resultat
+                </MudText>
+                
+                <MudGrid Class="mb-4">
+                    <MudItem xs="12">
+                        <MudCard Outlined="true" Class="mb-3">
+                            <MudCardContent>
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">Månadsinkomst</MudText>
+                                <MudText Typo="Typo.h5" Color="Color.Success">
+                                    +@_kalpResult.TotalIncome.ToString("N0") kr
+                                </MudText>
+                            </MudCardContent>
+                        </MudCard>
+                    </MudItem>
+                    
+                    <MudItem xs="12" sm="6">
+                        <MudCard Outlined="true">
+                            <MudCardContent>
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">Fasta utgifter</MudText>
+                                <MudText Typo="Typo.h6" Color="Color.Error">
+                                    -@_kalpResult.FixedExpenses.ToString("N0") kr
+                                </MudText>
+                            </MudCardContent>
+                        </MudCard>
+                    </MudItem>
+                    
+                    <MudItem xs="12" sm="6">
+                        <MudCard Outlined="true">
+                            <MudCardContent>
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">Lån och amorteringar</MudText>
+                                <MudText Typo="Typo.h6" Color="Color.Error">
+                                    -@_kalpResult.LoanPayments.ToString("N0") kr
+                                </MudText>
+                            </MudCardContent>
+                        </MudCard>
+                    </MudItem>
+                    
+                    <MudItem xs="12">
+                        <MudDivider />
+                    </MudItem>
+                    
+                    <MudItem xs="12">
+                        <MudCard Outlined="true" Style="background: var(--mud-palette-primary-lighten);">
+                            <MudCardContent>
+                                <MudText Typo="Typo.body1" Color="Color.Secondary">
+                                    <strong>KALP - Kvar att leva på</strong>
+                                </MudText>
+                                <MudText Typo="Typo.h4" Color="@(_kalpResult.KalpAmount >= 0 ? Color.Success : Color.Error)">
+                                    @_kalpResult.KalpAmount.ToString("N0") kr/månad
+                                </MudText>
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                    @_kalpResult.KalpPercentage.ToString("F1")% av inkomsten
+                                </MudText>
+                            </MudCardContent>
+                        </MudCard>
+                    </MudItem>
+                </MudGrid>
+                
+                @if (_kalpResult.RecommendedMinimumKalp.HasValue)
+                {
+                    <MudDivider Class="my-4" />
+                    
+                    <MudText Typo="Typo.h6" Class="mb-3">
+                        <MudIcon Icon="@Icons.Material.Filled.Recommend" Class="mr-2" />
+                        Jämförelse med rekommendation
+                    </MudText>
+                    
+                    <MudGrid>
+                        <MudItem xs="12" sm="6">
+                            <MudCard Outlined="true">
+                                <MudCardContent>
+                                    <MudText Typo="Typo.body2" Color="Color.Secondary">Din KALP</MudText>
+                                    <MudText Typo="Typo.h6" Color="Color.Primary">
+                                        @_kalpResult.KalpAmount.ToString("N0") kr
+                                    </MudText>
+                                </MudCardContent>
+                            </MudCard>
+                        </MudItem>
+                        <MudItem xs="12" sm="6">
+                            <MudCard Outlined="true">
+                                <MudCardContent>
+                                    <MudText Typo="Typo.body2" Color="Color.Secondary">Rekommenderad miniminivå</MudText>
+                                    <MudText Typo="Typo.h6" Color="Color.Info">
+                                        @_kalpResult.RecommendedMinimumKalp.Value.ToString("N0") kr
+                                    </MudText>
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                        Baserat på Konsumentverkets riktlinjer
+                                    </MudText>
+                                </MudCardContent>
+                            </MudCard>
+                        </MudItem>
+                        <MudItem xs="12">
+                            @if (_kalpResult.MeetsRecommendedMinimum)
+                            {
+                                <MudAlert Severity="Severity.Success" Variant="Variant.Outlined">
+                                    <MudText>
+                                        <strong>Bra jobbat!</strong> Din KALP överstiger den rekommenderade miniminivån med 
+                                        <strong>@((_kalpResult.KalpAmount - _kalpResult.RecommendedMinimumKalp.Value).ToString("N0")) kr</strong>.
+                                    </MudText>
+                                </MudAlert>
+                            }
+                            else
+                            {
+                                <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined">
+                                    <MudText>
+                                        Din KALP ligger 
+                                        <strong>@((_kalpResult.RecommendedMinimumKalp.Value - _kalpResult.KalpAmount).ToString("N0")) kr</strong>
+                                        under den rekommenderade miniminivån. Överväg att minska fasta utgifter eller öka inkomster.
+                                    </MudText>
+                                </MudAlert>
+                            }
+                        </MudItem>
+                    </MudGrid>
+                }
+                
+                @if (_kalpResult.FixedExpenseBreakdown.Any())
+                {
+                    <MudDivider Class="my-4" />
+                    
+                    <MudText Typo="Typo.h6" Class="mb-3">Uppdelning av fasta utgifter</MudText>
+                    <MudSimpleTable Dense="true" Hover="true" Striped="true">
+                        <thead>
+                            <tr>
+                                <th>Kategori</th>
+                                <th style="text-align: right;">Belopp</th>
+                                <th style="text-align: right;">Andel av totalt</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var expense in _kalpResult.FixedExpenseBreakdown.Where(e => e.Value > 0).OrderByDescending(e => e.Value))
+                            {
+                                <tr>
+                                    <td>@expense.Key</td>
+                                    <td style="text-align: right;">@expense.Value.ToString("N0") kr</td>
+                                    <td style="text-align: right;">
+                                        @((_kalpResult.FixedExpenses > 0 ? (expense.Value / _kalpResult.FixedExpenses * 100) : 0).ToString("F1"))%
+                                    </td>
+                                </tr>
+                            }
+                            <tr style="font-weight: bold; border-top: 2px solid var(--mud-palette-divider);">
+                                <td>Totalt</td>
+                                <td style="text-align: right;">@_kalpResult.FixedExpenses.ToString("N0") kr</td>
+                                <td style="text-align: right;">100%</td>
+                            </tr>
+                        </tbody>
+                    </MudSimpleTable>
+                }
+                
+                @if (_kalpResult.LoanPaymentBreakdown.Any())
+                {
+                    <MudDivider Class="my-4" />
+                    
+                    <MudText Typo="Typo.h6" Class="mb-3">Uppdelning av lån</MudText>
+                    <MudSimpleTable Dense="true" Hover="true" Striped="true">
+                        <thead>
+                            <tr>
+                                <th>Lånetyp</th>
+                                <th style="text-align: right;">Månadskostnad</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var loan in _kalpResult.LoanPaymentBreakdown.OrderByDescending(l => l.Value))
+                            {
+                                <tr>
+                                    <td>@loan.Key</td>
+                                    <td style="text-align: right;">@loan.Value.ToString("N0") kr</td>
+                                </tr>
+                            }
+                            <tr style="font-weight: bold; border-top: 2px solid var(--mud-palette-divider);">
+                                <td>Totalt</td>
+                                <td style="text-align: right;">@_kalpResult.LoanPayments.ToString("N0") kr</td>
+                            </tr>
+                        </tbody>
+                    </MudSimpleTable>
+                }
+            </MudPaper>
+            
+            <MudPaper Class="pa-4">
+                <MudText Typo="Typo.h6" Class="mb-3">
+                    <MudIcon Icon="@Icons.Material.Filled.Info" Class="mr-2" />
+                    Om KALP
+                </MudText>
+                <MudText Typo="Typo.body2" Class="mb-2">
+                    KALP (Kvar att leva på) visar hur mycket pengar du har kvar för variabla utgifter som:
+                </MudText>
+                <MudList T="string" Dense="true">
+                    <MudListItem T="string" Icon="@Icons.Material.Filled.ShoppingCart">Mat och dryck</MudListItem>
+                    <MudListItem T="string" Icon="@Icons.Material.Filled.Checkroom">Kläder och skor</MudListItem>
+                    <MudListItem T="string" Icon="@Icons.Material.Filled.SportsEsports">Fritid och nöjen</MudListItem>
+                    <MudListItem T="string" Icon="@Icons.Material.Filled.Spa">Personlig hygien</MudListItem>
+                    <MudListItem T="string" Icon="@Icons.Material.Filled.Savings">Sparande</MudListItem>
+                </MudList>
+                <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-3">
+                    Tips: En bra KALP bör täcka Konsumentverkets rekommenderade kostnader för ditt hushåll och ge utrymme för sparande.
+                </MudText>
+            </MudPaper>
+        }
+        else
+        {
+            <MudPaper Class="pa-6" Style="text-align: center;">
+                <MudIcon Icon="@Icons.Material.Filled.Calculate" Size="Size.Large" Color="Color.Secondary" Class="mb-4" Style="font-size: 4rem;" />
+                <MudText Typo="Typo.h6" Class="mb-2">Ingen beräkning än</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                    Fyll i dina uppgifter till vänster och klicka på "Beräkna KALP" för att se resultatet.
+                </MudText>
+            </MudPaper>
+        }
+    </MudItem>
+</MudGrid>
+
+@code {
+    private static readonly CultureInfo SwedishCulture = new("sv-SE");
+    
+    private decimal _monthlyIncome = 25000m;
+    private Dictionary<string, decimal> _fixedExpenses = new();
+    private List<LoanPayment> _loans = new();
+    private List<KonsumentverketHouseholdMember> _householdMembers = new();
+    private KalpCalculation? _kalpResult;
+
+    // Helper properties for binding
+    private decimal Hyra { get => _fixedExpenses["Hyra/Boende"]; set => _fixedExpenses["Hyra/Boende"] = value; }
+    private decimal El { get => _fixedExpenses["El"]; set => _fixedExpenses["El"] = value; }
+    private decimal Vatten { get => _fixedExpenses["Vatten"]; set => _fixedExpenses["Vatten"] = value; }
+    private decimal Hemforsakring { get => _fixedExpenses["Hemförsäkring"]; set => _fixedExpenses["Hemförsäkring"] = value; }
+    private decimal OvrigaForsakringar { get => _fixedExpenses["Övriga försäkringar"]; set => _fixedExpenses["Övriga försäkringar"] = value; }
+    private decimal Internet { get => _fixedExpenses["Internet"]; set => _fixedExpenses["Internet"] = value; }
+    private decimal Mobiltelefon { get => _fixedExpenses["Mobiltelefon"]; set => _fixedExpenses["Mobiltelefon"] = value; }
+    private decimal Streaming { get => _fixedExpenses["Streaming"]; set => _fixedExpenses["Streaming"] = value; }
+    private decimal Kollektivtrafik { get => _fixedExpenses["Kollektivtrafik"]; set => _fixedExpenses["Kollektivtrafik"] = value; }
+    private decimal Bilkostnader { get => _fixedExpenses["Bilkostnader"]; set => _fixedExpenses["Bilkostnader"] = value; }
+    private decimal AndraFastaUtgifter { get => _fixedExpenses["Andra fasta utgifter"]; set => _fixedExpenses["Andra fasta utgifter"] = value; }
+
+    protected override void OnInitialized()
+    {
+        // Initialize fixed expenses with default categories
+        _fixedExpenses = new Dictionary<string, decimal>
+        {
+            { "Hyra/Boende", 8000m },
+            { "El", 500m },
+            { "Vatten", 200m },
+            { "Hemförsäkring", 150m },
+            { "Övriga försäkringar", 0m },
+            { "Internet", 300m },
+            { "Mobiltelefon", 200m },
+            { "Streaming", 200m },
+            { "Kollektivtrafik", 0m },
+            { "Bilkostnader", 0m },
+            { "Andra fasta utgifter", 0m }
+        };
+
+        // Add default household member (single person)
+        _householdMembers.Add(new KonsumentverketHouseholdMember { Age = 35, HasLunchOutOnWeekdays = true });
+    }
+
+    private void AddLoan()
+    {
+        _loans.Add(new LoanPayment 
+        { 
+            LoanName = $"Lån {_loans.Count + 1}", 
+            LoanType = "Privatlån",
+            MonthlyPayment = 0
+        });
+    }
+
+    private void RemoveLoan(LoanPayment loan)
+    {
+        _loans.Remove(loan);
+    }
+
+    private void AddMember()
+    {
+        _householdMembers.Add(new KonsumentverketHouseholdMember { Age = 0, HasLunchOutOnWeekdays = false });
+    }
+
+    private void RemoveMember(KonsumentverketHouseholdMember member)
+    {
+        if (_householdMembers.Count > 1)
+        {
+            _householdMembers.Remove(member);
+        }
+        else
+        {
+            Snackbar.Add("Du måste ha minst en medlem i hushållet", Severity.Warning);
+        }
+    }
+
+    private void CalculateKalp()
+    {
+        if (_monthlyIncome <= 0)
+        {
+            Snackbar.Add("Ange en månadsinkomst", Severity.Warning);
+            return;
+        }
+
+        try
+        {
+            var input = new KalpInput
+            {
+                MonthlyIncome = _monthlyIncome,
+                FixedExpenses = new Dictionary<string, decimal>(_fixedExpenses),
+                Loans = new List<LoanPayment>(_loans),
+                HouseholdMembers = _householdMembers.Any() ? new List<KonsumentverketHouseholdMember>(_householdMembers) : null
+            };
+
+            _kalpResult = KalpService.CalculateKalp(input);
+            Snackbar.Add("KALP beräknad!", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Fel vid beräkning: {ex.Message}", Severity.Error);
+        }
+    }
+}

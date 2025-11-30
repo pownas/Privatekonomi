@@ -13,6 +13,28 @@ using Privatekonomi.Core.Configuration;
 
 var builder = WebApplication.CreateBuilder(args);
 
+if (builder.Environment.IsDevelopment() || string.Equals(builder.Environment.EnvironmentName, "Local", StringComparison.OrdinalIgnoreCase))
+{
+    builder.Configuration.AddJsonFile("appsettings.local.json", optional: true, reloadOnChange: true);
+    builder.Configuration.AddUserSecrets(typeof(Program).Assembly, optional: true);
+}
+
+// Raspberry Pi configuration - ensure we listen on all network interfaces
+var isRaspberryPi = Environment.GetEnvironmentVariable("PRIVATEKONOMI_RASPBERRY_PI") == "true";
+if (isRaspberryPi)
+{
+    // When running under Aspire, it manages the ports via WithHttpEndpoint
+    // But Aspire binds to localhost by default, so we need to override this
+    // We configure Kestrel AFTER AddServiceDefaults to ensure our binding takes precedence
+    builder.WebHost.ConfigureKestrel(serverOptions =>
+    {
+        // Listen on all network interfaces (0.0.0.0) for Raspberry Pi network access
+        // Get port from Aspire's PORT env var, or fall back to configuration, or default to 5274
+        var port = int.TryParse(Environment.GetEnvironmentVariable("PORT"), out var p) ? p : 5274;
+        serverOptions.ListenAnyIP(port);
+    });
+}
+
 // Configure Swedish culture as default
 var swedishCulture = new CultureInfo("sv-SE");
 CultureInfo.DefaultThreadCurrentCulture = swedishCulture;
@@ -21,12 +43,12 @@ CultureInfo.DefaultThreadCurrentUICulture = swedishCulture;
 // Add Aspire service defaults
 builder.AddServiceDefaults();
 
+// Add SignalR for real-time budget alerts
+builder.Services.AddSignalR();
+
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
-
-// Add SignalR for real-time notifications
-builder.Services.AddSignalR();
 
 // Configure Blazor Server options for better error handling
 builder.Services.Configure<Microsoft.AspNetCore.Components.Server.CircuitOptions>(options =>
@@ -98,13 +120,18 @@ builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<ICategoryRuleService, CategoryRuleService>();
 builder.Services.AddScoped<ILoanService, LoanService>();
 builder.Services.AddScoped<IDebtStrategyService, DebtStrategyService>();
+builder.Services.AddScoped<IMortgageAnalysisService, MortgageAnalysisService>();
 builder.Services.AddScoped<IInvestmentService, InvestmentService>();
 builder.Services.AddScoped<IAssetService, AssetService>();
 builder.Services.AddScoped<IBudgetService, BudgetService>();
+builder.Services.AddScoped<IBudgetSuggestionService, BudgetSuggestionService>();
 builder.Services.AddScoped<IBankSourceService, BankSourceService>();
 builder.Services.AddScoped<IHouseholdService, HouseholdService>();
+builder.Services.AddScoped<IRbacService, RbacService>();
 builder.Services.AddScoped<IChildAllowanceService, ChildAllowanceService>();
+builder.Services.AddScoped<IGoalMilestoneService, GoalMilestoneService>();
 builder.Services.AddScoped<IGoalService, GoalService>();
+builder.Services.AddScoped<IRoundUpService, RoundUpService>();
 builder.Services.AddScoped<IPocketService, PocketService>();
 builder.Services.AddScoped<ISharedGoalService, SharedGoalService>();
 builder.Services.AddScoped<ISocialFeatureService, SocialFeatureService>();
@@ -112,9 +139,11 @@ builder.Services.AddScoped<IAuditLogService, AuditLogService>();
 builder.Services.AddScoped<IExportService, ExportService>();
 builder.Services.AddScoped<IDataImportService, DataImportService>();
 builder.Services.AddScoped<IReportService, ReportService>();
+builder.Services.AddScoped<IHeatmapAnalysisService, HeatmapAnalysisService>();
 builder.Services.AddScoped<ISalaryHistoryService, SalaryHistoryService>();
 builder.Services.AddScoped<ICurrencyAccountService, CurrencyAccountService>();
 builder.Services.AddScoped<IReceiptService, ReceiptService>();
+builder.Services.AddScoped<IOcrService, TesseractOcrService>();
 builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
 builder.Services.AddScoped<IBillService, BillService>();
 builder.Services.AddScoped<IPensionService, PensionService>();
@@ -136,11 +165,24 @@ builder.Services.AddScoped<INotificationService>(sp =>
 });
 
 builder.Services.AddScoped<INotificationPreferenceService, NotificationPreferenceService>();
+builder.Services.AddScoped<IReminderService, ReminderService>();
+builder.Services.AddScoped<IBudgetAlertService, BudgetAlertService>();
 builder.Services.AddScoped<ILifeTimelinePlannerService, LifeTimelinePlannerService>();
 builder.Services.AddScoped<ISavingsChallengeService, SavingsChallengeService>();
 builder.Services.AddScoped<IKonsumentverketComparisonService, KonsumentverketComparisonService>();
+builder.Services.AddScoped<IKalpService, KalpService>();
+builder.Services.AddScoped<IMetricsService, MetricsService>();
+builder.Services.AddScoped<ICashFlowScenarioService, CashFlowScenarioService>();
+builder.Services.AddScoped<IOnboardingService, OnboardingService>();
 builder.Services.AddScoped<ThemeService>();
 builder.Services.AddScoped<DashboardPreferencesService>();
+builder.Services.AddScoped<IDashboardLayoutService, DashboardLayoutService>();
+builder.Services.AddScoped<IDashboardService, DashboardService>();
+builder.Services.AddScoped<ViewDensityService>();
+
+// Register background services
+builder.Services.AddHostedService<Privatekonomi.Web.Services.BudgetAlertBackgroundService>();
+builder.Services.AddHostedService<Privatekonomi.Web.Services.WeeklyBudgetDigestService>();
 
 // Swedish-specific services
 builder.Services.AddScoped<ISieExporter, SieExporter>();
@@ -151,22 +193,25 @@ builder.Services.AddScoped<IISKTaxCalculator, ISKTaxCalculator>();
 // Register bank API services and dependencies
 builder.Services.AddBankApiServices(builder.Configuration);
 
-// Add HttpClient for API calls (if needed later) using Aspire service discovery
+// Add HttpClient for API calls
 builder.Services.AddHttpClient("api", client =>
 {
-    // Aspire will configure this automatically through service discovery
-
-    // // This will be configured by Aspire service discovery
-    // client.BaseAddress = new Uri(builder.Configuration["services:api:http:0"] ?? "http://localhost:5001");
+    // Configure API base address based on environment
+    // Aspire will override this through service discovery when running with AppHost
+    // For Raspberry Pi and standalone deployments, use configuration
+    var apiBaseUrl = builder.Configuration["ApiSettings:BaseUrl"] 
+        ?? builder.Configuration["services:api:http:0"] 
+        ?? "http://localhost:5277";
+    
+    client.BaseAddress = new Uri(apiBaseUrl);
 });
 
-// Configure default HttpClient 
+// Configure default HttpClient to use the API client configuration
 builder.Services.AddScoped<HttpClient>(sp =>
 {
     var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
-    return httpClientFactory.CreateClient();
-    //// to use the API base address
-    //return httpClientFactory.CreateClient("api");
+    // Use the configured "api" client as the default
+    return httpClientFactory.CreateClient("api");
 });
 
 // Register stock price service with HttpClient
@@ -218,6 +263,11 @@ try
             }
         }
         
+        // Always seed production reference data (challenge templates, etc.)
+        logger.LogInformation("Seeding production reference data (challenge templates)...");
+        TestDataSeeder.SeedProductionReferenceData(context);
+        logger.LogInformation("Production reference data seeded successfully");
+        
         // Seed test data only if configured
         if (storageSettings.SeedTestData)
         {
@@ -261,10 +311,11 @@ app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
-// Add SignalR hub for real-time notifications
-app.MapHub<Privatekonomi.Web.Hubs.NotificationHub>("/notificationHub");
-
 // Add Identity endpoints
 app.MapGroup("/Account").MapIdentityApi<ApplicationUser>();
+
+// Map SignalR hubs
+app.MapHub<Privatekonomi.Web.Hubs.BudgetAlertHub>("/hubs/budgetalert");
+app.MapHub<Privatekonomi.Web.Hubs.NotificationHub>("/notificationHub");
 
 app.Run();

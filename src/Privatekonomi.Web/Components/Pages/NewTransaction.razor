@@ -1,3 +1,4 @@
+@page "/economy/transactions/new"
 @page "/transactions/new"
 @rendermode InteractiveServer
 @inject ITransactionService TransactionService
@@ -14,7 +15,10 @@
                    OnClick="Cancel"
                    aria-label="Tillbaka till transaktioner" 
                    Class="mr-2" />
-    <MudText Typo="Typo.h4">Ny Transaktion</MudText>
+    <MudText Typo="Typo.h4">
+        <MudIcon Icon="@Icons.Material.Filled.Add" Color="Color.Primary" Class="mr-2" aria-hidden="true" />
+        Ny Transaktion
+    </MudText>
 </div>
 
 <MudPaper Class="pa-4">
@@ -181,7 +185,7 @@
         {
             await TransactionService.CreateTransactionAsync(_transaction);
             Snackbar.Add("Transaktion skapad", Severity.Success);
-            Navigation.NavigateTo("/transactions");
+            Navigation.NavigateTo("/economy/transactions");
         }
         catch (Exception ex)
         {
@@ -191,6 +195,6 @@
 
     private void Cancel()
     {
-        Navigation.NavigateTo("/transactions");
+        Navigation.NavigateTo("/economy/transactions");
     }
 }

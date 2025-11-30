@@ -2,7 +2,7 @@
 
 Detta dokument innehåller screenshots av alla huvudfunktioner i Privatekonomi-applikationen. Dokumentationen uppdateras löpande när gränssnittet förändras.
 
-**Senast uppdaterad:** 2025-10-24
+**Senast uppdaterad:** 2025-11-02
 
 ---
 
@@ -29,7 +29,7 @@ Detta dokument innehåller screenshots av alla huvudfunktioner i Privatekonomi-a
 Dashboard ger en översikt över din ekonomi med inkomster, utgifter, kassaflöde och visualiseringar.
 
 ### Ljust läge
-![Dashboard - Ljust läge](docs/screenshots/dashboard-light.png)
+![Dashboard - Ljust läge](screenshots/dashboard-light.png)
 
 **Funktioner som visas:**
 - 💰 Totala inkomster, utgifter och nettoresultat
@@ -41,7 +41,7 @@ Dashboard ger en översikt över din ekonomi med inkomster, utgifter, kassaflöd
 - 📝 Senaste transaktioner
 
 ### Mörkt läge
-![Dashboard - Mörkt läge](docs/screenshots/dashboard-dark.png)
+![Dashboard - Mörkt läge](screenshots/dashboard-dark.png)
 
 **Funktioner i mörkt läge:**
 - Samma funktioner som ljust läge med anpassad färgpalett
@@ -55,7 +55,7 @@ Dashboard ger en översikt över din ekonomi med inkomster, utgifter, kassaflöd
 Hantera alla dina transaktioner med sökning, filtrering och export.
 
 ### Transaktionslista
-![Transaktioner](docs/screenshots/transactions-light.png)
+![Transaktioner](screenshots/transactions-light.png)
 
 **Funktioner som visas:**
 - 📝 Ny Transaktion - knapp för att lägga till transaktion
@@ -85,7 +85,7 @@ Hantera alla dina transaktioner med sökning, filtrering och export.
 Skapa och följ upp budgetar med visualisering av planerat vs faktiskt utfall.
 
 ### Budgetöversikt
-![Budget](docs/screenshots/budgets-light.png)
+![Budget](screenshots/budgets-light.png)
 
 **Funktioner som visas:**
 - 📅 Skapa Nästa Månads Budgetar - automatisk kopiering av budgetar
@@ -110,7 +110,7 @@ Skapa och följ upp budgetar med visualisering av planerat vs faktiskt utfall.
 Hantera och följ upp alla lån och krediter med amorteringsplan.
 
 ### Lånöversikt
-![Lån & Krediter](docs/screenshots/loans-light.png)
+![Lån & Krediter](screenshots/loans-light.png)
 
 **Funktioner som visas:**
 - 💳 Sammanfattning:
@@ -146,7 +146,7 @@ Hantera och följ upp alla lån och krediter med amorteringsplan.
 Spåra och följa din löneutveckling över tid.
 
 ### Lönehistorik
-![Löneutveckling](docs/screenshots/salary-history-light.png)
+![Löneutveckling](screenshots/salary-history-light.png)
 
 **Funktioner som visas:**
 - 💼 Sammanfattning:
@@ -181,7 +181,7 @@ Spåra och följa din löneutveckling över tid.
 Hantera personliga sparmål med prioritering och progress tracking.
 
 ### Sparmålsöversikt
-![Sparmål](docs/screenshots/goals-light.png)
+![Sparmål](screenshots/goals-light.png)
 
 **Funktioner som visas:**
 - 💰 Översikt:
@@ -219,7 +219,7 @@ Hantera personliga sparmål med prioritering och progress tracking.
 Hantera aktier, fonder och certifikat med automatisk kursuppdatering.
 
 ### Investeringsöversikt
-![Investeringar](docs/screenshots/investments-light.png)
+![Investeringar](screenshots/investments-light.png)
 
 **Funktioner som visas:**
 - 💰 Sammanfattning:
@@ -269,7 +269,7 @@ Hantera aktier, fonder och certifikat med automatisk kursuppdatering.
 Hantera och organisera utgifts- och inkomstkategorier.
 
 ### Kategoriöversikt
-![Kategorier](docs/screenshots/categories-light.png)
+![Kategorier](screenshots/categories-light.png)
 
 **Funktioner som visas:**
 - ➕ Ny Kategori - Skapa anpassad kategori
@@ -308,7 +308,7 @@ Hantera och organisera utgifts- och inkomstkategorier.
 Importera transaktioner från banker.
 
 ### Importgränssnitt
-![Import](docs/screenshots/import-light.png)
+![Import](screenshots/import-light.png)
 
 **Funktioner som visas:**
 - 🏦 Bankval:
@@ -359,7 +359,7 @@ Sverige-specifika skattefunktioner.
 Översikt över din ekonomiska situation med tillgångar, skulder och nettoförmögenhet.
 
 ### Balansräkningsöversikt
-![Balansräkning](docs/screenshots/balance-sheet-light.png)
+![Balansräkning](screenshots/balance-sheet-light.png)
 
 **Funktioner som visas:**
 - 💰 Nettoförmögenhet (stor rubrik):
@@ -403,7 +403,7 @@ Sverige-specifika skattefunktioner.
 Visualisering av din ekonomiska utveckling över tid.
 
 ### Förmögenhetsutveckling
-![Nettoförmögenhetskurva](docs/screenshots/networth-chart-light.png)
+![Nettoförmögenhetskurva](screenshots/networth-chart-light.png)
 
 **Funktioner som visas:**
 - 💰 Översikt:
@@ -475,7 +475,7 @@ Screenshots bör uppdateras när:
    # eller använd ett anpassat script
    ```
 
-3. Spara screenshots i `docs/screenshots/` med beskrivande namn:
+3. Spara screenshots i `screenshots/` med beskrivande namn:
    - `[sida]-light.png` för ljust läge
    - `[sida]-dark.png` för mörkt läge
    
@@ -502,7 +502,7 @@ Screenshots bör uppdateras när:
    - **Mac**: `Cmd + Shift + 4`
    - **Linux**: `Print Screen` eller `Shift + Print Screen`
 
-5. Spara bilden i `docs/screenshots/` med beskrivande namn
+5. Spara bilden i `screenshots/` med beskrivande namn
 
 6. Uppdatera `SCREENSHOTS.md` med den nya bilden
 

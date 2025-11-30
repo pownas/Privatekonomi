@@ -77,6 +77,10 @@ artifacts/
 # ASP.NET Scaffolding
 ScaffoldingReadMe.txt
 
+# Local configuration overrides
+appsettings.local.json
+**/appsettings.local.json
+
 # StyleCop
 StyleCopReport.xml
 
@@ -426,3 +430,6 @@ tests/playwright/.cache/
 
 # Uploaded files
 src/Privatekonomi.Web/wwwroot/uploads/
+
+# Tesseract OCR language data files (download via setup-tesseract.sh)
+src/Privatekonomi.Web/tessdata/

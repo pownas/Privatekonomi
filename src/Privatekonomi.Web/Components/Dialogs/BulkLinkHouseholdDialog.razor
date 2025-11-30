@@ -1,0 +1,114 @@
+@using Privatekonomi.Core.Models
+@using Privatekonomi.Core.Services
+@inject IHouseholdService HouseholdService
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.Home" Class="mr-2" />
+            Bulk-koppla till hushåll
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudText Typo="Typo.body2" Class="mb-4">
+            Välj hushåll för @SelectedTransactionCount @(SelectedTransactionCount == 1 ? "transaktion" : "transaktioner")
+        </MudText>
+
+        @if (_loading)
+        {
+            <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+        }
+        else if (_households.Any())
+        {
+            <MudSelect T="int?" 
+                      @bind-Value="_selectedHouseholdId" 
+                      Label="Välj hushåll" 
+                      Clearable="true"
+                      Variant="Variant.Outlined">
+                @foreach (var household in _households.OrderBy(h => h.Name))
+                {
+                    <MudSelectItem Value="@((int?)household.HouseholdId)">
+                        <MudIcon Icon="@Icons.Material.Filled.Home" Size="Size.Small" Class="mr-2" />
+                        @household.Name
+                    </MudSelectItem>
+                }
+            </MudSelect>
+
+            @if (_selectedHouseholdId == null)
+            {
+                <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-2">
+                    Om inget hushåll väljs kommer transaktionerna att kopplas bort från sina nuvarande hushåll (bli personliga)
+                </MudText>
+            }
+            else
+            {
+                var household = _households.FirstOrDefault(h => h.HouseholdId == _selectedHouseholdId.Value);
+                if (household != null)
+                {
+                    <MudAlert Severity="Severity.Info" Class="mt-4">
+                        Kopplar @SelectedTransactionCount @(SelectedTransactionCount == 1 ? "transaktion" : "transaktioner") till <strong>@household.Name</strong>
+                    </MudAlert>
+                }
+            }
+        }
+        else
+        {
+            <MudAlert Severity="Severity.Info">
+                Inga hushåll tillgängliga. Skapa ett hushåll först för att koppla transaktioner.
+            </MudAlert>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel" Variant="Variant.Text">Avbryt</MudButton>
+        <MudButton OnClick="Submit" 
+                   Color="Color.Primary" 
+                   Variant="Variant.Filled">
+            @(_selectedHouseholdId == null ? "Koppla bort från hushåll" : "Koppla till hushåll")
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    public required IMudDialogInstance MudDialog { get; set; }
+
+    [Parameter]
+    public int SelectedTransactionCount { get; set; }
+
+    private bool _loading = true;
+    private List<Household> _households = new();
+    private int? _selectedHouseholdId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadHouseholds();
+    }
+
+    private async Task LoadHouseholds()
+    {
+        _loading = true;
+        try
+        {
+            _households = (await HouseholdService.GetAllHouseholdsAsync()).ToList();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Fel vid laddning av hushåll: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+
+    private void Submit()
+    {
+        MudDialog.Close(DialogResult.Ok(_selectedHouseholdId));
+    }
+}

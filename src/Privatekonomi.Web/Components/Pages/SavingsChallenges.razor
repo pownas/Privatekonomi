@@ -1,3 +1,4 @@
+@page "/savings/challenges"
 @page "/savingschallenges"
 @rendermode InteractiveServer
 @using Privatekonomi.Core.Models
@@ -9,10 +10,18 @@
 <PageTitle>Sparmåls-utmaningar - Privatekonomi</PageTitle>
 
 <div class="d-flex justify-space-between align-center mb-4">
-    <MudText Typo="Typo.h4">🏆 Sparmåls-utmaningar</MudText>
-    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="ToggleCreateForm">
-        Ny Utmaning
-    </MudButton>
+    <MudText Typo="Typo.h4">
+        <MudIcon Icon="@Icons.Material.Filled.Flag" Color="Color.Primary" Class="mr-2" aria-hidden="true" />
+        🏆 Sparmåls-utmaningar
+    </MudText>
+    <div class="d-flex gap-2">
+        <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.EmojiEvents" OnClick="ToggleTemplateLibrary">
+            Utmaningsbibliotek
+        </MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="ToggleCreateForm">
+            Skapa Egen Utmaning
+        </MudButton>
+    </div>
 </div>
 
 @if (_showCreateForm)
@@ -44,6 +53,23 @@
             <MudSelectItem Value="ChallengeType.NoCoffeeOut">☕ Inget kaffe på café</MudSelectItem>
             <MudSelectItem Value="ChallengeType.SavePercentOfIncome">📊 Spara % av inkomst</MudSelectItem>
             <MudSelectItem Value="ChallengeType.SpendingLimit">🔒 Utgiftsgräns</MudSelectItem>
+            <MudSelectItem Value="ChallengeType.NoSpendWeekend">🛍️ No Spend Weekend</MudSelectItem>
+            <MudSelectItem Value="ChallengeType.LunchBox">🍱 Matlåda varje dag</MudSelectItem>
+            <MudSelectItem Value="ChallengeType.BikeOrPublic">🚴 Endast cykel/kollektiv</MudSelectItem>
+            <MudSelectItem Value="ChallengeType.SellItems">📦 Sälja 5 saker</MudSelectItem>
+            <MudSelectItem Value="ChallengeType.ChangeJar">🪙 Växelpengsburken</MudSelectItem>
+            <MudSelectItem Value="ChallengeType.NoImpulseBuying">🛒 Noll spontanhandel</MudSelectItem>
+            <MudSelectItem Value="ChallengeType.StreamingDetox">📺 Strömnings-detox</MudSelectItem>
+            <MudSelectItem Value="ChallengeType.AlcoholFree">🍷 Alkoholfri månad</MudSelectItem>
+            <MudSelectItem Value="ChallengeType.GiftFree">🎁 Gåvofri period</MudSelectItem>
+            <MudSelectItem Value="ChallengeType.HomeGym">🏋️ Hemma-gymmet</MudSelectItem>
+            <MudSelectItem Value="ChallengeType.SpecificGoal">💰 Spara för specifikt mål</MudSelectItem>
+            <MudSelectItem Value="ChallengeType.HouseholdGoal">🏠 Hushålls-challenge</MudSelectItem>
+            <MudSelectItem Value="ChallengeType.ClimateChallenge">🌍 Klimatsmart-utmaning</MudSelectItem>
+            <MudSelectItem Value="ChallengeType.ProgressiveSaving">📈 Progressivt sparande</MudSelectItem>
+            <MudSelectItem Value="ChallengeType.RandomChallenge">🎲 Slump-spararen</MudSelectItem>
+            <MudSelectItem Value="ChallengeType.SavingsGroup">👥 Spargruppen</MudSelectItem>
+            <MudSelectItem Value="ChallengeType.Leaderboard">🥇 Leaderboard-tävling</MudSelectItem>
             <MudSelectItem Value="ChallengeType.Custom">✏️ Anpassad</MudSelectItem>
         </MudSelect>
 
@@ -72,6 +98,64 @@
             </MudButton>
             <MudButton Variant="Variant.Outlined" OnClick="CancelForm">Avbryt</MudButton>
         </div>
+    </MudPaper>
+}
+
+@if (_showTemplateLibrary)
+{
+    <MudPaper Class="pa-4 mb-4">
+        <div class="d-flex justify-space-between align-center mb-3">
+            <MudText Typo="Typo.h6">📚 Utmaningsbibliotek - Välj en färdig utmaning</MudText>
+            <MudIconButton Icon="@Icons.Material.Filled.Close" OnClick="ToggleTemplateLibrary" Color="Color.Default" />
+        </div>
+        
+        @if (_templates.Any())
+        {
+            <MudGrid>
+                @foreach (var template in _templates)
+                {
+                    <MudItem xs="12" md="6" lg="4">
+                        <MudCard Outlined="true" Class="pa-3" Style="height: 100%;">
+                            <MudCardContent>
+                                <div class="d-flex align-center gap-2 mb-2">
+                                    <MudText Typo="Typo.h6">@template.Icon @template.Name</MudText>
+                                </div>
+                                <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-2">@template.Description</MudText>
+                                
+                                <MudDivider Class="my-2" />
+                                
+                                <div class="d-flex flex-column gap-1">
+                                    <MudText Typo="Typo.caption">
+                                        <strong>Längd:</strong> @template.DurationDays dagar
+                                    </MudText>
+                                    <MudText Typo="Typo.caption">
+                                        <strong>Svårighetsgrad:</strong> @GetDifficultyStars(template.Difficulty)
+                                    </MudText>
+                                    <MudText Typo="Typo.caption">
+                                        <strong>Kategori:</strong> @GetCategoryName(template.Category)
+                                    </MudText>
+                                    @if (template.EstimatedSavingsMin.HasValue && template.EstimatedSavingsMax.HasValue)
+                                    {
+                                        <MudText Typo="Typo.caption">
+                                            <strong>Estimerad besparing:</strong> @template.EstimatedSavingsMin.Value.ToString("N0") - @template.EstimatedSavingsMax.Value.ToString("N0") kr
+                                        </MudText>
+                                    }
+                                </div>
+                            </MudCardContent>
+                            <MudCardActions>
+                                <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" OnClick="@(() => StartTemplateChallenge(template.ChallengeTemplateId))">
+                                    Starta denna utmaning
+                                </MudButton>
+                            </MudCardActions>
+                        </MudCard>
+                    </MudItem>
+                }
+            </MudGrid>
+        }
+        else
+        {
+            <MudAlert Severity="Severity.Info">Inga mallar tillgängliga för tillfället.</MudAlert>
+        }
     </MudPaper>
 }
 
@@ -277,8 +361,10 @@ else
 @code {
     private IEnumerable<SavingsChallenge> _activeChallenges = new List<SavingsChallenge>();
     private IEnumerable<SavingsChallenge> _completedChallenges = new List<SavingsChallenge>();
+    private IEnumerable<ChallengeTemplate> _templates = new List<ChallengeTemplate>();
     private bool _loading = true;
     private bool _showCreateForm = false;
+    private bool _showTemplateLibrary = false;
     private SavingsChallenge _formChallenge = new();
     private DateTime? _formChallengeStartDate;
     private SavingsChallenge? _editingChallenge;
@@ -300,6 +386,7 @@ else
         _loading = true;
         await LoadChallenges();
         await LoadStatistics();
+        await LoadTemplates();
         _loading = false;
     }
 
@@ -316,6 +403,20 @@ else
         _totalAmountSaved = await ChallengeService.GetTotalAmountSavedAsync();
     }
 
+    private async Task LoadTemplates()
+    {
+        _templates = await ChallengeService.GetAllTemplatesAsync();
+    }
+
+    private void ToggleTemplateLibrary()
+    {
+        _showTemplateLibrary = !_showTemplateLibrary;
+        if (_showTemplateLibrary)
+        {
+            _showCreateForm = false;
+        }
+    }
+
     private void ToggleCreateForm()
     {
         _showCreateForm = !_showCreateForm;
@@ -329,6 +430,7 @@ else
             };
             _formChallengeStartDate = DateTime.Today;
             _editingChallenge = null;
+            _showTemplateLibrary = false;
         }
     }
 
@@ -463,6 +565,22 @@ else
         Snackbar.Add("Detaljvy kommer snart!", Severity.Info);
     }
 
+    private async Task StartTemplateChallenge(int templateId)
+    {
+        try
+        {
+            var challenge = await ChallengeService.CreateChallengeFromTemplateAsync(templateId);
+            Snackbar.Add($"Utmaningen '{challenge.Name}' har startats! 🎉", Severity.Success);
+            _showTemplateLibrary = false;
+            await LoadChallenges();
+            await LoadStatistics();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Ett fel uppstod: {ex.Message}", Severity.Error);
+        }
+    }
+
     private Color GetProgressColor(SavingsChallenge challenge)
     {
         var progress = (double)challenge.ProgressPercentage;
@@ -484,6 +602,23 @@ else
             ChallengeType.SavePercentOfIncome => "📊",
             ChallengeType.SpendingLimit => "🔒",
             ChallengeType.Custom => "✏️",
+            ChallengeType.NoSpendWeekend => "🛍️",
+            ChallengeType.LunchBox => "🍱",
+            ChallengeType.BikeOrPublic => "🚴",
+            ChallengeType.SellItems => "📦",
+            ChallengeType.ChangeJar => "🪙",
+            ChallengeType.NoImpulseBuying => "🛒",
+            ChallengeType.StreamingDetox => "📺",
+            ChallengeType.AlcoholFree => "🍷",
+            ChallengeType.GiftFree => "🎁",
+            ChallengeType.HomeGym => "🏋️",
+            ChallengeType.SpecificGoal => "💰",
+            ChallengeType.HouseholdGoal => "🏠",
+            ChallengeType.ClimateChallenge => "🌍",
+            ChallengeType.ProgressiveSaving => "📈",
+            ChallengeType.RandomChallenge => "🎲",
+            ChallengeType.SavingsGroup => "👥",
+            ChallengeType.Leaderboard => "🥇",
             _ => "🎯"
         };
     }
@@ -499,6 +634,53 @@ else
             ChallengeType.SavePercentOfIncome => "Spara % av inkomst",
             ChallengeType.SpendingLimit => "Utgiftsgräns",
             ChallengeType.Custom => "Anpassad",
+            ChallengeType.NoSpendWeekend => "No Spend Weekend",
+            ChallengeType.LunchBox => "Matlåda varje dag",
+            ChallengeType.BikeOrPublic => "Endast cykel/kollektiv",
+            ChallengeType.SellItems => "Sälja 5 saker",
+            ChallengeType.ChangeJar => "Växelpengsburken",
+            ChallengeType.NoImpulseBuying => "Noll spontanhandel",
+            ChallengeType.StreamingDetox => "Strömnings-detox",
+            ChallengeType.AlcoholFree => "Alkoholfri månad",
+            ChallengeType.GiftFree => "Gåvofri period",
+            ChallengeType.HomeGym => "Hemma-gymmet",
+            ChallengeType.SpecificGoal => "Spara för specifikt mål",
+            ChallengeType.HouseholdGoal => "Hushålls-challenge",
+            ChallengeType.ClimateChallenge => "Klimatsmart-utmaning",
+            ChallengeType.ProgressiveSaving => "Progressivt sparande",
+            ChallengeType.RandomChallenge => "Slump-spararen",
+            ChallengeType.SavingsGroup => "Spargruppen",
+            ChallengeType.Leaderboard => "Leaderboard-tävling",
+            _ => "Okänd"
+        };
+    }
+
+    private string GetDifficultyStars(DifficultyLevel difficulty)
+    {
+        return difficulty switch
+        {
+            DifficultyLevel.VeryEasy => "⭐",
+            DifficultyLevel.Easy => "⭐⭐",
+            DifficultyLevel.Medium => "⭐⭐⭐",
+            DifficultyLevel.Hard => "⭐⭐⭐⭐",
+            DifficultyLevel.VeryHard => "⭐⭐⭐⭐⭐",
+            _ => "⭐⭐⭐"
+        };
+    }
+
+    private string GetCategoryName(ChallengeCategory category)
+    {
+        return category switch
+        {
+            ChallengeCategory.Individual => "Individuell",
+            ChallengeCategory.Social => "Social",
+            ChallengeCategory.Household => "Hushåll",
+            ChallengeCategory.Health => "Hälsa",
+            ChallengeCategory.Environment => "Miljö",
+            ChallengeCategory.Minimalism => "Minimalism",
+            ChallengeCategory.Thematic => "Tematisk",
+            ChallengeCategory.GoalBased => "Målbaserad",
+            ChallengeCategory.Fun => "Rolig",
             _ => "Okänd"
         };
     }

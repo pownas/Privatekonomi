@@ -77,4 +77,5 @@ public class Transaction : ITemporalEntity
     public Pocket? Pocket { get; set; }
     public Household? Household { get; set; }
     public ICollection<TransactionCategory> TransactionCategories { get; set; } = new List<TransactionCategory>();
+    public ICollection<Receipt> Receipts { get; set; } = new List<Receipt>();
 }

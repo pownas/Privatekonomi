@@ -298,4 +298,79 @@ public class NotificationsController : ControllerBase
             return StatusCode(500, "Internal server error");
         }
     }
+
+    /// <summary>
+    /// Snooze en notifikation
+    /// </summary>
+    [HttpPost("{id}/snooze")]
+    public async Task<IActionResult> SnoozeNotification(int id, [FromBody] SnoozeRequest request)
+    {
+        try
+        {
+            var userId = _currentUserService.UserId ?? throw new UnauthorizedAccessException();
+            await _notificationService.SnoozeNotificationAsync(id, userId, request.Duration);
+            return NoContent();
+        }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogWarning(ex, "Invalid snooze operation for notification {NotificationId}", id);
+            return NotFound(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error snoozing notification {NotificationId}", id);
+            return StatusCode(500, "Internal server error");
+        }
+    }
+
+    /// <summary>
+    /// Markera påminnelse som slutförd
+    /// </summary>
+    [HttpPost("{id}/complete")]
+    public async Task<IActionResult> CompleteReminder(int id)
+    {
+        try
+        {
+            var userId = _currentUserService.UserId ?? throw new UnauthorizedAccessException();
+            await _notificationService.MarkReminderAsCompletedAsync(id, userId);
+            return NoContent();
+        }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogWarning(ex, "Invalid complete operation for notification {NotificationId}", id);
+            return NotFound(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error completing reminder {NotificationId}", id);
+            return StatusCode(500, "Internal server error");
+        }
+    }
+
+    /// <summary>
+    /// Hämta aktiva notifikationer (exkluderar snoozade)
+    /// </summary>
+    [HttpGet("active")]
+    public async Task<ActionResult<IEnumerable<Notification>>> GetActiveNotifications([FromQuery] bool unreadOnly = false)
+    {
+        try
+        {
+            var userId = _currentUserService.UserId ?? throw new UnauthorizedAccessException();
+            var notifications = await _notificationService.GetActiveNotificationsAsync(userId, unreadOnly);
+            return Ok(notifications);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving active notifications");
+            return StatusCode(500, "Internal server error");
+        }
+    }
+}
+
+/// <summary>
+/// Request model for snoozing a notification
+/// </summary>
+public class SnoozeRequest
+{
+    public SnoozeDuration Duration { get; set; }
 }

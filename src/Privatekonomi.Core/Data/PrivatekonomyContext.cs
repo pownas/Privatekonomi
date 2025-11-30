@@ -28,10 +28,16 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
     public DbSet<HouseholdMember> HouseholdMembers { get; set; }
     public DbSet<SharedExpense> SharedExpenses { get; set; }
     public DbSet<ExpenseShare> ExpenseShares { get; set; }
+    public DbSet<HouseholdActivity> HouseholdActivities { get; set; }
+    public DbSet<HouseholdActivityImage> HouseholdActivityImages { get; set; }
+    public DbSet<HouseholdTask> HouseholdTasks { get; set; }
+    public DbSet<HouseholdBudgetShare> HouseholdBudgetShares { get; set; }
+    public DbSet<DebtSettlement> DebtSettlements { get; set; }
     public DbSet<ChildAllowance> ChildAllowances { get; set; }
     public DbSet<AllowanceTransaction> AllowanceTransactions { get; set; }
     public DbSet<AllowanceTask> AllowanceTasks { get; set; }
     public DbSet<Goal> Goals { get; set; }
+    public DbSet<GoalMilestone> GoalMilestones { get; set; }
     public DbSet<SalaryHistory> SalaryHistories { get; set; }
     
     // Pockets for savings accounts
@@ -79,6 +85,7 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
     // Savings Challenges
     public DbSet<SavingsChallenge> SavingsChallenges { get; set; }
     public DbSet<SavingsChallengeProgress> SavingsChallengeProgress { get; set; }
+    public DbSet<ChallengeTemplate> ChallengeTemplates { get; set; }
     
     // Notifications
     public DbSet<Notification> Notifications { get; set; }
@@ -98,6 +105,41 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
     public DbSet<CommentLike> CommentLikes { get; set; }
     public DbSet<GroupGoal> GroupGoals { get; set; }
     public DbSet<UserPrivacySettings> UserPrivacySettings { get; set; }
+    
+    // Dashboard Layouts
+    public DbSet<DashboardLayout> DashboardLayouts { get; set; }
+    public DbSet<WidgetConfiguration> WidgetConfigurations { get; set; }
+    
+    // Round-up Savings
+    public DbSet<RoundUpSettings> RoundUpSettings { get; set; }
+    public DbSet<RoundUpTransaction> RoundUpTransactions { get; set; }
+    
+    // Budget Alerts
+    public DbSet<BudgetAlert> BudgetAlerts { get; set; }
+    public DbSet<BudgetAlertSettings> BudgetAlertSettings { get; set; }
+    public DbSet<BudgetFreeze> BudgetFreezes { get; set; }
+    
+    // Budget Suggestions
+    public DbSet<BudgetSuggestion> BudgetSuggestions { get; set; }
+    public DbSet<BudgetSuggestionItem> BudgetSuggestionItems { get; set; }
+    public DbSet<BudgetAdjustment> BudgetAdjustments { get; set; }
+    
+    // Reminders
+    public DbSet<Reminder> Reminders { get; set; }
+    public DbSet<ReminderSettings> ReminderSettings { get; set; }
+    
+    // RBAC - Role-Based Access Control
+    public DbSet<HouseholdRole> HouseholdRoles { get; set; }
+    public DbSet<RolePermission> RolePermissions { get; set; }
+    public DbSet<AuditLogEntry> AuditLogEntries { get; set; }
+    
+    // Monthly Reports
+    public DbSet<MonthlyReport> MonthlyReports { get; set; }
+    public DbSet<ReportDelivery> ReportDeliveries { get; set; }
+    public DbSet<ReportPreference> ReportPreferences { get; set; }
+    
+    // Import Jobs
+    public DbSet<ImportJob> ImportJobs { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -451,6 +493,7 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
         {
             entity.HasKey(e => e.BudgetCategoryId);
             entity.Property(e => e.PlannedAmount).HasPrecision(18, 2);
+            entity.Property(e => e.RecurrencePeriodMonths).IsRequired().HasDefaultValue(1);
             
             entity.HasOne(e => e.Budget)
                 .WithMany(b => b.BudgetCategories)
@@ -460,6 +503,81 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
             entity.HasOne(e => e.Category)
                 .WithMany()
                 .HasForeignKey(e => e.CategoryId)
+                .OnDelete(DeleteBehavior.Restrict);
+            
+            // Ignore computed property
+            entity.Ignore(e => e.MonthlyAmount);
+        });
+
+        // Budget Suggestion configuration
+        modelBuilder.Entity<BudgetSuggestion>(entity =>
+        {
+            entity.HasKey(e => e.BudgetSuggestionId);
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(200);
+            entity.Property(e => e.TotalIncome).HasPrecision(18, 2);
+            entity.Property(e => e.DistributionModel).IsRequired();
+            entity.Property(e => e.CreatedAt).IsRequired();
+            
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.HasOne(e => e.Household)
+                .WithMany()
+                .HasForeignKey(e => e.HouseholdId)
+                .OnDelete(DeleteBehavior.SetNull);
+            
+            entity.HasOne(e => e.AppliedBudget)
+                .WithMany()
+                .HasForeignKey(e => e.AppliedBudgetId)
+                .OnDelete(DeleteBehavior.SetNull);
+            
+            entity.HasIndex(e => e.UserId);
+            entity.HasIndex(e => e.IsAccepted);
+        });
+
+        modelBuilder.Entity<BudgetSuggestionItem>(entity =>
+        {
+            entity.HasKey(e => e.BudgetSuggestionItemId);
+            entity.Property(e => e.SuggestedAmount).HasPrecision(18, 2);
+            entity.Property(e => e.AdjustedAmount).HasPrecision(18, 2);
+            entity.Property(e => e.Percentage).HasPrecision(5, 2);
+            entity.Property(e => e.RecurrencePeriodMonths).IsRequired().HasDefaultValue(1);
+            
+            entity.HasOne(e => e.BudgetSuggestion)
+                .WithMany(s => s.Items)
+                .HasForeignKey(e => e.BudgetSuggestionId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.HasOne(e => e.Category)
+                .WithMany()
+                .HasForeignKey(e => e.CategoryId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<BudgetAdjustment>(entity =>
+        {
+            entity.HasKey(e => e.BudgetAdjustmentId);
+            entity.Property(e => e.PreviousAmount).HasPrecision(18, 2);
+            entity.Property(e => e.NewAmount).HasPrecision(18, 2);
+            entity.Property(e => e.Reason).HasMaxLength(500);
+            entity.Property(e => e.AdjustedAt).IsRequired();
+            entity.Property(e => e.Type).IsRequired();
+            
+            entity.HasOne(e => e.BudgetSuggestion)
+                .WithMany(s => s.Adjustments)
+                .HasForeignKey(e => e.BudgetSuggestionId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.HasOne(e => e.Category)
+                .WithMany()
+                .HasForeignKey(e => e.CategoryId)
+                .OnDelete(DeleteBehavior.Restrict);
+            
+            entity.HasOne(e => e.TransferToCategory)
+                .WithMany()
+                .HasForeignKey(e => e.TransferToCategoryId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
 
@@ -492,6 +610,27 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
             entity.HasIndex(e => e.ValidFrom);
             entity.HasIndex(e => e.ValidTo);
             entity.HasIndex(e => new { e.ValidFrom, e.ValidTo });
+        });
+        
+        // GoalMilestone configuration
+        modelBuilder.Entity<GoalMilestone>(entity =>
+        {
+            entity.HasKey(e => e.GoalMilestoneId);
+            entity.Property(e => e.TargetAmount).HasPrecision(18, 2);
+            entity.Property(e => e.Percentage).IsRequired();
+            entity.Property(e => e.Description).HasMaxLength(500);
+            entity.Property(e => e.IsReached).IsRequired();
+            entity.Property(e => e.IsAutomatic).IsRequired();
+            entity.Property(e => e.CreatedAt).IsRequired();
+            
+            entity.HasOne(e => e.Goal)
+                .WithMany()
+                .HasForeignKey(e => e.GoalId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.HasIndex(e => e.GoalId);
+            entity.HasIndex(e => e.IsReached);
+            entity.HasIndex(e => new { e.GoalId, e.Percentage });
         });
         
         // SalaryHistory configuration
@@ -1109,13 +1248,14 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
             entity.Property(e => e.PaymentMethod).HasMaxLength(50);
             entity.Property(e => e.Notes).HasMaxLength(500);
             entity.HasOne(e => e.Transaction)
-                .WithMany()
+                .WithMany(t => t.Receipts)
                 .HasForeignKey(e => e.TransactionId)
                 .OnDelete(DeleteBehavior.SetNull);
             
             entity.HasIndex(e => e.UserId);
             entity.HasIndex(e => e.ReceiptDate);
             entity.HasIndex(e => e.Merchant);
+            entity.HasIndex(e => e.TransactionId);
         });
         
         // ReceiptLineItem configuration
@@ -1475,6 +1615,226 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
             entity.HasIndex(e => e.UserId);
             entity.HasIndex(e => e.IsActive);
             entity.HasIndex(e => new { e.UserId, e.IsActive });
+        });
+        
+        // RBAC - HouseholdRole configuration
+        modelBuilder.Entity<HouseholdRole>(entity =>
+        {
+            entity.HasKey(e => e.HouseholdRoleId);
+            entity.Property(e => e.RoleType).IsRequired();
+            entity.Property(e => e.IsDelegated).IsRequired();
+            entity.Property(e => e.DelegatedBy).HasMaxLength(450);
+            entity.Property(e => e.AssignedBy).HasMaxLength(450);
+            entity.Property(e => e.RevokedBy).HasMaxLength(450);
+            entity.Property(e => e.IsActive).IsRequired();
+            entity.Property(e => e.AssignedDate).IsRequired();
+            
+            entity.HasOne(e => e.HouseholdMember)
+                .WithMany(m => m.Roles)
+                .HasForeignKey(e => e.HouseholdMemberId)
+                .OnDelete(DeleteBehavior.Cascade);
+                
+            entity.HasIndex(e => e.HouseholdMemberId);
+            entity.HasIndex(e => e.RoleType);
+            entity.HasIndex(e => e.IsActive);
+            entity.HasIndex(e => new { e.HouseholdMemberId, e.IsActive });
+            entity.HasIndex(e => e.DelegationEndDate);
+        });
+        
+        // RBAC - RolePermission configuration
+        modelBuilder.Entity<RolePermission>(entity =>
+        {
+            entity.HasKey(e => e.RolePermissionId);
+            entity.Property(e => e.RoleType).IsRequired();
+            entity.Property(e => e.PermissionKey).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.IsAllowed).IsRequired();
+            entity.Property(e => e.AmountLimit).HasPrecision(18, 2);
+            
+            entity.HasIndex(e => e.RoleType);
+            entity.HasIndex(e => e.PermissionKey);
+            entity.HasIndex(e => new { e.RoleType, e.PermissionKey });
+        });
+        
+        // RBAC - AuditLogEntry configuration
+        modelBuilder.Entity<AuditLogEntry>(entity =>
+        {
+            entity.HasKey(e => e.AuditLogEntryId);
+            entity.Property(e => e.Timestamp).IsRequired();
+            entity.Property(e => e.UserId).HasMaxLength(450);
+            entity.Property(e => e.UserEmail).HasMaxLength(256);
+            entity.Property(e => e.UserName).HasMaxLength(256);
+            entity.Property(e => e.Action).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.Category).IsRequired();
+            entity.Property(e => e.Severity).IsRequired();
+            entity.Property(e => e.ResourceType).HasMaxLength(100);
+            entity.Property(e => e.Details).HasMaxLength(2000);
+            entity.Property(e => e.OldValue).HasMaxLength(1000);
+            entity.Property(e => e.NewValue).HasMaxLength(1000);
+            entity.Property(e => e.IpAddress).HasMaxLength(50);
+            entity.Property(e => e.UserAgent).HasMaxLength(500);
+            entity.Property(e => e.Success).IsRequired();
+            entity.Property(e => e.ErrorMessage).HasMaxLength(1000);
+            
+            entity.HasIndex(e => e.Timestamp);
+            entity.HasIndex(e => e.UserId);
+            entity.HasIndex(e => e.HouseholdId);
+            entity.HasIndex(e => e.Action);
+            entity.HasIndex(e => e.Category);
+            entity.HasIndex(e => e.Severity);
+            entity.HasIndex(e => new { e.HouseholdId, e.Timestamp });
+            entity.HasIndex(e => new { e.UserId, e.Timestamp });
+        });
+
+        // DashboardLayout configuration
+        modelBuilder.Entity<DashboardLayout>(entity =>
+        {
+            entity.HasKey(e => e.LayoutId);
+            entity.Property(e => e.UserId).IsRequired().HasMaxLength(450);
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.IsDefault).IsRequired();
+            entity.Property(e => e.CreatedAt).IsRequired();
+            entity.Property(e => e.UpdatedAt).IsRequired();
+            
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.HasMany(e => e.Widgets)
+                .WithOne(w => w.Layout)
+                .HasForeignKey(w => w.LayoutId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.HasIndex(e => e.UserId);
+            entity.HasIndex(e => new { e.UserId, e.IsDefault });
+        });
+
+        // WidgetConfiguration configuration
+        modelBuilder.Entity<WidgetConfiguration>(entity =>
+        {
+            entity.HasKey(e => e.WidgetConfigId);
+            entity.Property(e => e.LayoutId).IsRequired();
+            entity.Property(e => e.Type).IsRequired();
+            entity.Property(e => e.Row).IsRequired();
+            entity.Property(e => e.Column).IsRequired();
+            entity.Property(e => e.Width).IsRequired();
+            entity.Property(e => e.Height).IsRequired();
+            entity.Property(e => e.Settings).HasMaxLength(2000);
+            
+            entity.HasIndex(e => e.LayoutId);
+        });
+        
+        // MonthlyReport configuration
+        modelBuilder.Entity<MonthlyReport>(entity =>
+        {
+            entity.HasKey(e => e.MonthlyReportId);
+            entity.Property(e => e.ReportMonth).IsRequired();
+            entity.Property(e => e.TotalIncome).HasPrecision(18, 2);
+            entity.Property(e => e.TotalExpenses).HasPrecision(18, 2);
+            entity.Property(e => e.NetFlow).HasPrecision(18, 2);
+            entity.Property(e => e.IncomeChangePercent).HasPrecision(10, 2);
+            entity.Property(e => e.ExpenseChangePercent).HasPrecision(10, 2);
+            entity.Property(e => e.CategorySummariesJson).HasMaxLength(10000);
+            entity.Property(e => e.TopMerchantsJson).HasMaxLength(5000);
+            entity.Property(e => e.BudgetOutcomeJson).HasMaxLength(5000);
+            entity.Property(e => e.InsightsJson).HasMaxLength(5000);
+            entity.Property(e => e.GeneratedAt).IsRequired();
+            entity.Property(e => e.Status).IsRequired();
+            entity.Property(e => e.CreatedAt).IsRequired();
+            
+            // Temporal tracking
+            entity.Property(e => e.ValidFrom).IsRequired();
+            entity.Property(e => e.ValidTo);
+            
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.HasOne(e => e.Household)
+                .WithMany()
+                .HasForeignKey(e => e.HouseholdId)
+                .OnDelete(DeleteBehavior.SetNull);
+            
+            entity.HasIndex(e => e.UserId);
+            entity.HasIndex(e => e.ReportMonth);
+            entity.HasIndex(e => new { e.UserId, e.ReportMonth });
+            entity.HasIndex(e => e.ValidFrom);
+            entity.HasIndex(e => e.ValidTo);
+        });
+        
+        // ReportDelivery configuration
+        modelBuilder.Entity<ReportDelivery>(entity =>
+        {
+            entity.HasKey(e => e.ReportDeliveryId);
+            entity.Property(e => e.DeliveryMethod).IsRequired();
+            entity.Property(e => e.Status).IsRequired();
+            entity.Property(e => e.EmailAddress).HasMaxLength(256);
+            entity.Property(e => e.ScheduledAt).IsRequired();
+            entity.Property(e => e.ErrorMessage).HasMaxLength(1000);
+            entity.Property(e => e.RetryCount).IsRequired();
+            entity.Property(e => e.CreatedAt).IsRequired();
+            
+            entity.HasOne(e => e.MonthlyReport)
+                .WithMany(r => r.Deliveries)
+                .HasForeignKey(e => e.MonthlyReportId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.HasIndex(e => e.MonthlyReportId);
+            entity.HasIndex(e => e.Status);
+            entity.HasIndex(e => e.ScheduledAt);
+        });
+        
+        // ReportPreference configuration
+        modelBuilder.Entity<ReportPreference>(entity =>
+        {
+            entity.HasKey(e => e.ReportPreferenceId);
+            entity.Property(e => e.SendEmail).IsRequired();
+            entity.Property(e => e.ShowInApp).IsRequired();
+            entity.Property(e => e.EmailAddress).HasMaxLength(256);
+            entity.Property(e => e.PreferredDeliveryDay).IsRequired();
+            entity.Property(e => e.IncludeCategoryDetails).IsRequired();
+            entity.Property(e => e.IncludeTopMerchants).IsRequired();
+            entity.Property(e => e.IncludeBudgetComparison).IsRequired();
+            entity.Property(e => e.IncludeTrendAnalysis).IsRequired();
+            entity.Property(e => e.IsEnabled).IsRequired();
+            entity.Property(e => e.CreatedAt).IsRequired();
+            
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.HasIndex(e => e.UserId).IsUnique();
+        });
+        
+        // ImportJob configuration
+        modelBuilder.Entity<ImportJob>(entity =>
+        {
+            entity.HasKey(e => e.ImportJobId);
+            entity.Property(e => e.Status).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.BankName).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.FileType).IsRequired().HasMaxLength(10);
+            entity.Property(e => e.FileName).IsRequired().HasMaxLength(255);
+            entity.Property(e => e.FileSize).IsRequired();
+            entity.Property(e => e.TotalRows).IsRequired();
+            entity.Property(e => e.ImportedCount).IsRequired();
+            entity.Property(e => e.DuplicateCount).IsRequired();
+            entity.Property(e => e.ErrorCount).IsRequired();
+            entity.Property(e => e.ErrorMessages).HasMaxLength(5000);
+            entity.Property(e => e.Source).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.UserId).HasMaxLength(450);
+            entity.Property(e => e.CreatedAt).IsRequired();
+            
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.HasIndex(e => e.UserId);
+            entity.HasIndex(e => e.Status);
+            entity.HasIndex(e => e.CreatedAt);
+            entity.HasIndex(e => new { e.UserId, e.Status });
         });
     }
 }

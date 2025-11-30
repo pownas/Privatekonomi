@@ -1,0 +1,318 @@
+@page "/households/{HouseholdId:int}/roles"
+@using Privatekonomi.Core.Models
+@using Privatekonomi.Core.Services
+@inject IRbacService RbacService
+@inject IHouseholdService HouseholdService
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+
+<PageTitle>Rollhantering - Privatekonomi</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+    <MudText Typo="Typo.h4" Class="mb-4">
+        <MudIcon Icon="@Icons.Material.Filled.Security" Class="mr-2" />
+        Rollhantering för @_household?.Name
+    </MudText>
+
+    @if (_loading)
+    {
+        <MudProgressLinear Indeterminate="true" />
+    }
+    else if (_currentUserRole?.RoleType != HouseholdRoleType.Admin)
+    {
+        <MudAlert Severity="Severity.Warning">
+            Endast administratörer kan hantera roller i hushållet.
+        </MudAlert>
+    }
+    else
+    {
+        <MudGrid>
+            <MudItem xs="12">
+                <MudPaper Class="pa-4 mb-4">
+                    <MudText Typo="Typo.h6" Class="mb-2">Medlemmar och roller</MudText>
+                    <MudTable Items="@_members" Hover="true" Dense="true">
+                        <HeaderContent>
+                            <MudTh>Namn</MudTh>
+                            <MudTh>E-post</MudTh>
+                            <MudTh>Aktuell roll</MudTh>
+                            <MudTh>Tilldelad datum</MudTh>
+                            <MudTh>Åtgärder</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataLabel="Namn">@context.Name</MudTd>
+                            <MudTd DataLabel="E-post">@context.Email</MudTd>
+                            <MudTd DataLabel="Roll">
+                                @if (GetActiveRole(context) != null)
+                                {
+                                    <MudChip T="string" Size="Size.Small" Color="@GetRoleColor(GetActiveRole(context)!.RoleType)">
+                                        @GetRoleDisplayName(GetActiveRole(context)!.RoleType)
+                                    </MudChip>
+                                    @if (GetActiveRole(context)!.IsDelegated)
+                                    {
+                                        <MudChip T="string" Size="Size.Small" Color="Color.Info" Icon="@Icons.Material.Filled.Schedule">
+                                            Delegerad (till @GetActiveRole(context)!.DelegationEndDate?.ToString("yyyy-MM-dd"))
+                                        </MudChip>
+                                    }
+                                }
+                                else
+                                {
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Default">Ingen roll</MudChip>
+                                }
+                            </MudTd>
+                            <MudTd DataLabel="Tilldelad">
+                                @GetActiveRole(context)?.AssignedDate.ToString("yyyy-MM-dd")
+                            </MudTd>
+                            <MudTd DataLabel="Åtgärder">
+                                <MudButtonGroup Size="Size.Small" OverrideStyles="false">
+                                    <MudButton Color="Color.Primary" 
+                                               StartIcon="@Icons.Material.Filled.Edit"
+                                               OnClick="@(() => ShowAssignRoleDialog(context))">
+                                        Ändra roll
+                                    </MudButton>
+                                    @if (GetActiveRole(context)?.RoleType == HouseholdRoleType.Admin && GetActiveRole(context)?.HouseholdMemberId != _currentMemberId)
+                                    {
+                                        <MudButton Color="Color.Secondary"
+                                                   StartIcon="@Icons.Material.Filled.SwapHoriz"
+                                                   OnClick="@(() => TransferAdmin(context))">
+                                            Överför Admin
+                                        </MudButton>
+                                    }
+                                </MudButtonGroup>
+                            </MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                </MudPaper>
+            </MudItem>
+
+            <MudItem xs="12" md="6">
+                <MudPaper Class="pa-4">
+                    <MudText Typo="Typo.h6" Class="mb-2">Aktiva delegeringar</MudText>
+                    @if (_delegations.Any())
+                    {
+                        <MudList T="string">
+                            @foreach (var delegation in _delegations)
+                            {
+                                <MudListItem T="string">
+                                    <MudText>
+                                        <strong>@delegation.HouseholdMember?.Name</strong> - 
+                                        @GetRoleDisplayName(delegation.RoleType)
+                                    </MudText>
+                                    <MudText Typo="Typo.caption">
+                                        Upphör: @delegation.DelegationEndDate?.ToString("yyyy-MM-dd HH:mm")
+                                    </MudText>
+                                    <MudButton Size="Size.Small" 
+                                               Color="Color.Warning" 
+                                               StartIcon="@Icons.Material.Filled.Cancel"
+                                               OnClick="@(() => RevokeDelegation(delegation.HouseholdRoleId))">
+                                        Återkalla
+                                    </MudButton>
+                                </MudListItem>
+                            }
+                        </MudList>
+                    }
+                    else
+                    {
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">Inga aktiva delegeringar</MudText>
+                    }
+                </MudPaper>
+            </MudItem>
+
+            <MudItem xs="12" md="6">
+                <MudPaper Class="pa-4">
+                    <MudText Typo="Typo.h6" Class="mb-2">Rollbeskrivningar</MudText>
+                    <MudList T="string" Dense="true">
+                        <MudListItem T="string" Icon="@Icons.Material.Filled.AdminPanelSettings">
+                            <MudText><strong>Admin:</strong> Full kontroll över hushållet</MudText>
+                        </MudListItem>
+                        <MudListItem T="string" Icon="@Icons.Material.Filled.Key">
+                            <MudText><strong>Full Access:</strong> Hantera ekonomi, ej medlemmar</MudText>
+                        </MudListItem>
+                        <MudListItem T="string" Icon="@Icons.Material.Filled.Edit">
+                            <MudText><strong>Editor:</strong> Skapa/ändra egna data</MudText>
+                        </MudListItem>
+                        <MudListItem T="string" Icon="@Icons.Material.Filled.Visibility">
+                            <MudText><strong>View Only:</strong> Endast läsrättigheter</MudText>
+                        </MudListItem>
+                        <MudListItem T="string" Icon="@Icons.Material.Filled.Lock">
+                            <MudText><strong>Limited:</strong> Endast egna transaktioner</MudText>
+                        </MudListItem>
+                        <MudListItem T="string" Icon="@Icons.Material.Filled.ChildCare">
+                            <MudText><strong>Child:</strong> Barnkonto med begränsningar</MudText>
+                        </MudListItem>
+                    </MudList>
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+    }
+</MudContainer>
+
+@code {
+    [Parameter]
+    public int HouseholdId { get; set; }
+
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthenticationStateTask { get; set; }
+
+    private bool _loading = true;
+    private Household? _household;
+    private List<HouseholdMember> _members = new();
+    private List<HouseholdRole> _delegations = new();
+    private HouseholdRole? _currentUserRole;
+    private int? _currentMemberId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDataAsync();
+    }
+
+    private async Task LoadDataAsync()
+    {
+        _loading = true;
+
+        try
+        {
+            // Get current user
+            var authState = await AuthenticationStateTask!;
+            var user = authState.User;
+            var userId = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+            if (userId == null)
+            {
+                Snackbar.Add("Du måste vara inloggad", Severity.Error);
+                return;
+            }
+
+            // Load household
+            _household = await HouseholdService.GetHouseholdByIdAsync(HouseholdId);
+
+            if (_household == null)
+            {
+                Snackbar.Add("Hushåll hittades inte", Severity.Error);
+                return;
+            }
+
+            // Get current user's role
+            _currentUserRole = await RbacService.GetUserRoleInHouseholdAsync(userId, HouseholdId);
+
+            // Get current member ID
+            var currentMember = _household.Members.FirstOrDefault(m => m.UserId == userId);
+            _currentMemberId = currentMember?.HouseholdMemberId;
+
+            // Load members with roles
+            _members = _household.Members.Where(m => m.IsActive).ToList();
+
+            // Load their roles
+            foreach (var member in _members)
+            {
+                var roles = await RbacService.GetUserRoleInHouseholdAsync(member.UserId ?? "", HouseholdId);
+                if (roles != null)
+                {
+                    member.Roles = new List<HouseholdRole> { roles };
+                }
+            }
+
+            // Load active delegations
+            _delegations = (await RbacService.GetActiveDelegationsAsync(HouseholdId)).ToList();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Fel vid laddning: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private HouseholdRole? GetActiveRole(HouseholdMember member)
+    {
+        return member.Roles.FirstOrDefault(r => r.IsActive);
+    }
+
+    private string GetRoleDisplayName(HouseholdRoleType roleType)
+    {
+        return roleType switch
+        {
+            HouseholdRoleType.Admin => "Administratör",
+            HouseholdRoleType.FullAccess => "Full åtkomst",
+            HouseholdRoleType.Editor => "Redigerare",
+            HouseholdRoleType.ViewOnly => "Endast visning",
+            HouseholdRoleType.Limited => "Begränsad",
+            HouseholdRoleType.Child => "Barn",
+            _ => roleType.ToString()
+        };
+    }
+
+    private Color GetRoleColor(HouseholdRoleType roleType)
+    {
+        return roleType switch
+        {
+            HouseholdRoleType.Admin => Color.Error,
+            HouseholdRoleType.FullAccess => Color.Warning,
+            HouseholdRoleType.Editor => Color.Info,
+            HouseholdRoleType.ViewOnly => Color.Default,
+            HouseholdRoleType.Limited => Color.Secondary,
+            HouseholdRoleType.Child => Color.Success,
+            _ => Color.Default
+        };
+    }
+
+    private void ShowAssignRoleDialog(HouseholdMember member)
+    {
+        // TODO: Implement role assignment dialog component
+        // Tracked in issue #197 (RBAC implementation)
+        Snackbar.Add("Rollväljare-dialog kommer snart", Severity.Info);
+    }
+
+    private async Task TransferAdmin(HouseholdMember newAdmin)
+    {
+        try
+        {
+            if (newAdmin.UserId == null)
+            {
+                Snackbar.Add("Medlemmen har inget användarkonto", Severity.Warning);
+                return;
+            }
+
+            var authState = await AuthenticationStateTask!;
+            var currentUserId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+            if (currentUserId == null)
+            {
+                Snackbar.Add("Du måste vara inloggad", Severity.Error);
+                return;
+            }
+
+            await RbacService.TransferAdminRoleAsync(currentUserId, newAdmin.UserId, HouseholdId);
+            Snackbar.Add($"Admin-rollen överförd till {newAdmin.Name}", Severity.Success);
+            await LoadDataAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Fel vid överföring: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task RevokeDelegation(int delegationId)
+    {
+        try
+        {
+            var authState = await AuthenticationStateTask!;
+            var userId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+            if (userId == null)
+            {
+                Snackbar.Add("Du måste vara inloggad", Severity.Error);
+                return;
+            }
+
+            await RbacService.RevokeDelegationAsync(userId, delegationId);
+            Snackbar.Add("Delegering återkallad", Severity.Success);
+            await LoadDataAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Fel vid återkallelse: {ex.Message}", Severity.Error);
+        }
+    }
+}

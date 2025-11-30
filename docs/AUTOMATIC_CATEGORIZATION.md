@@ -77,23 +77,46 @@ Användare kan hantera kategoriseringsregler via webbgränssnittet:
 5. Ta bort regler genom att klicka på radera-ikonen
 6. Aktivera/inaktivera regler utan att ta bort dem
 
+### 3.1 Skapa regel från transaktion
+
+Du kan snabbt skapa en ny kategoriseringsregel direkt från en transaktion:
+
+1. Öppna en transaktion genom att klicka på den i transaktionslistan
+2. I detaljvyn, klicka på **Skapa regel**-ikonen (✨) bredvid kategorisektionen
+3. Mönstret förfylls automatiskt från transaktionens beskrivning eller betalningsmottagare
+4. Justera mönster, matchningstyp och kategori efter behov
+5. Spara regeln
+
+### 3.2 Ändra kategori direkt
+
+Från transaktionsdetaljvyn kan du snabbt ändra kategorin:
+
+1. Öppna en transaktion genom att klicka på den i transaktionslistan
+2. Klicka på **Ändra kategori**-ikonen (📂) bredvid kategorisektionen
+3. Välj ny kategori från listan
+4. Alternativt, markera "Skapa regel för liknande transaktioner" för automatisering
+5. Spara ändringen
+
 ### 4. API för Kategoriseringsregler
 
-För integration och automatisering finns följande API-endpoints:
+För integration och automatisering finns följande API-endpoints. Både `/api/categoryrules` och `/api/rules` stöds för kompatibilitet.
 
 #### Hämta alla regler
 ```http
 GET /api/categoryrules
+GET /api/rules
 ```
 
 #### Hämta aktiva regler
 ```http
 GET /api/categoryrules/active
+GET /api/rules/active
 ```
 
 #### Skapa ny regel
 ```http
 POST /api/categoryrules
+POST /api/rules
 Content-Type: application/json
 
 {
@@ -111,6 +134,7 @@ Content-Type: application/json
 #### Uppdatera regel
 ```http
 PUT /api/categoryrules/{id}
+PUT /api/rules/{id}
 Content-Type: application/json
 
 {
@@ -123,11 +147,13 @@ Content-Type: application/json
 #### Ta bort regel
 ```http
 DELETE /api/categoryrules/{id}
+DELETE /api/rules/{id}
 ```
 
 #### Testa regel
 ```http
 POST /api/categoryrules/test
+POST /api/rules/test
 Content-Type: application/json
 
 {

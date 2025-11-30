@@ -1,0 +1,217 @@
+@page "/budgets/settings"
+@rendermode InteractiveServer
+@inject IBudgetAlertService BudgetAlertService
+@inject ISnackbar Snackbar
+
+<PageTitle>Budgetinställningar - Privatekonomi</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-4">
+    <MudIcon Icon="@Icons.Material.Filled.Settings" Color="Color.Primary" Class="mr-2" />
+    Budgetinställningar
+</MudText>
+
+@if (_loading)
+{
+    <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+}
+else if (_settings != null)
+{
+    <MudPaper Class="pa-4">
+        <MudText Typo="Typo.h6" Class="mb-4">Varningströsklar</MudText>
+        
+        <MudText Typo="Typo.body2" Class="mb-3">
+            Aktivera varningar när din budgetanvändning når följande nivåer:
+        </MudText>
+
+        <MudSwitch @bind-Value="_settings.EnableAlert75" 
+                   Color="Color.Info"
+                   Label="Varning vid 75% av budget"
+                   Class="mb-2" />
+        
+        <MudSwitch @bind-Value="_settings.EnableAlert90" 
+                   Color="Color.Warning"
+                   Label="Varning vid 90% av budget"
+                   Class="mb-2" />
+        
+        <MudSwitch @bind-Value="_settings.EnableAlert100" 
+                   Color="Color.Error"
+                   Label="Varning vid 100% av budget (överskriden)"
+                   Class="mb-3" />
+
+        <MudDivider Class="my-4" />
+
+        <MudText Typo="Typo.h6" Class="mb-4">Anpassade trösklar</MudText>
+        
+        <MudTextField @bind-Value="_settings.CustomThresholds"
+                     Label="Anpassade trösklar (%)"
+                     Placeholder="t.ex. 50,85,95"
+                     HelperText="Kommaseparerade värden för ytterligare varningströsklar"
+                     Variant="Variant.Outlined"
+                     Class="mb-3" />
+
+        <MudDivider Class="my-4" />
+
+        <MudText Typo="Typo.h6" Class="mb-4">Prognoser</MudText>
+
+        <MudSwitch @bind-Value="_settings.EnableForecastWarnings" 
+                   Color="Color.Warning"
+                   Label="Aktivera prognosvarningar"
+                   Class="mb-2" />
+
+        @if (_settings.EnableForecastWarnings)
+        {
+            <MudNumericField @bind-Value="_settings.ForecastWarningDays"
+                           Label="Antal dagar framåt för prognosvarningar"
+                           Variant="Variant.Outlined"
+                           Min="1"
+                           Max="30"
+                           HelperText="Visa varning om budgeten beräknas överskridas inom detta antal dagar"
+                           Class="mb-3" />
+        }
+
+        <MudDivider Class="my-4" />
+
+        <MudText Typo="Typo.h6" Class="mb-4">Budgetfrysning</MudText>
+
+        <MudSwitch @bind-Value="_settings.EnableBudgetFreeze" 
+                   Color="Color.Error"
+                   Label="Aktivera automatisk budgetfrysning vid överskriden budget"
+                   Class="mb-2" />
+
+        <MudAlert Severity="Severity.Info" Dense="true" Class="mb-3">
+            När budgetfrysning är aktiverad kommer budgetkategorier som överskrids att 
+            automatiskt frysas, vilket förhindrar nya utgifter i den kategorin.
+        </MudAlert>
+
+        <MudDivider Class="my-4" />
+
+        <div class="d-flex gap-2">
+            <MudButton Variant="Variant.Filled" 
+                      Color="Color.Primary"
+                      OnClick="SaveSettings"
+                      Disabled="_saving">
+                @if (_saving)
+                {
+                    <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                }
+                Spara inställningar
+            </MudButton>
+            
+            <MudButton Variant="Variant.Outlined" 
+                      Color="Color.Secondary"
+                      Href="/budgets">
+                Avbryt
+            </MudButton>
+        </div>
+    </MudPaper>
+
+    <MudPaper Class="pa-4 mt-4">
+        <MudText Typo="Typo.h6" Class="mb-4">Aktiva budgetfrysningar</MudText>
+        
+        @if (_activeFreezes.Any())
+        {
+            <MudTable Items="_activeFreezes" Dense="true" Hover="true">
+                <HeaderContent>
+                    <MudTh>Budget</MudTh>
+                    <MudTh>Kategori</MudTh>
+                    <MudTh>Fryst sedan</MudTh>
+                    <MudTh>Anledning</MudTh>
+                    <MudTh>Åtgärd</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Budget">@context.Budget?.Name</MudTd>
+                    <MudTd DataLabel="Kategori">
+                        @if (context.BudgetCategory != null)
+                        {
+                            @context.BudgetCategory.Category?.Name
+                        }
+                        else
+                        {
+                            <em>Hela budgeten</em>
+                        }
+                    </MudTd>
+                    <MudTd DataLabel="Fryst sedan">@context.FrozenAt.ToString("g")</MudTd>
+                    <MudTd DataLabel="Anledning">@context.Reason</MudTd>
+                    <MudTd DataLabel="Åtgärd">
+                        <MudButton Size="Size.Small" 
+                                  Variant="Variant.Text"
+                                  Color="Color.Primary"
+                                  OnClick="@(() => UnfreezeAsync(context.BudgetFreezeId))">
+                            Avfrysa
+                        </MudButton>
+                    </MudTd>
+                </RowTemplate>
+            </MudTable>
+        }
+        else
+        {
+            <MudAlert Severity="Severity.Success" Dense="true">
+                Inga aktiva budgetfrysningar
+            </MudAlert>
+        }
+    </MudPaper>
+}
+
+@code {
+    private BudgetAlertSettings? _settings;
+    private List<BudgetFreeze> _activeFreezes = new();
+    private bool _loading = true;
+    private bool _saving = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDataAsync();
+    }
+
+    private async Task LoadDataAsync()
+    {
+        _loading = true;
+        try
+        {
+            _settings = await BudgetAlertService.GetOrCreateSettingsAsync();
+            _activeFreezes = (await BudgetAlertService.GetActiveFreezesAsync()).ToList();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Kunde inte ladda inställningar: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task SaveSettings()
+    {
+        if (_settings == null) return;
+
+        _saving = true;
+        try
+        {
+            await BudgetAlertService.UpdateSettingsAsync(_settings);
+            Snackbar.Add("Inställningar sparade", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Kunde inte spara inställningar: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private async Task UnfreezeAsync(int budgetFreezeId)
+    {
+        try
+        {
+            await BudgetAlertService.UnfreezeBudgetAsync(budgetFreezeId);
+            Snackbar.Add("Budget avfryst", Severity.Success);
+            await LoadDataAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Kunde inte avfrysa budget: {ex.Message}", Severity.Error);
+        }
+    }
+}

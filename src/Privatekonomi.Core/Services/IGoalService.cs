@@ -13,4 +13,22 @@ public interface IGoalService
     Task<decimal> GetTotalProgress();
     Task<Goal> UpdateGoalProgressAsync(int id, decimal currentAmount);
     Task<IEnumerable<Goal>> GetGoalsByPriorityAsync(int priority);
+    Task<bool> UpdateGoalPrioritiesAsync(Dictionary<int, int> goalPriorities);
+    
+    // Simulation methods
+    DateTime? CalculateCompletionDate(Goal goal, decimal monthlySavings);
+    int CalculateMonthsToCompletion(Goal goal, decimal monthlySavings);
+    SavingsSimulationResult SimulateSavingsChange(Goal goal, decimal newMonthlySavings);
+}
+
+public class SavingsSimulationResult
+{
+    public int CurrentMonthsToCompletion { get; set; }
+    public int NewMonthsToCompletion { get; set; }
+    public int MonthsDifference { get; set; }
+    public DateTime? CurrentCompletionDate { get; set; }
+    public DateTime? NewCompletionDate { get; set; }
+    public decimal CurrentMonthlySavings { get; set; }
+    public decimal NewMonthlySavings { get; set; }
+    public decimal RemainingAmount { get; set; }
 }

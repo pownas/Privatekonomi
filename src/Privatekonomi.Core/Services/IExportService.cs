@@ -50,4 +50,18 @@ public interface IExportService
     /// <param name="year">Year to export</param>
     /// <returns>CSV file content as byte array</returns>
     Task<byte[]> ExportYearDataToCsvAsync(int year);
+    
+    /// <summary>
+    /// Export selected transactions to CSV format
+    /// </summary>
+    /// <param name="transactionIds">IDs of transactions to export</param>
+    /// <returns>CSV file content as byte array</returns>
+    Task<byte[]> ExportSelectedTransactionsToCsvAsync(List<int> transactionIds);
+    
+    /// <summary>
+    /// Export selected transactions to JSON format
+    /// </summary>
+    /// <param name="transactionIds">IDs of transactions to export</param>
+    /// <returns>JSON file content as byte array</returns>
+    Task<byte[]> ExportSelectedTransactionsToJsonAsync(List<int> transactionIds);
 }

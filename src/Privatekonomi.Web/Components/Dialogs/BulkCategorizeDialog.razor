@@ -1,0 +1,160 @@
+@using Privatekonomi.Core.Models
+@using Privatekonomi.Core.Services
+@inject ICategoryService CategoryService
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.Category" Class="mr-2" />
+            Bulk-kategorisera transaktioner
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudText Typo="Typo.body2" Class="mb-4">
+            Välj kategorier för @SelectedTransactionCount @(SelectedTransactionCount == 1 ? "transaktion" : "transaktioner")
+        </MudText>
+
+        @if (_loading)
+        {
+            <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+        }
+        else if (_categories.Any())
+        {
+            <MudText Typo="Typo.subtitle2" Class="mb-2">Välj en eller flera kategorier:</MudText>
+            
+            <div class="d-flex flex-wrap gap-2 mb-4">
+                @foreach (var category in _categories.OrderBy(c => c.Name))
+                {
+                    var isSelected = _selectedCategoryIds.Contains(category.CategoryId);
+                    <MudChip T="string" 
+                             Color="@(isSelected ? Color.Primary : Color.Default)"
+                             Variant="@(isSelected ? Variant.Filled : Variant.Outlined)"
+                             OnClick="@(() => ToggleCategorySelection(category.CategoryId))"
+                             Style="@($"border-color: {category.Color}; {(isSelected ? $"background-color: {category.Color}; color: white;" : "")}")">
+                        <MudIcon Icon="@Icons.Material.Filled.Circle" Style="@($"color: {category.Color};")" Size="Size.Small" Class="mr-1" />
+                        @category.Name
+                    </MudChip>
+                }
+            </div>
+
+            @if (_selectedCategoryIds.Any())
+            {
+                <MudDivider Class="my-4" />
+                <MudText Typo="Typo.subtitle2" Class="mb-2">Beloppsfördelning (valfritt):</MudText>
+                <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-2">
+                    Lämna tomt för att använda hela transaktionsbeloppet för varje kategori
+                </MudText>
+
+                @foreach (var categoryId in _selectedCategoryIds)
+                {
+                    var category = _categories.FirstOrDefault(c => c.CategoryId == categoryId);
+                    if (category != null)
+                    {
+                        <MudNumericField @bind-Value="_categoryAmounts[category.CategoryId]"
+                                       Label="@($"Belopp för {category.Name}")"
+                                       Min="0"
+                                       Step="0.01m"
+                                       Format="N2"
+                                       Adornment="Adornment.End"
+                                       AdornmentText="kr"
+                                       Clearable="true"
+                                       Class="mb-2" />
+                    }
+                }
+            }
+        }
+        else
+        {
+            <MudAlert Severity="Severity.Info">Inga kategorier tillgängliga. Skapa kategorier först.</MudAlert>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel" Variant="Variant.Text">Avbryt</MudButton>
+        <MudButton OnClick="Submit" 
+                   Color="Color.Primary" 
+                   Variant="Variant.Filled"
+                   Disabled="@(!_selectedCategoryIds.Any())">
+            Kategorisera
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    public required IMudDialogInstance MudDialog { get; set; }
+
+    [Parameter]
+    public int SelectedTransactionCount { get; set; }
+
+    private bool _loading = true;
+    private List<Category> _categories = new();
+    private HashSet<int> _selectedCategoryIds = new();
+    private Dictionary<int, decimal?> _categoryAmounts = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCategories();
+    }
+
+    private async Task LoadCategories()
+    {
+        _loading = true;
+        try
+        {
+            _categories = (await CategoryService.GetAllCategoriesAsync()).ToList();
+            
+            // Initialize amount dictionary
+            foreach (var category in _categories)
+            {
+                _categoryAmounts[category.CategoryId] = null;
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Fel vid laddning av kategorier: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void ToggleCategorySelection(int categoryId)
+    {
+        if (_selectedCategoryIds.Contains(categoryId))
+        {
+            _selectedCategoryIds.Remove(categoryId);
+        }
+        else
+        {
+            _selectedCategoryIds.Add(categoryId);
+        }
+    }
+
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+
+    private void Submit()
+    {
+        if (!_selectedCategoryIds.Any())
+        {
+            Snackbar.Add("Välj minst en kategori", Severity.Warning);
+            return;
+        }
+
+        var selectedCategories = _selectedCategoryIds
+            .Select(categoryId =>
+            {
+                return new { 
+                    CategoryId = categoryId, 
+                    Amount = _categoryAmounts.GetValueOrDefault(categoryId)
+                };
+            })
+            .ToList();
+
+        MudDialog.Close(DialogResult.Ok(selectedCategories));
+    }
+}

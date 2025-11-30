@@ -1,3 +1,4 @@
+@page "/economy/bills"
 @page "/bills"
 @rendermode InteractiveServer
 @using Privatekonomi.Core.Models
@@ -12,7 +13,10 @@
 <PageTitle>Räkningar - Privatekonomi</PageTitle>
 
 <div class="d-flex justify-space-between align-center mb-4">
-    <MudText Typo="Typo.h4">Räkningar</MudText>
+    <MudText Typo="Typo.h4">
+        <MudIcon Icon="@Icons.Material.Filled.RequestQuote" Color="Color.Primary" Class="mr-2" aria-hidden="true" />
+        Räkningar
+    </MudText>
     <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="ToggleCreateForm">
         Ny Räkning
     </MudButton>
@@ -244,7 +248,7 @@ else
                             </MudTd>
                             <MudTd>
                                 <MudIconButton Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Small" Color="Color.Success" 
-                                               OnClick="@(() => MarkAsPaid(context))" Title="Markera som betald" />
+                                               OnClick="@(() => MarkAsPaid(context))" title="Markera som betald" />
                                 <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Primary" 
                                                OnClick="@(() => EditBill(context))" />
                                 <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" 
@@ -325,7 +329,7 @@ else
                                 @if (context.Status == "Pending")
                                 {
                                     <MudIconButton Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Small" Color="Color.Success" 
-                                                   OnClick="@(() => MarkAsPaid(context))" Title="Markera som betald" />
+                                                   OnClick="@(() => MarkAsPaid(context))" title="Markera som betald" />
                                 }
                                 <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Primary" 
                                                OnClick="@(() => EditBill(context))" />
