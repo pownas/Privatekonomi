@@ -1,10 +1,7 @@
 @page "/Account/Login"
+@attribute [AllowAnonymous]
 @using System.ComponentModel.DataAnnotations
-@using Microsoft.AspNetCore.Identity
-@using Privatekonomi.Core.Models
-
-@inject SignInManager<ApplicationUser> SignInManager
-@inject NavigationManager NavigationManager
+@using Microsoft.AspNetCore.Authorization
 
 <PageTitle>Logga in</PageTitle>
 
@@ -14,30 +11,37 @@
             Logga in
         </MudText>
         
-        @if (!string.IsNullOrEmpty(errorMessage))
+        @if (!string.IsNullOrEmpty(ErrorMessage))
         {
-            <MudAlert Severity="Severity.Error" Class="mb-4">@errorMessage</MudAlert>
+            <MudAlert Severity="Severity.Error" Class="mb-4">@ErrorMessage</MudAlert>
         }
         
-        <EditForm Model="Input" OnValidSubmit="LoginUser" FormName="login">
-            <DataAnnotationsValidator />
+        <form method="post" action="/Account/PerformLogin">
+            <input type="hidden" name="ReturnUrl" value="@ReturnUrl" />
             
             <MudTextField Label="E-post" 
-                          @bind-Value="Input!.Email" 
-                          For="@(() => Input!.Email)"
+                          Name="Email"
+                          @bind-Value="Email"
                           Variant="Variant.Outlined"
                           Margin="Margin.Dense"
-                          Class="mb-4" />
+                          Class="mb-4"
+                          autocomplete="username"
+                          Required="true" />
             
             <MudTextField Label="Lösenord" 
-                          @bind-Value="Input!.Password" 
-                          For="@(() => Input!.Password)"
+                          Name="Password"
+                          @bind-Value="Password"
                           InputType="InputType.Password"
                           Variant="Variant.Outlined"
                           Margin="Margin.Dense"
-                          Class="mb-4" />
+                          Class="mb-4"
+                          autocomplete="current-password"
+                          Required="true" />
             
-            <MudCheckBox @bind-Value="Input!.RememberMe" Label="Kom ihåg mig" Class="mb-4" />
+            <div class="mb-4">
+                <input type="hidden" name="RememberMe" value="@(RememberMe ? "true" : "false")" />
+                <MudCheckBox @bind-Value="RememberMe" Label="Kom ihåg mig" />
+            </div>
             
             <MudButton ButtonType="ButtonType.Submit" 
                        Variant="Variant.Filled" 
@@ -46,7 +50,7 @@
                        Class="mb-4">
                 Logga in
             </MudButton>
-        </EditForm>
+        </form>
         
         <MudText Align="Align.Center">
             Har du inget konto? <MudLink Href="/Account/Register">Registrera dig</MudLink>
@@ -55,45 +59,21 @@
 </MudContainer>
 
 @code {
-    [SupplyParameterFromForm]
-    private InputModel? Input { get; set; }
-
     [SupplyParameterFromQuery]
     private string? ReturnUrl { get; set; }
 
-    private string? errorMessage;
+    [SupplyParameterFromQuery(Name = "error")]
+    private string? Error { get; set; }
 
-    protected override void OnInitialized()
+    private string Email { get; set; } = "";
+    private string Password { get; set; } = "";
+    private bool RememberMe { get; set; }
+
+    private string? ErrorMessage => Error switch
     {
-        Input ??= new();
-    }
-
-    private async Task LoginUser()
-    {
-        if (Input is null) return;
-
-        var result = await SignInManager.PasswordSignInAsync(Input.Email, Input.Password, Input.RememberMe, lockoutOnFailure: false);
-
-        if (result.Succeeded)
-        {
-            NavigationManager.NavigateTo(ReturnUrl ?? "/");
-        }
-        else
-        {
-            errorMessage = "Felaktigt användarnamn eller lösenord.";
-        }
-    }
-
-    private sealed class InputModel
-    {
-        [Required(ErrorMessage = "E-post krävs")]
-        [EmailAddress(ErrorMessage = "Ogiltig e-postadress")]
-        public string Email { get; set; } = "";
-
-        [Required(ErrorMessage = "Lösenord krävs")]
-        [DataType(DataType.Password)]
-        public string Password { get; set; } = "";
-
-        public bool RememberMe { get; set; }
-    }
+        "invalid" => "Felaktigt användarnamn eller lösenord.",
+        "lockedout" => "Kontot är låst. Vänta och försök igen senare.",
+        "empty" => "E-post och lösenord krävs.",
+        _ => null
+    };
 }

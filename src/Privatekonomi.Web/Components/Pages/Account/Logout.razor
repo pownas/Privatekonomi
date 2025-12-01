@@ -1,8 +1,7 @@
 @page "/Account/Logout"
-@using Microsoft.AspNetCore.Identity
-@using Privatekonomi.Core.Models
+@attribute [AllowAnonymous]
+@using Microsoft.AspNetCore.Authorization
 
-@inject SignInManager<ApplicationUser> SignInManager
 @inject NavigationManager NavigationManager
 
 <PageTitle>Loggar ut...</PageTitle>
@@ -16,9 +15,9 @@
 </MudContainer>
 
 @code {
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
     {
-        await SignInManager.SignOutAsync();
-        NavigationManager.NavigateTo("/Account/Login");
+        // Redirect to the logout endpoint which handles the actual sign out
+        NavigationManager.NavigateTo("/Account/PerformLogout", forceLoad: true);
     }
 }
