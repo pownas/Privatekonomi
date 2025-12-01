@@ -59,7 +59,7 @@ Onboarding-flödet som guidar nya användare genom:
 
 | Område | Nuvarande | Förslag | Motivering |
 |--------|-----------|---------|------------|
-| Sidebar-kontrast | Vit bakgrund | Lätt grå (#F8FAFC) | Bättre visuell separation från huvudinnehåll |
+| Sidebar-kontrast | Vit bakgrund | Lätt grå (#F8FAFC) | Bättre visuell separation från huvudinnehållet |
 | Aktiv menymarkering | Svag highlight | Tydligare färgad highlight med vänsterkant | Förbättrad navigeringsförståelse |
 | Kategori-chips | Blandade mättade färger | Mer harmonisk palett med samma mättnadsnivå | Ökad visuell harmoni |
 | Sammanfattningskort | Grå bakgrund | Subtil gradient eller skuggning | Modernare utseende |
@@ -75,7 +75,7 @@ Onboarding-flödet som guidar nya användare genom:
 
 | Område | Nuvarande | Förslag | Motivering |
 |--------|-----------|---------|------------|
-| Belopp i kort | Standard fontvikt | Semi-bold (600) för belopp | Bättre läsbarhet av viktiga siffror |
+| Belopp i kort | Standard fontvikt | Fontvikt 600 för belopp | Bättre läsbarhet av viktiga siffror |
 | Tabellrubriker | Normal text | All-caps med ökad letter-spacing | Tydligare separation från data |
 | Sidmenyn | Samma storlek överallt | Större text för huvudkategorier | Förbättrad navigeringshierarki |
 | Diagrametiketter | Små etiketter | Något större fontstorlek | Bättre läsbarhet på alla skärmar |
@@ -263,7 +263,7 @@ private readonly string[] ModernPalette = new[]
 {
     "#6366F1",  // Indigo (primär)
     "#EC4899",  // Rosa
-    "#8B5CF6",  // Lila  
+    "#8B5CF6",  // Lila
     "#10B981",  // Grön
     "#F59E0B",  // Orange
     "#3B82F6",  // Blå
@@ -416,7 +416,7 @@ private readonly string[] ModernPalette = new[]
             Inga transaktioner än
         </MudText>
         <MudText Typo="Typo.body2" Class="text-muted mb-4">
-            Börja med att importera transaktioner från din bank 
+            Börja med att importera transaktioner från din bank, 
             eller lägg till din första transaktion manuellt.
         </MudText>
         <MudButton Variant="Variant.Filled" 
