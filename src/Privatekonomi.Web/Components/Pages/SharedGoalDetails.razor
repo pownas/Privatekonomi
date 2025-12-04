@@ -20,15 +20,15 @@ else
 {
     <MudBreadcrumbs Items="_breadcrumbs" Class="mb-4"></MudBreadcrumbs>
     
-    <div class="d-flex justify-space-between align-center mb-4">
+    <div class="page-header mb-4">
         <MudText Typo="Typo.h4">
             <MudIcon Icon="@Icons.Material.Filled.Groups" Color="Color.Primary" Class="mr-2" aria-hidden="true" />
             @_sharedGoal.Name
         </MudText>
-        <div>
+        <div class="page-header-buttons">
             @if (_isOwner)
             {
-                <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.PersonAdd" OnClick="OpenInviteDialog" Class="mr-2">
+                <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.PersonAdd" OnClick="OpenInviteDialog">
                     Bjud In
                 </MudButton>
             }

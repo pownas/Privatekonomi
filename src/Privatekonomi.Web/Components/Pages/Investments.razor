@@ -142,9 +142,9 @@ else
     <!-- Investments Table -->
     <MudPaper Class="pa-4">
         <MudGrid>
-            <MudItem xs="12" Class="d-flex justify-space-between align-center mb-4">
+            <MudItem xs="12" Class="page-header mb-4">
                 <MudText Typo="Typo.h6">Mina Investeringar (@_filteredInvestments.Count() st)</MudText>
-                <div class="d-flex gap-2 flex-wrap">
+                <div class="page-header-buttons">
                     <MudButton Variant="Variant.Outlined" Color="Color.Success" StartIcon="@Icons.Material.Filled.Refresh" 
                                OnClick="UpdateAllPrices" Disabled="!_investments.Any() || _isUpdatingAll" Size="Size.Small">
                         @if (_isUpdatingAll)
