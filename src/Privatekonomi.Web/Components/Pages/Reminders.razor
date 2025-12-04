@@ -11,17 +11,19 @@
 <PageTitle>Påminnelser - Privatekonomi</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
-    <div class="d-flex justify-space-between align-center mb-4">
+    <div class="page-header mb-4">
         <MudText Typo="Typo.h4">
             <MudIcon Icon="@Icons.Material.Filled.Notifications" Color="Color.Primary" Class="mr-2" aria-hidden="true" />
             Påminnelser
         </MudText>
-        <MudButton Variant="Variant.Filled" 
-                   Color="Color.Primary" 
-                   StartIcon="@Icons.Material.Filled.Add" 
-                   OnClick="OpenCreateDialog">
-            Ny Påminnelse
-        </MudButton>
+        <div class="page-header-buttons">
+            <MudButton Variant="Variant.Filled" 
+                       Color="Color.Primary" 
+                       StartIcon="@Icons.Material.Filled.Add" 
+                       OnClick="OpenCreateDialog">
+                Ny Påminnelse
+            </MudButton>
+        </div>
     </div>
 
     @if (_loading)

@@ -9,7 +9,7 @@
 
 <PageTitle>Automatiska Kategoriseringsregler - Privatekonomi</PageTitle>
 
-<div class="d-flex justify-space-between align-center mb-4">
+<div class="page-header mb-4">
     <div>
         <MudText Typo="Typo.h4">
             <MudIcon Icon="@Icons.Material.Filled.AutoAwesome" Color="Color.Primary" Class="mr-2" aria-hidden="true" />
@@ -19,9 +19,11 @@
             Definiera regler för att automatiskt kategorisera transaktioner baserat på beskrivning eller betalningsmottagare.
         </MudText>
     </div>
-    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="ToggleCreateForm">
-        Ny Regel
-    </MudButton>
+    <div class="page-header-buttons">
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="ToggleCreateForm">
+            Ny Regel
+        </MudButton>
+    </div>
 </div>
 
 @if (_showCreateForm)
