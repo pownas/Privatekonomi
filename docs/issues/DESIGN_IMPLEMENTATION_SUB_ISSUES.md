@@ -917,11 +917,11 @@ Lägg till visuella tomma tillstånd med illustrationer och tydlig vägledning f
 
 För att skapa dessa 7 sub-issues i GitHub:
 
-1. Gå till huvudissuen: https://github.com/pownas/Privatekonomi/issues/426
+1. Gå till huvudissuen #426
 2. Skapa varje issue med:
    - Titel enligt "Titel" i respektive sektion ovan
    - Beskrivning inkluderande bakgrund, åtgärder och teknisk implementation
-   - Labels: `design`, relevant label (t.ex. `dashboard`, `navigation`), `fas-1/2/3`
+   - Labels: `design`, relevant label (t.ex. `dashboard`, `navigation`), samt rätt faslabel (`fas-1`, `fas-2` eller `fas-3`)
    - Lägg till som sub-issue till #426
    - Tilldela till rätt person
 
