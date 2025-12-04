@@ -2,8 +2,19 @@
 
 Baserat på `docs/DESIGN_ANALYSIS_2025.md`, här är de rekommenderade sub-issues för att implementera designförbättringarna.
 
-**Huvudissue:** pownas/Privatekonomi#420  
+**Huvudissue:** pownas/Privatekonomi#426  
 **Referensdokument:** [DESIGN_ANALYSIS_2025.md](../DESIGN_ANALYSIS_2025.md), [VISUAL_UX_IMPROVEMENTS.md](../VISUAL_UX_IMPROVEMENTS.md)
+
+> **Obs:** Denna dokumentation innehåller specifikationer för 7 sub-issues som ska skapas manuellt i GitHub kopplat till huvudissuen #426.
+>
+> **De 7 sub-issues som ska skapas:**
+> 1. Dashboard-omdesign — Fas 1, ⭐⭐⭐, 3-4 dagar
+> 2. Förbättrad Sidnavigation — Fas 1, ⭐⭐⭐, 1-2 dagar
+> 3. Moderniserade Datakort — Fas 1, ⭐⭐⭐, 2-3 dagar
+> 4. Diagramförbättringar — Fas 2, ⭐⭐, 2-3 dagar
+> 5. Förbättrad Inloggningssida — Fas 2, ⭐⭐, 2-3 dagar
+> 6. Mikrointeraktioner — Fas 3, ⭐⭐, 2-3 dagar
+> 7. Empty States & Feedback — Fas 3, ⭐, 2-3 dagar
 
 ---
 
@@ -883,22 +894,48 @@ Lägg till visuella tomma tillstånd med illustrationer och tydlig vägledning f
 
 ## Sammanfattning
 
-### Testing Sub-Issues (Fas 1, 1-2 veckor):
-- **Issue 1:** Dashboard-omdesign (⭐⭐⭐)
-- **Issue 2:** Förbättrad Sidnavigation (⭐⭐⭐)
-- **Issue 3:** Moderniserade Datakort (⭐⭐⭐)
+### Fas 1: Snabba Vinster (1-2 veckor):
+- **Issue 1:** Dashboard-omdesign (⭐⭐⭐, 3-4 dagar)
+- **Issue 2:** Förbättrad Sidnavigation (⭐⭐⭐, 1-2 dagar)
+- **Issue 3:** Moderniserade Datakort (⭐⭐⭐, 2-3 dagar)
 
-### Visuella Förbättringar (Fas 2, 2-4 veckor):
-- **Issue 4:** Diagramförbättringar (⭐⭐)
-- **Issue 5:** Förbättrad Inloggningssida (⭐⭐)
+### Fas 2: Visuella Förbättringar (2-4 veckor):
+- **Issue 4:** Diagramförbättringar (⭐⭐, 2-3 dagar)
+- **Issue 5:** Förbättrad Inloggningssida (⭐⭐, 2-3 dagar)
 
-### Polish (Fas 3, 1-2 veckor):
-- **Issue 6:** Mikrointeraktioner (⭐⭐)
-- **Issue 7:** Empty States & Feedback (⭐)
+### Fas 3: Polish (1-2 veckor):
+- **Issue 6:** Mikrointeraktioner (⭐⭐, 2-3 dagar)
+- **Issue 7:** Empty States & Feedback (⭐, 2-3 dagar)
 
 **Totalt: 7 sub-issues**
 
 **Rekommendation:** Börja med Fas 1 issues (1-3) för snabba vinster och hög påverkan. Issue 4-5 kan implementeras parallellt. Issue 6-7 bör göras sist som polish.
+
+---
+
+## Hur man skapar Sub-Issues
+
+För att skapa dessa 7 sub-issues i GitHub:
+
+1. Gå till huvudissuen: https://github.com/pownas/Privatekonomi/issues/426
+2. Skapa varje issue med:
+   - Titel enligt "Titel" i respektive sektion ovan
+   - Beskrivning inkluderande bakgrund, åtgärder och teknisk implementation
+   - Labels: `design`, relevant label (t.ex. `dashboard`, `navigation`), `fas-1/2/3`
+   - Lägg till som sub-issue till #426
+   - Tilldela till rätt person
+
+### Exempellabels per issue:
+
+| Issue | Labels |
+|-------|--------|
+| Dashboard-omdesign | `design`, `dashboard`, `ux`, `high-priority`, `fas-1` |
+| Förbättrad Sidnavigation | `design`, `navigation`, `ux`, `high-priority`, `fas-1` |
+| Moderniserade Datakort | `design`, `components`, `ux`, `high-priority`, `fas-1` |
+| Diagramförbättringar | `design`, `charts`, `ux`, `medium-priority`, `fas-2` |
+| Förbättrad Inloggningssida | `design`, `authentication`, `ux`, `medium-priority`, `fas-2` |
+| Mikrointeraktioner | `design`, `animations`, `ux`, `medium-priority`, `fas-3` |
+| Empty States & Feedback | `design`, `empty-states`, `ux`, `low-priority`, `fas-3` |
 
 ---
 
