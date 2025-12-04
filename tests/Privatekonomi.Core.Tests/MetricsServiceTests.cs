@@ -65,9 +65,10 @@ public class MetricsServiceTests
         var startOfMonth = new DateTime(now.Year, now.Month, 1);
         
         // Add users - 2 active this month, 1 inactive
+        // Use startOfMonth.AddDays() to ensure dates are within the current month
         context.Users.AddRange(
             new ApplicationUser { Id = "user1", Email = "user1@test.com", CreatedAt = now.AddMonths(-2), LastLoginAt = now },
-            new ApplicationUser { Id = "user2", Email = "user2@test.com", CreatedAt = now.AddMonths(-2), LastLoginAt = now.AddDays(-5) },
+            new ApplicationUser { Id = "user2", Email = "user2@test.com", CreatedAt = now.AddMonths(-2), LastLoginAt = startOfMonth.AddDays(1) },
             new ApplicationUser { Id = "user3", Email = "user3@test.com", CreatedAt = now.AddMonths(-2), LastLoginAt = now.AddMonths(-2) }
         );
         await context.SaveChangesAsync();
@@ -115,26 +116,28 @@ public class MetricsServiceTests
         var now = DateTime.UtcNow;
         var startOfMonth = new DateTime(now.Year, now.Month, 1);
         
-        // Add users
-        var user1 = new ApplicationUser { Id = "user1", Email = "user1@test.com", CreatedAt = now.AddMonths(-2), LastLoginAt = now };
-        var user2 = new ApplicationUser { Id = "user2", Email = "user2@test.com", CreatedAt = now.AddMonths(-2), LastLoginAt = now };
+        // Add users with login dates in the current month
+        var user1 = new ApplicationUser { Id = "user1", Email = "user1@test.com", CreatedAt = now.AddMonths(-2), LastLoginAt = startOfMonth };
+        var user2 = new ApplicationUser { Id = "user2", Email = "user2@test.com", CreatedAt = now.AddMonths(-2), LastLoginAt = startOfMonth };
         context.Users.AddRange(user1, user2);
         
-        // Add transactions this month - 6 transactions for 2 active users = 3 per user
+        // Add transactions this month - use dates that are at or before 'now' to ensure they're counted
+        // The service filters: t.Date >= startOfMonth && t.Date <= now
+        // Using startOfMonth as the base date ensures all transactions are within valid range
         context.Transactions.AddRange(
-            new Transaction { TransactionId = 1, UserId = "user1", Date = startOfMonth.AddDays(1), Amount = 100, Description = "Test1" },
-            new Transaction { TransactionId = 2, UserId = "user1", Date = startOfMonth.AddDays(2), Amount = 200, Description = "Test2" },
-            new Transaction { TransactionId = 3, UserId = "user1", Date = startOfMonth.AddDays(3), Amount = 300, Description = "Test3" },
-            new Transaction { TransactionId = 4, UserId = "user2", Date = startOfMonth.AddDays(4), Amount = 400, Description = "Test4" },
-            new Transaction { TransactionId = 5, UserId = "user2", Date = startOfMonth.AddDays(5), Amount = 500, Description = "Test5" },
-            new Transaction { TransactionId = 6, UserId = "user2", Date = startOfMonth.AddDays(6), Amount = 600, Description = "Test6" }
+            new Transaction { TransactionId = 1, UserId = "user1", Date = startOfMonth, Amount = 100, Description = "Test1" },
+            new Transaction { TransactionId = 2, UserId = "user1", Date = startOfMonth, Amount = 200, Description = "Test2" },
+            new Transaction { TransactionId = 3, UserId = "user1", Date = startOfMonth, Amount = 300, Description = "Test3" },
+            new Transaction { TransactionId = 4, UserId = "user2", Date = startOfMonth, Amount = 400, Description = "Test4" },
+            new Transaction { TransactionId = 5, UserId = "user2", Date = startOfMonth, Amount = 500, Description = "Test5" },
+            new Transaction { TransactionId = 6, UserId = "user2", Date = startOfMonth, Amount = 600, Description = "Test6" }
         );
         await context.SaveChangesAsync();
 
         // Act
         var result = await service.GetCurrentMetricsAsync();
 
-        // Assert
+        // Assert - 6 transactions for 2 active users = 3 per user
         Assert.Equal(3m, result.EngagementMetrics.TransactionsPerUser);
         Assert.Equal(6, result.EngagementMetrics.TotalTransactionsThisMonth);
     }

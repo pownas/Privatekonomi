@@ -194,12 +194,21 @@ public class JsonFilePersistenceService : IDataPersistenceService
         
         if (entities != null && entities.Count > 0)
         {
-            // Clear existing data to avoid conflicts
-            var existingEntities = await dbSet.ToListAsync();
-            if (existingEntities.Count > 0)
+            // Clear change tracker before loading to avoid entity tracking conflicts
+            context.ChangeTracker.Clear();
+            
+            // Check if there's existing data using AsNoTracking to avoid tracking conflicts
+            var hasExistingData = await dbSet.AsNoTracking().AnyAsync();
+            if (hasExistingData)
             {
+                // For InMemory database, we need to read the entities first (without tracking)
+                // then remove them
+                var existingEntities = await dbSet.ToListAsync();
                 dbSet.RemoveRange(existingEntities);
                 await context.SaveChangesAsync();
+                
+                // Clear change tracker again after removal
+                context.ChangeTracker.Clear();
             }
             
             await dbSet.AddRangeAsync(entities);
