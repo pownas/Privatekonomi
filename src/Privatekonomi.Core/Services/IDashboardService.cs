@@ -42,4 +42,10 @@ public interface IDashboardService
     /// <param name="limit">Maximum number of insights to return (default: 5)</param>
     /// <returns>List of insights</returns>
     Task<List<InsightItem>> GetRecentInsightsAsync(int limit = 5);
+    
+    /// <summary>
+    /// Get income and expense trend data for dashboard summary cards
+    /// </summary>
+    /// <returns>Trend data with comparisons to previous month</returns>
+    Task<FinancialTrendSummary> GetFinancialTrendsAsync();
 }

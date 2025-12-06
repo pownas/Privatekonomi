@@ -258,6 +258,67 @@ public class DashboardService : IDashboardService
 
         return insights.Take(limit).ToList();
     }
+    
+    /// <inheritdoc />
+    public async Task<FinancialTrendSummary> GetFinancialTrendsAsync()
+    {
+        var userId = _currentUserService?.UserId;
+        
+        if (string.IsNullOrEmpty(userId))
+        {
+            return new FinancialTrendSummary();
+        }
+
+        var now = DateTime.UtcNow;
+        var firstDayOfCurrentMonth = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+        var firstDayOfPreviousMonth = firstDayOfCurrentMonth.AddMonths(-1);
+        var firstDayOfTwoMonthsAgo = firstDayOfCurrentMonth.AddMonths(-2);
+
+        // Get transactions for current and previous month
+        var transactions = await _context.Transactions
+            .Where(t => t.UserId == userId && t.Date >= firstDayOfTwoMonthsAgo)
+            .ToListAsync();
+
+        // Current month transactions
+        var currentMonthTransactions = transactions.Where(t => t.Date >= firstDayOfCurrentMonth).ToList();
+        var currentIncome = currentMonthTransactions.Where(t => t.IsIncome).Sum(t => t.Amount);
+        var currentExpenses = currentMonthTransactions.Where(t => !t.IsIncome).Sum(t => t.Amount);
+        var currentNet = currentIncome - currentExpenses;
+
+        // Previous month transactions
+        var previousMonthTransactions = transactions
+            .Where(t => t.Date >= firstDayOfPreviousMonth && t.Date < firstDayOfCurrentMonth)
+            .ToList();
+        var previousIncome = previousMonthTransactions.Where(t => t.IsIncome).Sum(t => t.Amount);
+        var previousExpenses = previousMonthTransactions.Where(t => !t.IsIncome).Sum(t => t.Amount);
+        var previousNet = previousIncome - previousExpenses;
+
+        // Calculate changes
+        var incomeChange = currentIncome - previousIncome;
+        var incomePercentageChange = previousIncome > 0 ? (incomeChange / previousIncome) * 100 : 0;
+
+        var expenseChange = currentExpenses - previousExpenses;
+        var expensePercentageChange = previousExpenses > 0 ? (expenseChange / previousExpenses) * 100 : 0;
+
+        var netChange = currentNet - previousNet;
+        var netPercentageChange = previousNet != 0 ? (netChange / Math.Abs(previousNet)) * 100 : 0;
+
+        return new FinancialTrendSummary
+        {
+            CurrentIncome = currentIncome,
+            PreviousIncome = previousIncome,
+            IncomeChange = incomeChange,
+            IncomePercentageChange = incomePercentageChange,
+            CurrentExpenses = currentExpenses,
+            PreviousExpenses = previousExpenses,
+            ExpenseChange = expenseChange,
+            ExpensePercentageChange = expensePercentageChange,
+            CurrentNet = currentNet,
+            PreviousNet = previousNet,
+            NetChange = netChange,
+            NetPercentageChange = netPercentageChange
+        };
+    }
 
     private async Task<(decimal changeFromPrevious, decimal percentageChange)> CalculateBalanceChangeAsync(
         List<BankSource> accounts, decimal currentBalance)
