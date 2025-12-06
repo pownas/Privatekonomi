@@ -215,3 +215,69 @@ public enum InsightPriority
     High,
     Critical
 }
+
+/// <summary>
+/// Financial trends summary for dashboard cards
+/// </summary>
+public class FinancialTrendSummary
+{
+    /// <summary>
+    /// Total income for current month
+    /// </summary>
+    public decimal CurrentIncome { get; set; }
+    
+    /// <summary>
+    /// Total income for previous month
+    /// </summary>
+    public decimal PreviousIncome { get; set; }
+    
+    /// <summary>
+    /// Income change from previous month
+    /// </summary>
+    public decimal IncomeChange { get; set; }
+    
+    /// <summary>
+    /// Income percentage change from previous month
+    /// </summary>
+    public decimal IncomePercentageChange { get; set; }
+    
+    /// <summary>
+    /// Total expenses for current month
+    /// </summary>
+    public decimal CurrentExpenses { get; set; }
+    
+    /// <summary>
+    /// Total expenses for previous month
+    /// </summary>
+    public decimal PreviousExpenses { get; set; }
+    
+    /// <summary>
+    /// Expense change from previous month
+    /// </summary>
+    public decimal ExpenseChange { get; set; }
+    
+    /// <summary>
+    /// Expense percentage change from previous month
+    /// </summary>
+    public decimal ExpensePercentageChange { get; set; }
+    
+    /// <summary>
+    /// Net result for current month (income - expenses)
+    /// </summary>
+    public decimal CurrentNet { get; set; }
+    
+    /// <summary>
+    /// Net result for previous month
+    /// </summary>
+    public decimal PreviousNet { get; set; }
+    
+    /// <summary>
+    /// Net change from previous month
+    /// </summary>
+    public decimal NetChange { get; set; }
+    
+    /// <summary>
+    /// Net percentage change from previous month
+    /// </summary>
+    public decimal NetPercentageChange { get; set; }
+}

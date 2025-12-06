@@ -8,6 +8,7 @@
 @inject ICategoryService CategoryService
 @inject IBudgetService BudgetService
 @inject IReportService ReportService
+@inject IDashboardService DashboardService
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 @inject DashboardPreferencesService PreferencesService
@@ -65,41 +66,89 @@ else
 {
     @if (_preferences.ShowTotalCards)
     {
-    <MudGrid>
+    <MudGrid Class="dashboard-grid mb-4">
         <MudItem xs="12" md="6" lg="3">
-            <MudCard Elevation="2" Class="pa-4">
-                <MudCardContent>
-                    <MudText Typo="Typo.h6" Color="Color.Success">Totala Inkomster</MudText>
-                    <MudText Typo="Typo.h4">@_totalIncome.ToString("C", new System.Globalization.CultureInfo("sv-SE"))</MudText>
-                </MudCardContent>
-            </MudCard>
+            <MudPaper Class="summary-card gradient-income" Elevation="0">
+                <div class="card-icon-bg">
+                    <MudIcon Icon="@Icons.Material.Filled.TrendingUp" />
+                </div>
+                <div class="card-content">
+                    <MudText Class="summary-card-label">Inkomster</MudText>
+                    <MudText Typo="Typo.h3" Class="amount-animated my-2">
+                        @_totalIncome.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))
+                    </MudText>
+                    @if (_trendData != null)
+                    {
+                        <div class="trend-indicator">
+                            <MudChip T="string" Size="Size.Small" Icon="@GetTrendIcon(_trendData.IncomeChange)">
+                                @GetTrendText(_trendData.IncomePercentageChange)
+                            </MudChip>
+                        </div>
+                        <MudText Class="comparison-text">vs förra månaden</MudText>
+                    }
+                </div>
+            </MudPaper>
         </MudItem>
         
         <MudItem xs="12" md="6" lg="3">
-            <MudCard Elevation="2" Class="pa-4">
-                <MudCardContent>
-                    <MudText Typo="Typo.h6" Color="Color.Error">Totala Utgifter</MudText>
-                    <MudText Typo="Typo.h4">@_totalExpenses.ToString("C", new System.Globalization.CultureInfo("sv-SE"))</MudText>
-                </MudCardContent>
-            </MudCard>
+            <MudPaper Class="summary-card gradient-expense" Elevation="0">
+                <div class="card-icon-bg">
+                    <MudIcon Icon="@Icons.Material.Filled.TrendingDown" />
+                </div>
+                <div class="card-content">
+                    <MudText Class="summary-card-label">Utgifter</MudText>
+                    <MudText Typo="Typo.h3" Class="amount-animated my-2">
+                        @_totalExpenses.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))
+                    </MudText>
+                    @if (_trendData != null)
+                    {
+                        <div class="trend-indicator">
+                            <MudChip T="string" Size="Size.Small" Icon="@GetTrendIcon(-_trendData.ExpenseChange)">
+                                @GetTrendText(_trendData.ExpensePercentageChange)
+                            </MudChip>
+                        </div>
+                        <MudText Class="comparison-text">vs förra månaden</MudText>
+                    }
+                </div>
+            </MudPaper>
         </MudItem>
         
         <MudItem xs="12" md="6" lg="3">
-            <MudCard Elevation="2" Class="pa-4">
-                <MudCardContent>
-                    <MudText Typo="Typo.h6" Color="Color.Info">Nettoresultat</MudText>
-                    <MudText Typo="Typo.h4">@((_totalIncome - _totalExpenses).ToString("C", new System.Globalization.CultureInfo("sv-SE")))</MudText>
-                </MudCardContent>
-            </MudCard>
+            <MudPaper Class="summary-card gradient-net" Elevation="0">
+                <div class="card-icon-bg">
+                    <MudIcon Icon="@Icons.Material.Filled.AccountBalance" />
+                </div>
+                <div class="card-content">
+                    <MudText Class="summary-card-label">Nettoresultat</MudText>
+                    <MudText Typo="Typo.h3" Class="amount-animated my-2">
+                        @((_totalIncome - _totalExpenses).ToString("C0", new System.Globalization.CultureInfo("sv-SE")))
+                    </MudText>
+                    @if (_trendData != null)
+                    {
+                        <div class="trend-indicator">
+                            <MudChip T="string" Size="Size.Small" Icon="@GetTrendIcon(_trendData.NetChange)">
+                                @GetTrendText(_trendData.NetPercentageChange)
+                            </MudChip>
+                        </div>
+                        <MudText Class="comparison-text">vs förra månaden</MudText>
+                    }
+                </div>
+            </MudPaper>
         </MudItem>
         
         <MudItem xs="12" md="6" lg="3">
-            <MudCard Elevation="2" Class="pa-4">
-                <MudCardContent>
-                    <MudText Typo="Typo.h6">Antal Transaktioner</MudText>
-                    <MudText Typo="Typo.h4">@_transactions.Count()</MudText>
-                </MudCardContent>
-            </MudCard>
+            <MudPaper Class="summary-card gradient-neutral" Elevation="0">
+                <div class="card-icon-bg">
+                    <MudIcon Icon="@Icons.Material.Filled.Receipt" />
+                </div>
+                <div class="card-content">
+                    <MudText Class="summary-card-label">Transaktioner</MudText>
+                    <MudText Typo="Typo.h3" Class="amount-animated my-2">
+                        @_transactions.Count()
+                    </MudText>
+                    <MudText Class="comparison-text">denna månaden</MudText>
+                </div>
+            </MudPaper>
         </MudItem>
     </MudGrid>
     }
@@ -527,6 +576,7 @@ else
     private Dictionary<int, Dictionary<int, List<Transaction>>> _budgetTransactionsByCategory = new();
     private DashboardPreferences _preferences = new();
     private PeriodComparisonReport? _periodComparison;
+    private FinancialTrendSummary? _trendData;
 
     // Chart data
     private double[] _expensePieData = Array.Empty<double>();
@@ -608,6 +658,16 @@ else
         catch (Exception ex)
         {
             Snackbar.Add($"Kunde inte ladda periodjämförelse: {ex.Message}", Severity.Warning);
+        }
+        
+        // Load financial trends
+        try
+        {
+            _trendData = await DashboardService.GetFinancialTrendsAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Kunde inte ladda trenddata: {ex.Message}", Severity.Warning);
         }
         
         _totalIncome = _transactions.Where(t => t.IsIncome).Sum(t => t.Amount);
@@ -875,6 +935,20 @@ else
         if (_netWorthReport.PercentageChange > 0) return Icons.Material.Filled.TrendingUp;
         if (_netWorthReport.PercentageChange < 0) return Icons.Material.Filled.TrendingDown;
         return Icons.Material.Filled.Remove;
+    }
+    
+    private string GetTrendIcon(decimal change)
+    {
+        if (change > 0) return Icons.Material.Filled.ArrowUpward;
+        if (change < 0) return Icons.Material.Filled.ArrowDownward;
+        return Icons.Material.Filled.Remove;
+    }
+    
+    private string GetTrendText(decimal percentageChange)
+    {
+        var absChange = Math.Abs(percentageChange);
+        var sign = percentageChange >= 0 ? "+" : "";
+        return $"{sign}{percentageChange:F1}%";
     }
     
     public void Dispose()
