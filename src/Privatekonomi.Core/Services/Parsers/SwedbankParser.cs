@@ -313,11 +313,21 @@ public class SwedbankParser : ICsvParser
         var semicolonCount = 0;
         var insideQuotes = false;
 
-        foreach (var c in headerLine)
+        for (int i = 0; i < headerLine.Length; i++)
         {
+            var c = headerLine[i];
+            
             if (c == '"')
             {
-                insideQuotes = !insideQuotes;
+                // Check for escaped quote (two consecutive quotes)
+                if (i + 1 < headerLine.Length && headerLine[i + 1] == '"')
+                {
+                    i++; // Skip the next quote as it's escaped
+                }
+                else
+                {
+                    insideQuotes = !insideQuotes;
+                }
             }
             else if (!insideQuotes)
             {

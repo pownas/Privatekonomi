@@ -271,4 +271,21 @@ public class SwedbankParserTests
         // Act & Assert
         await Assert.ThrowsAsync<InvalidOperationException>(async () => await parser.ParseAsync(stream));
     }
+
+    [Fact]
+    public async Task SwedbankParser_ParseAsync_HandlesEscapedQuotesInDescription()
+    {
+        // Arrange
+        var parser = new SwedbankParser();
+        var csvWithEscapedQuotes = @"Radnummer,Clearingnummer,Kontonummer,Produkt,Valuta,Bokföringsdag,Transaktionsdag,Valutadag,Referens,Beskrivning,Belopp,Bokfört saldo
+1,84525,1234567891,""e-sparkonto"",SEK,2025-11-12,2025-11-12,2025-11-12,""Test """"quoted"""" text"",""Test """"quoted"""" text"",50.00,9989.74";
+        var stream = new MemoryStream(Encoding.UTF8.GetBytes(csvWithEscapedQuotes));
+
+        // Act
+        var transactions = await parser.ParseAsync(stream);
+
+        // Assert
+        Assert.Single(transactions);
+        Assert.Contains("quoted", transactions[0].Description);
+    }
 }
