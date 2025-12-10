@@ -3,10 +3,11 @@ using Moq;
 using Privatekonomi.Core.Data;
 using Privatekonomi.Core.Models;
 using Privatekonomi.Core.Services;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Privatekonomi.Core.Tests;
 
+[TestClass]
 public class GoalServiceTests : IDisposable
 {
     private readonly PrivatekonomyContext _context;
@@ -30,13 +31,14 @@ public class GoalServiceTests : IDisposable
         _service = new GoalService(_context, _currentUserServiceMock.Object, _milestoneServiceMock.Object);
     }
 
+    [TestCleanup]
     public void Dispose()
     {
         _context.Database.EnsureDeleted();
         _context.Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task UpdateGoalPrioritiesAsync_ShouldUpdateMultipleGoalPriorities()
     {
         // Arrange
@@ -70,14 +72,14 @@ public class GoalServiceTests : IDisposable
         var result = await _service.UpdateGoalPrioritiesAsync(priorities);
 
         // Assert
-        Assert.True(result);
+        Assert.IsTrue(result);
         var updatedGoal1 = await _context.Goals.FindAsync(goal1.GoalId);
         var updatedGoal2 = await _context.Goals.FindAsync(goal2.GoalId);
-        Assert.Equal(3, updatedGoal1!.Priority);
-        Assert.Equal(1, updatedGoal2!.Priority);
+        Assert.AreEqual(3, updatedGoal1!.Priority);
+        Assert.AreEqual(1, updatedGoal2!.Priority);
     }
 
-    [Fact]
+    [TestMethod]
     public void CalculateCompletionDate_WithValidMonthlySavings_ReturnsCorrectDate()
     {
         // Arrange
@@ -95,14 +97,14 @@ public class GoalServiceTests : IDisposable
         var completionDate = _service.CalculateCompletionDate(goal, monthlySavings);
 
         // Assert
-        Assert.NotNull(completionDate);
+        Assert.IsNotNull(completionDate);
         var expectedMonths = 12; // 12000 / 1000 = 12 months
         var expectedDate = DateTime.UtcNow.AddMonths(expectedMonths);
-        Assert.Equal(expectedDate.Year, completionDate!.Value.Year);
-        Assert.Equal(expectedDate.Month, completionDate.Value.Month);
+        Assert.AreEqual(expectedDate.Year, completionDate!.Value.Year);
+        Assert.AreEqual(expectedDate.Month, completionDate.Value.Month);
     }
 
-    [Fact]
+    [TestMethod]
     public void CalculateCompletionDate_WithZeroMonthlySavings_ReturnsNull()
     {
         // Arrange
@@ -119,10 +121,10 @@ public class GoalServiceTests : IDisposable
         var completionDate = _service.CalculateCompletionDate(goal, 0m);
 
         // Assert
-        Assert.Null(completionDate);
+        Assert.IsNull(completionDate);
     }
 
-    [Fact]
+    [TestMethod]
     public void CalculateCompletionDate_WithGoalAlreadyCompleted_ReturnsCurrentDate()
     {
         // Arrange
@@ -139,11 +141,11 @@ public class GoalServiceTests : IDisposable
         var completionDate = _service.CalculateCompletionDate(goal, 1000m);
 
         // Assert
-        Assert.NotNull(completionDate);
-        Assert.True((completionDate.Value - DateTime.UtcNow).TotalMinutes < 1);
+        Assert.IsNotNull(completionDate);
+        Assert.IsTrue((completionDate.Value - DateTime.UtcNow).TotalMinutes < 1);
     }
 
-    [Fact]
+    [TestMethod]
     public void CalculateMonthsToCompletion_WithValidMonthlySavings_ReturnsCorrectMonths()
     {
         // Arrange
@@ -161,10 +163,10 @@ public class GoalServiceTests : IDisposable
         var months = _service.CalculateMonthsToCompletion(goal, monthlySavings);
 
         // Assert
-        Assert.Equal(8, months); // (10000 - 2000) / 1000 = 8 months
+        Assert.AreEqual(8, months); // (10000 - 2000) / 1000 = 8 months
     }
 
-    [Fact]
+    [TestMethod]
     public void CalculateMonthsToCompletion_WithPartialMonth_RoundsUp()
     {
         // Arrange
@@ -182,10 +184,10 @@ public class GoalServiceTests : IDisposable
         var months = _service.CalculateMonthsToCompletion(goal, monthlySavings);
 
         // Assert
-        Assert.Equal(7, months); // 10000 / 1500 = 6.67, rounds up to 7
+        Assert.AreEqual(7, months); // 10000 / 1500 = 6.67, rounds up to 7
     }
 
-    [Fact]
+    [TestMethod]
     public void SimulateSavingsChange_WithIncreasedSavings_ShowsEarlierCompletion()
     {
         // Arrange
@@ -204,18 +206,18 @@ public class GoalServiceTests : IDisposable
         var result = _service.SimulateSavingsChange(goal, newMonthlySavings);
 
         // Assert
-        Assert.Equal(1000m, result.CurrentMonthlySavings);
-        Assert.Equal(1200m, result.NewMonthlySavings);
-        Assert.Equal(12, result.CurrentMonthsToCompletion);
-        Assert.Equal(10, result.NewMonthsToCompletion);
-        Assert.Equal(2, result.MonthsDifference); // 2 months earlier
-        Assert.Equal(12000m, result.RemainingAmount);
-        Assert.NotNull(result.CurrentCompletionDate);
-        Assert.NotNull(result.NewCompletionDate);
-        Assert.True(result.NewCompletionDate < result.CurrentCompletionDate);
+        Assert.AreEqual(1000m, result.CurrentMonthlySavings);
+        Assert.AreEqual(1200m, result.NewMonthlySavings);
+        Assert.AreEqual(12, result.CurrentMonthsToCompletion);
+        Assert.AreEqual(10, result.NewMonthsToCompletion);
+        Assert.AreEqual(2, result.MonthsDifference); // 2 months earlier
+        Assert.AreEqual(12000m, result.RemainingAmount);
+        Assert.IsNotNull(result.CurrentCompletionDate);
+        Assert.IsNotNull(result.NewCompletionDate);
+        Assert.IsTrue(result.NewCompletionDate < result.CurrentCompletionDate);
     }
 
-    [Fact]
+    [TestMethod]
     public void SimulateSavingsChange_WithDecreasedSavings_ShowsLaterCompletion()
     {
         // Arrange
@@ -234,13 +236,13 @@ public class GoalServiceTests : IDisposable
         var result = _service.SimulateSavingsChange(goal, newMonthlySavings);
 
         // Assert
-        Assert.Equal(5, result.CurrentMonthsToCompletion);
-        Assert.Equal(10, result.NewMonthsToCompletion);
-        Assert.Equal(-5, result.MonthsDifference); // 5 months later
-        Assert.True(result.NewCompletionDate > result.CurrentCompletionDate);
+        Assert.AreEqual(5, result.CurrentMonthsToCompletion);
+        Assert.AreEqual(10, result.NewMonthsToCompletion);
+        Assert.AreEqual(-5, result.MonthsDifference); // 5 months later
+        Assert.IsTrue(result.NewCompletionDate > result.CurrentCompletionDate);
     }
 
-    [Fact]
+    [TestMethod]
     public void SimulateSavingsChange_WithZeroCurrentSavings_CalculatesCorrectly()
     {
         // Arrange
@@ -259,11 +261,11 @@ public class GoalServiceTests : IDisposable
         var result = _service.SimulateSavingsChange(goal, newMonthlySavings);
 
         // Assert
-        Assert.Equal(0m, result.CurrentMonthlySavings);
-        Assert.Equal(500m, result.NewMonthlySavings);
-        Assert.Equal(int.MaxValue, result.CurrentMonthsToCompletion);
-        Assert.Equal(12, result.NewMonthsToCompletion);
-        Assert.Null(result.CurrentCompletionDate);
-        Assert.NotNull(result.NewCompletionDate);
+        Assert.AreEqual(0m, result.CurrentMonthlySavings);
+        Assert.AreEqual(500m, result.NewMonthlySavings);
+        Assert.AreEqual(int.MaxValue, result.CurrentMonthsToCompletion);
+        Assert.AreEqual(12, result.NewMonthsToCompletion);
+        Assert.IsNull(result.CurrentCompletionDate);
+        Assert.IsNotNull(result.NewCompletionDate);
     }
 }

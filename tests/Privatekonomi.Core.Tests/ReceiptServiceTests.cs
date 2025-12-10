@@ -3,10 +3,11 @@ using Moq;
 using Privatekonomi.Core.Data;
 using Privatekonomi.Core.Models;
 using Privatekonomi.Core.Services;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Privatekonomi.Core.Tests;
 
+[TestClass]
 public class ReceiptServiceTests : IDisposable
 {
     private readonly PrivatekonomyContext _context;
@@ -25,13 +26,14 @@ public class ReceiptServiceTests : IDisposable
         _receiptService = new ReceiptService(_context, _auditLogServiceMock.Object);
     }
 
+    [TestCleanup]
     public void Dispose()
     {
         _context.Database.EnsureDeleted();
         _context.Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CreateReceiptAsync_WithLineItems_SavesSuccessfully()
     {
         // Arrange
@@ -66,14 +68,14 @@ public class ReceiptServiceTests : IDisposable
         var result = await _receiptService.CreateReceiptAsync(receipt);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.True(result.ReceiptId > 0);
-        Assert.Equal("Test Store", result.Merchant);
-        Assert.Equal(2, result.ReceiptLineItems.Count);
-        Assert.Equal(150.00m, result.TotalAmount);
+        Assert.IsNotNull(result);
+        Assert.IsTrue(result.ReceiptId > 0);
+        Assert.AreEqual("Test Store", result.Merchant);
+        Assert.AreEqual(2, result.ReceiptLineItems.Count);
+        Assert.AreEqual(150.00m, result.TotalAmount);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CreateReceiptAsync_WithImagePath_SavesImagePath()
     {
         // Arrange
@@ -92,12 +94,12 @@ public class ReceiptServiceTests : IDisposable
         var result = await _receiptService.CreateReceiptAsync(receipt);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Equal("receipt-12345.jpg", result.ImagePath);
-        Assert.Equal("Scanned", result.ReceiptType);
+        Assert.IsNotNull(result);
+        Assert.AreEqual("receipt-12345.jpg", result.ImagePath);
+        Assert.AreEqual("Scanned", result.ReceiptType);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetReceiptByIdAsync_WithLineItemsAndCategories_LoadsAllData()
     {
         // Arrange
@@ -135,17 +137,17 @@ public class ReceiptServiceTests : IDisposable
         var result = await _receiptService.GetReceiptByIdAsync(created.ReceiptId, TestUserId);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Equal("Grocery Store", result.Merchant);
-        Assert.Equal("RCP-001", result.ReceiptNumber);
-        Assert.Equal("Credit Card", result.PaymentMethod);
-        Assert.Equal("Weekly shopping", result.Notes);
-        Assert.Single(result.ReceiptLineItems);
-        Assert.NotNull(result.ReceiptLineItems[0].Category);
-        Assert.Equal("Groceries", result.ReceiptLineItems[0].Category!.Name);
+        Assert.IsNotNull(result);
+        Assert.AreEqual("Grocery Store", result.Merchant);
+        Assert.AreEqual("RCP-001", result.ReceiptNumber);
+        Assert.AreEqual("Credit Card", result.PaymentMethod);
+        Assert.AreEqual("Weekly shopping", result.Notes);
+        Assert.AreEqual(1, result.ReceiptLineItems.Count());
+        Assert.IsNotNull(result.ReceiptLineItems[0].Category);
+        Assert.AreEqual("Groceries", result.ReceiptLineItems[0].Category!.Name);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task UpdateReceiptAsync_UpdatesAllFields()
     {
         // Arrange
@@ -168,14 +170,14 @@ public class ReceiptServiceTests : IDisposable
         var result = await _receiptService.UpdateReceiptAsync(created);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Equal("New Store", result.Merchant);
-        Assert.Equal(75.00m, result.TotalAmount);
-        Assert.Equal("Cash", result.PaymentMethod);
-        Assert.NotNull(result.UpdatedAt);
+        Assert.IsNotNull(result);
+        Assert.AreEqual("New Store", result.Merchant);
+        Assert.AreEqual(75.00m, result.TotalAmount);
+        Assert.AreEqual("Cash", result.PaymentMethod);
+        Assert.IsNotNull(result.UpdatedAt);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetReceiptsAsync_ReturnsOnlyUserReceipts()
     {
         // Arrange
@@ -206,11 +208,11 @@ public class ReceiptServiceTests : IDisposable
         var results = await _receiptService.GetReceiptsAsync(TestUserId);
 
         // Assert
-        Assert.Single(results);
-        Assert.Equal("Store A", results[0].Merchant);
+        Assert.AreEqual(1, results.Count());
+        Assert.AreEqual("Store A", results[0].Merchant);
     }
 
-    [Fact]
+    [TestMethod]
     public void LineItemTotalCalculation_QuantityTimesUnitPrice_CalculatesCorrectly()
     {
         // Arrange
@@ -226,10 +228,10 @@ public class ReceiptServiceTests : IDisposable
         lineItem.TotalPrice = lineItem.Quantity * lineItem.UnitPrice;
 
         // Assert
-        Assert.Equal(104.965m, lineItem.TotalPrice);
+        Assert.AreEqual(104.965m, lineItem.TotalPrice);
     }
 
-    [Fact]
+    [TestMethod]
     public void LineItemTotalCalculation_WhenQuantityChanges_UpdatesTotal()
     {
         // Arrange
@@ -246,10 +248,10 @@ public class ReceiptServiceTests : IDisposable
         lineItem.TotalPrice = lineItem.Quantity * lineItem.UnitPrice;
 
         // Assert
-        Assert.Equal(250.00m, lineItem.TotalPrice);
+        Assert.AreEqual(250.00m, lineItem.TotalPrice);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task DeleteReceiptAsync_RemovesReceiptAndLineItems()
     {
         // Arrange
@@ -280,10 +282,10 @@ public class ReceiptServiceTests : IDisposable
 
         // Assert
         var result = await _receiptService.GetReceiptByIdAsync(created.ReceiptId, TestUserId);
-        Assert.Null(result);
+        Assert.IsNull(result);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetReceiptsByTransactionIdAsync_ReturnsOnlyReceiptsForTransaction()
     {
         // Arrange
@@ -329,12 +331,12 @@ public class ReceiptServiceTests : IDisposable
         var results = await _receiptService.GetReceiptsByTransactionIdAsync(transaction.TransactionId, TestUserId);
 
         // Assert
-        Assert.Single(results);
-        Assert.Equal("Store A", results[0].Merchant);
-        Assert.Equal(transaction.TransactionId, results[0].TransactionId);
+        Assert.AreEqual(1, results.Count());
+        Assert.AreEqual("Store A", results[0].Merchant);
+        Assert.AreEqual(transaction.TransactionId, results[0].TransactionId);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task LinkReceiptToTransactionAsync_LinksReceiptSuccessfully()
     {
         // Arrange
@@ -367,9 +369,9 @@ public class ReceiptServiceTests : IDisposable
 
         // Assert
         var updated = await _receiptService.GetReceiptByIdAsync(created.ReceiptId, TestUserId);
-        Assert.NotNull(updated);
-        Assert.Equal(transaction.TransactionId, updated.TransactionId);
-        Assert.NotNull(updated.UpdatedAt);
+        Assert.IsNotNull(updated);
+        Assert.AreEqual(transaction.TransactionId, updated.TransactionId);
+        Assert.IsNotNull(updated.UpdatedAt);
         
         _auditLogServiceMock.Verify(
             x => x.LogAsync("Link", "Receipt", created.ReceiptId, 
@@ -377,7 +379,7 @@ public class ReceiptServiceTests : IDisposable
             Times.Once);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task LinkReceiptToTransactionAsync_ThrowsWhenReceiptNotFound()
     {
         // Arrange
@@ -395,11 +397,10 @@ public class ReceiptServiceTests : IDisposable
         await _context.SaveChangesAsync();
 
         // Act & Assert
-        await Assert.ThrowsAsync<InvalidOperationException>(
-            () => _receiptService.LinkReceiptToTransactionAsync(999, transaction.TransactionId, TestUserId));
+        Assert.ThrowsException<InvalidOperationException>(() => _receiptService.LinkReceiptToTransactionAsync(999, transaction.TransactionId, TestUserId.Result));
     }
 
-    [Fact]
+    [TestMethod]
     public async Task LinkReceiptToTransactionAsync_ThrowsWhenTransactionNotFound()
     {
         // Arrange
@@ -415,11 +416,10 @@ public class ReceiptServiceTests : IDisposable
         var created = await _receiptService.CreateReceiptAsync(receipt);
 
         // Act & Assert
-        await Assert.ThrowsAsync<InvalidOperationException>(
-            () => _receiptService.LinkReceiptToTransactionAsync(created.ReceiptId, 999, TestUserId));
+        Assert.ThrowsException<InvalidOperationException>(() => _receiptService.LinkReceiptToTransactionAsync(created.ReceiptId, 999, TestUserId.Result));
     }
 
-    [Fact]
+    [TestMethod]
     public async Task UnlinkReceiptFromTransactionAsync_UnlinksReceiptSuccessfully()
     {
         // Arrange
@@ -453,9 +453,9 @@ public class ReceiptServiceTests : IDisposable
 
         // Assert
         var updated = await _receiptService.GetReceiptByIdAsync(created.ReceiptId, TestUserId);
-        Assert.NotNull(updated);
-        Assert.Null(updated.TransactionId);
-        Assert.NotNull(updated.UpdatedAt);
+        Assert.IsNotNull(updated);
+        Assert.IsNull(updated.TransactionId);
+        Assert.IsNotNull(updated.UpdatedAt);
         
         _auditLogServiceMock.Verify(
             x => x.LogAsync("Unlink", "Receipt", created.ReceiptId, 
@@ -463,11 +463,10 @@ public class ReceiptServiceTests : IDisposable
             Times.Once);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task UnlinkReceiptFromTransactionAsync_ThrowsWhenReceiptNotFound()
     {
         // Act & Assert
-        await Assert.ThrowsAsync<InvalidOperationException>(
-            () => _receiptService.UnlinkReceiptFromTransactionAsync(999, TestUserId));
+        Assert.ThrowsException<InvalidOperationException>(() => _receiptService.UnlinkReceiptFromTransactionAsync(999, TestUserId.Result));
     }
 }

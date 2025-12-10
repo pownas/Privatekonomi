@@ -2,10 +2,11 @@ using Microsoft.EntityFrameworkCore;
 using Privatekonomi.Core.Data;
 using Privatekonomi.Core.Models;
 using Privatekonomi.Core.Services;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Privatekonomi.Core.Tests;
 
+[TestClass]
 public class ReportServiceTests : IDisposable
 {
     private readonly PrivatekonomyContext _context;
@@ -22,29 +23,30 @@ public class ReportServiceTests : IDisposable
         _reportService = new ReportService(_context);
     }
 
+    [TestCleanup]
     public void Dispose()
     {
         _context.Database.EnsureDeleted();
         _context.Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetNetWorthReportAsync_WithNoData_ReturnsZeroNetWorth()
     {
         // Act
         var report = await _reportService.GetNetWorthReportAsync(TestUserId);
 
         // Assert
-        Assert.NotNull(report);
-        Assert.Equal(0, report.TotalAssets);
-        Assert.Equal(0, report.TotalInvestments);
-        Assert.Equal(0, report.TotalLiabilities);
-        Assert.Equal(0, report.NetWorth);
-        Assert.Empty(report.Assets);
-        Assert.Empty(report.Liabilities);
+        Assert.IsNotNull(report);
+        Assert.AreEqual(0, report.TotalAssets);
+        Assert.AreEqual(0, report.TotalInvestments);
+        Assert.AreEqual(0, report.TotalLiabilities);
+        Assert.AreEqual(0, report.NetWorth);
+        Assert.AreEqual(0, report.Assets.Count());
+        Assert.AreEqual(0, report.Liabilities.Count());
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetNetWorthReportAsync_WithAssets_CalculatesCorrectNetWorth()
     {
         // Arrange
@@ -65,14 +67,14 @@ public class ReportServiceTests : IDisposable
         var report = await _reportService.GetNetWorthReportAsync(TestUserId);
 
         // Assert
-        Assert.Equal(500000m, report.TotalAssets);
-        Assert.Equal(0, report.TotalLiabilities);
-        Assert.Equal(500000m, report.NetWorth);
-        Assert.Single(report.Assets);
-        Assert.Equal("Test Asset", report.Assets[0].Name);
+        Assert.AreEqual(500000m, report.TotalAssets);
+        Assert.AreEqual(0, report.TotalLiabilities);
+        Assert.AreEqual(500000m, report.NetWorth);
+        Assert.AreEqual(1, report.Assets.Count());
+        Assert.AreEqual("Test Asset", report.Assets[0].Name);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetNetWorthReportAsync_WithInvestments_IncludesInTotalAssets()
     {
         // Arrange
@@ -96,14 +98,14 @@ public class ReportServiceTests : IDisposable
         var report = await _reportService.GetNetWorthReportAsync(TestUserId);
 
         // Assert
-        Assert.Equal(7500m, report.TotalAssets); // 100 * 75
-        Assert.Equal(7500m, report.TotalInvestments);
-        Assert.Equal(7500m, report.NetWorth);
-        Assert.Single(report.Assets);
-        Assert.Equal("Investment", report.Assets[0].Type);
+        Assert.AreEqual(7500m, report.TotalAssets); // 100 * 75
+        Assert.AreEqual(7500m, report.TotalInvestments);
+        Assert.AreEqual(7500m, report.NetWorth);
+        Assert.AreEqual(1, report.Assets.Count());
+        Assert.AreEqual("Investment", report.Assets[0].Type);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetNetWorthReportAsync_WithLoans_SubtractsFromNetWorth()
     {
         // Arrange
@@ -136,14 +138,14 @@ public class ReportServiceTests : IDisposable
         var report = await _reportService.GetNetWorthReportAsync(TestUserId);
 
         // Assert
-        Assert.Equal(3000000m, report.TotalAssets);
-        Assert.Equal(2000000m, report.TotalLiabilities);
-        Assert.Equal(1000000m, report.NetWorth);
-        Assert.Single(report.Liabilities);
-        Assert.Equal("Mortgage", report.Liabilities[0].Name);
+        Assert.AreEqual(3000000m, report.TotalAssets);
+        Assert.AreEqual(2000000m, report.TotalLiabilities);
+        Assert.AreEqual(1000000m, report.NetWorth);
+        Assert.AreEqual(1, report.Liabilities.Count());
+        Assert.AreEqual("Mortgage", report.Liabilities[0].Name);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetNetWorthReportAsync_WithMultipleUsers_FiltersCorrectly()
     {
         // Arrange
@@ -174,12 +176,12 @@ public class ReportServiceTests : IDisposable
         var report = await _reportService.GetNetWorthReportAsync(TestUserId);
 
         // Assert
-        Assert.Equal(100000m, report.TotalAssets);
-        Assert.Single(report.Assets);
-        Assert.Equal("User Asset", report.Assets[0].Name);
+        Assert.AreEqual(100000m, report.TotalAssets);
+        Assert.AreEqual(1, report.Assets.Count());
+        Assert.AreEqual("User Asset", report.Assets[0].Name);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetNetWorthReportAsync_ReturnsHistoricalData()
     {
         // Arrange
@@ -200,13 +202,13 @@ public class ReportServiceTests : IDisposable
         var report = await _reportService.GetNetWorthReportAsync(TestUserId);
 
         // Assert
-        Assert.NotNull(report.History);
-        Assert.NotEmpty(report.History);
+        Assert.IsNotNull(report.History);
+        Assert.AreNotEqual(0, report.History.Count());
         // History should contain 12 months of data
-        Assert.Equal(12, report.History.Count);
+        Assert.AreEqual(12, report.History.Count);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetNetWorthReportAsync_WithSnapshots_UsesSnapshotData()
     {
         // Arrange
@@ -226,11 +228,11 @@ public class ReportServiceTests : IDisposable
         var report = await _reportService.GetNetWorthReportAsync(TestUserId);
 
         // Assert
-        Assert.NotNull(report.History);
-        Assert.NotEmpty(report.History);
+        Assert.IsNotNull(report.History);
+        Assert.AreNotEqual(0, report.History.Count());
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetNetWorthReportAsync_CalculatesPercentageChange()
     {
         // Arrange - Create two snapshots for different months
@@ -284,10 +286,10 @@ public class ReportServiceTests : IDisposable
         var report = await _reportService.GetNetWorthReportAsync(TestUserId);
 
         // Assert
-        Assert.NotEqual(0, report.PercentageChange);
+        Assert.AreNotEqual(0, report.PercentageChange);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetNetWorthReportAsync_WithNullUserId_ReturnsAllUsersData()
     {
         // Arrange
@@ -318,11 +320,11 @@ public class ReportServiceTests : IDisposable
         var report = await _reportService.GetNetWorthReportAsync(null);
 
         // Assert
-        Assert.Equal(300000m, report.TotalAssets); // Sum of both users
-        Assert.Equal(2, report.Assets.Count);
+        Assert.AreEqual(300000m, report.TotalAssets); // Sum of both users
+        Assert.AreEqual(2, report.Assets.Count);
     }
     
-    [Fact]
+    [TestMethod]
     public async Task GetPeriodComparisonAsync_WithTransactions_ReturnsCorrectComparison()
     {
         // Arrange
@@ -385,37 +387,37 @@ public class ReportServiceTests : IDisposable
         var result = await _reportService.GetPeriodComparisonAsync(referenceDate);
 
         // Assert
-        Assert.NotNull(result);
+        Assert.IsNotNull(result);
         
         // Check income comparison
-        Assert.Equal(1000m, result.Income.CurrentPeriod);
-        Assert.Equal(1000m, result.Income.PreviousPeriod);
-        Assert.Equal(900m, result.Income.YearAgoPeriod);
-        Assert.Equal(0m, result.Income.ChangeFromPrevious);
-        Assert.Equal(100m, result.Income.ChangeFromYearAgo);
-        Assert.Equal(0m, result.Income.PercentageChangeFromPrevious);
-        Assert.Equal(11.1m, Math.Round(result.Income.PercentageChangeFromYearAgo, 1));
+        Assert.AreEqual(1000m, result.Income.CurrentPeriod);
+        Assert.AreEqual(1000m, result.Income.PreviousPeriod);
+        Assert.AreEqual(900m, result.Income.YearAgoPeriod);
+        Assert.AreEqual(0m, result.Income.ChangeFromPrevious);
+        Assert.AreEqual(100m, result.Income.ChangeFromYearAgo);
+        Assert.AreEqual(0m, result.Income.PercentageChangeFromPrevious);
+        Assert.AreEqual(11.1m, Math.Round(result.Income.PercentageChangeFromYearAgo, 1));
         
         // Check expenses comparison
-        Assert.Equal(600m, result.Expenses.CurrentPeriod);
-        Assert.Equal(800m, result.Expenses.PreviousPeriod);
-        Assert.Equal(700m, result.Expenses.YearAgoPeriod);
-        Assert.Equal(-200m, result.Expenses.ChangeFromPrevious);
-        Assert.Equal(-100m, result.Expenses.ChangeFromYearAgo);
-        Assert.Equal(-25m, result.Expenses.PercentageChangeFromPrevious);
-        Assert.Equal(-14.3m, Math.Round(result.Expenses.PercentageChangeFromYearAgo, 1));
-        Assert.Equal("Improving", result.Expenses.TrendDirection);
+        Assert.AreEqual(600m, result.Expenses.CurrentPeriod);
+        Assert.AreEqual(800m, result.Expenses.PreviousPeriod);
+        Assert.AreEqual(700m, result.Expenses.YearAgoPeriod);
+        Assert.AreEqual(-200m, result.Expenses.ChangeFromPrevious);
+        Assert.AreEqual(-100m, result.Expenses.ChangeFromYearAgo);
+        Assert.AreEqual(-25m, result.Expenses.PercentageChangeFromPrevious);
+        Assert.AreEqual(-14.3m, Math.Round(result.Expenses.PercentageChangeFromYearAgo, 1));
+        Assert.AreEqual("Improving", result.Expenses.TrendDirection);
         
         // Check net flow comparison
-        Assert.Equal(400m, result.NetFlow.CurrentPeriod); // 1000 - 600
-        Assert.Equal(200m, result.NetFlow.PreviousPeriod); // 1000 - 800
-        Assert.Equal(200m, result.NetFlow.YearAgoPeriod); // 900 - 700
-        Assert.Equal(200m, result.NetFlow.ChangeFromPrevious);
-        Assert.Equal(100m, result.NetFlow.PercentageChangeFromPrevious);
-        Assert.Equal("Improving", result.NetFlow.TrendDirection);
+        Assert.AreEqual(400m, result.NetFlow.CurrentPeriod); // 1000 - 600
+        Assert.AreEqual(200m, result.NetFlow.PreviousPeriod); // 1000 - 800
+        Assert.AreEqual(200m, result.NetFlow.YearAgoPeriod); // 900 - 700
+        Assert.AreEqual(200m, result.NetFlow.ChangeFromPrevious);
+        Assert.AreEqual(100m, result.NetFlow.PercentageChangeFromPrevious);
+        Assert.AreEqual("Improving", result.NetFlow.TrendDirection);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetPeriodComparisonAsync_NoTransactions_ReturnsZeroValues()
     {
         // Arrange
@@ -425,16 +427,16 @@ public class ReportServiceTests : IDisposable
         var result = await _reportService.GetPeriodComparisonAsync(referenceDate);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Equal(0m, result.Income.CurrentPeriod);
-        Assert.Equal(0m, result.Income.PreviousPeriod);
-        Assert.Equal(0m, result.Income.YearAgoPeriod);
-        Assert.Equal(0m, result.Expenses.CurrentPeriod);
-        Assert.Equal(0m, result.Expenses.PreviousPeriod);
-        Assert.Equal(0m, result.Expenses.YearAgoPeriod);
+        Assert.IsNotNull(result);
+        Assert.AreEqual(0m, result.Income.CurrentPeriod);
+        Assert.AreEqual(0m, result.Income.PreviousPeriod);
+        Assert.AreEqual(0m, result.Income.YearAgoPeriod);
+        Assert.AreEqual(0m, result.Expenses.CurrentPeriod);
+        Assert.AreEqual(0m, result.Expenses.PreviousPeriod);
+        Assert.AreEqual(0m, result.Expenses.YearAgoPeriod);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetPeriodComparisonAsync_IncreasingExpenses_ShowsWorsening()
     {
         // Arrange
@@ -464,12 +466,12 @@ public class ReportServiceTests : IDisposable
         var result = await _reportService.GetPeriodComparisonAsync(referenceDate);
 
         // Assert
-        Assert.Equal("Worsening", result.Expenses.TrendDirection);
-        Assert.True(result.Expenses.ChangeFromPrevious > 0);
-        Assert.True(result.Expenses.PercentageChangeFromPrevious > 0);
+        Assert.AreEqual("Worsening", result.Expenses.TrendDirection);
+        Assert.IsTrue(result.Expenses.ChangeFromPrevious > 0);
+        Assert.IsTrue(result.Expenses.PercentageChangeFromPrevious > 0);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetPeriodComparisonAsync_StableExpenses_ShowsStable()
     {
         // Arrange
@@ -500,10 +502,10 @@ public class ReportServiceTests : IDisposable
 
         // Assert
         // Change is less than 5%, so should be "Stable"
-        Assert.Equal("Stable", result.Expenses.TrendDirection);
+        Assert.AreEqual("Stable", result.Expenses.TrendDirection);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetPeriodComparisonAsync_GeneratesSparklineData()
     {
         // Arrange
@@ -528,15 +530,15 @@ public class ReportServiceTests : IDisposable
         var result = await _reportService.GetPeriodComparisonAsync(referenceDate);
 
         // Assert
-        Assert.NotNull(result.SparklineData);
-        Assert.Equal(6, result.SparklineData.Count);
+        Assert.IsNotNull(result.SparklineData);
+        Assert.AreEqual(6, result.SparklineData.Count);
         // Verify we have increasing trend (first value should be less than last)
-        Assert.True(result.SparklineData[0] < result.SparklineData[5]);
-        Assert.Equal(100, result.SparklineData[0]);
-        Assert.Equal(600, result.SparklineData[5]);
+        Assert.IsTrue(result.SparklineData[0] < result.SparklineData[5]);
+        Assert.AreEqual(100, result.SparklineData[0]);
+        Assert.AreEqual(600, result.SparklineData[5]);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetSpendingPatternReportAsync_WithNoData_ReturnsEmptyReport()
     {
         // Arrange
@@ -547,15 +549,15 @@ public class ReportServiceTests : IDisposable
         var report = await _reportService.GetSpendingPatternReportAsync(fromDate, toDate);
 
         // Assert
-        Assert.NotNull(report);
-        Assert.Equal(0, report.TotalSpending);
-        Assert.Equal(0, report.AverageMonthlySpending);
-        Assert.Empty(report.CategoryDistribution);
-        Assert.Empty(report.TopCategories);
-        Assert.Empty(report.MonthlyData);
+        Assert.IsNotNull(report);
+        Assert.AreEqual(0, report.TotalSpending);
+        Assert.AreEqual(0, report.AverageMonthlySpending);
+        Assert.AreEqual(0, report.CategoryDistribution.Count());
+        Assert.AreEqual(0, report.TopCategories.Count());
+        Assert.AreEqual(0, report.MonthlyData.Count());
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetSpendingPatternReportAsync_CalculatesTotalSpending()
     {
         // Arrange
@@ -601,14 +603,14 @@ public class ReportServiceTests : IDisposable
             DateTime.Today);
 
         // Assert
-        Assert.Equal(800m, report.TotalSpending);
-        Assert.NotEmpty(report.CategoryDistribution);
-        Assert.Single(report.CategoryDistribution);
-        Assert.Equal("Mat", report.CategoryDistribution[0].CategoryName);
-        Assert.Equal(800m, report.CategoryDistribution[0].Amount);
+        Assert.AreEqual(800m, report.TotalSpending);
+        Assert.AreNotEqual(0, report.CategoryDistribution.Count());
+        Assert.AreEqual(1, report.CategoryDistribution.Count());
+        Assert.AreEqual("Mat", report.CategoryDistribution[0].CategoryName);
+        Assert.AreEqual(800m, report.CategoryDistribution[0].Amount);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetSpendingPatternReportAsync_CalculatesCategoryPercentages()
     {
         // Arrange
@@ -655,17 +657,17 @@ public class ReportServiceTests : IDisposable
             DateTime.Today);
 
         // Assert
-        Assert.Equal(1000m, report.TotalSpending);
-        Assert.Equal(2, report.CategoryDistribution.Count);
+        Assert.AreEqual(1000m, report.TotalSpending);
+        Assert.AreEqual(2, report.CategoryDistribution.Count);
         
         var matCategory = report.CategoryDistribution.First(c => c.CategoryName == "Mat");
-        Assert.Equal(70m, matCategory.Percentage); // 700/1000 * 100
+        Assert.AreEqual(70m, matCategory.Percentage); // 700/1000 * 100
         
         var transportCategory = report.CategoryDistribution.First(c => c.CategoryName == "Transport");
-        Assert.Equal(30m, transportCategory.Percentage); // 300/1000 * 100
+        Assert.AreEqual(30m, transportCategory.Percentage); // 300/1000 * 100
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetSpendingPatternReportAsync_IdentifiesTopCategories()
     {
         // Arrange - Create 6 categories with different amounts
@@ -707,14 +709,14 @@ public class ReportServiceTests : IDisposable
             DateTime.Today);
 
         // Assert - Should only have top 5 categories
-        Assert.Equal(5, report.TopCategories.Count);
-        Assert.Equal("Cat1", report.TopCategories[0].CategoryName);
-        Assert.Equal(1000m, report.TopCategories[0].Amount);
-        Assert.Equal("Cat5", report.TopCategories[4].CategoryName);
-        Assert.Equal(200m, report.TopCategories[4].Amount);
+        Assert.AreEqual(5, report.TopCategories.Count);
+        Assert.AreEqual("Cat1", report.TopCategories[0].CategoryName);
+        Assert.AreEqual(1000m, report.TopCategories[0].Amount);
+        Assert.AreEqual("Cat5", report.TopCategories[4].CategoryName);
+        Assert.AreEqual(200m, report.TopCategories[4].Amount);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetSpendingPatternReportAsync_CalculatesMonthlyData()
     {
         // Arrange
@@ -761,13 +763,13 @@ public class ReportServiceTests : IDisposable
             DateTime.Today);
 
         // Assert
-        Assert.NotEmpty(report.MonthlyData);
-        Assert.Equal(2, report.MonthlyData.Count);
-        Assert.Equal(500m, report.MonthlyData[0].TotalAmount);
-        Assert.Equal(700m, report.MonthlyData[1].TotalAmount);
+        Assert.AreNotEqual(0, report.MonthlyData.Count());
+        Assert.AreEqual(2, report.MonthlyData.Count);
+        Assert.AreEqual(500m, report.MonthlyData[0].TotalAmount);
+        Assert.AreEqual(700m, report.MonthlyData[1].TotalAmount);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetSpendingPatternReportAsync_DetectsTrends()
     {
         // Arrange
@@ -801,13 +803,13 @@ public class ReportServiceTests : IDisposable
             DateTime.Today);
 
         // Assert
-        Assert.NotEmpty(report.Trends);
+        Assert.AreNotEqual(0, report.Trends.Count());
         var overallTrend = report.Trends.FirstOrDefault(t => t.CategoryName == "Total utgifter");
-        Assert.NotNull(overallTrend);
-        Assert.Equal("Increasing", overallTrend.TrendType);
+        Assert.IsNotNull(overallTrend);
+        Assert.AreEqual("Increasing", overallTrend.TrendType);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetSpendingPatternReportAsync_GeneratesRecommendations()
     {
         // Arrange
@@ -839,13 +841,13 @@ public class ReportServiceTests : IDisposable
             DateTime.Today);
 
         // Assert
-        Assert.NotEmpty(report.Recommendations);
+        Assert.AreNotEqual(0, report.Recommendations.Count());
         // Should have recommendation about high percentage category
         var highPercentageRec = report.Recommendations.FirstOrDefault(r => r.Type == "BudgetAlert");
-        Assert.NotNull(highPercentageRec);
+        Assert.IsNotNull(highPercentageRec);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetSpendingPatternReportAsync_FiltersByHousehold()
     {
         // Arrange
@@ -894,10 +896,10 @@ public class ReportServiceTests : IDisposable
             householdId: 1);
 
         // Assert
-        Assert.Equal(500m, report.TotalSpending);
+        Assert.AreEqual(500m, report.TotalSpending);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GenerateMonthlyReportAsync_WithNoData_ReturnsEmptyReport()
     {
         // Arrange
@@ -908,19 +910,19 @@ public class ReportServiceTests : IDisposable
         var report = await _reportService.GenerateMonthlyReportAsync(year, month);
 
         // Assert
-        Assert.NotNull(report);
-        Assert.Equal(year, report.Year);
-        Assert.Equal(month, report.Month);
-        Assert.Equal("januari", report.MonthName);
-        Assert.Equal(0, report.TotalIncome);
-        Assert.Equal(0, report.TotalExpenses);
-        Assert.Equal(0, report.NetFlow);
-        Assert.Equal(0, report.TransactionCount);
-        Assert.Empty(report.CategorySummaries);
-        Assert.Empty(report.TopMerchants);
+        Assert.IsNotNull(report);
+        Assert.AreEqual(year, report.Year);
+        Assert.AreEqual(month, report.Month);
+        Assert.AreEqual("januari", report.MonthName);
+        Assert.AreEqual(0, report.TotalIncome);
+        Assert.AreEqual(0, report.TotalExpenses);
+        Assert.AreEqual(0, report.NetFlow);
+        Assert.AreEqual(0, report.TransactionCount);
+        Assert.AreEqual(0, report.CategorySummaries.Count());
+        Assert.AreEqual(0, report.TopMerchants.Count());
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GenerateMonthlyReportAsync_WithTransactions_CalculatesCorrectTotals()
     {
         // Arrange
@@ -968,15 +970,15 @@ public class ReportServiceTests : IDisposable
         var report = await _reportService.GenerateMonthlyReportAsync(year, month);
 
         // Assert
-        Assert.NotNull(report);
-        Assert.Equal(30000m, report.TotalIncome);
-        Assert.Equal(7000m, report.TotalExpenses);
-        Assert.Equal(23000m, report.NetFlow);
-        Assert.Equal(3, report.TransactionCount);
-        Assert.True(report.SavingsRate > 75m); // (23000 / 30000) * 100 ≈ 76.67%
+        Assert.IsNotNull(report);
+        Assert.AreEqual(30000m, report.TotalIncome);
+        Assert.AreEqual(7000m, report.TotalExpenses);
+        Assert.AreEqual(23000m, report.NetFlow);
+        Assert.AreEqual(3, report.TransactionCount);
+        Assert.IsTrue(report.SavingsRate > 75m); // (23000 / 30000) * 100 ≈ 76.67%
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GenerateMonthlyReportAsync_CalculatesSavingsRate()
     {
         // Arrange
@@ -1012,10 +1014,10 @@ public class ReportServiceTests : IDisposable
 
         // Assert
         // Savings rate = (10000 - 8000) / 10000 * 100 = 20%
-        Assert.Equal(20m, report.SavingsRate);
+        Assert.AreEqual(20m, report.SavingsRate);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GenerateMonthlyReportAsync_WithCategorizedExpenses_GeneratesCategorySummaries()
     {
         // Arrange
@@ -1048,15 +1050,15 @@ public class ReportServiceTests : IDisposable
         var report = await _reportService.GenerateMonthlyReportAsync(year, month);
 
         // Assert
-        Assert.NotNull(report);
-        Assert.NotEmpty(report.CategorySummaries);
+        Assert.IsNotNull(report);
+        Assert.AreNotEqual(0, report.CategorySummaries.Count());
         var matCategory = report.CategorySummaries.FirstOrDefault(c => c.CategoryName == "Mat");
-        Assert.NotNull(matCategory);
-        Assert.Equal(3000m, matCategory.Amount);
-        Assert.Equal(100m, matCategory.Percentage); // Only category, so 100%
+        Assert.IsNotNull(matCategory);
+        Assert.AreEqual(3000m, matCategory.Amount);
+        Assert.AreEqual(100m, matCategory.Percentage); // Only category, so 100%
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GenerateMonthlyReportAsync_ComparesWithPreviousMonth()
     {
         // Arrange
@@ -1115,13 +1117,13 @@ public class ReportServiceTests : IDisposable
         var report = await _reportService.GenerateMonthlyReportAsync(year, month);
 
         // Assert
-        Assert.NotNull(report.PreviousMonthComparison);
-        Assert.Equal(5000m, report.PreviousMonthComparison.IncomeChange); // 30000 - 25000
-        Assert.Equal(-2000m, report.PreviousMonthComparison.ExpenseChange); // 18000 - 20000
-        Assert.Equal(20m, report.PreviousMonthComparison.IncomeChangePercent); // (5000/25000) * 100
+        Assert.IsNotNull(report.PreviousMonthComparison);
+        Assert.AreEqual(5000m, report.PreviousMonthComparison.IncomeChange); // 30000 - 25000
+        Assert.AreEqual(-2000m, report.PreviousMonthComparison.ExpenseChange); // 18000 - 20000
+        Assert.AreEqual(20m, report.PreviousMonthComparison.IncomeChangePercent); // (5000/25000) * 100
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GenerateMonthlyReportAsync_GeneratesInsights()
     {
         // Arrange
@@ -1156,14 +1158,14 @@ public class ReportServiceTests : IDisposable
         var report = await _reportService.GenerateMonthlyReportAsync(year, month);
 
         // Assert
-        Assert.NotNull(report.Insights);
-        Assert.NotEmpty(report.Insights);
+        Assert.IsNotNull(report.Insights);
+        Assert.AreNotEqual(0, report.Insights.Count());
         // Should have a savings rate insight
-        Assert.True(report.Insights.Any(i => i.Title.Contains("sparande", StringComparison.OrdinalIgnoreCase) || 
+        Assert.IsTrue(report.Insights.Any(i => i.Title.Contains("sparande", StringComparison.OrdinalIgnoreCase) || 
                                               i.Title.Contains("sparprocent", StringComparison.OrdinalIgnoreCase)));
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GenerateMonthlyReportAsync_IncludesTopMerchants()
     {
         // Arrange
@@ -1209,23 +1211,23 @@ public class ReportServiceTests : IDisposable
         var report = await _reportService.GenerateMonthlyReportAsync(year, month);
 
         // Assert
-        Assert.NotNull(report.TopMerchants);
-        Assert.NotEmpty(report.TopMerchants);
+        Assert.IsNotNull(report.TopMerchants);
+        Assert.AreNotEqual(0, report.TopMerchants.Count());
         // ICA should be first as it has highest total
-        Assert.Equal("ICA", report.TopMerchants.First().Name);
+        Assert.AreEqual("ICA", report.TopMerchants.First().Name);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetMonthlyReportAsync_WithNoSavedReport_ReturnsNull()
     {
         // Act
         var report = await _reportService.GetMonthlyReportAsync(2025, 1, TestUserId);
 
         // Assert
-        Assert.Null(report);
+        Assert.IsNull(report);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task SaveMonthlyReportAsync_SavesReportToDatabase()
     {
         // Arrange
@@ -1246,16 +1248,16 @@ public class ReportServiceTests : IDisposable
         var savedReport = await _reportService.SaveMonthlyReportAsync(reportData, TestUserId);
 
         // Assert
-        Assert.NotNull(savedReport);
-        Assert.Equal(new DateTime(2025, 1, 1), savedReport.ReportMonth);
-        Assert.Equal(30000m, savedReport.TotalIncome);
-        Assert.Equal(20000m, savedReport.TotalExpenses);
-        Assert.Equal(10000m, savedReport.NetFlow);
-        Assert.Equal(ReportStatus.Generated, savedReport.Status);
-        Assert.Equal(TestUserId, savedReport.UserId);
+        Assert.IsNotNull(savedReport);
+        Assert.AreEqual(new DateTime(2025, 1, 1), savedReport.ReportMonth);
+        Assert.AreEqual(30000m, savedReport.TotalIncome);
+        Assert.AreEqual(20000m, savedReport.TotalExpenses);
+        Assert.AreEqual(10000m, savedReport.NetFlow);
+        Assert.AreEqual(ReportStatus.Generated, savedReport.Status);
+        Assert.AreEqual(TestUserId, savedReport.UserId);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task SaveMonthlyReportAsync_UpdatesExistingReport()
     {
         // Arrange
@@ -1287,17 +1289,17 @@ public class ReportServiceTests : IDisposable
         var result = await _reportService.SaveMonthlyReportAsync(updatedReport, TestUserId);
 
         // Assert
-        Assert.Equal(30000m, result.TotalIncome);
-        Assert.Equal(22000m, result.TotalExpenses);
-        Assert.Equal(8000m, result.NetFlow);
+        Assert.AreEqual(30000m, result.TotalIncome);
+        Assert.AreEqual(22000m, result.TotalExpenses);
+        Assert.AreEqual(8000m, result.NetFlow);
 
         // Verify only one report exists for this month
         var allReports = await _reportService.GetMonthlyReportsAsync(TestUserId);
         var reportsForJan2025 = allReports.Where(r => r.ReportMonth.Year == 2025 && r.ReportMonth.Month == 1);
-        Assert.Single(reportsForJan2025);
+        Assert.AreEqual(1, reportsForJan2025.Count());
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetMonthlyReportsAsync_ReturnsReportsInDescendingOrder()
     {
         // Arrange
@@ -1313,31 +1315,31 @@ public class ReportServiceTests : IDisposable
         var reports = (await _reportService.GetMonthlyReportsAsync(TestUserId)).ToList();
 
         // Assert
-        Assert.Equal(3, reports.Count);
-        Assert.Equal(2025, reports[0].ReportMonth.Year);
-        Assert.Equal(1, reports[0].ReportMonth.Month);
-        Assert.Equal(2024, reports[1].ReportMonth.Year);
-        Assert.Equal(12, reports[1].ReportMonth.Month);
-        Assert.Equal(2024, reports[2].ReportMonth.Year);
-        Assert.Equal(11, reports[2].ReportMonth.Month);
+        Assert.AreEqual(3, reports.Count);
+        Assert.AreEqual(2025, reports[0].ReportMonth.Year);
+        Assert.AreEqual(1, reports[0].ReportMonth.Month);
+        Assert.AreEqual(2024, reports[1].ReportMonth.Year);
+        Assert.AreEqual(12, reports[1].ReportMonth.Month);
+        Assert.AreEqual(2024, reports[2].ReportMonth.Year);
+        Assert.AreEqual(11, reports[2].ReportMonth.Month);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetReportPreferencesAsync_WithNoPreferences_ReturnsDefaults()
     {
         // Act
         var preferences = await _reportService.GetReportPreferencesAsync(TestUserId);
 
         // Assert
-        Assert.NotNull(preferences);
-        Assert.Equal(TestUserId, preferences.UserId);
-        Assert.False(preferences.SendEmail);
-        Assert.True(preferences.ShowInApp);
-        Assert.Equal(1, preferences.PreferredDeliveryDay);
-        Assert.True(preferences.IsEnabled);
+        Assert.IsNotNull(preferences);
+        Assert.AreEqual(TestUserId, preferences.UserId);
+        Assert.IsFalse(preferences.SendEmail);
+        Assert.IsTrue(preferences.ShowInApp);
+        Assert.AreEqual(1, preferences.PreferredDeliveryDay);
+        Assert.IsTrue(preferences.IsEnabled);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task SaveReportPreferencesAsync_SavesPreferences()
     {
         // Arrange
@@ -1359,14 +1361,14 @@ public class ReportServiceTests : IDisposable
         var saved = await _reportService.SaveReportPreferencesAsync(preferences);
 
         // Assert
-        Assert.NotNull(saved);
-        Assert.True(saved.SendEmail);
-        Assert.Equal("test@example.com", saved.EmailAddress);
-        Assert.Equal(5, saved.PreferredDeliveryDay);
-        Assert.False(saved.IncludeBudgetComparison);
+        Assert.IsNotNull(saved);
+        Assert.IsTrue(saved.SendEmail);
+        Assert.AreEqual("test@example.com", saved.EmailAddress);
+        Assert.AreEqual(5, saved.PreferredDeliveryDay);
+        Assert.IsFalse(saved.IncludeBudgetComparison);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task SaveReportPreferencesAsync_UpdatesExistingPreferences()
     {
         // Arrange
@@ -1392,15 +1394,15 @@ public class ReportServiceTests : IDisposable
         var result = await _reportService.SaveReportPreferencesAsync(updatedPrefs);
 
         // Assert
-        Assert.True(result.SendEmail);
-        Assert.False(result.ShowInApp);
-        Assert.Equal("updated@example.com", result.EmailAddress);
-        Assert.False(result.IsEnabled);
+        Assert.IsTrue(result.SendEmail);
+        Assert.IsFalse(result.ShowInApp);
+        Assert.AreEqual("updated@example.com", result.EmailAddress);
+        Assert.IsFalse(result.IsEnabled);
     }
 
     #region Historical Overview Tests
 
-    [Fact]
+    [TestMethod]
     public async Task GetHistoricalOverviewAsync_WithNoData_ReturnsZeroValues()
     {
         // Arrange
@@ -1410,18 +1412,18 @@ public class ReportServiceTests : IDisposable
         var report = await _reportService.GetHistoricalOverviewAsync(asOfDate, TestUserId);
 
         // Assert
-        Assert.NotNull(report);
-        Assert.Equal(asOfDate.Date, report.AsOfDate.Date);
-        Assert.Equal(0, report.NetWorth);
-        Assert.Equal(0, report.TotalAssets);
-        Assert.Equal(0, report.TotalLiabilities);
-        Assert.Empty(report.Accounts);
-        Assert.Empty(report.Investments);
-        Assert.Empty(report.Assets);
-        Assert.Empty(report.Loans);
+        Assert.IsNotNull(report);
+        Assert.AreEqual(asOfDate.Date, report.AsOfDate.Date);
+        Assert.AreEqual(0, report.NetWorth);
+        Assert.AreEqual(0, report.TotalAssets);
+        Assert.AreEqual(0, report.TotalLiabilities);
+        Assert.AreEqual(0, report.Accounts.Count());
+        Assert.AreEqual(0, report.Investments.Count());
+        Assert.AreEqual(0, report.Assets.Count());
+        Assert.AreEqual(0, report.Loans.Count());
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetHistoricalOverviewAsync_WithBankAccounts_CalculatesHistoricalBalance()
     {
         // Arrange
@@ -1471,13 +1473,13 @@ public class ReportServiceTests : IDisposable
         var report = await _reportService.GetHistoricalOverviewAsync(asOfDate, TestUserId);
 
         // Assert
-        Assert.NotNull(report);
-        Assert.Single(report.Accounts);
+        Assert.IsNotNull(report);
+        Assert.AreEqual(1, report.Accounts.Count());
         // Should include initial balance + transaction before as-of date
-        Assert.Equal(11000m, report.Accounts[0].Balance); // 10000 + 1000
+        Assert.AreEqual(11000m, report.Accounts[0].Balance); // 10000 + 1000
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetHistoricalOverviewAsync_WithLoans_CalculatesLiabilities()
     {
         // Arrange
@@ -1500,14 +1502,14 @@ public class ReportServiceTests : IDisposable
         var report = await _reportService.GetHistoricalOverviewAsync(asOfDate, TestUserId);
 
         // Assert
-        Assert.NotNull(report);
-        Assert.Single(report.Loans);
-        Assert.Equal(50000m, report.TotalLoans);
-        Assert.Equal(50000m, report.TotalLiabilities);
-        Assert.Equal(-50000m, report.NetWorth);
+        Assert.IsNotNull(report);
+        Assert.AreEqual(1, report.Loans.Count());
+        Assert.AreEqual(50000m, report.TotalLoans);
+        Assert.AreEqual(50000m, report.TotalLiabilities);
+        Assert.AreEqual(-50000m, report.NetWorth);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetHistoricalOverviewAsync_WithInvestments_CalculatesAssets()
     {
         // Arrange
@@ -1532,12 +1534,12 @@ public class ReportServiceTests : IDisposable
         var report = await _reportService.GetHistoricalOverviewAsync(asOfDate, TestUserId);
 
         // Assert
-        Assert.NotNull(report);
-        Assert.Single(report.Investments);
-        Assert.Equal(6000m, report.TotalInvestments); // 100 * 60
+        Assert.IsNotNull(report);
+        Assert.AreEqual(1, report.Investments.Count());
+        Assert.AreEqual(6000m, report.TotalInvestments); // 100 * 60
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetHistoricalOverviewAsync_IncludesMonthlyTransactions()
     {
         // Arrange
@@ -1574,13 +1576,13 @@ public class ReportServiceTests : IDisposable
         var report = await _reportService.GetHistoricalOverviewAsync(asOfDate, TestUserId);
 
         // Assert
-        Assert.Equal(30000m, report.MonthlyIncome);
-        Assert.Equal(5000m, report.MonthlyExpenses);
-        Assert.Equal(25000m, report.MonthlyNetFlow);
-        Assert.Equal(2, report.TransactionCount);
+        Assert.AreEqual(30000m, report.MonthlyIncome);
+        Assert.AreEqual(5000m, report.MonthlyExpenses);
+        Assert.AreEqual(25000m, report.MonthlyNetFlow);
+        Assert.AreEqual(2, report.TransactionCount);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetHistoricalOverviewAsync_IncludesComparisonWithCurrentValues()
     {
         // Arrange
@@ -1604,22 +1606,22 @@ public class ReportServiceTests : IDisposable
         var report = await _reportService.GetHistoricalOverviewAsync(asOfDate, TestUserId);
 
         // Assert
-        Assert.NotNull(report.Comparison);
-        Assert.True(report.Comparison.DaysElapsed > 0);
+        Assert.IsNotNull(report.Comparison);
+        Assert.IsTrue(report.Comparison.DaysElapsed > 0);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetTimelineKeyDatesAsync_WithNoData_ReturnsEmptyList()
     {
         // Act
         var keyDates = await _reportService.GetTimelineKeyDatesAsync(TestUserId, 12);
 
         // Assert
-        Assert.NotNull(keyDates);
-        Assert.Empty(keyDates);
+        Assert.IsNotNull(keyDates);
+        Assert.AreEqual(0, keyDates.Count());
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetTimelineKeyDatesAsync_WithTransactions_ReturnsMonthlyDates()
     {
         // Arrange - Add transactions in different months
@@ -1643,12 +1645,12 @@ public class ReportServiceTests : IDisposable
         var keyDates = await _reportService.GetTimelineKeyDatesAsync(TestUserId, 12);
 
         // Assert
-        Assert.NotNull(keyDates);
-        Assert.NotEmpty(keyDates);
-        Assert.True(keyDates.Count <= 12);
+        Assert.IsNotNull(keyDates);
+        Assert.AreNotEqual(0, keyDates.Count());
+        Assert.IsTrue(keyDates.Count <= 12);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetTimelineKeyDatesAsync_WithSnapshots_IncludesPeaksAndValleys()
     {
         // Arrange - Add net worth snapshots
@@ -1689,21 +1691,21 @@ public class ReportServiceTests : IDisposable
         var keyDates = await _reportService.GetTimelineKeyDatesAsync(TestUserId, 12);
 
         // Assert
-        Assert.NotNull(keyDates);
-        Assert.NotEmpty(keyDates);
+        Assert.IsNotNull(keyDates);
+        Assert.AreNotEqual(0, keyDates.Count());
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetJourneyStartInfoAsync_WithNoTransactions_ReturnsNull()
     {
         // Act
         var journeyStart = await _reportService.GetJourneyStartInfoAsync(TestUserId);
 
         // Assert
-        Assert.Null(journeyStart);
+        Assert.IsNull(journeyStart);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetJourneyStartInfoAsync_WithTransactions_ReturnsCorrectStartDate()
     {
         // Arrange - Add transactions with different dates
@@ -1736,13 +1738,13 @@ public class ReportServiceTests : IDisposable
         var journeyStart = await _reportService.GetJourneyStartInfoAsync(TestUserId);
 
         // Assert
-        Assert.NotNull(journeyStart);
-        Assert.Equal(earliestDate.Date, journeyStart.StartDate.Date);
-        Assert.Equal(2, journeyStart.TotalTransactions);
-        Assert.True(journeyStart.DaysTracked >= 0);
+        Assert.IsNotNull(journeyStart);
+        Assert.AreEqual(earliestDate.Date, journeyStart.StartDate.Date);
+        Assert.AreEqual(2, journeyStart.TotalTransactions);
+        Assert.IsTrue(journeyStart.DaysTracked >= 0);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetJourneyStartInfoAsync_WithUserFilter_ReturnsOnlyUserTransactions()
     {
         // Arrange - Add transactions for different users
@@ -1772,9 +1774,9 @@ public class ReportServiceTests : IDisposable
         var journeyStart = await _reportService.GetJourneyStartInfoAsync(TestUserId);
 
         // Assert
-        Assert.NotNull(journeyStart);
-        Assert.Equal(new DateTime(2023, 1, 1).Date, journeyStart.StartDate.Date);
-        Assert.Equal(1, journeyStart.TotalTransactions);
+        Assert.IsNotNull(journeyStart);
+        Assert.AreEqual(new DateTime(2023, 1, 1).Date, journeyStart.StartDate.Date);
+        Assert.AreEqual(1, journeyStart.TotalTransactions);
     }
 
     #endregion

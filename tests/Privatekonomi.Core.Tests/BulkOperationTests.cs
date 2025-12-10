@@ -1,4 +1,4 @@
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using Microsoft.EntityFrameworkCore;
 using Privatekonomi.Core.Data;
@@ -7,6 +7,7 @@ using Privatekonomi.Core.Services;
 
 namespace Privatekonomi.Core.Tests;
 
+[TestClass]
 public class BulkOperationTests
 {
     private PrivatekonomyContext CreateInMemoryContext()
@@ -18,7 +19,7 @@ public class BulkOperationTests
         return new PrivatekonomyContext(options);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task BulkDeleteTransactionsAsync_ShouldDeleteMultipleTransactions()
     {
         // Arrange
@@ -44,13 +45,13 @@ public class BulkOperationTests
         var result = await service.BulkDeleteTransactionsAsync(new List<int> { 1, 2 });
 
         // Assert
-        Assert.Equal(2, result.SuccessCount);
-        Assert.Equal(0, result.FailureCount);
-        Assert.True(result.IsSuccess);
-        Assert.Equal(1, await context.Transactions.CountAsync());
+        Assert.AreEqual(2, result.SuccessCount);
+        Assert.AreEqual(0, result.FailureCount);
+        Assert.IsTrue(result.IsSuccess);
+        Assert.AreEqual(1, await context.Transactions.CountAsync());
     }
 
-    [Fact]
+    [TestMethod]
     public async Task BulkDeleteTransactionsAsync_ShouldNotDeleteLockedTransactions()
     {
         // Arrange
@@ -75,14 +76,14 @@ public class BulkOperationTests
         var result = await service.BulkDeleteTransactionsAsync(new List<int> { 1, 2 });
 
         // Assert
-        Assert.Equal(1, result.SuccessCount);
-        Assert.Equal(1, result.FailureCount);
-        Assert.True(result.IsPartialSuccess);
-        Assert.Contains("locked", result.Errors[0]);
-        Assert.Equal(1, await context.Transactions.CountAsync());
+        Assert.AreEqual(1, result.SuccessCount);
+        Assert.AreEqual(1, result.FailureCount);
+        Assert.IsTrue(result.IsPartialSuccess);
+        CollectionAssert.Contains(result.Errors[0], "locked");
+        Assert.AreEqual(1, await context.Transactions.CountAsync());
     }
 
-    [Fact]
+    [TestMethod]
     public async Task BulkCategorizeTransactionsAsync_ShouldCategorizeMultipleTransactions()
     {
         // Arrange
@@ -111,17 +112,17 @@ public class BulkOperationTests
         var result = await service.BulkCategorizeTransactionsAsync(new List<int> { 1, 2 }, categories);
 
         // Assert
-        Assert.Equal(2, result.SuccessCount);
-        Assert.Equal(0, result.FailureCount);
-        Assert.True(result.IsSuccess);
+        Assert.AreEqual(2, result.SuccessCount);
+        Assert.AreEqual(0, result.FailureCount);
+        Assert.IsTrue(result.IsSuccess);
         
         var tx1 = await context.Transactions.Include(t => t.TransactionCategories)
             .FirstAsync(t => t.TransactionId == 1);
-        Assert.Single(tx1.TransactionCategories);
-        Assert.Equal(1, tx1.TransactionCategories.First().CategoryId);
+        Assert.AreEqual(1, tx1.TransactionCategories.Count());
+        Assert.AreEqual(1, tx1.TransactionCategories.First().CategoryId);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task BulkCategorizeTransactionsAsync_ShouldFailWithInvalidCategory()
     {
         // Arrange
@@ -146,12 +147,12 @@ public class BulkOperationTests
         var result = await service.BulkCategorizeTransactionsAsync(new List<int> { 1 }, categories);
 
         // Assert
-        Assert.Equal(0, result.SuccessCount);
-        Assert.NotEmpty(result.Errors);
-        Assert.Contains("Invalid category", result.Errors[0]);
+        Assert.AreEqual(0, result.SuccessCount);
+        Assert.AreNotEqual(0, result.Errors.Count());
+        CollectionAssert.Contains(result.Errors[0], "Invalid category");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task BulkLinkToHouseholdAsync_ShouldLinkMultipleTransactions()
     {
         // Arrange
@@ -179,15 +180,15 @@ public class BulkOperationTests
         var result = await service.BulkLinkToHouseholdAsync(new List<int> { 1, 2 }, 1);
 
         // Assert
-        Assert.Equal(2, result.SuccessCount);
-        Assert.Equal(0, result.FailureCount);
-        Assert.True(result.IsSuccess);
+        Assert.AreEqual(2, result.SuccessCount);
+        Assert.AreEqual(0, result.FailureCount);
+        Assert.IsTrue(result.IsSuccess);
         
         var tx1 = await context.Transactions.FindAsync(1);
-        Assert.Equal(1, tx1!.HouseholdId);
+        Assert.AreEqual(1, tx1!.HouseholdId);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task BulkLinkToHouseholdAsync_ShouldUnlinkWhenHouseholdIdIsNull()
     {
         // Arrange
@@ -214,14 +215,14 @@ public class BulkOperationTests
         var result = await service.BulkLinkToHouseholdAsync(new List<int> { 1 }, null);
 
         // Assert
-        Assert.Equal(1, result.SuccessCount);
-        Assert.True(result.IsSuccess);
+        Assert.AreEqual(1, result.SuccessCount);
+        Assert.IsTrue(result.IsSuccess);
         
         var tx1 = await context.Transactions.FindAsync(1);
-        Assert.Null(tx1!.HouseholdId);
+        Assert.IsNull(tx1!.HouseholdId);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CreateOperationSnapshotAsync_ShouldCreateSnapshot()
     {
         // Arrange
@@ -262,17 +263,17 @@ public class BulkOperationTests
             BulkOperationType.Categorize);
 
         // Assert
-        Assert.NotNull(snapshot);
-        Assert.Equal(BulkOperationType.Categorize, snapshot.OperationType);
-        Assert.Equal("user123", snapshot.UserId);
-        Assert.Single(snapshot.AffectedTransactionIds);
-        Assert.Single(snapshot.TransactionSnapshots!);
-        Assert.Equal(5, snapshot.TransactionSnapshots![0].HouseholdId);
-        Assert.Single(snapshot.TransactionSnapshots[0].CategoryIds);
-        Assert.Equal(1, snapshot.TransactionSnapshots[0].CategoryIds[0]);
+        Assert.IsNotNull(snapshot);
+        Assert.AreEqual(BulkOperationType.Categorize, snapshot.OperationType);
+        Assert.AreEqual("user123", snapshot.UserId);
+        Assert.AreEqual(1, snapshot.AffectedTransactionIds.Count());
+        Assert.AreEqual(1, snapshot.TransactionSnapshots!.Count());
+        Assert.AreEqual(5, snapshot.TransactionSnapshots![0].HouseholdId);
+        Assert.AreEqual(1, snapshot.TransactionSnapshots[0].CategoryIds.Count());
+        Assert.AreEqual(1, snapshot.TransactionSnapshots[0].CategoryIds[0]);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task UndoBulkOperationAsync_ShouldRestoreCategorization()
     {
         // Arrange
@@ -318,21 +319,21 @@ public class BulkOperationTests
         // Verify change
         var txAfterChange = await context.Transactions.Include(t => t.TransactionCategories)
             .FirstAsync(t => t.TransactionId == 1);
-        Assert.Equal(2, txAfterChange.TransactionCategories.First().CategoryId);
+        Assert.AreEqual(2, txAfterChange.TransactionCategories.First().CategoryId);
 
         // Act - Undo
         var result = await service.UndoBulkOperationAsync(snapshot);
 
         // Assert
-        Assert.Equal(1, result.SuccessCount);
-        Assert.True(result.IsSuccess);
+        Assert.AreEqual(1, result.SuccessCount);
+        Assert.IsTrue(result.IsSuccess);
         
         var txAfterUndo = await context.Transactions.Include(t => t.TransactionCategories)
             .FirstAsync(t => t.TransactionId == 1);
-        Assert.Equal(1, txAfterUndo.TransactionCategories.First().CategoryId);
+        Assert.AreEqual(1, txAfterUndo.TransactionCategories.First().CategoryId);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task UndoBulkOperationAsync_ShouldNotUndoDelete()
     {
         // Arrange
@@ -354,12 +355,12 @@ public class BulkOperationTests
         var result = await service.UndoBulkOperationAsync(snapshot);
 
         // Assert
-        Assert.Equal(2, result.FailureCount);
-        Assert.NotEmpty(result.Errors);
-        Assert.Contains("Cannot undo delete", result.Errors[0]);
+        Assert.AreEqual(2, result.FailureCount);
+        Assert.AreNotEqual(0, result.Errors.Count());
+        CollectionAssert.Contains(result.Errors[0], "Cannot undo delete");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task BulkDeleteTransactionsAsync_ShouldHandleLargeNumberOfTransactions()
     {
         // Arrange
@@ -391,11 +392,11 @@ public class BulkOperationTests
         stopwatch.Stop();
 
         // Assert
-        Assert.Equal(150, result.SuccessCount);
-        Assert.Equal(0, result.FailureCount);
-        Assert.True(result.IsSuccess);
-        Assert.True(stopwatch.ElapsedMilliseconds < 2000, 
+        Assert.AreEqual(150, result.SuccessCount);
+        Assert.AreEqual(0, result.FailureCount);
+        Assert.IsTrue(result.IsSuccess);
+        Assert.IsTrue(stopwatch.ElapsedMilliseconds < 2000, 
             $"Bulk delete took {stopwatch.ElapsedMilliseconds}ms, should be < 2000ms");
-        Assert.Equal(0, await context.Transactions.CountAsync());
+        Assert.AreEqual(0, await context.Transactions.CountAsync());
     }
 }

@@ -4,10 +4,11 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Privatekonomi.Core.Configuration;
 using Privatekonomi.Core.Data;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Privatekonomi.Core.Tests;
 
+[TestClass]
 public class StorageConfigurationTests
 {
     private static IServiceProvider CreateServiceProvider(Dictionary<string, string?> configValues)
@@ -48,7 +49,7 @@ public class StorageConfigurationTests
         return services.BuildServiceProvider();
     }
 
-    [Fact]
+    [TestMethod]
     public void InMemoryStorage_ShouldBeConfigurable()
     {
         // Arrange & Act
@@ -61,11 +62,11 @@ public class StorageConfigurationTests
         var context = serviceProvider.GetRequiredService<PrivatekonomyContext>();
 
         // Assert
-        Assert.NotNull(context);
-        Assert.True(context.Database.IsInMemory());
+        Assert.IsNotNull(context);
+        Assert.IsTrue(context.Database.IsInMemory());
     }
 
-    [Fact]
+    [TestMethod]
     public void SqliteStorage_ShouldBeConfigurable()
     {
         // Arrange
@@ -81,9 +82,9 @@ public class StorageConfigurationTests
         var context = serviceProvider.GetRequiredService<PrivatekonomyContext>();
 
         // Assert
-        Assert.NotNull(context);
-        Assert.False(context.Database.IsInMemory());
-        Assert.True(context.Database.IsSqlite());
+        Assert.IsNotNull(context);
+        Assert.IsFalse(context.Database.IsInMemory());
+        Assert.IsTrue(context.Database.IsSqlite());
 
         // Cleanup
         if (File.Exists(dbPath))
@@ -92,7 +93,7 @@ public class StorageConfigurationTests
         }
     }
 
-    [Fact]
+    [TestMethod]
     public void StorageSettings_ShouldBindFromConfiguration()
     {
         // Arrange
@@ -114,12 +115,12 @@ public class StorageConfigurationTests
         var settings = serviceProvider.GetRequiredService<Microsoft.Extensions.Options.IOptions<StorageSettings>>().Value;
 
         // Assert
-        Assert.Equal("Sqlite", settings.Provider);
-        Assert.Equal("Data Source=test.db", settings.ConnectionString);
-        Assert.True(settings.SeedTestData);
+        Assert.AreEqual("Sqlite", settings.Provider);
+        Assert.AreEqual("Data Source=test.db", settings.ConnectionString);
+        Assert.IsTrue(settings.SeedTestData);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task SqliteStorage_ShouldPersistData()
     {
         // Arrange
@@ -158,9 +159,9 @@ public class StorageConfigurationTests
             var category = await context.Categories.FirstOrDefaultAsync(c => c.Name == "Test Category");
 
             // Assert
-            Assert.NotNull(category);
-            Assert.Equal("Test Category", category.Name);
-            Assert.Equal("#FF0000", category.Color);
+            Assert.IsNotNull(category);
+            Assert.AreEqual("Test Category", category.Name);
+            Assert.AreEqual("#FF0000", category.Color);
         }
 
         // Cleanup
@@ -170,7 +171,7 @@ public class StorageConfigurationTests
         }
     }
 
-    [Fact]
+    [TestMethod]
     public void SqlServerStorage_ShouldBeConfigurable()
     {
         // Arrange
@@ -186,16 +187,16 @@ public class StorageConfigurationTests
         var context = serviceProvider.GetRequiredService<PrivatekonomyContext>();
 
         // Assert
-        Assert.NotNull(context);
-        Assert.False(context.Database.IsInMemory());
-        Assert.True(context.Database.IsSqlServer());
+        Assert.IsNotNull(context);
+        Assert.IsFalse(context.Database.IsInMemory());
+        Assert.IsTrue(context.Database.IsSqlServer());
     }
 
-    [Fact]
+    [TestMethod]
     public void SqlServerStorage_WithoutConnectionString_ShouldThrowException()
     {
         // Arrange & Act & Assert
-        var exception = Assert.Throws<InvalidOperationException>(() =>
+        var exception = Assert.ThrowsException<InvalidOperationException>(() =>
         {
             var serviceProvider = CreateServiceProvider(new Dictionary<string, string?>
             {
@@ -206,10 +207,10 @@ public class StorageConfigurationTests
             // Exception is thrown during AddDbContext configuration
         });
 
-        Assert.Contains("ConnectionString is required for SqlServer provider", exception.Message);
+        StringAssert.Contains(exception.Message, "ConnectionString is required for SqlServer provider");
     }
 
-    [Fact]
+    [TestMethod]
     public void JsonFileStorage_ShouldBeConfigurable()
     {
         // Arrange & Act
@@ -223,12 +224,12 @@ public class StorageConfigurationTests
         var context = serviceProvider.GetRequiredService<PrivatekonomyContext>();
 
         // Assert
-        Assert.NotNull(context);
-        Assert.True(context.Database.IsInMemory());
+        Assert.IsNotNull(context);
+        Assert.IsTrue(context.Database.IsInMemory());
         
         // Verify persistence service is registered
         var persistenceService = serviceProvider.GetService<Core.Services.Persistence.IDataPersistenceService>();
-        Assert.NotNull(persistenceService);
+        Assert.IsNotNull(persistenceService);
 
         // Cleanup
         if (Directory.Exists(dataPath))
@@ -237,7 +238,8 @@ public class StorageConfigurationTests
         }
     }
 
-    [Fact(Skip = "Known issue: InMemory database entity tracking conflict when loading from JSON. This test works in isolation but fails when database instances are shared.")]
+    [TestMethod]
+    [Ignore("Known issue: InMemory database entity tracking conflict when loading from JSON. This test works in isolation but fails when database instances are shared.")]
     public async Task JsonFileStorage_ShouldPersistAndLoadData()
     {
         // Arrange
@@ -251,7 +253,7 @@ public class StorageConfigurationTests
             var context = serviceProvider.GetRequiredService<PrivatekonomyContext>();
             var persistenceService = serviceProvider.GetService<Core.Services.Persistence.IDataPersistenceService>();
 
-            Assert.NotNull(persistenceService); // Verify service is registered
+            Assert.IsNotNull(persistenceService); // Verify service is registered
 
             await context.Database.EnsureCreatedAsync();
 
@@ -274,7 +276,7 @@ public class StorageConfigurationTests
             var context = serviceProvider.GetRequiredService<PrivatekonomyContext>();
             var persistenceService = serviceProvider.GetService<Core.Services.Persistence.IDataPersistenceService>();
 
-            Assert.NotNull(persistenceService); // Verify service is registered
+            Assert.IsNotNull(persistenceService); // Verify service is registered
 
             await context.Database.EnsureCreatedAsync();
             await persistenceService.LoadAsync(context);
@@ -282,9 +284,9 @@ public class StorageConfigurationTests
             var category = await context.Categories.FirstOrDefaultAsync(c => c.Name == "Test Category");
 
             // Assert
-            Assert.NotNull(category);
-            Assert.Equal("Test Category", category.Name);
-            Assert.Equal("#FF0000", category.Color);
+            Assert.IsNotNull(category);
+            Assert.AreEqual("Test Category", category.Name);
+            Assert.AreEqual("#FF0000", category.Color);
         }
 
         // Cleanup

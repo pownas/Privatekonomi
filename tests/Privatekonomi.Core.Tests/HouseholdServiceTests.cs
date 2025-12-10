@@ -2,10 +2,11 @@ using Microsoft.EntityFrameworkCore;
 using Privatekonomi.Core.Data;
 using Privatekonomi.Core.Models;
 using Privatekonomi.Core.Services;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Privatekonomi.Core.Tests;
 
+[TestClass]
 public class HouseholdServiceTests : IDisposable
 {
     private readonly PrivatekonomyContext _context;
@@ -21,6 +22,7 @@ public class HouseholdServiceTests : IDisposable
         _householdService = new HouseholdService(_context);
     }
 
+    [TestCleanup]
     public void Dispose()
     {
         _context.Database.EnsureDeleted();
@@ -29,7 +31,7 @@ public class HouseholdServiceTests : IDisposable
 
     #region Household CRUD Tests
 
-    [Fact]
+    [TestMethod]
     public async Task UpdateHouseholdAsync_UpdatesHouseholdSuccessfully()
     {
         // Arrange
@@ -46,23 +48,23 @@ public class HouseholdServiceTests : IDisposable
         var updated = await _householdService.UpdateHouseholdAsync(created);
 
         // Assert
-        Assert.NotNull(updated);
-        Assert.Equal("Updated Name", updated.Name);
-        Assert.Equal("Updated Description", updated.Description);
-        Assert.Equal(created.HouseholdId, updated.HouseholdId);
+        Assert.IsNotNull(updated);
+        Assert.AreEqual("Updated Name", updated.Name);
+        Assert.AreEqual("Updated Description", updated.Description);
+        Assert.AreEqual(created.HouseholdId, updated.HouseholdId);
 
         // Verify the update persisted
         var retrieved = await _householdService.GetHouseholdByIdAsync(created.HouseholdId);
-        Assert.NotNull(retrieved);
-        Assert.Equal("Updated Name", retrieved.Name);
-        Assert.Equal("Updated Description", retrieved.Description);
+        Assert.IsNotNull(retrieved);
+        Assert.AreEqual("Updated Name", retrieved.Name);
+        Assert.AreEqual("Updated Description", retrieved.Description);
     }
 
     #endregion
 
     #region Activity Tests
 
-    [Fact]
+    [TestMethod]
     public async Task CreateActivityAsync_CreatesActivitySuccessfully()
     {
         // Arrange
@@ -82,14 +84,14 @@ public class HouseholdServiceTests : IDisposable
         var result = await _householdService.CreateActivityAsync(activity);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Equal("Cleaned the kitchen", result.Title);
-        Assert.Equal(HouseholdActivityType.Cleaning, result.Type);
-        Assert.NotEqual(default, result.CreatedDate);
-        Assert.NotEqual(default, result.CompletedDate);
+        Assert.IsNotNull(result);
+        Assert.AreEqual("Cleaned the kitchen", result.Title);
+        Assert.AreEqual(HouseholdActivityType.Cleaning, result.Type);
+        Assert.AreNotEqual(default, result.CreatedDate);
+        Assert.AreNotEqual(default, result.CompletedDate);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetActivitiesAsync_ReturnsActivitiesOrderedByDate()
     {
         // Arrange
@@ -118,12 +120,12 @@ public class HouseholdServiceTests : IDisposable
 
         // Assert
         var activities = result.ToList();
-        Assert.Equal(2, activities.Count);
-        Assert.Equal("Activity 2", activities[0].Title); // Most recent first
-        Assert.Equal("Activity 1", activities[1].Title);
+        Assert.AreEqual(2, activities.Count);
+        Assert.AreEqual("Activity 2", activities[0].Title); // Most recent first
+        Assert.AreEqual("Activity 1", activities[1].Title);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetActivitiesAsync_FiltersWithDateRange()
     {
         // Arrange
@@ -155,11 +157,11 @@ public class HouseholdServiceTests : IDisposable
 
         // Assert
         var activities = result.ToList();
-        Assert.Single(activities);
-        Assert.Equal("Recent Activity", activities[0].Title);
+        Assert.AreEqual(1, activities.Count());
+        Assert.AreEqual("Recent Activity", activities[0].Title);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task DeleteActivityAsync_RemovesActivity()
     {
         // Arrange
@@ -178,16 +180,16 @@ public class HouseholdServiceTests : IDisposable
         var result = await _householdService.DeleteActivityAsync(created.HouseholdActivityId);
 
         // Assert
-        Assert.True(result);
+        Assert.IsTrue(result);
         var activities = await _householdService.GetActivitiesAsync(household.HouseholdId);
-        Assert.Empty(activities);
+        Assert.AreEqual(0, activities.Count());
     }
 
     #endregion
 
     #region Task Tests
 
-    [Fact]
+    [TestMethod]
     public async Task CreateTaskAsync_CreatesTaskSuccessfully()
     {
         // Arrange
@@ -208,15 +210,15 @@ public class HouseholdServiceTests : IDisposable
         var result = await _householdService.CreateTaskAsync(task);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Equal("Buy groceries", result.Title);
-        Assert.Equal(HouseholdTaskPriority.High, result.Priority);
-        Assert.False(result.IsCompleted);
-        Assert.Null(result.CompletedDate);
-        Assert.NotEqual(default, result.CreatedDate);
+        Assert.IsNotNull(result);
+        Assert.AreEqual("Buy groceries", result.Title);
+        Assert.AreEqual(HouseholdTaskPriority.High, result.Priority);
+        Assert.IsFalse(result.IsCompleted);
+        Assert.IsNull(result.CompletedDate);
+        Assert.AreNotEqual(default, result.CreatedDate);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetTasksAsync_ReturnsTasksOrderedByPriority()
     {
         // Arrange
@@ -245,11 +247,11 @@ public class HouseholdServiceTests : IDisposable
 
         // Assert
         var tasks = result.ToList();
-        Assert.Equal(2, tasks.Count);
-        Assert.Equal("High priority task", tasks[0].Title); // Higher priority first
+        Assert.AreEqual(2, tasks.Count);
+        Assert.AreEqual("High priority task", tasks[0].Title); // Higher priority first
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetTasksAsync_ExcludesCompletedTasksWhenRequested()
     {
         // Arrange
@@ -277,11 +279,11 @@ public class HouseholdServiceTests : IDisposable
 
         // Assert
         var tasks = result.ToList();
-        Assert.Single(tasks);
-        Assert.Equal("Incomplete task", tasks[0].Title);
+        Assert.AreEqual(1, tasks.Count());
+        Assert.AreEqual("Incomplete task", tasks[0].Title);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task MarkTaskCompleteAsync_MarksTaskAsCompleted()
     {
         // Arrange
@@ -309,15 +311,15 @@ public class HouseholdServiceTests : IDisposable
         );
 
         // Assert
-        Assert.True(result);
+        Assert.IsTrue(result);
         var updated = await _context.HouseholdTasks.FindAsync(created.HouseholdTaskId);
-        Assert.NotNull(updated);
-        Assert.True(updated.IsCompleted);
-        Assert.NotNull(updated.CompletedDate);
-        Assert.Equal(member.HouseholdMemberId, updated.CompletedByMemberId);
+        Assert.IsNotNull(updated);
+        Assert.IsTrue(updated.IsCompleted);
+        Assert.IsNotNull(updated.CompletedDate);
+        Assert.AreEqual(member.HouseholdMemberId, updated.CompletedByMemberId);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task MarkTaskIncompleteAsync_MarksTaskAsIncomplete()
     {
         // Arrange
@@ -337,15 +339,15 @@ public class HouseholdServiceTests : IDisposable
         var result = await _householdService.MarkTaskIncompleteAsync(created.HouseholdTaskId);
 
         // Assert
-        Assert.True(result);
+        Assert.IsTrue(result);
         var updated = await _context.HouseholdTasks.FindAsync(created.HouseholdTaskId);
-        Assert.NotNull(updated);
-        Assert.False(updated.IsCompleted);
-        Assert.Null(updated.CompletedDate);
-        Assert.Null(updated.CompletedByMemberId);
+        Assert.IsNotNull(updated);
+        Assert.IsFalse(updated.IsCompleted);
+        Assert.IsNull(updated.CompletedDate);
+        Assert.IsNull(updated.CompletedByMemberId);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task SearchTasksAsync_FindsTasksByTitle()
     {
         // Arrange
@@ -372,11 +374,11 @@ public class HouseholdServiceTests : IDisposable
 
         // Assert
         var tasks = result.ToList();
-        Assert.Single(tasks);
-        Assert.Equal("Buy groceries", tasks[0].Title);
+        Assert.AreEqual(1, tasks.Count());
+        Assert.AreEqual("Buy groceries", tasks[0].Title);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task SearchTasksAsync_FindsTasksByDescription()
     {
         // Arrange
@@ -398,11 +400,11 @@ public class HouseholdServiceTests : IDisposable
 
         // Assert
         var tasks = result.ToList();
-        Assert.Single(tasks);
-        Assert.Equal("Shopping", tasks[0].Title);
+        Assert.AreEqual(1, tasks.Count());
+        Assert.AreEqual("Shopping", tasks[0].Title);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task DeleteTaskAsync_RemovesTask()
     {
         // Arrange
@@ -421,16 +423,16 @@ public class HouseholdServiceTests : IDisposable
         var result = await _householdService.DeleteTaskAsync(created.HouseholdTaskId);
 
         // Assert
-        Assert.True(result);
+        Assert.IsTrue(result);
         var tasks = await _householdService.GetTasksAsync(household.HouseholdId);
-        Assert.Empty(tasks);
+        Assert.AreEqual(0, tasks.Count());
     }
 
     #endregion
     
     #region Activity Image Tests
 
-    [Fact]
+    [TestMethod]
     public async Task AddActivityImageAsync_AddsImageSuccessfully()
     {
         // Arrange
@@ -456,15 +458,15 @@ public class HouseholdServiceTests : IDisposable
         );
 
         // Assert
-        Assert.NotNull(image);
-        Assert.Equal("test-image.jpg", image.ImagePath);
-        Assert.Equal("image/jpeg", image.MimeType);
-        Assert.Equal(1024000, image.FileSize);
-        Assert.Equal("Test caption", image.Caption);
-        Assert.Equal(1, image.DisplayOrder);
+        Assert.IsNotNull(image);
+        Assert.AreEqual("test-image.jpg", image.ImagePath);
+        Assert.AreEqual("image/jpeg", image.MimeType);
+        Assert.AreEqual(1024000, image.FileSize);
+        Assert.AreEqual("Test caption", image.Caption);
+        Assert.AreEqual(1, image.DisplayOrder);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task AddActivityImageAsync_SetsCorrectDisplayOrder()
     {
         // Arrange
@@ -501,12 +503,12 @@ public class HouseholdServiceTests : IDisposable
         );
 
         // Assert
-        Assert.Equal(1, image1.DisplayOrder);
-        Assert.Equal(2, image2.DisplayOrder);
-        Assert.Equal(3, image3.DisplayOrder);
+        Assert.AreEqual(1, image1.DisplayOrder);
+        Assert.AreEqual(2, image2.DisplayOrder);
+        Assert.AreEqual(3, image3.DisplayOrder);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetActivityImagesAsync_ReturnsImagesInOrder()
     {
         // Arrange
@@ -537,13 +539,13 @@ public class HouseholdServiceTests : IDisposable
 
         // Assert
         var imageList = images.ToList();
-        Assert.Equal(3, imageList.Count);
-        Assert.Equal("image3.jpg", imageList[0].ImagePath);
-        Assert.Equal("image1.jpg", imageList[1].ImagePath);
-        Assert.Equal("image2.jpg", imageList[2].ImagePath);
+        Assert.AreEqual(3, imageList.Count);
+        Assert.AreEqual("image3.jpg", imageList[0].ImagePath);
+        Assert.AreEqual("image1.jpg", imageList[1].ImagePath);
+        Assert.AreEqual("image2.jpg", imageList[2].ImagePath);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task DeleteActivityImageAsync_DeletesImageSuccessfully()
     {
         // Arrange
@@ -569,12 +571,12 @@ public class HouseholdServiceTests : IDisposable
         var result = await _householdService.DeleteActivityImageAsync(image.HouseholdActivityImageId);
 
         // Assert
-        Assert.True(result);
+        Assert.IsTrue(result);
         var images = await _householdService.GetActivityImagesAsync(createdActivity.HouseholdActivityId);
-        Assert.Empty(images);
+        Assert.AreEqual(0, images.Count());
     }
 
-    [Fact]
+    [TestMethod]
     public async Task UpdateImageOrderAsync_UpdatesOrderSuccessfully()
     {
         // Arrange
@@ -600,13 +602,13 @@ public class HouseholdServiceTests : IDisposable
         var result = await _householdService.UpdateImageOrderAsync(image.HouseholdActivityImageId, 5);
 
         // Assert
-        Assert.True(result);
+        Assert.IsTrue(result);
         var updatedImage = await _context.HouseholdActivityImages.FindAsync(image.HouseholdActivityImageId);
-        Assert.NotNull(updatedImage);
-        Assert.Equal(5, updatedImage.DisplayOrder);
+        Assert.IsNotNull(updatedImage);
+        Assert.AreEqual(5, updatedImage.DisplayOrder);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetActivitiesAsync_IncludesImages()
     {
         // Arrange
@@ -634,15 +636,15 @@ public class HouseholdServiceTests : IDisposable
 
         // Assert
         var activityList = activities.ToList();
-        Assert.Single(activityList);
-        Assert.Equal(2, activityList[0].Images.Count);
+        Assert.AreEqual(1, activityList.Count());
+        Assert.AreEqual(2, activityList[0].Images.Count);
     }
 
     #endregion
 
     #region Shared Budget Tests
 
-    [Fact]
+    [TestMethod]
     public async Task CreateSharedBudgetAsync_CreatesSharedBudgetSuccessfully()
     {
         // Arrange
@@ -686,21 +688,21 @@ public class HouseholdServiceTests : IDisposable
         var result = await _householdService.CreateSharedBudgetAsync(budget, contributions);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Equal("Test Budget", result.Name);
-        Assert.Equal(household.HouseholdId, result.HouseholdId);
-        Assert.Equal("test-user-id", result.UserId);
+        Assert.IsNotNull(result);
+        Assert.AreEqual("Test Budget", result.Name);
+        Assert.AreEqual(household.HouseholdId, result.HouseholdId);
+        Assert.AreEqual("test-user-id", result.UserId);
         
         // Verify budget shares were created
         var shares = await _context.HouseholdBudgetShares
             .Where(s => s.BudgetId == result.BudgetId)
             .ToListAsync();
-        Assert.Equal(2, shares.Count);
-        Assert.Contains(shares, s => s.HouseholdMemberId == member1.HouseholdMemberId && s.SharePercentage == 60m);
-        Assert.Contains(shares, s => s.HouseholdMemberId == member2.HouseholdMemberId && s.SharePercentage == 40m);
+        Assert.AreEqual(2, shares.Count);
+        Assert.IsTrue(shares.Any(s => s.HouseholdMemberId == member1.HouseholdMemberId && s.SharePercentage == 60m));
+        Assert.IsTrue(shares.Any(s => s.HouseholdMemberId == member2.HouseholdMemberId && s.SharePercentage == 40m));
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CreateSharedBudgetAsync_ThrowsWhenContributionsDontSumTo100()
     {
         // Arrange
@@ -740,13 +742,12 @@ public class HouseholdServiceTests : IDisposable
         };
 
         // Act & Assert
-        var exception = await Assert.ThrowsAsync<InvalidOperationException>(
-            () => _householdService.CreateSharedBudgetAsync(budget, contributions)
+        var exception = Assert.ThrowsException<InvalidOperationException>(() => _householdService.CreateSharedBudgetAsync(budget, contributions.Result)
         );
-        Assert.Contains("must sum to 100%", exception.Message);
+        StringAssert.Contains(exception.Message, "must sum to 100%");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CreateSharedBudgetAsync_ThrowsWhenHouseholdIdIsNull()
     {
         // Arrange
@@ -763,13 +764,12 @@ public class HouseholdServiceTests : IDisposable
         var contributions = new Dictionary<int, decimal>();
 
         // Act & Assert
-        var exception = await Assert.ThrowsAsync<InvalidOperationException>(
-            () => _householdService.CreateSharedBudgetAsync(budget, contributions)
+        var exception = Assert.ThrowsException<InvalidOperationException>(() => _householdService.CreateSharedBudgetAsync(budget, contributions.Result)
         );
-        Assert.Contains("must be associated with a household", exception.Message);
+        StringAssert.Contains(exception.Message, "must be associated with a household");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetHouseholdBudgetsAsync_ReturnsHouseholdBudgets()
     {
         // Arrange
@@ -807,16 +807,16 @@ public class HouseholdServiceTests : IDisposable
 
         // Assert
         var budgets = result.ToList();
-        Assert.Single(budgets);
-        Assert.Equal("Test Budget", budgets[0].Name);
-        Assert.NotEmpty(budgets[0].HouseholdBudgetShares);
+        Assert.AreEqual(1, budgets.Count());
+        Assert.AreEqual("Test Budget", budgets[0].Name);
+        Assert.AreNotEqual(0, budgets[0].HouseholdBudgetShares.Count());
     }
 
     #endregion
 
     #region Recurring Task Tests
 
-    [Fact]
+    [TestMethod]
     public async Task CreateNextRecurrenceAsync_CreatesNewTaskWithCorrectDueDate()
     {
         // Arrange
@@ -844,16 +844,16 @@ public class HouseholdServiceTests : IDisposable
         var nextTask = await _householdService.CreateNextRecurrenceAsync(created.HouseholdTaskId);
 
         // Assert
-        Assert.NotNull(nextTask);
-        Assert.Equal("Weekly cleaning", nextTask.Title);
-        Assert.Equal(new DateTime(2025, 1, 8), nextTask.DueDate); // 7 days later
-        Assert.Equal(HouseholdTaskStatus.ToDo, nextTask.Status);
-        Assert.False(nextTask.IsCompleted);
-        Assert.True(nextTask.IsRecurring);
-        Assert.Equal(created.HouseholdTaskId, nextTask.ParentTaskId);
+        Assert.IsNotNull(nextTask);
+        Assert.AreEqual("Weekly cleaning", nextTask.Title);
+        Assert.AreEqual(new DateTime(2025, 1, 8), nextTask.DueDate); // 7 days later
+        Assert.AreEqual(HouseholdTaskStatus.ToDo, nextTask.Status);
+        Assert.IsFalse(nextTask.IsCompleted);
+        Assert.IsTrue(nextTask.IsRecurring);
+        Assert.AreEqual(created.HouseholdTaskId, nextTask.ParentTaskId);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CreateNextRecurrenceAsync_MonthlyRecurrence_CalculatesCorrectDate()
     {
         // Arrange
@@ -879,11 +879,11 @@ public class HouseholdServiceTests : IDisposable
         var nextTask = await _householdService.CreateNextRecurrenceAsync(created.HouseholdTaskId);
 
         // Assert
-        Assert.NotNull(nextTask);
-        Assert.Equal(new DateTime(2025, 2, 15), nextTask.DueDate);
+        Assert.IsNotNull(nextTask);
+        Assert.AreEqual(new DateTime(2025, 2, 15), nextTask.DueDate);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task UpdateTaskStatusAsync_CompletingRecurringTask_CreatesNextOccurrence()
     {
         // Arrange
@@ -909,15 +909,15 @@ public class HouseholdServiceTests : IDisposable
         // Assert
         var allTasks = await _householdService.GetTasksAsync(household.HouseholdId);
         var tasksList = allTasks.ToList();
-        Assert.Equal(2, tasksList.Count); // Original + next occurrence
-        Assert.True(tasksList.Any(t => t.DueDate == DateTime.Today.AddDays(1)));
+        Assert.AreEqual(2, tasksList.Count); // Original + next occurrence
+        Assert.IsTrue(tasksList.Any(t => t.DueDate == DateTime.Today.AddDays(1)));
     }
 
     #endregion
 
     #region Kanban Board Tests
 
-    [Fact]
+    [TestMethod]
     public async Task GetTasksByStatusAsync_ReturnsOnlyTasksWithSpecifiedStatus()
     {
         // Arrange
@@ -956,11 +956,11 @@ public class HouseholdServiceTests : IDisposable
 
         // Assert
         var tasks = inProgressTasks.ToList();
-        Assert.Single(tasks);
-        Assert.Equal("In progress task", tasks[0].Title);
+        Assert.AreEqual(1, tasks.Count());
+        Assert.AreEqual("In progress task", tasks[0].Title);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetTasksGroupedByStatusAsync_ReturnsTasksGroupedByStatus()
     {
         // Arrange
@@ -997,12 +997,12 @@ public class HouseholdServiceTests : IDisposable
         );
 
         // Assert
-        Assert.Equal(2, grouped.Count);
-        Assert.Equal(2, grouped[HouseholdTaskStatus.ToDo].Count());
-        Assert.Single(grouped[HouseholdTaskStatus.InProgress]);
+        Assert.AreEqual(2, grouped.Count);
+        Assert.AreEqual(2, grouped[HouseholdTaskStatus.ToDo].Count());
+        Assert.AreEqual(1, grouped[HouseholdTaskStatus.InProgress].Count());
     }
 
-    [Fact]
+    [TestMethod]
     public async Task UpdateTaskStatusAsync_UpdatesStatusCorrectly()
     {
         // Arrange
@@ -1026,12 +1026,12 @@ public class HouseholdServiceTests : IDisposable
         );
 
         // Assert
-        Assert.True(result);
+        Assert.IsTrue(result);
         var updated = await _context.HouseholdTasks.FindAsync(created.HouseholdTaskId);
-        Assert.Equal(HouseholdTaskStatus.InProgress, updated!.Status);
+        Assert.AreEqual(HouseholdTaskStatus.InProgress, updated!.Status);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task UpdateTaskStatusAsync_MovingToDone_MarksAsCompleted()
     {
         // Arrange
@@ -1053,8 +1053,8 @@ public class HouseholdServiceTests : IDisposable
 
         // Assert
         var updated = await _context.HouseholdTasks.FindAsync(created.HouseholdTaskId);
-        Assert.True(updated!.IsCompleted);
-        Assert.NotNull(updated.CompletedDate);
+        Assert.IsTrue(updated!.IsCompleted);
+        Assert.IsNotNull(updated.CompletedDate);
     }
 
     #endregion

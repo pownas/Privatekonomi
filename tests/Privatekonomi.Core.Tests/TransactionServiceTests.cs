@@ -4,10 +4,11 @@ using Moq;
 using Privatekonomi.Core.Data;
 using Privatekonomi.Core.Models;
 using Privatekonomi.Core.Services;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Privatekonomi.Core.Tests;
 
+[TestClass]
 public class TransactionServiceTests : IDisposable
 {
     private readonly PrivatekonomyContext _context;
@@ -32,13 +33,14 @@ public class TransactionServiceTests : IDisposable
             null);
     }
 
+    [TestCleanup]
     public void Dispose()
     {
         _context.Database.EnsureDeleted();
         _context.Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task UpdateTransactionWithAuditAsync_ValidUpdate_SuccessfullyUpdatesTransaction()
     {
         // Arrange
@@ -73,14 +75,14 @@ public class TransactionServiceTests : IDisposable
             "127.0.0.1");
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Equal(200m, result.Amount);
-        Assert.Equal(DateTime.UtcNow.Date.AddDays(1), result.Date);
-        Assert.Equal("Updated Description", result.Description);
-        Assert.Equal("Updated Payee", result.Payee);
-        Assert.Equal("Updated Notes", result.Notes);
-        Assert.Equal("tag3,tag4", result.Tags);
-        Assert.NotNull(result.UpdatedAt);
+        Assert.IsNotNull(result);
+        Assert.AreEqual(200m, result.Amount);
+        Assert.AreEqual(DateTime.UtcNow.Date.AddDays(1), result.Date);
+        Assert.AreEqual("Updated Description", result.Description);
+        Assert.AreEqual("Updated Payee", result.Payee);
+        Assert.AreEqual("Updated Notes", result.Notes);
+        Assert.AreEqual("tag3,tag4", result.Tags);
+        Assert.IsNotNull(result.UpdatedAt);
 
         // Verify audit log was called
         _mockAuditLogService.Verify(x => x.LogTransactionUpdateAsync(
@@ -90,7 +92,7 @@ public class TransactionServiceTests : IDisposable
             "127.0.0.1"), Times.Once);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task UpdateTransactionWithAuditAsync_AmountZero_ThrowsArgumentException()
     {
         // Arrange
@@ -107,8 +109,8 @@ public class TransactionServiceTests : IDisposable
         await _context.SaveChangesAsync();
 
         // Act & Assert
-        await Assert.ThrowsAsync<ArgumentException>(async () =>
-            await _transactionService.UpdateTransactionWithAuditAsync(
+        Assert.ThrowsException<ArgumentException>(() =>
+            _transactionService.UpdateTransactionWithAuditAsync(
                 transaction.TransactionId,
                 0m, // Invalid amount
                 DateTime.UtcNow.Date,
@@ -122,7 +124,7 @@ public class TransactionServiceTests : IDisposable
                 null));
     }
 
-    [Fact]
+    [TestMethod]
     public async Task UpdateTransactionWithAuditAsync_NegativeAmount_ThrowsArgumentException()
     {
         // Arrange
@@ -139,8 +141,8 @@ public class TransactionServiceTests : IDisposable
         await _context.SaveChangesAsync();
 
         // Act & Assert
-        await Assert.ThrowsAsync<ArgumentException>(async () =>
-            await _transactionService.UpdateTransactionWithAuditAsync(
+        Assert.ThrowsException<ArgumentException>(() =>
+            _transactionService.UpdateTransactionWithAuditAsync(
                 transaction.TransactionId,
                 -50m, // Invalid amount
                 DateTime.UtcNow.Date,
@@ -154,7 +156,7 @@ public class TransactionServiceTests : IDisposable
                 null));
     }
 
-    [Fact]
+    [TestMethod]
     public async Task UpdateTransactionWithAuditAsync_EmptyDescription_ThrowsArgumentException()
     {
         // Arrange
@@ -171,8 +173,8 @@ public class TransactionServiceTests : IDisposable
         await _context.SaveChangesAsync();
 
         // Act & Assert
-        await Assert.ThrowsAsync<ArgumentException>(async () =>
-            await _transactionService.UpdateTransactionWithAuditAsync(
+        Assert.ThrowsException<ArgumentException>(() =>
+            _transactionService.UpdateTransactionWithAuditAsync(
                 transaction.TransactionId,
                 100m,
                 DateTime.UtcNow.Date,
@@ -186,7 +188,7 @@ public class TransactionServiceTests : IDisposable
                 null));
     }
 
-    [Fact]
+    [TestMethod]
     public async Task UpdateTransactionWithAuditAsync_LockedTransaction_ThrowsInvalidOperationException()
     {
         // Arrange
@@ -203,8 +205,8 @@ public class TransactionServiceTests : IDisposable
         await _context.SaveChangesAsync();
 
         // Act & Assert
-        var exception = await Assert.ThrowsAsync<InvalidOperationException>(async () =>
-            await _transactionService.UpdateTransactionWithAuditAsync(
+        var exception = Assert.ThrowsException<InvalidOperationException>(() =>
+            _transactionService.UpdateTransactionWithAuditAsync(
                 transaction.TransactionId,
                 100m,
                 DateTime.UtcNow.Date,
@@ -217,10 +219,10 @@ public class TransactionServiceTests : IDisposable
                 null,
                 null));
 
-        Assert.Contains("locked", exception.Message);
+        StringAssert.Contains(exception.Message, "locked");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task UpdateTransactionWithAuditAsync_ConcurrentModification_ThrowsInvalidOperationException()
     {
         // Arrange
@@ -238,8 +240,8 @@ public class TransactionServiceTests : IDisposable
         await _context.SaveChangesAsync();
 
         // Act & Assert
-        var exception = await Assert.ThrowsAsync<InvalidOperationException>(async () =>
-            await _transactionService.UpdateTransactionWithAuditAsync(
+        var exception = Assert.ThrowsException<InvalidOperationException>(() =>
+            _transactionService.UpdateTransactionWithAuditAsync(
                 transaction.TransactionId,
                 100m,
                 DateTime.UtcNow.Date,
@@ -252,15 +254,15 @@ public class TransactionServiceTests : IDisposable
                 null,
                 null));
 
-        Assert.Contains("modified by another user", exception.Message);
+        StringAssert.Contains(exception.Message, "modified by another user");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task UpdateTransactionWithAuditAsync_TransactionNotFound_ThrowsInvalidOperationException()
     {
         // Act & Assert
-        var exception = await Assert.ThrowsAsync<InvalidOperationException>(async () =>
-            await _transactionService.UpdateTransactionWithAuditAsync(
+        var exception = Assert.ThrowsException<InvalidOperationException>(() =>
+            _transactionService.UpdateTransactionWithAuditAsync(
                 999, // Non-existent ID
                 100m,
                 DateTime.UtcNow.Date,
@@ -273,10 +275,10 @@ public class TransactionServiceTests : IDisposable
                 null,
                 null));
 
-        Assert.Contains("not found", exception.Message);
+        StringAssert.Contains(exception.Message, "not found");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task UpdateTransactionWithAuditAsync_WithCategories_UpdatesCategoriesCorrectly()
     {
         // Arrange
@@ -321,13 +323,13 @@ public class TransactionServiceTests : IDisposable
             .Include(t => t.TransactionCategories)
             .FirstOrDefaultAsync(t => t.TransactionId == transaction.TransactionId);
 
-        Assert.NotNull(updatedTransaction);
-        Assert.Equal(2, updatedTransaction.TransactionCategories.Count);
-        Assert.Contains(updatedTransaction.TransactionCategories, tc => tc.CategoryId == 1 && tc.Amount == 60m);
-        Assert.Contains(updatedTransaction.TransactionCategories, tc => tc.CategoryId == 2 && tc.Amount == 40m);
+        Assert.IsNotNull(updatedTransaction);
+        Assert.AreEqual(2, updatedTransaction.TransactionCategories.Count);
+        Assert.IsTrue(updatedTransaction.TransactionCategories.Any(tc => tc.CategoryId == 1 && tc.Amount == 60m));
+        Assert.IsTrue(updatedTransaction.TransactionCategories.Any(tc => tc.CategoryId == 2 && tc.Amount == 40m));
     }
 
-    [Fact]
+    [TestMethod]
     public async Task UpdateTransactionWithAuditAsync_WithNullUpdatedAt_AllowsUpdate()
     {
         // Arrange
@@ -359,7 +361,7 @@ public class TransactionServiceTests : IDisposable
             null);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Equal(150m, result.Amount);
+        Assert.IsNotNull(result);
+        Assert.AreEqual(150m, result.Amount);
     }
 }

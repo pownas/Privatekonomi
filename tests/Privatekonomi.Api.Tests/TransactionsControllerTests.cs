@@ -6,10 +6,11 @@ using Microsoft.Extensions.DependencyInjection;
 using Privatekonomi.Api.Models;
 using Privatekonomi.Core.Data;
 using Privatekonomi.Core.Models;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Privatekonomi.Api.Tests;
 
+[TestClass]
 public class TransactionsControllerTests
 {
     private WebApplicationFactory<Program> CreateFactory(string databaseName)
@@ -61,7 +62,7 @@ public class TransactionsControllerTests
         return transaction;
     }
 
-    [Fact]
+    [TestMethod]
     public async Task UpdateTransaction_ValidRequest_ReturnsOkAndUpdatesTransaction()
     {
         // Arrange
@@ -86,18 +87,18 @@ public class TransactionsControllerTests
             updateRequest);
 
         // Assert
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
 
         var updatedTransaction = await response.Content.ReadFromJsonAsync<Transaction>();
-        Assert.NotNull(updatedTransaction);
-        Assert.Equal(200m, updatedTransaction.Amount);
-        Assert.Equal("Updated Description", updatedTransaction.Description);
-        Assert.Equal("Updated Payee", updatedTransaction.Payee);
-        Assert.Equal("Updated Notes", updatedTransaction.Notes);
-        Assert.Equal("updated,tag", updatedTransaction.Tags);
+        Assert.IsNotNull(updatedTransaction);
+        Assert.AreEqual(200m, updatedTransaction.Amount);
+        Assert.AreEqual("Updated Description", updatedTransaction.Description);
+        Assert.AreEqual("Updated Payee", updatedTransaction.Payee);
+        Assert.AreEqual("Updated Notes", updatedTransaction.Notes);
+        Assert.AreEqual("updated,tag", updatedTransaction.Tags);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task UpdateTransaction_InvalidAmount_ReturnsBadRequest()
     {
         // Arrange
@@ -119,10 +120,10 @@ public class TransactionsControllerTests
             updateRequest);
 
         // Assert
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.AreEqual(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task UpdateTransaction_EmptyDescription_ReturnsBadRequest()
     {
         // Arrange
@@ -144,10 +145,10 @@ public class TransactionsControllerTests
             updateRequest);
 
         // Assert
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.AreEqual(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task UpdateTransaction_LockedTransaction_ReturnsForbidden()
     {
         // Arrange
@@ -182,10 +183,10 @@ public class TransactionsControllerTests
             updateRequest);
 
         // Assert
-        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        Assert.AreEqual(HttpStatusCode.Forbidden, response.StatusCode);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task UpdateTransaction_ConcurrentModification_ReturnsConflict()
     {
         // Arrange
@@ -207,10 +208,10 @@ public class TransactionsControllerTests
             updateRequest);
 
         // Assert
-        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+        Assert.AreEqual(HttpStatusCode.Conflict, response.StatusCode);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task UpdateTransaction_TransactionNotFound_ReturnsNotFound()
     {
         // Arrange
@@ -230,10 +231,10 @@ public class TransactionsControllerTests
             updateRequest);
 
         // Assert
-        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.AreEqual(HttpStatusCode.NotFound, response.StatusCode);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task UpdateTransaction_WithCategories_UpdatesCategoriesCorrectly()
     {
         // Arrange
@@ -271,20 +272,20 @@ public class TransactionsControllerTests
             updateRequest);
 
         // Assert
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
 
         // Verify categories were updated in the database
         var updatedTransaction = await context.Transactions
             .Include(t => t.TransactionCategories)
             .FirstOrDefaultAsync(t => t.TransactionId == transaction.TransactionId);
 
-        Assert.NotNull(updatedTransaction);
-        Assert.Equal(2, updatedTransaction.TransactionCategories.Count);
-        Assert.Contains(updatedTransaction.TransactionCategories, tc => tc.CategoryId == category1.CategoryId && tc.Amount == 60m);
-        Assert.Contains(updatedTransaction.TransactionCategories, tc => tc.CategoryId == category2.CategoryId && tc.Amount == 40m);
+        Assert.IsNotNull(updatedTransaction);
+        Assert.AreEqual(2, updatedTransaction.TransactionCategories.Count);
+        Assert.IsTrue(updatedTransaction.TransactionCategories.Any(tc => tc.CategoryId == category1.CategoryId && tc.Amount == 60m));
+        Assert.IsTrue(updatedTransaction.TransactionCategories.Any(tc => tc.CategoryId == category2.CategoryId && tc.Amount == 40m));
     }
 
-    [Fact]
+    [TestMethod]
     public async Task UpdateTransaction_WithoutOptimisticLocking_AllowsUpdate()
     {
         // Arrange
@@ -306,10 +307,10 @@ public class TransactionsControllerTests
             updateRequest);
 
         // Assert
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task QuickCategorize_ValidRequest_ReturnsOkAndCategorizes()
     {
         // Arrange
@@ -339,15 +340,15 @@ public class TransactionsControllerTests
             request);
 
         // Assert
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
 
         var result = await response.Content.ReadFromJsonAsync<QuickCategorizeResponse>();
-        Assert.NotNull(result);
-        Assert.NotNull(result.Transaction);
-        Assert.Null(result.CreatedRule);
+        Assert.IsNotNull(result);
+        Assert.IsNotNull(result.Transaction);
+        Assert.IsNull(result.CreatedRule);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task QuickCategorize_WithCreateRule_CreatesRuleAndCategorizes()
     {
         // Arrange
@@ -378,17 +379,17 @@ public class TransactionsControllerTests
             request);
 
         // Assert
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
 
         var result = await response.Content.ReadFromJsonAsync<QuickCategorizeResponse>();
-        Assert.NotNull(result);
-        Assert.NotNull(result.Transaction);
-        Assert.NotNull(result.CreatedRule);
-        Assert.Equal("Test Payee", result.CreatedRule!.Pattern);
-        Assert.Equal(category.CategoryId, result.CreatedRule.CategoryId);
+        Assert.IsNotNull(result);
+        Assert.IsNotNull(result.Transaction);
+        Assert.IsNotNull(result.CreatedRule);
+        Assert.AreEqual("Test Payee", result.CreatedRule!.Pattern);
+        Assert.AreEqual(category.CategoryId, result.CreatedRule.CategoryId);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task QuickCategorize_TransactionNotFound_ReturnsNotFound()
     {
         // Arrange
@@ -415,10 +416,10 @@ public class TransactionsControllerTests
             request);
 
         // Assert
-        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.AreEqual(HttpStatusCode.NotFound, response.StatusCode);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task QuickCategorize_CategoryNotFound_ReturnsNotFound()
     {
         // Arrange
@@ -440,6 +441,6 @@ public class TransactionsControllerTests
             request);
 
         // Assert
-        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.AreEqual(HttpStatusCode.NotFound, response.StatusCode);
     }
 }

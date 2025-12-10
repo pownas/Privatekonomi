@@ -2,10 +2,11 @@ using Microsoft.EntityFrameworkCore;
 using Privatekonomi.Core.Data;
 using Privatekonomi.Core.Models;
 using Privatekonomi.Core.Services;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Privatekonomi.Core.Tests;
 
+[TestClass]
 public class MortgageAnalysisServiceTests
 {
     private PrivatekonomyContext CreateInMemoryContext()
@@ -19,7 +20,7 @@ public class MortgageAnalysisServiceTests
 
     #region Amortization Requirement Tests
 
-    [Fact]
+    [TestMethod]
     public void CalculateAmortizationRequirement_LtvOver70_Requires2PercentAnnual()
     {
         // Arrange
@@ -40,15 +41,15 @@ public class MortgageAnalysisServiceTests
         var result = service.CalculateAmortizationRequirement(loan);
 
         // Assert
-        Assert.Equal(75m, result.LoanToValueRatio); // 3M/4M = 75%
-        Assert.Equal(AmortizationRule.TwoPercentAnnual, result.ApplicableRule);
-        Assert.Equal(60000m, result.RequiredAnnualAmortization); // 2% of 3M
-        Assert.Equal(5000m, result.RequiredMonthlyAmortization); // 60000 / 12
-        Assert.False(result.MeetsRequirement); // 3000 < 5000
-        Assert.Equal(2000m, result.MonthlyShortage); // 5000 - 3000
+        Assert.AreEqual(75m, result.LoanToValueRatio); // 3M/4M = 75%
+        Assert.AreEqual(AmortizationRule.TwoPercentAnnual, result.ApplicableRule);
+        Assert.AreEqual(60000m, result.RequiredAnnualAmortization); // 2% of 3M
+        Assert.AreEqual(5000m, result.RequiredMonthlyAmortization); // 60000 / 12
+        Assert.IsFalse(result.MeetsRequirement); // 3000 < 5000
+        Assert.AreEqual(2000m, result.MonthlyShortage); // 5000 - 3000
     }
 
-    [Fact]
+    [TestMethod]
     public void CalculateAmortizationRequirement_LtvBetween50And70_Requires1PercentAnnual()
     {
         // Arrange
@@ -69,15 +70,15 @@ public class MortgageAnalysisServiceTests
         var result = service.CalculateAmortizationRequirement(loan);
 
         // Assert
-        Assert.Equal(60m, result.LoanToValueRatio); // 2.4M/4M = 60%
-        Assert.Equal(AmortizationRule.OnePercentAnnual, result.ApplicableRule);
-        Assert.Equal(24000m, result.RequiredAnnualAmortization); // 1% of 2.4M
-        Assert.Equal(2000m, result.RequiredMonthlyAmortization); // 24000 / 12
-        Assert.True(result.MeetsRequirement); // 2500 >= 2000
-        Assert.Equal(0m, result.MonthlyShortage);
+        Assert.AreEqual(60m, result.LoanToValueRatio); // 2.4M/4M = 60%
+        Assert.AreEqual(AmortizationRule.OnePercentAnnual, result.ApplicableRule);
+        Assert.AreEqual(24000m, result.RequiredAnnualAmortization); // 1% of 2.4M
+        Assert.AreEqual(2000m, result.RequiredMonthlyAmortization); // 24000 / 12
+        Assert.IsTrue(result.MeetsRequirement); // 2500 >= 2000
+        Assert.AreEqual(0m, result.MonthlyShortage);
     }
 
-    [Fact]
+    [TestMethod]
     public void CalculateAmortizationRequirement_LtvUnder50_NoRequirement()
     {
         // Arrange
@@ -98,15 +99,15 @@ public class MortgageAnalysisServiceTests
         var result = service.CalculateAmortizationRequirement(loan);
 
         // Assert
-        Assert.Equal(37.5m, result.LoanToValueRatio); // 1.5M/4M = 37.5%
-        Assert.Equal(AmortizationRule.NoRequirement, result.ApplicableRule);
-        Assert.Equal(0m, result.RequiredAnnualAmortization);
-        Assert.Equal(0m, result.RequiredMonthlyAmortization);
-        Assert.True(result.MeetsRequirement);
-        Assert.Equal(0m, result.MonthlyShortage);
+        Assert.AreEqual(37.5m, result.LoanToValueRatio); // 1.5M/4M = 37.5%
+        Assert.AreEqual(AmortizationRule.NoRequirement, result.ApplicableRule);
+        Assert.AreEqual(0m, result.RequiredAnnualAmortization);
+        Assert.AreEqual(0m, result.RequiredMonthlyAmortization);
+        Assert.IsTrue(result.MeetsRequirement);
+        Assert.AreEqual(0m, result.MonthlyShortage);
     }
 
-    [Fact]
+    [TestMethod]
     public void CalculateAmortizationRequirement_WithExtraPayment_IncludesInCalculation()
     {
         // Arrange
@@ -128,12 +129,12 @@ public class MortgageAnalysisServiceTests
         var result = service.CalculateAmortizationRequirement(loan);
 
         // Assert
-        Assert.Equal(5000m, result.CurrentMonthlyAmortization); // 3000 + 2000
-        Assert.True(result.MeetsRequirement); // 5000 >= 5000
-        Assert.Equal(0m, result.MonthlyShortage);
+        Assert.AreEqual(5000m, result.CurrentMonthlyAmortization); // 3000 + 2000
+        Assert.IsTrue(result.MeetsRequirement); // 5000 >= 5000
+        Assert.AreEqual(0m, result.MonthlyShortage);
     }
 
-    [Fact]
+    [TestMethod]
     public void CalculateAmortizationRequirement_NonMortgageLoan_NoRequirement()
     {
         // Arrange
@@ -153,13 +154,13 @@ public class MortgageAnalysisServiceTests
         var result = service.CalculateAmortizationRequirement(loan);
 
         // Assert
-        Assert.Equal(AmortizationRule.NoRequirement, result.ApplicableRule);
-        Assert.Equal(0m, result.RequiredAnnualAmortization);
-        Assert.True(result.MeetsRequirement);
-        Assert.Contains("endast för bolån", result.RuleDescription);
+        Assert.AreEqual(AmortizationRule.NoRequirement, result.ApplicableRule);
+        Assert.AreEqual(0m, result.RequiredAnnualAmortization);
+        Assert.IsTrue(result.MeetsRequirement);
+        StringAssert.Contains(result.RuleDescription, "endast för bolån");
     }
 
-    [Fact]
+    [TestMethod]
     public void CalculateAmortizationRequirement_CalculatesYearsToPayoff()
     {
         // Arrange
@@ -180,15 +181,15 @@ public class MortgageAnalysisServiceTests
         var result = service.CalculateAmortizationRequirement(loan);
 
         // Assert
-        Assert.NotNull(result.YearsToPayoff);
-        Assert.Equal(20m, result.YearsToPayoff.Value);
+        Assert.IsNotNull(result.YearsToPayoff);
+        Assert.AreEqual(20m, result.YearsToPayoff.Value);
     }
 
     #endregion
 
     #region Interest Rate Risk Analysis Tests
 
-    [Fact]
+    [TestMethod]
     public void AnalyzeInterestRateRisk_CreatesScenarios()
     {
         // Arrange
@@ -211,23 +212,23 @@ public class MortgageAnalysisServiceTests
         var result = service.AnalyzeInterestRateRisk(loan, scenarios);
 
         // Assert
-        Assert.Equal(4, result.Scenarios.Count);
-        Assert.Equal(4.0m, result.CurrentInterestRate);
+        Assert.AreEqual(4, result.Scenarios.Count);
+        Assert.AreEqual(4.0m, result.CurrentInterestRate);
         
         // Check +1% scenario
         var scenario1 = result.Scenarios[1];
-        Assert.Equal("+1.0%", scenario1.ScenarioName);
-        Assert.Equal(5.0m, scenario1.InterestRate);
-        Assert.True(scenario1.MonthlyIncrease > 0);
+        Assert.AreEqual("+1.0%", scenario1.ScenarioName);
+        Assert.AreEqual(5.0m, scenario1.InterestRate);
+        Assert.IsTrue(scenario1.MonthlyIncrease > 0);
         
         // Check +2% scenario
         var scenario2 = result.Scenarios[2];
-        Assert.Equal("+2.0%", scenario2.ScenarioName);
-        Assert.Equal(6.0m, scenario2.InterestRate);
-        Assert.True(scenario2.MonthlyIncrease > scenario1.MonthlyIncrease);
+        Assert.AreEqual("+2.0%", scenario2.ScenarioName);
+        Assert.AreEqual(6.0m, scenario2.InterestRate);
+        Assert.IsTrue(scenario2.MonthlyIncrease > scenario1.MonthlyIncrease);
     }
 
-    [Fact]
+    [TestMethod]
     public void AnalyzeInterestRateRisk_VariableRate_HighRisk()
     {
         // Arrange
@@ -249,15 +250,15 @@ public class MortgageAnalysisServiceTests
         var result = service.AnalyzeInterestRateRisk(loan, new[] { 0m, 1m, 2m });
 
         // Assert
-        Assert.False(result.IsFixedRate);
-        Assert.Null(result.RateResetDate);
-        Assert.Null(result.MonthsUntilRateReset);
-        Assert.Equal(RiskLevel.High, result.RiskLevel);
-        Assert.Contains("Hög risk", result.RiskDescription);
-        Assert.Contains("Rörlig ränta", result.RiskDescription);
+        Assert.IsFalse(result.IsFixedRate);
+        Assert.IsNull(result.RateResetDate);
+        Assert.IsNull(result.MonthsUntilRateReset);
+        Assert.AreEqual(RiskLevel.High, result.RiskLevel);
+        StringAssert.Contains(result.RiskDescription, "Hög risk");
+        StringAssert.Contains(result.RiskDescription, "Rörlig ränta");
     }
 
-    [Fact]
+    [TestMethod]
     public void AnalyzeInterestRateRisk_LongFixedPeriod_LowRisk()
     {
         // Arrange
@@ -280,15 +281,15 @@ public class MortgageAnalysisServiceTests
         var result = service.AnalyzeInterestRateRisk(loan, new[] { 0m, 1m, 2m });
 
         // Assert
-        Assert.True(result.IsFixedRate);
-        Assert.NotNull(result.RateResetDate);
-        Assert.NotNull(result.MonthsUntilRateReset);
-        Assert.True(result.MonthsUntilRateReset >= 48);
-        Assert.Equal(RiskLevel.Low, result.RiskLevel);
-        Assert.Contains("Låg risk", result.RiskDescription);
+        Assert.IsTrue(result.IsFixedRate);
+        Assert.IsNotNull(result.RateResetDate);
+        Assert.IsNotNull(result.MonthsUntilRateReset);
+        Assert.IsTrue(result.MonthsUntilRateReset >= 48);
+        Assert.AreEqual(RiskLevel.Low, result.RiskLevel);
+        StringAssert.Contains(result.RiskDescription, "Låg risk");
     }
 
-    [Fact]
+    [TestMethod]
     public void AnalyzeInterestRateRisk_ShortFixedPeriodHighLtv_HighRisk()
     {
         // Arrange
@@ -311,13 +312,13 @@ public class MortgageAnalysisServiceTests
         var result = service.AnalyzeInterestRateRisk(loan, new[] { 0m, 1m, 2m, 3m });
 
         // Assert
-        Assert.True(result.IsFixedRate);
-        Assert.Equal(RiskLevel.High, result.RiskLevel);
-        Assert.Contains("Hög risk", result.RiskDescription);
-        Assert.Contains("löper ut snart", result.RiskDescription);
+        Assert.IsTrue(result.IsFixedRate);
+        Assert.AreEqual(RiskLevel.High, result.RiskLevel);
+        StringAssert.Contains(result.RiskDescription, "Hög risk");
+        StringAssert.Contains(result.RiskDescription, "löper ut snart");
     }
 
-    [Fact]
+    [TestMethod]
     public void AnalyzeInterestRateRisk_MediumPeriodMediumLtv_MediumRisk()
     {
         // Arrange
@@ -341,15 +342,15 @@ public class MortgageAnalysisServiceTests
 
         // Assert
         // With LTV > 70% and 12-36 months until reset, should be Medium risk
-        Assert.Equal(RiskLevel.Medium, result.RiskLevel);
-        Assert.Contains("Måttlig risk", result.RiskDescription);
+        Assert.AreEqual(RiskLevel.Medium, result.RiskLevel);
+        StringAssert.Contains(result.RiskDescription, "Måttlig risk");
     }
 
     #endregion
 
     #region Monthly Cost Calculation Tests
 
-    [Fact]
+    [TestMethod]
     public void CalculateMonthlyCost_ReturnsCorrectBreakdown()
     {
         // Arrange
@@ -368,20 +369,20 @@ public class MortgageAnalysisServiceTests
         var result = service.CalculateMonthlyCost(loan);
 
         // Assert
-        Assert.Equal(3000000m, result.Principal);
-        Assert.Equal(4.0m, result.InterestRate);
+        Assert.AreEqual(3000000m, result.Principal);
+        Assert.AreEqual(4.0m, result.InterestRate);
         
         // Monthly interest = (3000000 * 4.0 / 100) / 12 = 10000
-        Assert.Equal(10000m, result.MonthlyInterest);
-        Assert.Equal(5000m, result.MonthlyAmortization);
-        Assert.Equal(15000m, result.TotalMonthlyPayment); // 10000 + 5000
+        Assert.AreEqual(10000m, result.MonthlyInterest);
+        Assert.AreEqual(5000m, result.MonthlyAmortization);
+        Assert.AreEqual(15000m, result.TotalMonthlyPayment); // 10000 + 5000
         
-        Assert.Equal(120000m, result.AnnualInterestCost); // 10000 * 12
-        Assert.Equal(60000m, result.AnnualAmortization); // 5000 * 12
-        Assert.Equal(180000m, result.TotalAnnualPayment); // 15000 * 12
+        Assert.AreEqual(120000m, result.AnnualInterestCost); // 10000 * 12
+        Assert.AreEqual(60000m, result.AnnualAmortization); // 5000 * 12
+        Assert.AreEqual(180000m, result.TotalAnnualPayment); // 15000 * 12
     }
 
-    [Fact]
+    [TestMethod]
     public void CalculateMonthlyCost_WithCustomRate_UsesCustomRate()
     {
         // Arrange
@@ -400,14 +401,14 @@ public class MortgageAnalysisServiceTests
         var result = service.CalculateMonthlyCost(loan, 6.0m); // Custom 6% rate
 
         // Assert
-        Assert.Equal(6.0m, result.InterestRate);
+        Assert.AreEqual(6.0m, result.InterestRate);
         
         // Monthly interest = (3000000 * 6.0 / 100) / 12 = 15000
-        Assert.Equal(15000m, result.MonthlyInterest);
-        Assert.Equal(20000m, result.TotalMonthlyPayment); // 15000 + 5000
+        Assert.AreEqual(15000m, result.MonthlyInterest);
+        Assert.AreEqual(20000m, result.TotalMonthlyPayment); // 15000 + 5000
     }
 
-    [Fact]
+    [TestMethod]
     public void CalculateMonthlyCost_IncludesExtraPayment()
     {
         // Arrange
@@ -427,15 +428,15 @@ public class MortgageAnalysisServiceTests
         var result = service.CalculateMonthlyCost(loan);
 
         // Assert
-        Assert.Equal(7000m, result.MonthlyAmortization); // 5000 + 2000
-        Assert.Equal(17000m, result.TotalMonthlyPayment); // 10000 interest + 7000 amortization
+        Assert.AreEqual(7000m, result.MonthlyAmortization); // 5000 + 2000
+        Assert.AreEqual(17000m, result.TotalMonthlyPayment); // 10000 interest + 7000 amortization
     }
 
     #endregion
 
     #region Upcoming Rate Resets Tests
 
-    [Fact]
+    [TestMethod]
     public async Task GetUpcomingRateResetsAsync_ReturnsOnlyUpcomingResets()
     {
         // Arrange
@@ -497,11 +498,11 @@ public class MortgageAnalysisServiceTests
         var result = await service.GetUpcomingRateResetsAsync(6);
 
         // Assert
-        Assert.Single(result);
-        Assert.Equal("Soon Reset", result.First().Name);
+        Assert.AreEqual(1, result.Count());
+        Assert.AreEqual("Soon Reset", result.First().Name);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetUpcomingRateResetsAsync_WithCustomMonths_RespectsParameter()
     {
         // Arrange
@@ -541,10 +542,10 @@ public class MortgageAnalysisServiceTests
         var result = await service.GetUpcomingRateResetsAsync(12); // 12 months
 
         // Assert
-        Assert.Equal(2, result.Count());
+        Assert.AreEqual(2, result.Count());
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetUpcomingRateResetsAsync_OrdersByRateResetDate()
     {
         // Arrange
@@ -584,9 +585,9 @@ public class MortgageAnalysisServiceTests
         var result = await service.GetUpcomingRateResetsAsync(6);
 
         // Assert
-        Assert.Equal(2, result.Count());
-        Assert.Equal("Earlier", result.First().Name);
-        Assert.Equal("Later", result.Last().Name);
+        Assert.AreEqual(2, result.Count());
+        Assert.AreEqual("Earlier", result.First().Name);
+        Assert.AreEqual("Later", result.Last().Name);
     }
 
     #endregion

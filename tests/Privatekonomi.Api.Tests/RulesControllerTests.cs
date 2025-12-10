@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Privatekonomi.Core.Data;
 using Privatekonomi.Core.Models;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Privatekonomi.Api.Tests;
 
@@ -13,6 +13,7 @@ namespace Privatekonomi.Api.Tests;
 /// Unit tests for the RulesController API endpoints.
 /// Tests the /api/rules endpoint which provides user categorization rules.
 /// </summary>
+[TestClass]
 public class RulesControllerTests
 {
     private WebApplicationFactory<Program> CreateFactory(string databaseName)
@@ -84,7 +85,7 @@ public class RulesControllerTests
         return rule;
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetAllRules_ReturnsEmptyList_WhenNoRulesExist()
     {
         // Arrange
@@ -95,13 +96,13 @@ public class RulesControllerTests
         var response = await client.GetAsync("/api/rules");
 
         // Assert
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
         var rules = await response.Content.ReadFromJsonAsync<List<CategoryRule>>();
-        Assert.NotNull(rules);
-        Assert.Empty(rules);
+        Assert.IsNotNull(rules);
+        Assert.AreEqual(0, rules.Count());
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetAllRules_ReturnsList_WhenRulesExist()
     {
         // Arrange
@@ -115,13 +116,13 @@ public class RulesControllerTests
         var response = await client.GetAsync("/api/rules");
 
         // Assert
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
         var rules = await response.Content.ReadFromJsonAsync<List<CategoryRule>>();
-        Assert.NotNull(rules);
-        Assert.Single(rules);
+        Assert.IsNotNull(rules);
+        Assert.AreEqual(1, rules.Count());
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetActiveRules_ReturnsOnlyActiveRules()
     {
         // Arrange
@@ -157,14 +158,14 @@ public class RulesControllerTests
         var response = await client.GetAsync("/api/rules/active");
 
         // Assert
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
         var rules = await response.Content.ReadFromJsonAsync<List<CategoryRule>>();
-        Assert.NotNull(rules);
-        Assert.Single(rules);
-        Assert.True(rules.All(r => r.IsActive));
+        Assert.IsNotNull(rules);
+        Assert.AreEqual(1, rules.Count());
+        Assert.IsTrue(rules.All(r => r.IsActive));
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetRule_ReturnsNotFound_WhenRuleDoesNotExist()
     {
         // Arrange
@@ -175,10 +176,10 @@ public class RulesControllerTests
         var response = await client.GetAsync("/api/rules/9999");
 
         // Assert
-        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.AreEqual(HttpStatusCode.NotFound, response.StatusCode);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetRule_ReturnsRule_WhenRuleExists()
     {
         // Arrange
@@ -192,13 +193,13 @@ public class RulesControllerTests
         var response = await client.GetAsync($"/api/rules/{createdRule.CategoryRuleId}");
 
         // Assert
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
         var rule = await response.Content.ReadFromJsonAsync<CategoryRule>();
-        Assert.NotNull(rule);
-        Assert.Equal(createdRule.Pattern, rule.Pattern);
+        Assert.IsNotNull(rule);
+        Assert.AreEqual(createdRule.Pattern, rule.Pattern);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CreateRule_CreatesUserRule()
     {
         // Arrange
@@ -223,14 +224,14 @@ public class RulesControllerTests
         var response = await client.PostAsJsonAsync("/api/rules", newRule);
 
         // Assert
-        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        Assert.AreEqual(HttpStatusCode.Created, response.StatusCode);
         var createdRule = await response.Content.ReadFromJsonAsync<CategoryRule>();
-        Assert.NotNull(createdRule);
-        Assert.Equal("ICA", createdRule.Pattern);
-        Assert.Equal(RuleType.User, createdRule.RuleType);
+        Assert.IsNotNull(createdRule);
+        Assert.AreEqual("ICA", createdRule.Pattern);
+        Assert.AreEqual(RuleType.User, createdRule.RuleType);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task UpdateRule_IdMismatch_ReturnsBadRequest()
     {
         // Arrange
@@ -259,10 +260,10 @@ public class RulesControllerTests
         var response = await client.PutAsJsonAsync($"/api/rules/{existingRule.CategoryRuleId}", updatePayload);
 
         // Assert - should fail due to ID mismatch
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.AreEqual(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task DeleteRule_RemovesRule()
     {
         // Arrange
@@ -277,11 +278,11 @@ public class RulesControllerTests
         var getResponse = await client.GetAsync($"/api/rules/{existingRule.CategoryRuleId}");
 
         // Assert
-        Assert.Equal(HttpStatusCode.NoContent, deleteResponse.StatusCode);
-        Assert.Equal(HttpStatusCode.NotFound, getResponse.StatusCode);
+        Assert.AreEqual(HttpStatusCode.NoContent, deleteResponse.StatusCode);
+        Assert.AreEqual(HttpStatusCode.NotFound, getResponse.StatusCode);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task TestRule_ReturnsMatchingRule()
     {
         // Arrange
@@ -297,13 +298,13 @@ public class RulesControllerTests
         var response = await client.PostAsJsonAsync("/api/rules/test", testRequest);
 
         // Assert
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
         var matchingRule = await response.Content.ReadFromJsonAsync<CategoryRule>();
-        Assert.NotNull(matchingRule);
-        Assert.Equal("Test Pattern", matchingRule.Pattern);
+        Assert.IsNotNull(matchingRule);
+        Assert.AreEqual("Test Pattern", matchingRule.Pattern);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task TestRule_ReturnsNotFound_WhenNoMatchingRule()
     {
         // Arrange
@@ -316,6 +317,6 @@ public class RulesControllerTests
         var response = await client.PostAsJsonAsync("/api/rules/test", testRequest);
 
         // Assert
-        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.AreEqual(HttpStatusCode.NotFound, response.StatusCode);
     }
 }

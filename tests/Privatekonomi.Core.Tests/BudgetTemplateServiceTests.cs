@@ -1,9 +1,10 @@
 using Privatekonomi.Core.Models;
 using Privatekonomi.Core.Services;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Privatekonomi.Core.Tests;
 
+[TestClass]
 public class BudgetTemplateServiceTests
 {
     private readonly List<Category> _categories;
@@ -29,7 +30,7 @@ public class BudgetTemplateServiceTests
         };
     }
 
-    [Fact]
+    [TestMethod]
     public void ApplyTemplate_SwedishFamily_AllocatesCorrectPercentages()
     {
         // Arrange
@@ -43,11 +44,11 @@ public class BudgetTemplateServiceTests
         var boende = result[3]; // Boende category
         var sparande = result[8]; // Sparande category
         
-        Assert.Equal(9000m, boende); // 30% of 30000
-        Assert.Equal(4500m, sparande); // 15% of 30000
+        Assert.AreEqual(9000m, boende); // 30% of 30000
+        Assert.AreEqual(4500m, sparande); // 15% of 30000
     }
 
-    [Fact]
+    [TestMethod]
     public void ApplyTemplate_SwedishFamily_TreatsSavingsAsMonthlyCost()
     {
         // Arrange - Verify that savings is treated as a significant monthly cost
@@ -60,13 +61,13 @@ public class BudgetTemplateServiceTests
         var sparande = result[8]; // Sparande category
         
         // Should allocate 15% to savings as a monthly cost
-        Assert.Equal(4500m, sparande);
+        Assert.AreEqual(4500m, sparande);
         
         // Verify it's a significant portion
-        Assert.True(sparande > totalIncome * 0.10m, "Savings should be at least 10% of income");
+        Assert.IsTrue(sparande > totalIncome * 0.10m, "Savings should be at least 10% of income");
     }
 
-    [Fact]
+    [TestMethod]
     public void ApplyTemplate_SwedishFamily_SeparatesFoodCategories()
     {
         // Arrange
@@ -80,16 +81,16 @@ public class BudgetTemplateServiceTests
         var restaurang = result[10]; // Restaurang
         
         // Groceries should get 15% (4500 kr)
-        Assert.Equal(4500m, mat);
+        Assert.AreEqual(4500m, mat);
         
         // Restaurant should get 5% (1500 kr)
-        Assert.Equal(1500m, restaurang);
+        Assert.AreEqual(1500m, restaurang);
         
         // Total food budget should be 20%
-        Assert.Equal(6000m, mat + restaurang);
+        Assert.AreEqual(6000m, mat + restaurang);
     }
 
-    [Fact]
+    [TestMethod]
     public void ApplyTemplate_SwedishSingle_AllocatesHigherSavingsRate()
     {
         // Arrange
@@ -102,14 +103,14 @@ public class BudgetTemplateServiceTests
         var sparande = result[8]; // Sparande category
         
         // Singles should have 20% savings rate
-        Assert.Equal(5000m, sparande);
+        Assert.AreEqual(5000m, sparande);
         
         // Verify it's higher than family template would give
         var familyResult = BudgetTemplateService.ApplyTemplate(BudgetTemplateType.SwedishFamily, totalIncome, _categories);
-        Assert.True(sparande > familyResult[8], "Single household should save more than family");
+        Assert.IsTrue(sparande > familyResult[8], "Single household should save more than family");
     }
 
-    [Fact]
+    [TestMethod]
     public void ApplyTemplate_SwedishSingle_LowerHousingCosts()
     {
         // Arrange
@@ -122,10 +123,10 @@ public class BudgetTemplateServiceTests
         var boende = result[3]; // Boende category
         
         // Singles should have 28% housing costs (lower than family 30%)
-        Assert.Equal(7000m, boende);
+        Assert.AreEqual(7000m, boende);
     }
 
-    [Fact]
+    [TestMethod]
     public void ApplyTemplate_Custom_ReturnsAllZeros()
     {
         // Arrange
@@ -135,10 +136,10 @@ public class BudgetTemplateServiceTests
         var result = BudgetTemplateService.ApplyTemplate(BudgetTemplateType.Custom, totalIncome, _categories);
 
         // Assert
-        Assert.All(result.Values, amount => Assert.Equal(0m, amount));
+        foreach (var amount in result.Values) { Assert.AreEqual(0m, amount); }
     }
 
-    [Fact]
+    [TestMethod]
     public void ApplyTemplate_FiftyThirtyTwenty_AllocatesCorrectly()
     {
         // Arrange
@@ -150,14 +151,14 @@ public class BudgetTemplateServiceTests
         // Assert
         var sparande = result[8]; // Sparande should get 20% = 6000
         
-        Assert.Equal(6000m, sparande);
+        Assert.AreEqual(6000m, sparande);
     }
 
-    [Theory]
-    [InlineData(20000)]
-    [InlineData(30000)]
-    [InlineData(40000)]
-    [InlineData(50000)]
+    [DataTestMethod]
+    [DataRow(20000)]
+    [DataRow(30000)]
+    [DataRow(40000)]
+    [DataRow(50000)]
     public void ApplyTemplate_SwedishFamily_WorksWithVariousIncomes(decimal income)
     {
         // Act
@@ -168,34 +169,34 @@ public class BudgetTemplateServiceTests
         
         // Templates provide suggestions and may allocate more or less than 100%
         // Users are expected to adjust. Just verify it's a reasonable starting point.
-        Assert.True(total > 0, "Template should allocate some amount");
-        Assert.True(total > income * 0.5m, "Template should allocate at least 50% of income");
+        Assert.IsTrue(total > 0, "Template should allocate some amount");
+        Assert.IsTrue(total > income * 0.5m, "Template should allocate at least 50% of income");
     }
 
-    [Fact]
+    [TestMethod]
     public void GetTemplateDescription_SwedishFamily_ReturnsCorrectDescription()
     {
         // Act
         var description = BudgetTemplateService.GetTemplateDescription(BudgetTemplateType.SwedishFamily);
 
         // Assert
-        Assert.Contains("Svenska Familjehushåll", description);
-        Assert.Contains("Länsförsäkringar", description);
-        Assert.Contains("15% sparande", description);
+        StringAssert.Contains(description, "Svenska Familjehushåll");
+        StringAssert.Contains(description, "Länsförsäkringar");
+        StringAssert.Contains(description, "15% sparande");
     }
 
-    [Fact]
+    [TestMethod]
     public void GetTemplateDescription_SwedishSingle_ReturnsCorrectDescription()
     {
         // Act
         var description = BudgetTemplateService.GetTemplateDescription(BudgetTemplateType.SwedishSingle);
 
         // Assert
-        Assert.Contains("Svenska Singelhushåll", description);
-        Assert.Contains("20%", description);
+        StringAssert.Contains(description, "Svenska Singelhushåll");
+        StringAssert.Contains(description, "20%");
     }
 
-    [Fact]
+    [TestMethod]
     public void ApplyTemplate_SwedishFamily_IncludesChildrenCategory()
     {
         // Arrange
@@ -208,10 +209,10 @@ public class BudgetTemplateServiceTests
         var barn = result[13]; // Barn category
         
         // Should allocate 5% for children activities (1500 kr)
-        Assert.Equal(1500m, barn);
+        Assert.AreEqual(1500m, barn);
     }
 
-    [Fact]
+    [TestMethod]
     public void ApplyTemplate_SwedishFamily_IncludesBuffer()
     {
         // Arrange
@@ -224,10 +225,10 @@ public class BudgetTemplateServiceTests
         var buffert = result[14]; // Buffert category
         
         // Should allocate 6% for buffer (1800 kr)
-        Assert.Equal(1800m, buffert);
+        Assert.AreEqual(1800m, buffert);
     }
 
-    [Fact]
+    [TestMethod]
     public void ApplyTemplate_SwedishSingle_HigherBuffer()
     {
         // Arrange
@@ -240,6 +241,6 @@ public class BudgetTemplateServiceTests
         var buffert = result[14]; // Buffert category
         
         // Should allocate 9.5% for buffer (2375 kr)
-        Assert.Equal(2375m, buffert);
+        Assert.AreEqual(2375m, buffert);
     }
 }

@@ -1,9 +1,10 @@
 using Microsoft.Extensions.Caching.Memory;
 using Privatekonomi.Core.Services;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Privatekonomi.Core.Tests;
 
+[TestClass]
 public class OAuthStateServiceTests
 {
     private readonly IOAuthStateService _stateService;
@@ -14,7 +15,7 @@ public class OAuthStateServiceTests
         _stateService = new OAuthStateService(cache);
     }
 
-    [Fact]
+    [TestMethod]
     public void GenerateState_ShouldReturnNonEmptyString()
     {
         // Arrange
@@ -24,11 +25,11 @@ public class OAuthStateServiceTests
         var state = _stateService.GenerateState(bankName);
 
         // Assert
-        Assert.NotNull(state);
-        Assert.NotEmpty(state);
+        Assert.IsNotNull(state);
+        Assert.AreNotEqual(0, state.Count());
     }
 
-    [Fact]
+    [TestMethod]
     public void GenerateState_ShouldReturnUniqueStates()
     {
         // Arrange
@@ -39,10 +40,10 @@ public class OAuthStateServiceTests
         var state2 = _stateService.GenerateState(bankName);
 
         // Assert
-        Assert.NotEqual(state1, state2);
+        Assert.AreNotEqual(state1, state2);
     }
 
-    [Fact]
+    [TestMethod]
     public void ValidateState_ValidState_ShouldReturnTrue()
     {
         // Arrange
@@ -53,10 +54,10 @@ public class OAuthStateServiceTests
         var isValid = _stateService.ValidateState(state, bankName);
 
         // Assert
-        Assert.True(isValid);
+        Assert.IsTrue(isValid);
     }
 
-    [Fact]
+    [TestMethod]
     public void ValidateState_InvalidState_ShouldReturnFalse()
     {
         // Arrange
@@ -67,10 +68,10 @@ public class OAuthStateServiceTests
         var isValid = _stateService.ValidateState(invalidState, bankName);
 
         // Assert
-        Assert.False(isValid);
+        Assert.IsFalse(isValid);
     }
 
-    [Fact]
+    [TestMethod]
     public void ValidateState_WrongBankName_ShouldReturnFalse()
     {
         // Arrange
@@ -81,20 +82,20 @@ public class OAuthStateServiceTests
         var isValid = _stateService.ValidateState(state, "ICA-banken");
 
         // Assert
-        Assert.False(isValid);
+        Assert.IsFalse(isValid);
     }
 
-    [Fact]
+    [TestMethod]
     public void ValidateState_EmptyState_ShouldReturnFalse()
     {
         // Arrange & Act
         var isValid = _stateService.ValidateState(string.Empty, "Swedbank");
 
         // Assert
-        Assert.False(isValid);
+        Assert.IsFalse(isValid);
     }
 
-    [Fact]
+    [TestMethod]
     public void RemoveState_ShouldInvalidateState()
     {
         // Arrange
@@ -106,10 +107,10 @@ public class OAuthStateServiceTests
         var isValid = _stateService.ValidateState(state, bankName);
 
         // Assert
-        Assert.False(isValid);
+        Assert.IsFalse(isValid);
     }
 
-    [Fact]
+    [TestMethod]
     public void RemoveState_NonExistentState_ShouldNotThrow()
     {
         // Arrange
@@ -117,10 +118,10 @@ public class OAuthStateServiceTests
 
         // Act & Assert
         var exception = Record.Exception(() => _stateService.RemoveState(nonExistentState));
-        Assert.Null(exception);
+        Assert.IsNull(exception);
     }
 
-    [Fact]
+    [TestMethod]
     public void ValidateState_CaseInsensitiveBankName_ShouldWork()
     {
         // Arrange
@@ -131,11 +132,11 @@ public class OAuthStateServiceTests
         var isValid2 = _stateService.ValidateState(state, "SWEDBANK");
 
         // Assert
-        Assert.True(isValid1);
-        Assert.True(isValid2);
+        Assert.IsTrue(isValid1);
+        Assert.IsTrue(isValid2);
     }
 
-    [Fact]
+    [TestMethod]
     public void StateLifecycle_GenerateValidateRemove_ShouldWork()
     {
         // Arrange
@@ -143,17 +144,17 @@ public class OAuthStateServiceTests
 
         // Act - Generate
         var state = _stateService.GenerateState(bankName);
-        Assert.NotNull(state);
+        Assert.IsNotNull(state);
 
         // Act - Validate (should be valid)
         var isValidBefore = _stateService.ValidateState(state, bankName);
-        Assert.True(isValidBefore);
+        Assert.IsTrue(isValidBefore);
 
         // Act - Remove
         _stateService.RemoveState(state);
 
         // Act - Validate again (should be invalid after removal)
         var isValidAfter = _stateService.ValidateState(state, bankName);
-        Assert.False(isValidAfter);
+        Assert.IsFalse(isValidAfter);
     }
 }

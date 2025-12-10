@@ -4,10 +4,11 @@ using Moq;
 using Privatekonomi.Core.Data;
 using Privatekonomi.Core.Models;
 using Privatekonomi.Core.Services;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Privatekonomi.Core.Tests;
 
+[TestClass]
 public class ReminderServiceTests
 {
     private readonly Mock<INotificationService> _mockNotificationService;
@@ -28,7 +29,7 @@ public class ReminderServiceTests
         _service = new ReminderService(_context, _mockNotificationService.Object, _mockLogger.Object);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CreateReminderAsync_ShouldCreateReminder()
     {
         // Arrange
@@ -45,14 +46,14 @@ public class ReminderServiceTests
         var result = await _service.CreateReminderAsync(reminder);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.True(result.ReminderId > 0);
-        Assert.Equal(ReminderStatus.Active, result.Status);
-        Assert.Equal(_testUserId, result.UserId);
-        Assert.Equal("Test Reminder", result.Title);
+        Assert.IsNotNull(result);
+        Assert.IsTrue(result.ReminderId > 0);
+        Assert.AreEqual(ReminderStatus.Active, result.Status);
+        Assert.AreEqual(_testUserId, result.UserId);
+        Assert.AreEqual("Test Reminder", result.Title);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetUserRemindersAsync_ShouldReturnUserReminders()
     {
         // Arrange
@@ -88,11 +89,11 @@ public class ReminderServiceTests
         var result = await _service.GetUserRemindersAsync(_testUserId);
 
         // Assert
-        Assert.Equal(2, result.Count);
-        Assert.All(result, r => Assert.Equal(_testUserId, r.UserId));
+        Assert.AreEqual(2, result.Count);
+        foreach (var r in result) { Assert.AreEqual(_testUserId, r.UserId); }
     }
 
-    [Fact]
+    [TestMethod]
     public async Task SnoozeReminderAsync_ShouldSnoozeReminder()
     {
         // Arrange
@@ -110,13 +111,13 @@ public class ReminderServiceTests
 
         // Assert
         var result = await _service.GetReminderByIdAsync(created.ReminderId, _testUserId);
-        Assert.NotNull(result);
-        Assert.Equal(ReminderStatus.Snoozed, result.Status);
-        Assert.NotNull(result.SnoozeUntil);
-        Assert.Equal(1, result.SnoozeCount);
+        Assert.IsNotNull(result);
+        Assert.AreEqual(ReminderStatus.Snoozed, result.Status);
+        Assert.IsNotNull(result.SnoozeUntil);
+        Assert.AreEqual(1, result.SnoozeCount);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task MarkAsCompletedAsync_ShouldCompleteReminder()
     {
         // Arrange
@@ -134,9 +135,9 @@ public class ReminderServiceTests
 
         // Assert
         var result = await _service.GetReminderByIdAsync(created.ReminderId, _testUserId);
-        Assert.NotNull(result);
-        Assert.Equal(ReminderStatus.Completed, result.Status);
-        Assert.NotNull(result.CompletedDate);
+        Assert.IsNotNull(result);
+        Assert.AreEqual(ReminderStatus.Completed, result.Status);
+        Assert.IsNotNull(result.CompletedDate);
         
         // Verify notification was sent
         _mockNotificationService.Verify(
@@ -151,7 +152,7 @@ public class ReminderServiceTests
             Times.Once);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetActiveRemindersAsync_ShouldReturnOnlyActiveAndNonSnoozedReminders()
     {
         // Arrange
@@ -191,11 +192,11 @@ public class ReminderServiceTests
         var result = await _service.GetActiveRemindersAsync(_testUserId);
 
         // Assert
-        Assert.Single(result);
-        Assert.Equal("Active Reminder", result[0].Title);
+        Assert.AreEqual(1, result.Count());
+        Assert.AreEqual("Active Reminder", result[0].Title);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetDueRemindersAsync_ShouldReturnOnlyDueReminders()
     {
         // Arrange
@@ -222,11 +223,11 @@ public class ReminderServiceTests
         var result = await _service.GetDueRemindersAsync(_testUserId);
 
         // Assert
-        Assert.Single(result);
-        Assert.Equal("Due Reminder", result[0].Title);
+        Assert.AreEqual(1, result.Count());
+        Assert.AreEqual("Due Reminder", result[0].Title);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ShouldEscalateReminderAsync_ShouldReturnTrueWhenThresholdExceeded()
     {
         // Arrange
@@ -253,23 +254,23 @@ public class ReminderServiceTests
         var result = await _service.ShouldEscalateReminderAsync(reminder.ReminderId);
 
         // Assert
-        Assert.True(result);
+        Assert.IsTrue(result);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetUserSettingsAsync_ShouldCreateDefaultSettingsIfNotExist()
     {
         // Act
         var result = await _service.GetUserSettingsAsync(_testUserId);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Equal(_testUserId, result.UserId);
-        Assert.True(result.EnableEscalation);
-        Assert.Equal(3, result.SnoozeThresholdForEscalation);
+        Assert.IsNotNull(result);
+        Assert.AreEqual(_testUserId, result.UserId);
+        Assert.IsTrue(result.EnableEscalation);
+        Assert.AreEqual(3, result.SnoozeThresholdForEscalation);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetStatisticsAsync_ShouldReturnCorrectCounts()
     {
         // Arrange
@@ -308,12 +309,12 @@ public class ReminderServiceTests
         var result = await _service.GetStatisticsAsync(_testUserId);
 
         // Assert
-        Assert.Equal(1, result.TotalActive);
-        Assert.Equal(1, result.TotalSnoozed);
-        Assert.Equal(1, result.TotalCompleted);
+        Assert.AreEqual(1, result.TotalActive);
+        Assert.AreEqual(1, result.TotalSnoozed);
+        Assert.AreEqual(1, result.TotalCompleted);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task DeleteReminderAsync_ShouldDeleteReminder()
     {
         // Arrange
@@ -331,10 +332,10 @@ public class ReminderServiceTests
 
         // Assert
         var result = await _service.GetReminderByIdAsync(created.ReminderId, _testUserId);
-        Assert.Null(result);
+        Assert.IsNull(result);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task DismissReminderAsync_ShouldDismissReminder()
     {
         // Arrange
@@ -352,7 +353,7 @@ public class ReminderServiceTests
 
         // Assert
         var result = await _service.GetReminderByIdAsync(created.ReminderId, _testUserId);
-        Assert.NotNull(result);
-        Assert.Equal(ReminderStatus.Dismissed, result.Status);
+        Assert.IsNotNull(result);
+        Assert.AreEqual(ReminderStatus.Dismissed, result.Status);
     }
 }

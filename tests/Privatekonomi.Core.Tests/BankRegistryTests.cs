@@ -1,11 +1,12 @@
 using Privatekonomi.Core.Models;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Privatekonomi.Core.Tests;
 
+[TestClass]
 public class BankRegistryTests
 {
-    [Fact]
+    [TestMethod]
     public void SupportedBanks_ShouldContainAllRequiredBanks()
     {
         // Arrange
@@ -15,46 +16,46 @@ public class BankRegistryTests
         var bankNames = BankRegistry.SupportedBanks.Select(b => b.Name).ToList();
         
         // Assert
-        Assert.Equal(6, BankRegistry.SupportedBanks.Count);
+        Assert.AreEqual(6, BankRegistry.SupportedBanks.Count);
         foreach (var requiredBank in requiredBanks)
         {
-            Assert.Contains(requiredBank, bankNames);
+            CollectionAssert.Contains(bankNames, requiredBank);
         }
     }
     
-    [Fact]
+    [TestMethod]
     public void AllBanks_ShouldHaveColorDefined()
     {
         // Assert
         foreach (var bank in BankRegistry.SupportedBanks)
         {
-            Assert.NotNull(bank.Name);
-            Assert.NotEmpty(bank.Name);
-            Assert.NotNull(bank.ColorHex);
-            Assert.NotEmpty(bank.ColorHex);
-            Assert.StartsWith("#", bank.ColorHex);
+            Assert.IsNotNull(bank.Name);
+            Assert.AreNotEqual(0, bank.Name.Length);
+            Assert.IsNotNull(bank.ColorHex);
+            Assert.AreNotEqual(0, bank.ColorHex.Length);
+            StringAssert.StartsWith(bank.ColorHex, "#");
         }
     }
     
-    [Theory]
-    [InlineData("Handelsbanken", "#003781")]
-    [InlineData("ICA-banken", "#E3000F")]
-    [InlineData("Nordea", "#0000A0")]
-    [InlineData("SEB", "#60CD18")]
-    [InlineData("Swedbank", "#FF7900")]
-    [InlineData("Avanza", "#00C281")]
+    [DataTestMethod]
+    [DataRow("Handelsbanken", "#003781")]
+    [DataRow("ICA-banken", "#E3000F")]
+    [DataRow("Nordea", "#0000A0")]
+    [DataRow("SEB", "#60CD18")]
+    [DataRow("Swedbank", "#FF7900")]
+    [DataRow("Avanza", "#00C281")]
     public void GetBankByName_ShouldReturnCorrectBank(string bankName, string expectedColor)
     {
         // Act
         var bank = BankRegistry.GetBankByName(bankName);
         
         // Assert
-        Assert.NotNull(bank);
-        Assert.Equal(bankName, bank.Name);
-        Assert.Equal(expectedColor, bank.ColorHex);
+        Assert.IsNotNull(bank);
+        Assert.AreEqual(bankName, bank.Name);
+        Assert.AreEqual(expectedColor, bank.ColorHex);
     }
     
-    [Fact]
+    [TestMethod]
     public void GetBankByName_ShouldBeCaseInsensitive()
     {
         // Act
@@ -63,35 +64,35 @@ public class BankRegistryTests
         var bank3 = BankRegistry.GetBankByName("Handelsbanken");
         
         // Assert
-        Assert.NotNull(bank1);
-        Assert.NotNull(bank2);
-        Assert.NotNull(bank3);
-        Assert.Equal(bank1.ColorHex, bank2.ColorHex);
-        Assert.Equal(bank2.ColorHex, bank3.ColorHex);
+        Assert.IsNotNull(bank1);
+        Assert.IsNotNull(bank2);
+        Assert.IsNotNull(bank3);
+        Assert.AreEqual(bank1.ColorHex, bank2.ColorHex);
+        Assert.AreEqual(bank2.ColorHex, bank3.ColorHex);
     }
     
-    [Fact]
+    [TestMethod]
     public void GetBankByName_WithNonExistentBank_ShouldReturnNull()
     {
         // Act
         var bank = BankRegistry.GetBankByName("NonExistentBank");
         
         // Assert
-        Assert.Null(bank);
+        Assert.IsNull(bank);
     }
     
-    [Theory]
-    [InlineData("Handelsbanken", "#003781")]
-    [InlineData("SEB", "#60CD18")]
-    [InlineData(null, null)]
-    [InlineData("", null)]
-    [InlineData("UnknownBank", null)]
+    [DataTestMethod]
+    [DataRow("Handelsbanken", "#003781")]
+    [DataRow("SEB", "#60CD18")]
+    [DataRow(null, null)]
+    [DataRow("", null)]
+    [DataRow("UnknownBank", null)]
     public void GetBankColor_ShouldReturnCorrectColor(string? bankName, string? expectedColor)
     {
         // Act
         var color = BankRegistry.GetBankColor(bankName);
         
         // Assert
-        Assert.Equal(expectedColor, color);
+        Assert.AreEqual(expectedColor, color);
     }
 }

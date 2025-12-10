@@ -1,4 +1,4 @@
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using Microsoft.EntityFrameworkCore;
 using Privatekonomi.Core.Data;
@@ -9,6 +9,7 @@ using System.Text.Json;
 
 namespace Privatekonomi.Core.Tests;
 
+[TestClass]
 public class BulkExportTests
 {
     private PrivatekonomyContext CreateInMemoryContext()
@@ -20,7 +21,7 @@ public class BulkExportTests
         return new PrivatekonomyContext(options);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ExportSelectedTransactionsToCsvAsync_ShouldExportSelectedTransactions()
     {
         // Arrange
@@ -80,27 +81,27 @@ public class BulkExportTests
         var csvData = await service.ExportSelectedTransactionsToCsvAsync(new List<int> { 1, 2 });
 
         // Assert
-        Assert.NotNull(csvData);
-        Assert.True(csvData.Length > 0);
+        Assert.IsNotNull(csvData);
+        Assert.IsTrue(csvData.Length > 0);
 
         // Skip BOM and convert to string
         var csvString = Encoding.UTF8.GetString(csvData, 3, csvData.Length - 3);
         
         // Verify header
-        Assert.Contains("Datum,Beskrivning,Belopp,Typ,Bank,Kategorier", csvString);
+        StringAssert.Contains(csvString, "Datum,Beskrivning,Belopp,Typ,Bank,Kategorier");
         
         // Verify data
-        Assert.Contains("2024-01-15", csvString);
-        Assert.Contains("Grocery shopping", csvString);
-        Assert.Contains("100.50", csvString);
-        Assert.Contains("2024-01-16", csvString);
-        Assert.Contains("Restaurant", csvString);
+        StringAssert.Contains(csvString, "2024-01-15");
+        StringAssert.Contains(csvString, "Grocery shopping");
+        StringAssert.Contains(csvString, "100.50");
+        StringAssert.Contains(csvString, "2024-01-16");
+        StringAssert.Contains(csvString, "Restaurant");
         
         // Verify third transaction is not exported
-        Assert.DoesNotContain("Should not be exported", csvString);
+        Assert.IsFalse(csvString.Contains("Should not be exported"));
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ExportSelectedTransactionsToJsonAsync_ShouldExportSelectedTransactions()
     {
         // Arrange
@@ -157,26 +158,26 @@ public class BulkExportTests
         var jsonData = await service.ExportSelectedTransactionsToJsonAsync(new List<int> { 1, 2 });
 
         // Assert
-        Assert.NotNull(jsonData);
-        Assert.True(jsonData.Length > 0);
+        Assert.IsNotNull(jsonData);
+        Assert.IsTrue(jsonData.Length > 0);
 
         var jsonString = Encoding.UTF8.GetString(jsonData);
         var exportData = JsonSerializer.Deserialize<JsonElement>(jsonString);
         
-        Assert.True(exportData.TryGetProperty("transactionCount", out var countProp));
-        Assert.Equal(2, countProp.GetInt32());
+        Assert.IsTrue(exportData.TryGetProperty("transactionCount", out var countProp));
+        Assert.AreEqual(2, countProp.GetInt32());
         
-        Assert.True(exportData.TryGetProperty("transactions", out var txProp));
+        Assert.IsTrue(exportData.TryGetProperty("transactions", out var txProp));
         var transactions_array = txProp.EnumerateArray().ToList();
-        Assert.Equal(2, transactions_array.Count);
+        Assert.AreEqual(2, transactions_array.Count);
         
         var firstTx = transactions_array[0];
-        Assert.Equal(1, firstTx.GetProperty("transactionId").GetInt32());
-        Assert.Equal("Grocery shopping", firstTx.GetProperty("description").GetString());
-        Assert.Equal("food,essential", firstTx.GetProperty("tags").GetString());
+        Assert.AreEqual(1, firstTx.GetProperty("transactionId").GetInt32());
+        Assert.AreEqual("Grocery shopping", firstTx.GetProperty("description").GetString());
+        Assert.AreEqual("food,essential", firstTx.GetProperty("tags").GetString());
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ExportSelectedTransactionsToCsvAsync_ShouldHandleSpecialCharacters()
     {
         // Arrange
@@ -208,11 +209,11 @@ public class BulkExportTests
         var csvString = Encoding.UTF8.GetString(csvData);
         
         // Verify special characters are properly escaped
-        Assert.Contains("Test with \"\"quotes\"\" and, commas", csvString);
-        Assert.Contains("åäö ÅÄÖ", csvString);
+        StringAssert.Contains(csvString, "Test with \"\"quotes\"\" and, commas");
+        StringAssert.Contains(csvString, "åäö ÅÄÖ");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ExportSelectedTransactionsAsync_ShouldFilterByCurrentUser()
     {
         // Arrange
@@ -251,11 +252,11 @@ public class BulkExportTests
         var csvString = Encoding.UTF8.GetString(csvData);
 
         // Assert
-        Assert.Contains("User 123 transaction", csvString);
-        Assert.DoesNotContain("Other user transaction", csvString);
+        StringAssert.Contains(csvString, "User 123 transaction");
+        Assert.IsFalse(csvString.Contains("Other user transaction"));
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ExportSelectedTransactionsToJsonAsync_ShouldIncludeAllRelevantFields()
     {
         // Arrange
@@ -306,15 +307,15 @@ public class BulkExportTests
         var txArray = exportData.GetProperty("transactions").EnumerateArray().ToList();
         var tx = txArray[0];
         
-        Assert.Equal("Test transaction", tx.GetProperty("description").GetString());
-        Assert.Equal("SEK", tx.GetProperty("currency").GetString());
-        Assert.Equal("Test Payee", tx.GetProperty("payee").GetString());
-        Assert.Equal("tag1,tag2", tx.GetProperty("tags").GetString());
-        Assert.Equal("Test notes", tx.GetProperty("notes").GetString());
-        Assert.Equal("Swish", tx.GetProperty("paymentMethod").GetString());
-        Assert.Equal("123456", tx.GetProperty("ocr").GetString());
-        Assert.True(tx.GetProperty("isRecurring").GetBoolean());
-        Assert.True(tx.GetProperty("cleared").GetBoolean());
-        Assert.Equal("Manual", tx.GetProperty("importSource").GetString());
+        Assert.AreEqual("Test transaction", tx.GetProperty("description").GetString());
+        Assert.AreEqual("SEK", tx.GetProperty("currency").GetString());
+        Assert.AreEqual("Test Payee", tx.GetProperty("payee").GetString());
+        Assert.AreEqual("tag1,tag2", tx.GetProperty("tags").GetString());
+        Assert.AreEqual("Test notes", tx.GetProperty("notes").GetString());
+        Assert.AreEqual("Swish", tx.GetProperty("paymentMethod").GetString());
+        Assert.AreEqual("123456", tx.GetProperty("ocr").GetString());
+        Assert.IsTrue(tx.GetProperty("isRecurring").GetBoolean());
+        Assert.IsTrue(tx.GetProperty("cleared").GetBoolean());
+        Assert.AreEqual("Manual", tx.GetProperty("importSource").GetString());
     }
 }

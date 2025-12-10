@@ -6,10 +6,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Privatekonomi.Core.Tests;
 
+[TestClass]
 public class HeatmapAnalysisServiceTests
 {
     private PrivatekonomyContext CreateInMemoryContext()
@@ -21,7 +22,7 @@ public class HeatmapAnalysisServiceTests
         return new PrivatekonomyContext(options);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GenerateHeatmapAsync_ReturnsCorrectHeatmapData()
     {
         // Arrange
@@ -103,15 +104,15 @@ public class HeatmapAnalysisServiceTests
         var result = await service.GenerateHeatmapAsync(startDate, endDate);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Equal(startDate, result.StartDate);
-        Assert.Equal(endDate, result.EndDate);
-        Assert.Equal(4, result.TransactionCount);
-        Assert.Equal(950m, result.TotalExpenses); // 100 + 500 + 200 + 150
-        Assert.True(result.HeatmapCells.Any());
+        Assert.IsNotNull(result);
+        Assert.AreEqual(startDate, result.StartDate);
+        Assert.AreEqual(endDate, result.EndDate);
+        Assert.AreEqual(4, result.TransactionCount);
+        Assert.AreEqual(950m, result.TotalExpenses); // 100 + 500 + 200 + 150
+        Assert.IsTrue(result.HeatmapCells.Any());
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GenerateHeatmapAsync_CalculatesIntensityLevelsCorrectly()
     {
         // Arrange
@@ -158,11 +159,11 @@ public class HeatmapAnalysisServiceTests
         );
 
         // Assert
-        Assert.Equal(1000m, result.MaxCellAmount);
-        Assert.True(result.HeatmapCells.Any());
+        Assert.AreEqual(1000m, result.MaxCellAmount);
+        Assert.IsTrue(result.HeatmapCells.Any());
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GenerateHeatmapAsync_DetectsImpulsePurchases()
     {
         // Arrange
@@ -221,15 +222,15 @@ public class HeatmapAnalysisServiceTests
         );
 
         // Assert
-        Assert.NotNull(result.Insights.ImpulsePurchases);
-        Assert.Equal(500m, result.Insights.ImpulsePurchases.TotalAmount); // 300 + 200
-        Assert.Equal(2, result.Insights.ImpulsePurchases.TransactionCount);
-        Assert.True(result.Insights.ImpulsePurchases.PercentageOfTotal > 0);
+        Assert.IsNotNull(result.Insights.ImpulsePurchases);
+        Assert.AreEqual(500m, result.Insights.ImpulsePurchases.TotalAmount); // 300 + 200
+        Assert.AreEqual(2, result.Insights.ImpulsePurchases.TransactionCount);
+        Assert.IsTrue(result.Insights.ImpulsePurchases.PercentageOfTotal > 0);
         // 500/600 * 100 = 83.33%, which is >5%, so should be detected
-        Assert.True(result.Insights.ImpulsePurchases.IsDetected);
+        Assert.IsTrue(result.Insights.ImpulsePurchases.IsDetected);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GenerateHeatmapAsync_IdentifiesMostAndLeastExpensiveDays()
     {
         // Arrange
@@ -288,16 +289,16 @@ public class HeatmapAnalysisServiceTests
         );
 
         // Assert
-        Assert.NotNull(result.Insights.MostExpensiveDay);
-        Assert.Equal("Fredag", result.Insights.MostExpensiveDay.DayName);
-        Assert.Equal(800m, result.Insights.MostExpensiveDay.Amount); // 500 + 300
+        Assert.IsNotNull(result.Insights.MostExpensiveDay);
+        Assert.AreEqual("Fredag", result.Insights.MostExpensiveDay.DayName);
+        Assert.AreEqual(800m, result.Insights.MostExpensiveDay.Amount); // 500 + 300
 
-        Assert.NotNull(result.Insights.LeastExpensiveDay);
-        Assert.Equal("Måndag", result.Insights.LeastExpensiveDay.DayName);
-        Assert.Equal(50m, result.Insights.LeastExpensiveDay.Amount);
+        Assert.IsNotNull(result.Insights.LeastExpensiveDay);
+        Assert.AreEqual("Måndag", result.Insights.LeastExpensiveDay.DayName);
+        Assert.AreEqual(50m, result.Insights.LeastExpensiveDay.Amount);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GenerateHeatmapAsync_FiltersOnCategory()
     {
         // Arrange
@@ -345,12 +346,12 @@ public class HeatmapAnalysisServiceTests
         );
 
         // Assert
-        Assert.Equal(1, result.TransactionCount);
-        Assert.Equal(100m, result.TotalExpenses);
-        Assert.Equal("Mat", result.CategoryName);
+        Assert.AreEqual(1, result.TransactionCount);
+        Assert.AreEqual(100m, result.TotalExpenses);
+        Assert.AreEqual("Mat", result.CategoryName);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetPatternInsightsAsync_ReturnsInsights()
     {
         // Arrange
@@ -385,12 +386,12 @@ public class HeatmapAnalysisServiceTests
         );
 
         // Assert
-        Assert.NotNull(result);
-        Assert.NotNull(result.MostExpensiveDay);
-        Assert.NotNull(result.LeastExpensiveDay);
+        Assert.IsNotNull(result);
+        Assert.IsNotNull(result.MostExpensiveDay);
+        Assert.IsNotNull(result.LeastExpensiveDay);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GenerateHeatmapAsync_HandlesEmptyData()
     {
         // Arrange
@@ -404,9 +405,9 @@ public class HeatmapAnalysisServiceTests
         );
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Equal(0, result.TransactionCount);
-        Assert.Equal(0m, result.TotalExpenses);
-        Assert.Empty(result.HeatmapCells);
+        Assert.IsNotNull(result);
+        Assert.AreEqual(0, result.TransactionCount);
+        Assert.AreEqual(0m, result.TotalExpenses);
+        Assert.AreEqual(0, result.HeatmapCells.Count());
     }
 }

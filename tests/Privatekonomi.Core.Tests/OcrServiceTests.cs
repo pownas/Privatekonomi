@@ -2,10 +2,11 @@ using System.Text;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Privatekonomi.Core.Services;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Privatekonomi.Core.Tests;
 
+[TestClass]
 public class OcrServiceTests
 {
     private readonly Mock<ILogger<TesseractOcrService>> _mockLogger;
@@ -17,7 +18,7 @@ public class OcrServiceTests
         _ocrService = new TesseractOcrService(_mockLogger.Object);
     }
 
-    [Fact]
+    [TestMethod]
     public void ParseReceiptText_WithTotalAmount_ExtractsTotalAmount()
     {
         // Arrange
@@ -41,11 +42,11 @@ Kvitto: 12345
         var result = _ocrService.ParseReceiptText(ocrText);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Equal(100.00m, result.TotalAmount);
+        Assert.IsNotNull(result);
+        Assert.AreEqual(100.00m, result.TotalAmount);
     }
 
-    [Fact]
+    [TestMethod]
     public void ParseReceiptText_WithDate_ExtractsDate()
     {
         // Arrange
@@ -59,12 +60,12 @@ Totalt: 100,00 kr
         var result = _ocrService.ParseReceiptText(ocrText);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.NotNull(result.Date);
-        Assert.Equal(new DateTime(2024, 1, 15), result.Date);
+        Assert.IsNotNull(result);
+        Assert.IsNotNull(result.Date);
+        Assert.AreEqual(new DateTime(2024, 1, 15), result.Date);
     }
 
-    [Fact]
+    [TestMethod]
     public void ParseReceiptText_WithSwedishDateFormat_ExtractsDate()
     {
         // Arrange
@@ -78,12 +79,12 @@ Summa: 50,00
         var result = _ocrService.ParseReceiptText(ocrText);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.NotNull(result.Date);
-        Assert.Equal(new DateTime(2024, 1, 15), result.Date);
+        Assert.IsNotNull(result);
+        Assert.IsNotNull(result.Date);
+        Assert.AreEqual(new DateTime(2024, 1, 15), result.Date);
     }
 
-    [Fact]
+    [TestMethod]
     public void ParseReceiptText_WithMerchant_ExtractsMerchant()
     {
         // Arrange
@@ -98,12 +99,12 @@ Totalt: 100,00
         var result = _ocrService.ParseReceiptText(ocrText);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.NotNull(result.Merchant);
-        Assert.Contains("ICA Maxi", result.Merchant);
+        Assert.IsNotNull(result);
+        Assert.IsNotNull(result.Merchant);
+        StringAssert.Contains(result.Merchant, "ICA Maxi");
     }
 
-    [Fact]
+    [TestMethod]
     public void ParseReceiptText_WithReceiptNumber_ExtractsReceiptNumber()
     {
         // Arrange
@@ -118,11 +119,11 @@ Total: 75,50 kr
         var result = _ocrService.ParseReceiptText(ocrText);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Equal("98765", result.ReceiptNumber);
+        Assert.IsNotNull(result);
+        Assert.AreEqual("98765", result.ReceiptNumber);
     }
 
-    [Fact]
+    [TestMethod]
     public void ParseReceiptText_WithPaymentMethod_ExtractsPaymentMethod()
     {
         // Arrange
@@ -136,11 +137,11 @@ Swish
         var result = _ocrService.ParseReceiptText(ocrText);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Equal("Swish", result.PaymentMethod);
+        Assert.IsNotNull(result);
+        Assert.AreEqual("Swish", result.PaymentMethod);
     }
 
-    [Fact]
+    [TestMethod]
     public void ParseReceiptText_WithLineItems_ExtractsLineItems()
     {
         // Arrange
@@ -156,16 +157,16 @@ Totalt:              144,50 kr
         var result = _ocrService.ParseReceiptText(ocrText);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.NotEmpty(result.LineItems);
-        Assert.True(result.LineItems.Count >= 2);
+        Assert.IsNotNull(result);
+        Assert.AreNotEqual(0, result.LineItems.Count());
+        Assert.IsTrue(result.LineItems.Count >= 2);
         
         var milkItem = result.LineItems.FirstOrDefault(i => i.Description.Contains("Mjölk"));
-        Assert.NotNull(milkItem);
-        Assert.Equal(29.50m, milkItem.TotalPrice);
+        Assert.IsNotNull(milkItem);
+        Assert.AreEqual(29.50m, milkItem.TotalPrice);
     }
 
-    [Fact]
+    [TestMethod]
     public void ParseReceiptText_WithQuantityInLineItem_ExtractsQuantity()
     {
         // Arrange
@@ -179,17 +180,17 @@ Totalt:               30,00
         var result = _ocrService.ParseReceiptText(ocrText);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.NotEmpty(result.LineItems);
+        Assert.IsNotNull(result);
+        Assert.AreNotEqual(0, result.LineItems.Count());
         
         var appleItem = result.LineItems.FirstOrDefault();
-        Assert.NotNull(appleItem);
-        Assert.Equal(2, appleItem.Quantity);
-        Assert.Equal(15.00m, appleItem.UnitPrice);
-        Assert.Equal(30.00m, appleItem.TotalPrice);
+        Assert.IsNotNull(appleItem);
+        Assert.AreEqual(2, appleItem.Quantity);
+        Assert.AreEqual(15.00m, appleItem.UnitPrice);
+        Assert.AreEqual(30.00m, appleItem.TotalPrice);
     }
 
-    [Fact]
+    [TestMethod]
     public void ParseReceiptText_WithEmptyString_ReturnsEmptyData()
     {
         // Arrange
@@ -199,13 +200,13 @@ Totalt:               30,00
         var result = _ocrService.ParseReceiptText(ocrText);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Null(result.TotalAmount);
-        Assert.Null(result.Date);
-        Assert.Null(result.Merchant);
+        Assert.IsNotNull(result);
+        Assert.IsNull(result.TotalAmount);
+        Assert.IsNull(result.Date);
+        Assert.IsNull(result.Merchant);
     }
 
-    [Fact]
+    [TestMethod]
     public void ParseReceiptText_WithAlternativeTotalFormat_ExtractsTotalAmount()
     {
         // Arrange
@@ -219,11 +220,11 @@ Kort
         var result = _ocrService.ParseReceiptText(ocrText);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Equal(250.50m, result.TotalAmount);
+        Assert.IsNotNull(result);
+        Assert.AreEqual(250.50m, result.TotalAmount);
     }
 
-    [Fact]
+    [TestMethod]
     public void ParseReceiptText_WithSEKCurrency_ExtractsTotalAmount()
     {
         // Arrange
@@ -236,11 +237,11 @@ Summa: 150,00 SEK
         var result = _ocrService.ParseReceiptText(ocrText);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Equal(150.00m, result.TotalAmount);
+        Assert.IsNotNull(result);
+        Assert.AreEqual(150.00m, result.TotalAmount);
     }
 
-    [Fact]
+    [TestMethod]
     public void ParseReceiptText_WithKortPayment_ExtractsPaymentMethod()
     {
         // Arrange
@@ -254,11 +255,11 @@ Bankkort
         var result = _ocrService.ParseReceiptText(ocrText);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Equal("Kort", result.PaymentMethod);
+        Assert.IsNotNull(result);
+        Assert.AreEqual("Kort", result.PaymentMethod);
     }
 
-    [Fact]
+    [TestMethod]
     public void ParseReceiptText_WithKontantPayment_ExtractsPaymentMethod()
     {
         // Arrange
@@ -272,15 +273,15 @@ Kontant
         var result = _ocrService.ParseReceiptText(ocrText);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Equal("Kontant", result.PaymentMethod);
+        Assert.IsNotNull(result);
+        Assert.AreEqual("Kontant", result.PaymentMethod);
     }
 
-    [Theory]
-    [InlineData("Totalt: 100,00 kr", 100.00)]
-    [InlineData("Total: 150,50", 150.50)]
-    [InlineData("Summa: 75,25 kr", 75.25)]
-    [InlineData("Att betala: 200,00", 200.00)]
+    [DataTestMethod]
+    [DataRow("Totalt: 100,00 kr", 100.00)]
+    [DataRow("Total: 150,50", 150.50)]
+    [DataRow("Summa: 75,25 kr", 75.25)]
+    [DataRow("Att betala: 200,00", 200.00)]
     public void ParseReceiptText_WithVariousTotalFormats_ExtractsTotalAmount(string totalLine, decimal expectedAmount)
     {
         // Arrange
@@ -293,15 +294,15 @@ Test Store
         var result = _ocrService.ParseReceiptText(ocrText);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Equal(expectedAmount, result.TotalAmount);
+        Assert.IsNotNull(result);
+        Assert.AreEqual(expectedAmount, result.TotalAmount);
     }
 
-    [Theory]
-    [InlineData("2024-01-15", 2024, 1, 15)]
-    [InlineData("15/01/2024", 2024, 1, 15)]
-    [InlineData("15.01.2024", 2024, 1, 15)]
-    [InlineData("20240115", 2024, 1, 15)]
+    [DataTestMethod]
+    [DataRow("2024-01-15", 2024, 1, 15)]
+    [DataRow("15/01/2024", 2024, 1, 15)]
+    [DataRow("15.01.2024", 2024, 1, 15)]
+    [DataRow("20240115", 2024, 1, 15)]
     public void ParseReceiptText_WithVariousDateFormats_ExtractsDate(string dateStr, int year, int month, int day)
     {
         // Arrange
@@ -315,8 +316,8 @@ Total: 100
         var result = _ocrService.ParseReceiptText(ocrText);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.NotNull(result.Date);
-        Assert.Equal(new DateTime(year, month, day), result.Date);
+        Assert.IsNotNull(result);
+        Assert.IsNotNull(result.Date);
+        Assert.AreEqual(new DateTime(year, month, day), result.Date);
     }
 }

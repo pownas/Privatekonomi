@@ -2,10 +2,11 @@ using Microsoft.EntityFrameworkCore;
 using Privatekonomi.Core.Data;
 using Privatekonomi.Core.Models;
 using Privatekonomi.Core.Services;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Privatekonomi.Core.Tests;
 
+[TestClass]
 public class BankSourceServiceTests : IDisposable
 {
     private readonly PrivatekonomyContext _context;
@@ -22,13 +23,14 @@ public class BankSourceServiceTests : IDisposable
         _bankSourceService = new BankSourceService(_context);
     }
 
+    [TestCleanup]
     public void Dispose()
     {
         _context.Database.EnsureDeleted();
         _context.Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CreateBankSourceAsync_CreatesSuccessfully()
     {
         // Arrange
@@ -45,12 +47,12 @@ public class BankSourceServiceTests : IDisposable
         var result = await _bankSourceService.CreateBankSourceAsync(bankSource);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Equal("Test Checking Account", result.Name);
-        Assert.NotEqual(0, result.BankSourceId); // Should have an ID assigned
+        Assert.IsNotNull(result);
+        Assert.AreEqual("Test Checking Account", result.Name);
+        Assert.AreNotEqual(0, result.BankSourceId); // Should have an ID assigned
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CreateBankSourceAsync_WithAccountNumber_StoresCorrectly()
     {
         // Arrange
@@ -68,12 +70,12 @@ public class BankSourceServiceTests : IDisposable
         var result = await _bankSourceService.CreateBankSourceAsync(bankSource);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Equal("8327", result.ClearingNumber);
-        Assert.Equal("123456789", result.AccountNumber);
+        Assert.IsNotNull(result);
+        Assert.AreEqual("8327", result.ClearingNumber);
+        Assert.AreEqual("123456789", result.AccountNumber);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CreateBankSourceAsync_WithChartOfAccounts_StoresCorrectly()
     {
         // Arrange
@@ -90,11 +92,11 @@ public class BankSourceServiceTests : IDisposable
         var result = await _bankSourceService.CreateBankSourceAsync(bankSource);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Equal("1930", result.ChartOfAccountsCode);
+        Assert.IsNotNull(result);
+        Assert.AreEqual("1930", result.ChartOfAccountsCode);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CreateBankSourceAsync_CreditCardAccount_StoresCorrectType()
     {
         // Arrange
@@ -111,12 +113,12 @@ public class BankSourceServiceTests : IDisposable
         var result = await _bankSourceService.CreateBankSourceAsync(bankSource);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Equal("credit_card", result.AccountType);
-        Assert.Equal("Nordea", result.Institution);
+        Assert.IsNotNull(result);
+        Assert.AreEqual("credit_card", result.AccountType);
+        Assert.AreEqual("Nordea", result.Institution);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CreateBankSourceAsync_PensionAccount_StoresCorrectType()
     {
         // Arrange
@@ -132,11 +134,11 @@ public class BankSourceServiceTests : IDisposable
         var result = await _bankSourceService.CreateBankSourceAsync(bankSource);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Equal("pension", result.AccountType);
+        Assert.IsNotNull(result);
+        Assert.AreEqual("pension", result.AccountType);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CreateBankSourceAsync_LoanAccount_StoresCorrectType()
     {
         // Arrange
@@ -152,11 +154,11 @@ public class BankSourceServiceTests : IDisposable
         var result = await _bankSourceService.CreateBankSourceAsync(bankSource);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Equal("loan", result.AccountType);
+        Assert.IsNotNull(result);
+        Assert.AreEqual("loan", result.AccountType);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetAllBankSourcesAsync_ReturnsAllAccounts()
     {
         // Arrange
@@ -176,11 +178,11 @@ public class BankSourceServiceTests : IDisposable
         var result = await _bankSourceService.GetAllBankSourcesAsync();
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Equal(3, result.Count());
+        Assert.IsNotNull(result);
+        Assert.AreEqual(3, result.Count());
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetBankSourceByIdAsync_ReturnsCorrectAccount()
     {
         // Arrange
@@ -199,12 +201,12 @@ public class BankSourceServiceTests : IDisposable
         var result = await _bankSourceService.GetBankSourceByIdAsync(created.BankSourceId);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Equal("Test Account", result.Name);
-        Assert.Equal("987654321", result.AccountNumber);
+        Assert.IsNotNull(result);
+        Assert.AreEqual("Test Account", result.Name);
+        Assert.AreEqual("987654321", result.AccountNumber);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task UpdateBankSourceAsync_UpdatesAccountDetails()
     {
         // Arrange
@@ -227,13 +229,13 @@ public class BankSourceServiceTests : IDisposable
         var result = await _bankSourceService.UpdateBankSourceAsync(created);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Equal("Updated Name", result.Name);
-        Assert.Equal("111222333", result.AccountNumber);
-        Assert.Equal("1920", result.ChartOfAccountsCode);
+        Assert.IsNotNull(result);
+        Assert.AreEqual("Updated Name", result.Name);
+        Assert.AreEqual("111222333", result.AccountNumber);
+        Assert.AreEqual("1920", result.ChartOfAccountsCode);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task DeleteBankSourceAsync_RemovesAccount()
     {
         // Arrange
@@ -252,10 +254,10 @@ public class BankSourceServiceTests : IDisposable
 
         // Assert
         var deleted = await _bankSourceService.GetBankSourceByIdAsync(created.BankSourceId);
-        Assert.Null(deleted);
+        Assert.IsNull(deleted);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CreateBankSourceAsync_WithOpenedDate_StoresCorrectly()
     {
         // Arrange
@@ -274,12 +276,12 @@ public class BankSourceServiceTests : IDisposable
         var result = await _bankSourceService.CreateBankSourceAsync(bankSource);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Equal(openedDate, result.OpenedDate);
-        Assert.Equal(10000, result.InitialBalance);
+        Assert.IsNotNull(result);
+        Assert.AreEqual(openedDate, result.OpenedDate);
+        Assert.AreEqual(10000, result.InitialBalance);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task UpdateBankSourceAsync_CanCloseAccount()
     {
         // Arrange
@@ -300,8 +302,8 @@ public class BankSourceServiceTests : IDisposable
         var result = await _bankSourceService.UpdateBankSourceAsync(created);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.NotNull(result.ClosedDate);
-        Assert.True(result.ClosedDate <= DateTime.UtcNow);
+        Assert.IsNotNull(result);
+        Assert.IsNotNull(result.ClosedDate);
+        Assert.IsTrue(result.ClosedDate <= DateTime.UtcNow);
     }
 }

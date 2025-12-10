@@ -1,9 +1,10 @@
 using System.Text;
 using Privatekonomi.Core.Services.Parsers;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Privatekonomi.Core.Tests;
 
+[TestClass]
 public class AvanzaCsvParserTests
 {
     private const string PerAccountCsvContent = @"Kontonummer|Namn|Kortnamn|Volym|Marknadsvärde|GAV (SEK)|GAV|Valuta|Land|ISIN|Marknad|Typ
@@ -22,7 +23,7 @@ Avanza Bank Holding|AZA|6|2248,20|216,25|216,25|SEK|SE|SE0012454072|XSTO|STOCK
 Avanza Emerging Markets|Avanza Emerging Markets|25,015468|3789,59|124,74|124,74|SEK|SE|SE0012454338|FUND|FUND
 Avanza Europa|Avanza Europa|36,634425|5592,24|145,77|145,77|SEK|SE|SE0013718699|||";
 
-    [Fact]
+    [TestMethod]
     public void AvanzaHoldingsPerAccountParser_CanParse_ReturnsTrueForPerAccountFormat()
     {
         // Arrange
@@ -32,10 +33,10 @@ Avanza Europa|Avanza Europa|36,634425|5592,24|145,77|145,77|SEK|SE|SE0013718699|
         var result = parser.CanParse(PerAccountCsvContent);
 
         // Assert
-        Assert.True(result);
+        Assert.IsTrue(result);
     }
 
-    [Fact]
+    [TestMethod]
     public void AvanzaHoldingsPerAccountParser_CanParse_ReturnsFalseForConsolidatedFormat()
     {
         // Arrange
@@ -45,10 +46,10 @@ Avanza Europa|Avanza Europa|36,634425|5592,24|145,77|145,77|SEK|SE|SE0013718699|
         var result = parser.CanParse(ConsolidatedCsvContent);
 
         // Assert
-        Assert.False(result);
+        Assert.IsFalse(result);
     }
 
-    [Fact]
+    [TestMethod]
     public void AvanzaConsolidatedHoldingsParser_CanParse_ReturnsTrueForConsolidatedFormat()
     {
         // Arrange
@@ -58,10 +59,10 @@ Avanza Europa|Avanza Europa|36,634425|5592,24|145,77|145,77|SEK|SE|SE0013718699|
         var result = parser.CanParse(ConsolidatedCsvContent);
 
         // Assert
-        Assert.True(result);
+        Assert.IsTrue(result);
     }
 
-    [Fact]
+    [TestMethod]
     public void AvanzaConsolidatedHoldingsParser_CanParse_ReturnsFalseForPerAccountFormat()
     {
         // Arrange
@@ -71,10 +72,10 @@ Avanza Europa|Avanza Europa|36,634425|5592,24|145,77|145,77|SEK|SE|SE0013718699|
         var result = parser.CanParse(PerAccountCsvContent);
 
         // Assert
-        Assert.False(result);
+        Assert.IsFalse(result);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task AvanzaHoldingsPerAccountParser_ParseAsync_ParsesCorrectly()
     {
         // Arrange
@@ -85,38 +86,38 @@ Avanza Europa|Avanza Europa|36,634425|5592,24|145,77|145,77|SEK|SE|SE0013718699|
         var investments = await parser.ParseAsync(stream);
 
         // Assert
-        Assert.NotNull(investments);
-        Assert.Equal(4, investments.Count);
+        Assert.IsNotNull(investments);
+        Assert.AreEqual(4, investments.Count);
 
         // Check first investment (Telia Company)
         var telia = investments[0];
-        Assert.Equal("Telia Company", telia.Name);
-        Assert.Equal("TELIA", telia.ShortName);
-        Assert.Equal("Aktie", telia.Type);
-        Assert.Equal(5, telia.Quantity);
-        Assert.Equal(54.78m, telia.PurchasePrice);
-        Assert.Equal(36.18m, telia.CurrentPrice); // 180.90 / 5
-        Assert.Equal("1111-2223332", telia.AccountNumber);
-        Assert.Equal("SE0000667925", telia.ISIN);
-        Assert.Equal("SEK", telia.Currency);
-        Assert.Equal("SE", telia.Country);
-        Assert.Equal("XSTO", telia.Market);
+        Assert.AreEqual("Telia Company", telia.Name);
+        Assert.AreEqual("TELIA", telia.ShortName);
+        Assert.AreEqual("Aktie", telia.Type);
+        Assert.AreEqual(5, telia.Quantity);
+        Assert.AreEqual(54.78m, telia.PurchasePrice);
+        Assert.AreEqual(36.18m, telia.CurrentPrice); // 180.90 / 5
+        Assert.AreEqual("1111-2223332", telia.AccountNumber);
+        Assert.AreEqual("SE0000667925", telia.ISIN);
+        Assert.AreEqual("SEK", telia.Currency);
+        Assert.AreEqual("SE", telia.Country);
+        Assert.AreEqual("XSTO", telia.Market);
 
         // Check certificate investment
         var certificate = investments[2];
-        Assert.Equal("BEAR NASD X22 VT17", certificate.Name);
-        Assert.Equal("Certifikat", certificate.Type);
-        Assert.Equal(75000, certificate.Quantity);
-        Assert.Equal(0.02m, certificate.PurchasePrice);
-        Assert.Equal(0.001m, certificate.CurrentPrice); // 75.00 / 75000
+        Assert.AreEqual("BEAR NASD X22 VT17", certificate.Name);
+        Assert.AreEqual("Certifikat", certificate.Type);
+        Assert.AreEqual(75000, certificate.Quantity);
+        Assert.AreEqual(0.02m, certificate.PurchasePrice);
+        Assert.AreEqual(0.001m, certificate.CurrentPrice); // 75.00 / 75000
 
         // Check ETF/Fund
         var etf = investments[3];
-        Assert.Equal("Montrose Global Monthly Dividend MSCI World UCITS ETF", etf.Name);
-        Assert.Equal("Fond", etf.Type); // EXCHANGE_TRADED_FUND maps to "Fond"
+        Assert.AreEqual("Montrose Global Monthly Dividend MSCI World UCITS ETF", etf.Name);
+        Assert.AreEqual("Fond", etf.Type); // EXCHANGE_TRADED_FUND maps to "Fond"
     }
 
-    [Fact]
+    [TestMethod]
     public async Task AvanzaConsolidatedHoldingsParser_ParseAsync_ParsesCorrectly()
     {
         // Arrange
@@ -127,34 +128,34 @@ Avanza Europa|Avanza Europa|36,634425|5592,24|145,77|145,77|SEK|SE|SE0013718699|
         var investments = await parser.ParseAsync(stream);
 
         // Assert
-        Assert.NotNull(investments);
-        Assert.Equal(8, investments.Count);
+        Assert.IsNotNull(investments);
+        Assert.AreEqual(8, investments.Count);
 
         // Check first investment (AFRY)
         var afry = investments[0];
-        Assert.Equal("AFRY", afry.Name);
-        Assert.Equal("AFRY", afry.ShortName);
-        Assert.Equal("Aktie", afry.Type);
-        Assert.Equal(7, afry.Quantity);
-        Assert.Equal(159.59m, afry.PurchasePrice);
-        Assert.Equal(166.30m, Math.Round(afry.CurrentPrice, 2)); // 1164.10 / 7
-        Assert.Null(afry.AccountNumber); // Consolidated format doesn't have account numbers
-        Assert.Equal("SE0005999836", afry.ISIN);
+        Assert.AreEqual("AFRY", afry.Name);
+        Assert.AreEqual("AFRY", afry.ShortName);
+        Assert.AreEqual("Aktie", afry.Type);
+        Assert.AreEqual(7, afry.Quantity);
+        Assert.AreEqual(159.59m, afry.PurchasePrice);
+        Assert.AreEqual(166.30m, Math.Round(afry.CurrentPrice, 2)); // 1164.10 / 7
+        Assert.IsNull(afry.AccountNumber); // Consolidated format doesn't have account numbers
+        Assert.AreEqual("SE0005999836", afry.ISIN);
 
         // Check fund with decimal quantity
         var fund = investments[1];
-        Assert.Equal("Aktiespararna Direktavkastning A", fund.Name);
-        Assert.Equal("Fond", fund.Type);
-        Assert.Equal(24.519705m, fund.Quantity);
-        Assert.Equal(208.23m, fund.PurchasePrice);
+        Assert.AreEqual("Aktiespararna Direktavkastning A", fund.Name);
+        Assert.AreEqual("Fond", fund.Type);
+        Assert.AreEqual(24.519705m, fund.Quantity);
+        Assert.AreEqual(208.23m, fund.PurchasePrice);
 
         // Check investment with empty type
         var europa = investments[7];
-        Assert.Equal("Avanza Europa", europa.Name);
-        Assert.Equal("Övrigt", europa.Type); // Empty type maps to "Övrigt"
+        Assert.AreEqual("Avanza Europa", europa.Name);
+        Assert.AreEqual("Övrigt", europa.Type); // Empty type maps to "Övrigt"
     }
 
-    [Fact]
+    [TestMethod]
     public async Task AvanzaHoldingsPerAccountParser_ParseAsync_HandlesDecimalCommasCorrectly()
     {
         // Arrange
@@ -167,14 +168,14 @@ Avanza Europa|Avanza Europa|36,634425|5592,24|145,77|145,77|SEK|SE|SE0013718699|
         var investments = await parser.ParseAsync(stream);
 
         // Assert
-        Assert.Single(investments);
+        Assert.AreEqual(1, investments.Count());
         var investment = investments[0];
-        Assert.Equal(10.5m, investment.Quantity);
-        Assert.Equal(100.00m, investment.PurchasePrice);
-        Assert.Equal(117.58m, Math.Round(investment.CurrentPrice, 2)); // 1234.56 / 10.5
+        Assert.AreEqual(10.5m, investment.Quantity);
+        Assert.AreEqual(100.00m, investment.PurchasePrice);
+        Assert.AreEqual(117.58m, Math.Round(investment.CurrentPrice, 2)); // 1234.56 / 10.5
     }
 
-    [Fact]
+    [TestMethod]
     public async Task AvanzaConsolidatedHoldingsParser_ParseAsync_SkipsInvalidRows()
     {
         // Arrange
@@ -190,42 +191,42 @@ Valid Fund|VALID|5|500,00|100,00|100,00|SEK|SE|SE0000000004|XSTO|FUND";
         var investments = await parser.ParseAsync(stream);
 
         // Assert
-        Assert.Equal(2, investments.Count); // Only valid rows
-        Assert.Equal("AFRY", investments[0].Name);
-        Assert.Equal("Valid Fund", investments[1].Name);
+        Assert.AreEqual(2, investments.Count); // Only valid rows
+        Assert.AreEqual("AFRY", investments[0].Name);
+        Assert.AreEqual("Valid Fund", investments[1].Name);
     }
 
-    [Fact]
+    [TestMethod]
     public void AvanzaHoldingsPerAccountParser_BankName_ReturnsAvanza()
     {
         // Arrange
         var parser = new AvanzaHoldingsPerAccountParser();
 
         // Act & Assert
-        Assert.Equal("Avanza", parser.BankName);
+        Assert.AreEqual("Avanza", parser.BankName);
     }
 
-    [Fact]
+    [TestMethod]
     public void AvanzaHoldingsPerAccountParser_FormatType_ReturnsPerKonto()
     {
         // Arrange
         var parser = new AvanzaHoldingsPerAccountParser();
 
         // Act & Assert
-        Assert.Equal("Per konto", parser.FormatType);
+        Assert.AreEqual("Per konto", parser.FormatType);
     }
 
-    [Fact]
+    [TestMethod]
     public void AvanzaConsolidatedHoldingsParser_FormatType_ReturnsSammanställt()
     {
         // Arrange
         var parser = new AvanzaConsolidatedHoldingsParser();
 
         // Act & Assert
-        Assert.Equal("Sammanställt", parser.FormatType);
+        Assert.AreEqual("Sammanställt", parser.FormatType);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task AvanzaHoldingsPerAccountParser_ParseAsync_HandlesTabSeparator()
     {
         // Arrange
@@ -238,11 +239,11 @@ Valid Fund|VALID|5|500,00|100,00|100,00|SEK|SE|SE0000000004|XSTO|FUND";
         var investments = await parser.ParseAsync(stream);
 
         // Assert
-        Assert.Single(investments);
-        Assert.Equal("Telia Company", investments[0].Name);
+        Assert.AreEqual(1, investments.Count());
+        Assert.AreEqual("Telia Company", investments[0].Name);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task AvanzaConsolidatedHoldingsParser_ParseAsync_HandlesSemicolonSeparator()
     {
         // Arrange
@@ -255,7 +256,7 @@ Valid Fund|VALID|5|500,00|100,00|100,00|SEK|SE|SE0000000004|XSTO|FUND";
         var investments = await parser.ParseAsync(stream);
 
         // Assert
-        Assert.Single(investments);
-        Assert.Equal("AFRY", investments[0].Name);
+        Assert.AreEqual(1, investments.Count());
+        Assert.AreEqual("AFRY", investments[0].Name);
     }
 }
