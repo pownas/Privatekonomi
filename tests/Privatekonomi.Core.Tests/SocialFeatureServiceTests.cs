@@ -125,8 +125,8 @@ public class SocialFeatureServiceTests : IDisposable
         var shareSettings = new GoalShare { ShowCurrentAmount = true };
 
         // Act & Assert
-        Assert.ThrowsException<InvalidOperationException>(() => async () =>
-            await _socialFeatureService.CreateGoalShareAsync(goal.GoalId, shareSettings));
+        Assert.ThrowsException<InvalidOperationException>(() =>
+            _socialFeatureService.CreateGoalShareAsync(goal.GoalId, shareSettings));
     }
 
     [TestMethod]
@@ -260,8 +260,8 @@ public class SocialFeatureServiceTests : IDisposable
         var group = new SavingsGroup { Name = "Test Group" };
 
         // Act & Assert
-        Assert.ThrowsException<InvalidOperationException>(() => async () =>
-            await _socialFeatureService.CreateSavingsGroupAsync(group));
+        Assert.ThrowsException<InvalidOperationException>(() =>
+            _socialFeatureService.CreateSavingsGroupAsync(group));
     }
 
     [TestMethod]
@@ -626,8 +626,8 @@ public class SocialFeatureServiceTests : IDisposable
     public async Task CompareToCommunityAsync_WhenDisabled_ThrowsException()
     {
         // Act & Assert
-        Assert.ThrowsException<InvalidOperationException>(() => async () =>
-            await _socialFeatureService.CompareToCommunityAsync());
+        Assert.ThrowsException<InvalidOperationException>(() =>
+            _socialFeatureService.CompareToCommunityAsync());
     }
 
     [TestMethod]

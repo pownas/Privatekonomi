@@ -109,8 +109,8 @@ public class TransactionServiceTests : IDisposable
         await _context.SaveChangesAsync();
 
         // Act & Assert
-        Assert.ThrowsException<ArgumentException>(() => async () =>
-            await _transactionService.UpdateTransactionWithAuditAsync(
+        Assert.ThrowsException<ArgumentException>(() =>
+            _transactionService.UpdateTransactionWithAuditAsync(
                 transaction.TransactionId,
                 0m, // Invalid amount
                 DateTime.UtcNow.Date,
@@ -141,8 +141,8 @@ public class TransactionServiceTests : IDisposable
         await _context.SaveChangesAsync();
 
         // Act & Assert
-        Assert.ThrowsException<ArgumentException>(() => async () =>
-            await _transactionService.UpdateTransactionWithAuditAsync(
+        Assert.ThrowsException<ArgumentException>(() =>
+            _transactionService.UpdateTransactionWithAuditAsync(
                 transaction.TransactionId,
                 -50m, // Invalid amount
                 DateTime.UtcNow.Date,
@@ -173,8 +173,8 @@ public class TransactionServiceTests : IDisposable
         await _context.SaveChangesAsync();
 
         // Act & Assert
-        Assert.ThrowsException<ArgumentException>(() => async () =>
-            await _transactionService.UpdateTransactionWithAuditAsync(
+        Assert.ThrowsException<ArgumentException>(() =>
+            _transactionService.UpdateTransactionWithAuditAsync(
                 transaction.TransactionId,
                 100m,
                 DateTime.UtcNow.Date,
@@ -205,8 +205,8 @@ public class TransactionServiceTests : IDisposable
         await _context.SaveChangesAsync();
 
         // Act & Assert
-        var exception = Assert.ThrowsException<InvalidOperationException>(() => async () =>
-            await _transactionService.UpdateTransactionWithAuditAsync(
+        var exception = Assert.ThrowsException<InvalidOperationException>(() =>
+            _transactionService.UpdateTransactionWithAuditAsync(
                 transaction.TransactionId,
                 100m,
                 DateTime.UtcNow.Date,
@@ -240,8 +240,8 @@ public class TransactionServiceTests : IDisposable
         await _context.SaveChangesAsync();
 
         // Act & Assert
-        var exception = Assert.ThrowsException<InvalidOperationException>(() => async () =>
-            await _transactionService.UpdateTransactionWithAuditAsync(
+        var exception = Assert.ThrowsException<InvalidOperationException>(() =>
+            _transactionService.UpdateTransactionWithAuditAsync(
                 transaction.TransactionId,
                 100m,
                 DateTime.UtcNow.Date,
@@ -261,8 +261,8 @@ public class TransactionServiceTests : IDisposable
     public async Task UpdateTransactionWithAuditAsync_TransactionNotFound_ThrowsInvalidOperationException()
     {
         // Act & Assert
-        var exception = Assert.ThrowsException<InvalidOperationException>(() => async () =>
-            await _transactionService.UpdateTransactionWithAuditAsync(
+        var exception = Assert.ThrowsException<InvalidOperationException>(() =>
+            _transactionService.UpdateTransactionWithAuditAsync(
                 999, // Non-existent ID
                 100m,
                 DateTime.UtcNow.Date,

@@ -228,7 +228,7 @@ public class SubscriptionServiceTests : IDisposable
         Assert.IsNotNull(result);
         Assert.AreEqual(1, result.Count());
         var detected = result[0];
-        CollectionAssert.Contains(detected.Name, StringComparison.OrdinalIgnoreCase, "Netflix");
+        Assert.IsTrue(detected.Name.Contains("Netflix", StringComparison.OrdinalIgnoreCase));
         Assert.AreEqual(119, detected.Price);
         Assert.AreEqual("Monthly", detected.BillingFrequency);
         Assert.IsTrue(detected.AutoDetected);
@@ -371,7 +371,7 @@ public class SubscriptionServiceTests : IDisposable
 
         // Assert
         Assert.IsNotNull(result);
-        StringAssert.Contains(result.Name, StringComparison.OrdinalIgnoreCase, "Spotify");
+        Assert.IsTrue(result.Name.Contains("Spotify", StringComparison.OrdinalIgnoreCase));
         Assert.AreEqual(99, result.Price);
         Assert.AreEqual("SEK", result.Currency);
         Assert.IsTrue(result.AutoDetected);

@@ -98,7 +98,7 @@ public class BulkExportTests
         StringAssert.Contains(csvString, "Restaurant");
         
         // Verify third transaction is not exported
-        CollectionAssert.DoesNotContain(csvString, "Should not be exported");
+        Assert.IsFalse(csvString.Contains("Should not be exported"));
     }
 
     [TestMethod]
@@ -253,7 +253,7 @@ public class BulkExportTests
 
         // Assert
         StringAssert.Contains(csvString, "User 123 transaction");
-        CollectionAssert.DoesNotContain(csvString, "Other user transaction");
+        Assert.IsFalse(csvString.Contains("Other user transaction"));
     }
 
     [TestMethod]

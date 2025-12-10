@@ -180,9 +180,9 @@ public class BudgetTemplateServiceTests
         var description = BudgetTemplateService.GetTemplateDescription(BudgetTemplateType.SwedishFamily);
 
         // Assert
-        CollectionAssert.Contains(description, "Svenska Familjehushåll");
-        CollectionAssert.Contains(description, "Länsförsäkringar");
-        CollectionAssert.Contains(description, "15% sparande");
+        StringAssert.Contains(description, "Svenska Familjehushåll");
+        StringAssert.Contains(description, "Länsförsäkringar");
+        StringAssert.Contains(description, "15% sparande");
     }
 
     [TestMethod]
@@ -192,8 +192,8 @@ public class BudgetTemplateServiceTests
         var description = BudgetTemplateService.GetTemplateDescription(BudgetTemplateType.SwedishSingle);
 
         // Assert
-        CollectionAssert.Contains(description, "Svenska Singelhushåll");
-        CollectionAssert.Contains(description, "20%");
+        StringAssert.Contains(description, "Svenska Singelhushåll");
+        StringAssert.Contains(description, "20%");
     }
 
     [TestMethod]
