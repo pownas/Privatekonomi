@@ -125,7 +125,7 @@ public class SocialFeatureServiceTests : IDisposable
         var shareSettings = new GoalShare { ShowCurrentAmount = true };
 
         // Act & Assert
-        await Assert.ThrowsExceptionAsync<InvalidOperationException>(async () =>
+        Assert.ThrowsException<InvalidOperationException>(() => async () =>
             await _socialFeatureService.CreateGoalShareAsync(goal.GoalId, shareSettings));
     }
 
@@ -260,7 +260,7 @@ public class SocialFeatureServiceTests : IDisposable
         var group = new SavingsGroup { Name = "Test Group" };
 
         // Act & Assert
-        await Assert.ThrowsExceptionAsync<InvalidOperationException>(async () =>
+        Assert.ThrowsException<InvalidOperationException>(() => async () =>
             await _socialFeatureService.CreateSavingsGroupAsync(group));
     }
 
@@ -323,7 +323,7 @@ public class SocialFeatureServiceTests : IDisposable
 
         // Assert
         Assert.AreNotEqual(0, userGroups.Count());
-        CollectionAssert.Contains(g => g.SavingsGroupId == group1.SavingsGroupId, userGroups);
+        Assert.IsTrue(userGroups.Any(g => g.SavingsGroupId == group1.SavingsGroupId));
     }
 
     #endregion
@@ -472,7 +472,7 @@ public class SocialFeatureServiceTests : IDisposable
 
         // Assert
         Assert.AreNotEqual(0, groupGoals.Count());
-        CollectionAssert.Contains(gg => gg.GoalId == goal1.GoalId, groupGoals);
+        Assert.IsTrue(groupGoals.Any(gg => gg.GoalId == goal1.GoalId));
     }
 
     #endregion
@@ -626,7 +626,7 @@ public class SocialFeatureServiceTests : IDisposable
     public async Task CompareToCommunityAsync_WhenDisabled_ThrowsException()
     {
         // Act & Assert
-        await Assert.ThrowsExceptionAsync<InvalidOperationException>(async () =>
+        Assert.ThrowsException<InvalidOperationException>(() => async () =>
             await _socialFeatureService.CompareToCommunityAsync());
     }
 

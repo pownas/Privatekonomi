@@ -182,8 +182,7 @@ public class RbacServiceTests : IDisposable
         await _rbacService.AssignRoleAsync(_testUserId, 2, HouseholdRoleType.Editor);
 
         // Act & Assert
-        await Assert.ThrowsExceptionAsync<InvalidOperationException>(
-            () => _rbacService.AssignRoleAsync(_testUser2Id, 1, HouseholdRoleType.FullAccess));
+        Assert.ThrowsException<InvalidOperationException>(() => _rbacService.AssignRoleAsync(_testUser2Id, 1, HouseholdRoleType.FullAccess.Result));
     }
 
     [TestMethod]
@@ -235,8 +234,7 @@ public class RbacServiceTests : IDisposable
     public async Task RemoveRoleAsync_CannotRemoveLastAdminRole()
     {
         // Act & Assert
-        await Assert.ThrowsExceptionAsync<InvalidOperationException>(
-            () => _rbacService.RemoveRoleAsync(_testUserId, 1));
+        Assert.ThrowsException<InvalidOperationException>(() => _rbacService.RemoveRoleAsync(_testUserId, 1.Result));
     }
 
     // ==================== Permission Check Tests ====================
@@ -308,13 +306,12 @@ public class RbacServiceTests : IDisposable
     public async Task DelegateRoleAsync_ThrowsExceptionWhenExceedingMaxPeriod()
     {
         // Act & Assert
-        await Assert.ThrowsExceptionAsync<ArgumentException>(
-            () => _rbacService.DelegateRoleAsync(
+        Assert.ThrowsException<ArgumentException>(() => _rbacService.DelegateRoleAsync(
                 _testUserId,
                 _testUser2Id,
                 _testHouseholdId,
                 HouseholdRoleType.FullAccess,
-                DateTime.UtcNow.AddDays(365))); // Max is 90 days for FullAccess
+                DateTime.UtcNow.AddDays(365.Result))); // Max is 90 days for FullAccess
     }
 
     [TestMethod]
@@ -342,13 +339,12 @@ public class RbacServiceTests : IDisposable
         await _context.SaveChangesAsync();
 
         // Act & Assert - User 2 (with delegated role) tries to delegate to user 3
-        await Assert.ThrowsExceptionAsync<InvalidOperationException>(
-            () => _rbacService.DelegateRoleAsync(
+        Assert.ThrowsException<InvalidOperationException>(() => _rbacService.DelegateRoleAsync(
                 _testUser2Id,
                 "test-user-3",
                 _testHouseholdId,
                 HouseholdRoleType.Editor,
-                DateTime.UtcNow.AddDays(7)));
+                DateTime.UtcNow.AddDays(7.Result)));
     }
 
     [TestMethod]

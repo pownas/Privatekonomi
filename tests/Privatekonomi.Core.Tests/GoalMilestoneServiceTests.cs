@@ -71,7 +71,7 @@ public class GoalMilestoneServiceTests : IDisposable
         Assert.AreEqual(7500m, milestones[2].TargetAmount);
         Assert.AreEqual(100, milestones[3].Percentage);
         Assert.AreEqual(10000m, milestones[3].TargetAmount);
-        Assert.All(milestones, m => Assert.IsTrue(m.IsAutomatic));
+        foreach (var m in milestones) { Assert.IsTrue(m.IsAutomatic); }
     }
 
     [TestMethod]
@@ -294,7 +294,7 @@ public class GoalMilestoneServiceTests : IDisposable
         // Assert
         var milestoneList = reachedMilestones.ToList();
         Assert.AreEqual(2, milestoneList.Count); // 25% and 50%
-        Assert.All(milestoneList, m => Assert.IsTrue(m.IsReached));
+        foreach (var m in milestoneList) { Assert.IsTrue(m.IsReached); }
     }
 
     [TestMethod]

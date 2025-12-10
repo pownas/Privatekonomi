@@ -170,7 +170,7 @@ public class NotificationPreferenceServiceTests
 
         // Assert
         Assert.AreEqual(2, schedules.Count);
-        Assert.All(schedules, s => Assert.AreEqual(_testUserId, s.UserId));
+        foreach (var s in schedules) { Assert.AreEqual(_testUserId, s.UserId); }
     }
 
     [TestMethod]
@@ -245,8 +245,8 @@ public class NotificationPreferenceServiceTests
 
         // Assert
         Assert.AreEqual(2, integrations.Count);
-        CollectionAssert.Contains(i => i.Channel == NotificationChannel.Slack, integrations);
-        CollectionAssert.Contains(i => i.Channel == NotificationChannel.Teams, integrations);
+        Assert.IsTrue(integrations.Any(i => i.Channel == NotificationChannel.Slack));
+        Assert.IsTrue(integrations.Any(i => i.Channel == NotificationChannel.Teams));
     }
 
     [TestMethod]

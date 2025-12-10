@@ -208,9 +208,9 @@ public class ExportServiceTests : IDisposable
 
         // Verify it's valid JSON and contains expected year and structure
         var json = Encoding.UTF8.GetString(data);
-        CollectionAssert.Contains(json, "\"year\": 2024");
-        CollectionAssert.Contains(json.ToLower(), "\"data\"");
-        CollectionAssert.Contains(json.ToLower(), "\"transactions\"");
+        StringAssert.Contains(json, "\"year\": 2024");
+        StringAssert.Contains(json.ToLower(), "\"data\"");
+        StringAssert.Contains(json.ToLower(), "\"transactions\"");
         
         // Parse to verify it's valid JSON - skip BOM if present
         var jsonBytes = data;
@@ -245,21 +245,21 @@ public class ExportServiceTests : IDisposable
 
         // Verify it's valid CSV with header
         var csv = Encoding.UTF8.GetString(data);
-        CollectionAssert.Contains(csv, "# Privatekonomi Export - År 2024");
-        CollectionAssert.Contains(csv, "Datum,Beskrivning,Belopp,Typ");
-        CollectionAssert.Contains(csv, "Matinköp Willys");
-        CollectionAssert.Contains(csv, "Lön februari");
-        CollectionAssert.Contains(csv, "Hyra");
+        StringAssert.Contains(csv, "# Privatekonomi Export - År 2024");
+        StringAssert.Contains(csv, "Datum,Beskrivning,Belopp,Typ");
+        StringAssert.Contains(csv, "Matinköp Willys");
+        StringAssert.Contains(csv, "Lön februari");
+        StringAssert.Contains(csv, "Hyra");
         
         // Should not contain 2023 data
         CollectionAssert.DoesNotContain(csv, "Matinköp ICA");
         CollectionAssert.DoesNotContain(csv, "Lön januari");
 
         // Verify summary section
-        CollectionAssert.Contains(csv, "# Summering 2024");
-        CollectionAssert.Contains(csv, "# Totala inkomster: 32000");
-        CollectionAssert.Contains(csv, "# Totala utgifter: 9500"); // 6000 + 3500
-        CollectionAssert.Contains(csv, "# Nettoresultat: 22500"); // 32000 - 9500
+        StringAssert.Contains(csv, "# Summering 2024");
+        StringAssert.Contains(csv, "# Totala inkomster: 32000");
+        StringAssert.Contains(csv, "# Totala utgifter: 9500"); // 6000 + 3500
+        StringAssert.Contains(csv, "# Nettoresultat: 22500"); // 32000 - 9500
     }
 
     [TestMethod]
@@ -275,18 +275,18 @@ public class ExportServiceTests : IDisposable
         var json = Encoding.UTF8.GetString(data);
         
         // Check for all data types (camelCase because of JsonNamingPolicy.CamelCase)
-        CollectionAssert.Contains(json.ToLower(), "transactions");
-        CollectionAssert.Contains(json.ToLower(), "budgets");
-        CollectionAssert.Contains(json.ToLower(), "goals");
-        CollectionAssert.Contains(json.ToLower(), "investments");
-        CollectionAssert.Contains(json.ToLower(), "loans");
+        StringAssert.Contains(json.ToLower(), "transactions");
+        StringAssert.Contains(json.ToLower(), "budgets");
+        StringAssert.Contains(json.ToLower(), "goals");
+        StringAssert.Contains(json.ToLower(), "investments");
+        StringAssert.Contains(json.ToLower(), "loans");
         // SalaryHistory is serialized as "salaryHistory" in camelCase
-        CollectionAssert.Contains(json, "\"salaryHistory\"");
+        StringAssert.Contains(json, "\"salaryHistory\"");
         
         // Check for metadata (also in camelCase)
-        CollectionAssert.Contains(json, "\"year\": 2024");
-        CollectionAssert.Contains(json, "\"exportDate\""); // Property name in camelCase
-        CollectionAssert.Contains(json, "\"version\"");
+        StringAssert.Contains(json, "\"year\": 2024");
+        StringAssert.Contains(json, "\"exportDate\""); // Property name in camelCase
+        StringAssert.Contains(json, "\"version\"");
     }
 
     [TestMethod]
@@ -302,12 +302,12 @@ public class ExportServiceTests : IDisposable
         var csv = Encoding.UTF8.GetString(data);
         
         // Verify counts
-        CollectionAssert.Contains(csv, "# Antal transaktioner: 2");
+        StringAssert.Contains(csv, "# Antal transaktioner: 2");
         
         // Verify financial summary
-        CollectionAssert.Contains(csv, "# Totala inkomster: 30000.00 SEK");
-        CollectionAssert.Contains(csv, "# Totala utgifter: 5000.00 SEK");
-        CollectionAssert.Contains(csv, "# Nettoresultat: 25000.00 SEK");
+        StringAssert.Contains(csv, "# Totala inkomster: 30000.00 SEK");
+        StringAssert.Contains(csv, "# Totala utgifter: 5000.00 SEK");
+        StringAssert.Contains(csv, "# Nettoresultat: 25000.00 SEK");
     }
 
     [TestMethod]
@@ -383,7 +383,7 @@ public class ExportServiceTests : IDisposable
         var csv = Encoding.UTF8.GetString(data);
         
         // Should contain current user's data
-        CollectionAssert.Contains(csv, "Matinköp Willys");
+        StringAssert.Contains(csv, "Matinköp Willys");
         
         // Should NOT contain other user's data
         CollectionAssert.DoesNotContain(csv, "Other user transaction");
@@ -403,8 +403,8 @@ public class ExportServiceTests : IDisposable
         var json = Encoding.UTF8.GetString(data);
         
         // Should still have structure but empty arrays
-        CollectionAssert.Contains(json, "2025");
-        CollectionAssert.Contains(json.ToLower(), "transactions");
+        StringAssert.Contains(json, "2025");
+        StringAssert.Contains(json.ToLower(), "transactions");
     }
 
     [TestMethod]
@@ -421,10 +421,10 @@ public class ExportServiceTests : IDisposable
         var csv = Encoding.UTF8.GetString(data);
         
         // Should have header with 0 transactions
-        CollectionAssert.Contains(csv, "# Privatekonomi Export - År 2025");
-        CollectionAssert.Contains(csv, "# Antal transaktioner: 0");
-        CollectionAssert.Contains(csv, "# Totala inkomster: 0.00 SEK");
-        CollectionAssert.Contains(csv, "# Totala utgifter: 0.00 SEK");
-        CollectionAssert.Contains(csv, "# Nettoresultat: 0.00 SEK");
+        StringAssert.Contains(csv, "# Privatekonomi Export - År 2025");
+        StringAssert.Contains(csv, "# Antal transaktioner: 0");
+        StringAssert.Contains(csv, "# Totala inkomster: 0.00 SEK");
+        StringAssert.Contains(csv, "# Totala utgifter: 0.00 SEK");
+        StringAssert.Contains(csv, "# Nettoresultat: 0.00 SEK");
     }
 }

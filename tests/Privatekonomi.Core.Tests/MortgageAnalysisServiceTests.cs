@@ -157,7 +157,7 @@ public class MortgageAnalysisServiceTests
         Assert.AreEqual(AmortizationRule.NoRequirement, result.ApplicableRule);
         Assert.AreEqual(0m, result.RequiredAnnualAmortization);
         Assert.IsTrue(result.MeetsRequirement);
-        CollectionAssert.Contains(result.RuleDescription, "endast för bolån");
+        StringAssert.Contains(result.RuleDescription, "endast för bolån");
     }
 
     [TestMethod]
@@ -254,8 +254,8 @@ public class MortgageAnalysisServiceTests
         Assert.IsNull(result.RateResetDate);
         Assert.IsNull(result.MonthsUntilRateReset);
         Assert.AreEqual(RiskLevel.High, result.RiskLevel);
-        CollectionAssert.Contains(result.RiskDescription, "Hög risk");
-        CollectionAssert.Contains(result.RiskDescription, "Rörlig ränta");
+        StringAssert.Contains(result.RiskDescription, "Hög risk");
+        StringAssert.Contains(result.RiskDescription, "Rörlig ränta");
     }
 
     [TestMethod]
@@ -286,7 +286,7 @@ public class MortgageAnalysisServiceTests
         Assert.IsNotNull(result.MonthsUntilRateReset);
         Assert.IsTrue(result.MonthsUntilRateReset >= 48);
         Assert.AreEqual(RiskLevel.Low, result.RiskLevel);
-        CollectionAssert.Contains(result.RiskDescription, "Låg risk");
+        StringAssert.Contains(result.RiskDescription, "Låg risk");
     }
 
     [TestMethod]
@@ -314,8 +314,8 @@ public class MortgageAnalysisServiceTests
         // Assert
         Assert.IsTrue(result.IsFixedRate);
         Assert.AreEqual(RiskLevel.High, result.RiskLevel);
-        CollectionAssert.Contains(result.RiskDescription, "Hög risk");
-        CollectionAssert.Contains(result.RiskDescription, "löper ut snart");
+        StringAssert.Contains(result.RiskDescription, "Hög risk");
+        StringAssert.Contains(result.RiskDescription, "löper ut snart");
     }
 
     [TestMethod]
@@ -343,7 +343,7 @@ public class MortgageAnalysisServiceTests
         // Assert
         // With LTV > 70% and 12-36 months until reset, should be Medium risk
         Assert.AreEqual(RiskLevel.Medium, result.RiskLevel);
-        CollectionAssert.Contains(result.RiskDescription, "Måttlig risk");
+        StringAssert.Contains(result.RiskDescription, "Måttlig risk");
     }
 
     #endregion

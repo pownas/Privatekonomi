@@ -88,14 +88,14 @@ public class BulkExportTests
         var csvString = Encoding.UTF8.GetString(csvData, 3, csvData.Length - 3);
         
         // Verify header
-        CollectionAssert.Contains(csvString, "Datum,Beskrivning,Belopp,Typ,Bank,Kategorier");
+        StringAssert.Contains(csvString, "Datum,Beskrivning,Belopp,Typ,Bank,Kategorier");
         
         // Verify data
-        CollectionAssert.Contains(csvString, "2024-01-15");
-        CollectionAssert.Contains(csvString, "Grocery shopping");
-        CollectionAssert.Contains(csvString, "100.50");
-        CollectionAssert.Contains(csvString, "2024-01-16");
-        CollectionAssert.Contains(csvString, "Restaurant");
+        StringAssert.Contains(csvString, "2024-01-15");
+        StringAssert.Contains(csvString, "Grocery shopping");
+        StringAssert.Contains(csvString, "100.50");
+        StringAssert.Contains(csvString, "2024-01-16");
+        StringAssert.Contains(csvString, "Restaurant");
         
         // Verify third transaction is not exported
         CollectionAssert.DoesNotContain(csvString, "Should not be exported");
@@ -209,8 +209,8 @@ public class BulkExportTests
         var csvString = Encoding.UTF8.GetString(csvData);
         
         // Verify special characters are properly escaped
-        CollectionAssert.Contains(csvString, "Test with \"\"quotes\"\" and, commas");
-        CollectionAssert.Contains(csvString, "åäö ÅÄÖ");
+        StringAssert.Contains(csvString, "Test with \"\"quotes\"\" and, commas");
+        StringAssert.Contains(csvString, "åäö ÅÄÖ");
     }
 
     [TestMethod]
@@ -252,7 +252,7 @@ public class BulkExportTests
         var csvString = Encoding.UTF8.GetString(csvData);
 
         // Assert
-        CollectionAssert.Contains(csvString, "User 123 transaction");
+        StringAssert.Contains(csvString, "User 123 transaction");
         CollectionAssert.DoesNotContain(csvString, "Other user transaction");
     }
 

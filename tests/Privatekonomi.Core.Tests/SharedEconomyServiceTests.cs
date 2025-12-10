@@ -72,8 +72,8 @@ public class SharedEconomyServiceTests : IDisposable
             .Where(s => s.BudgetId == result.BudgetId)
             .ToListAsync();
         Assert.AreEqual(2, shares.Count);
-        CollectionAssert.Contains(s => s.HouseholdMemberId == member1.HouseholdMemberId && s.SharePercentage == 60m, shares);
-        CollectionAssert.Contains(s => s.HouseholdMemberId == member2.HouseholdMemberId && s.SharePercentage == 40m, shares);
+        Assert.IsTrue(shares.Any(s => s.HouseholdMemberId == member1.HouseholdMemberId && s.SharePercentage == 60m));
+        Assert.IsTrue(shares.Any(s => s.HouseholdMemberId == member2.HouseholdMemberId && s.SharePercentage == 40m));
     }
 
     [TestMethod]
@@ -103,8 +103,7 @@ public class SharedEconomyServiceTests : IDisposable
         };
 
         // Act & Assert
-        await Assert.ThrowsExceptionAsync<InvalidOperationException>(
-            () => _householdService.CreateSharedBudgetAsync(budget, contributions));
+        Assert.ThrowsException<InvalidOperationException>(() => _householdService.CreateSharedBudgetAsync(budget, contributions.Result));
     }
 
     [TestMethod]
@@ -234,12 +233,11 @@ public class SharedEconomyServiceTests : IDisposable
         await _context.SaveChangesAsync();
 
         // Act & Assert
-        await Assert.ThrowsExceptionAsync<InvalidOperationException>(
-            () => _householdService.CreateDebtAsync(
+        Assert.ThrowsException<InvalidOperationException>(() => _householdService.CreateDebtAsync(
                 household.HouseholdId,
                 member.HouseholdMemberId,
                 member.HouseholdMemberId,
-                100m));
+                100m.Result));
     }
 
     [TestMethod]
@@ -256,12 +254,11 @@ public class SharedEconomyServiceTests : IDisposable
         await _context.SaveChangesAsync();
 
         // Act & Assert
-        await Assert.ThrowsExceptionAsync<InvalidOperationException>(
-            () => _householdService.CreateDebtAsync(
+        Assert.ThrowsException<InvalidOperationException>(() => _householdService.CreateDebtAsync(
                 household.HouseholdId,
                 debtor.HouseholdMemberId,
                 creditor.HouseholdMemberId,
-                0m));
+                0m.Result));
     }
 
     [TestMethod]

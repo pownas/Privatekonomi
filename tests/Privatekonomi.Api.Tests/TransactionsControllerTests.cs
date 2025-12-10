@@ -281,8 +281,8 @@ public class TransactionsControllerTests
 
         Assert.IsNotNull(updatedTransaction);
         Assert.AreEqual(2, updatedTransaction.TransactionCategories.Count);
-        CollectionAssert.Contains(tc => tc.CategoryId == category1.CategoryId && tc.Amount == 60m, updatedTransaction.TransactionCategories);
-        CollectionAssert.Contains(tc => tc.CategoryId == category2.CategoryId && tc.Amount == 40m, updatedTransaction.TransactionCategories);
+        Assert.IsTrue(updatedTransaction.TransactionCategories.Any(tc => tc.CategoryId == category1.CategoryId && tc.Amount == 60m));
+        Assert.IsTrue(updatedTransaction.TransactionCategories.Any(tc => tc.CategoryId == category2.CategoryId && tc.Amount == 40m));
     }
 
     [TestMethod]

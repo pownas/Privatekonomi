@@ -66,7 +66,7 @@ public class DashboardLayoutServiceTests
 
         // Assert
         Assert.AreEqual(2, result.Count());
-        Assert.All(result, l => Assert.AreEqual(TestUserId, l.UserId));
+        foreach (var l in result) { Assert.AreEqual(TestUserId, l.UserId); }
     }
 
     [TestMethod]

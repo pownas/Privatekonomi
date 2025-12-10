@@ -197,7 +197,7 @@ public class BulkOperationsControllerTests
         Assert.IsInstanceOfType(result, typeof(FileContentResult));
         var fileResult = (FileContentResult)result;
         Assert.AreEqual("text/csv", fileResult.ContentType);
-        CollectionAssert.Contains(fileResult.FileDownloadName, "transaktioner_");
+        StringAssert.Contains(fileResult.FileDownloadName, "transaktioner_");
         StringAssert.EndsWith(fileResult.FileDownloadName, ".csv");
         Assert.AreEqual(csvData, fileResult.FileContents);
     }
@@ -224,7 +224,7 @@ public class BulkOperationsControllerTests
         Assert.IsInstanceOfType(result, typeof(FileContentResult));
         var fileResult = (FileContentResult)result;
         Assert.AreEqual("application/json", fileResult.ContentType);
-        CollectionAssert.Contains(fileResult.FileDownloadName, "transaktioner_");
+        StringAssert.Contains(fileResult.FileDownloadName, "transaktioner_");
         StringAssert.EndsWith(fileResult.FileDownloadName, ".json");
         Assert.AreEqual(jsonData, fileResult.FileContents);
     }

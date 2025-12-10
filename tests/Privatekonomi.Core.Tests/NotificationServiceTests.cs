@@ -78,7 +78,7 @@ public class NotificationServiceTests
         // Assert
         Assert.AreNotEqual(0, notifications.Count());
         Assert.IsTrue(notifications.Count >= 2);
-        Assert.All(notifications, n => Assert.AreEqual(_testUserId, n.UserId));
+        foreach (var n in notifications) { Assert.AreEqual(_testUserId, n.UserId); }
     }
 
     [TestMethod]
@@ -104,7 +104,7 @@ public class NotificationServiceTests
 
         // Assert
         Assert.AreNotEqual(0, unreadNotifications.Count());
-        Assert.All(unreadNotifications, n => Assert.IsFalse(n.IsRead));
+        foreach (var n in unreadNotifications) { Assert.IsFalse(n.IsRead); }
     }
 
     [TestMethod]
@@ -140,7 +140,7 @@ public class NotificationServiceTests
 
         // Assert
         var notifications = await _context.Notifications.Where(n => n.UserId == _testUserId).ToListAsync();
-        Assert.All(notifications, n => Assert.IsTrue(n.IsRead));
+        foreach (var n in notifications) { Assert.IsTrue(n.IsRead); }
     }
 
     [TestMethod]
@@ -379,8 +379,7 @@ public class NotificationServiceTests
     public async Task SnoozeNotificationAsync_WithInvalidNotificationId_ThrowsException()
     {
         // Act & Assert
-        await Assert.ThrowsExceptionAsync<InvalidOperationException>(
-            () => _notificationService.SnoozeNotificationAsync(999, _testUserId, SnoozeDuration.OneHour));
+        Assert.ThrowsException<InvalidOperationException>(() => _notificationService.SnoozeNotificationAsync(999, _testUserId, SnoozeDuration.OneHour.Result));
     }
 
     [TestMethod]
@@ -461,8 +460,8 @@ public class NotificationServiceTests
 
         // Assert
         Assert.AreNotEqual(0, activeNotifications.Count());
-        CollectionAssert.Contains(n => n.NotificationId == notification1.NotificationId, activeNotifications);
-        CollectionAssert.DoesNotContain(n => n.NotificationId == notification2.NotificationId, activeNotifications);
+        Assert.IsTrue(activeNotifications.Any(n => n.NotificationId == notification1.NotificationId));
+        Assert.IsFalse(activeNotifications.Any(n => n.NotificationId == notification2.NotificationId));
     }
 
     [TestMethod]
@@ -483,7 +482,7 @@ public class NotificationServiceTests
         var activeNotifications = await _notificationService.GetActiveNotificationsAsync(_testUserId);
 
         // Assert
-        CollectionAssert.Contains(n => n.NotificationId == notification.NotificationId, activeNotifications);
+        Assert.IsTrue(activeNotifications.Any(n => n.NotificationId == notification.NotificationId));
     }
 
     [TestMethod]

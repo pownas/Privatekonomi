@@ -698,8 +698,8 @@ public class HouseholdServiceTests : IDisposable
             .Where(s => s.BudgetId == result.BudgetId)
             .ToListAsync();
         Assert.AreEqual(2, shares.Count);
-        CollectionAssert.Contains(s => s.HouseholdMemberId == member1.HouseholdMemberId && s.SharePercentage == 60m, shares);
-        CollectionAssert.Contains(s => s.HouseholdMemberId == member2.HouseholdMemberId && s.SharePercentage == 40m, shares);
+        Assert.IsTrue(shares.Any(s => s.HouseholdMemberId == member1.HouseholdMemberId && s.SharePercentage == 60m));
+        Assert.IsTrue(shares.Any(s => s.HouseholdMemberId == member2.HouseholdMemberId && s.SharePercentage == 40m));
     }
 
     [TestMethod]
@@ -742,10 +742,9 @@ public class HouseholdServiceTests : IDisposable
         };
 
         // Act & Assert
-        var exception = await Assert.ThrowsExceptionAsync<InvalidOperationException>(
-            () => _householdService.CreateSharedBudgetAsync(budget, contributions)
+        var exception = Assert.ThrowsException<InvalidOperationException>(() => _householdService.CreateSharedBudgetAsync(budget, contributions.Result)
         );
-        CollectionAssert.Contains(exception.Message, "must sum to 100%");
+        StringAssert.Contains(exception.Message, "must sum to 100%");
     }
 
     [TestMethod]
@@ -765,10 +764,9 @@ public class HouseholdServiceTests : IDisposable
         var contributions = new Dictionary<int, decimal>();
 
         // Act & Assert
-        var exception = await Assert.ThrowsExceptionAsync<InvalidOperationException>(
-            () => _householdService.CreateSharedBudgetAsync(budget, contributions)
+        var exception = Assert.ThrowsException<InvalidOperationException>(() => _householdService.CreateSharedBudgetAsync(budget, contributions.Result)
         );
-        CollectionAssert.Contains(exception.Message, "must be associated with a household");
+        StringAssert.Contains(exception.Message, "must be associated with a household");
     }
 
     [TestMethod]

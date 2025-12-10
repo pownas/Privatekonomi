@@ -109,7 +109,7 @@ public class TransactionServiceTests : IDisposable
         await _context.SaveChangesAsync();
 
         // Act & Assert
-        await Assert.ThrowsExceptionAsync<ArgumentException>(async () =>
+        Assert.ThrowsException<ArgumentException>(() => async () =>
             await _transactionService.UpdateTransactionWithAuditAsync(
                 transaction.TransactionId,
                 0m, // Invalid amount
@@ -141,7 +141,7 @@ public class TransactionServiceTests : IDisposable
         await _context.SaveChangesAsync();
 
         // Act & Assert
-        await Assert.ThrowsExceptionAsync<ArgumentException>(async () =>
+        Assert.ThrowsException<ArgumentException>(() => async () =>
             await _transactionService.UpdateTransactionWithAuditAsync(
                 transaction.TransactionId,
                 -50m, // Invalid amount
@@ -173,7 +173,7 @@ public class TransactionServiceTests : IDisposable
         await _context.SaveChangesAsync();
 
         // Act & Assert
-        await Assert.ThrowsExceptionAsync<ArgumentException>(async () =>
+        Assert.ThrowsException<ArgumentException>(() => async () =>
             await _transactionService.UpdateTransactionWithAuditAsync(
                 transaction.TransactionId,
                 100m,
@@ -205,7 +205,7 @@ public class TransactionServiceTests : IDisposable
         await _context.SaveChangesAsync();
 
         // Act & Assert
-        var exception = await Assert.ThrowsExceptionAsync<InvalidOperationException>(async () =>
+        var exception = Assert.ThrowsException<InvalidOperationException>(() => async () =>
             await _transactionService.UpdateTransactionWithAuditAsync(
                 transaction.TransactionId,
                 100m,
@@ -219,7 +219,7 @@ public class TransactionServiceTests : IDisposable
                 null,
                 null));
 
-        CollectionAssert.Contains(exception.Message, "locked");
+        StringAssert.Contains(exception.Message, "locked");
     }
 
     [TestMethod]
@@ -240,7 +240,7 @@ public class TransactionServiceTests : IDisposable
         await _context.SaveChangesAsync();
 
         // Act & Assert
-        var exception = await Assert.ThrowsExceptionAsync<InvalidOperationException>(async () =>
+        var exception = Assert.ThrowsException<InvalidOperationException>(() => async () =>
             await _transactionService.UpdateTransactionWithAuditAsync(
                 transaction.TransactionId,
                 100m,
@@ -254,14 +254,14 @@ public class TransactionServiceTests : IDisposable
                 null,
                 null));
 
-        CollectionAssert.Contains(exception.Message, "modified by another user");
+        StringAssert.Contains(exception.Message, "modified by another user");
     }
 
     [TestMethod]
     public async Task UpdateTransactionWithAuditAsync_TransactionNotFound_ThrowsInvalidOperationException()
     {
         // Act & Assert
-        var exception = await Assert.ThrowsExceptionAsync<InvalidOperationException>(async () =>
+        var exception = Assert.ThrowsException<InvalidOperationException>(() => async () =>
             await _transactionService.UpdateTransactionWithAuditAsync(
                 999, // Non-existent ID
                 100m,
@@ -275,7 +275,7 @@ public class TransactionServiceTests : IDisposable
                 null,
                 null));
 
-        CollectionAssert.Contains(exception.Message, "not found");
+        StringAssert.Contains(exception.Message, "not found");
     }
 
     [TestMethod]
@@ -325,8 +325,8 @@ public class TransactionServiceTests : IDisposable
 
         Assert.IsNotNull(updatedTransaction);
         Assert.AreEqual(2, updatedTransaction.TransactionCategories.Count);
-        CollectionAssert.Contains(tc => tc.CategoryId == 1 && tc.Amount == 60m, updatedTransaction.TransactionCategories);
-        CollectionAssert.Contains(tc => tc.CategoryId == 2 && tc.Amount == 40m, updatedTransaction.TransactionCategories);
+        Assert.IsTrue(updatedTransaction.TransactionCategories.Any(tc => tc.CategoryId == 1 && tc.Amount == 60m));
+        Assert.IsTrue(updatedTransaction.TransactionCategories.Any(tc => tc.CategoryId == 2 && tc.Amount == 40m));
     }
 
     [TestMethod]

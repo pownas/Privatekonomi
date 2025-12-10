@@ -90,7 +90,7 @@ public class ReminderServiceTests
 
         // Assert
         Assert.AreEqual(2, result.Count);
-        Assert.All(result, r => Assert.AreEqual(_testUserId, r.UserId));
+        foreach (var r in result) { Assert.AreEqual(_testUserId, r.UserId); }
     }
 
     [TestMethod]

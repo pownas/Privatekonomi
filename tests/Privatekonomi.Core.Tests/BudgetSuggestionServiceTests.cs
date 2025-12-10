@@ -303,11 +303,10 @@ public class BudgetSuggestionServiceTests
             BudgetPeriod.Monthly);
 
         // Act & Assert
-        await Assert.ThrowsExceptionAsync<InvalidOperationException>(() => 
-            _service.AcceptSuggestionAsync(
+        Assert.ThrowsException<InvalidOperationException>(() => _service.AcceptSuggestionAsync(
                 suggestion.BudgetSuggestionId,
                 DateTime.Now,
-                DateTime.Now.AddMonths(1),
+                DateTime.Now.AddMonths(1.Result),
                 BudgetPeriod.Monthly));
     }
 
@@ -363,7 +362,7 @@ public class BudgetSuggestionServiceTests
 
         // Assert
         Assert.AreEqual(1, pendingSuggestions.Count());
-        Assert.All(pendingSuggestions, s => Assert.IsFalse(s.IsAccepted));
+        foreach (var s in pendingSuggestions) { Assert.IsFalse(s.IsAccepted); }
     }
 
     [TestMethod]
@@ -388,9 +387,9 @@ public class BudgetSuggestionServiceTests
 
         // Assert
         Assert.IsTrue(models.Count >= 5); // Should have at least 5 models
-        CollectionAssert.Contains(m => m.Model == BudgetDistributionModel.FiftyThirtyTwenty, models);
-        CollectionAssert.Contains(m => m.Model == BudgetDistributionModel.SwedishFamily, models);
-        CollectionAssert.Contains(m => m.Model == BudgetDistributionModel.SwedishSingle, models);
+        Assert.IsTrue(models.Any(m => m.Model == BudgetDistributionModel.FiftyThirtyTwenty));
+        Assert.IsTrue(models.Any(m => m.Model == BudgetDistributionModel.SwedishFamily));
+        Assert.IsTrue(models.Any(m => m.Model == BudgetDistributionModel.SwedishSingle));
     }
 
     [DataTestMethod]

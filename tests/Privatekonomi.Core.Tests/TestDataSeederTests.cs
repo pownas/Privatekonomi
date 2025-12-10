@@ -157,13 +157,13 @@ public class TestDataSeederTests : IDisposable
         Assert.AreNotEqual(0, templates.Count());
         
         // Verify that at least some expected templates exist
-        CollectionAssert.Contains(t => t.Name == "No Spend Weekend", templates);
-        CollectionAssert.Contains(t => t.Name == "Matlåda varje dag", templates);
-        CollectionAssert.Contains(t => t.Type == ChallengeType.NoSpendWeekend, templates);
-        CollectionAssert.Contains(t => t.Type == ChallengeType.LunchBox, templates);
+        Assert.IsTrue(templates.Any(t => t.Name == "No Spend Weekend"));
+        Assert.IsTrue(templates.Any(t => t.Name == "Matlåda varje dag"));
+        Assert.IsTrue(templates.Any(t => t.Type == ChallengeType.NoSpendWeekend));
+        Assert.IsTrue(templates.Any(t => t.Type == ChallengeType.LunchBox));
         
         // Verify all templates are active by default
-        Assert.All(templates, t => Assert.IsTrue(t.IsActive));
+        foreach (var t in templates) { Assert.IsTrue(t.IsActive); }
     }
 
     [TestMethod]

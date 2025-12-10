@@ -227,7 +227,7 @@ NEWFILEUID:NONE
         var transactions = await _parser.ParseAsync(stream);
 
         // Assert
-        Assert.All(transactions, t => Assert.IsTrue(t.Imported));
+        foreach (var t in transactions) { Assert.IsTrue(t.Imported); }
     }
 
     [TestMethod]
@@ -240,7 +240,7 @@ NEWFILEUID:NONE
         var transactions = await _parser.ParseAsync(stream);
 
         // Assert
-        Assert.All(transactions, t => Assert.AreEqual("OFX Import", t.ImportSource));
+        foreach (var t in transactions) { Assert.AreEqual("OFX Import", t.ImportSource); }
     }
 
     [TestMethod]
@@ -253,7 +253,7 @@ NEWFILEUID:NONE
         var transactions = await _parser.ParseAsync(stream);
 
         // Assert
-        Assert.All(transactions, t => Assert.AreEqual("SEK", t.Currency));
+        foreach (var t in transactions) { Assert.AreEqual("SEK", t.Currency); }
     }
 
     [TestMethod]

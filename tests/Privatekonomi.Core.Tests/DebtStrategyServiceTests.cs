@@ -203,9 +203,9 @@ public class DebtStrategyServiceTests
         Assert.IsTrue(csv.Length > 0);
         
         var content = System.Text.Encoding.UTF8.GetString(csv);
-        CollectionAssert.Contains(content, "Amorteringsplan för: Test Loan");
-        CollectionAssert.Contains(content, "Lånebelopp: 50");
-        CollectionAssert.Contains(content, "Betalning,Datum,Ingående Saldo");
+        StringAssert.Contains(content, "Amorteringsplan för: Test Loan");
+        StringAssert.Contains(content, "Lånebelopp: 50");
+        StringAssert.Contains(content, "Betalning,Datum,Ingående Saldo");
     }
 
     [TestMethod]
@@ -234,8 +234,8 @@ public class DebtStrategyServiceTests
         Assert.IsTrue(csv.Length > 0);
         
         var content = System.Text.Encoding.UTF8.GetString(csv);
-        CollectionAssert.Contains(content, "Avbetalningsstrategi: Snöboll");
-        CollectionAssert.Contains(content, "Ordning,Lån,Belopp,Ränta");
+        StringAssert.Contains(content, "Avbetalningsstrategi: Snöboll");
+        StringAssert.Contains(content, "Ordning,Lån,Belopp,Ränta");
     }
 
     [TestMethod]

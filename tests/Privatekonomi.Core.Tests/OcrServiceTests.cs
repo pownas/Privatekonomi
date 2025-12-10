@@ -101,7 +101,7 @@ Totalt: 100,00
         // Assert
         Assert.IsNotNull(result);
         Assert.IsNotNull(result.Merchant);
-        CollectionAssert.Contains(result.Merchant, "ICA Maxi");
+        StringAssert.Contains(result.Merchant, "ICA Maxi");
     }
 
     [TestMethod]

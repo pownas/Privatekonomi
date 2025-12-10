@@ -67,8 +67,8 @@ public class GoalMilestoneIntegrationTests : IDisposable
         var milestoneList = milestones.ToList();
         
         Assert.AreEqual(4, milestoneList.Count);
-        Assert.All(milestoneList, m => Assert.IsTrue(m.IsAutomatic));
-        Assert.All(milestoneList, m => Assert.IsFalse(m.IsReached));
+        foreach (var m in milestoneList) { Assert.IsTrue(m.IsAutomatic); }
+        foreach (var m in milestoneList) { Assert.IsFalse(m.IsReached); }
 
         // Act - Update progress to 30% (should reach 25% milestone)
         await _goalService.UpdateGoalProgressAsync(createdGoal.GoalId, 15000m);
@@ -99,8 +99,8 @@ public class GoalMilestoneIntegrationTests : IDisposable
         var reachedMilestones = finalMilestones.Where(m => m.IsReached).ToList();
         
         Assert.AreEqual(2, reachedMilestones.Count);
-        CollectionAssert.Contains(m => m.Percentage == 25, reachedMilestones);
-        CollectionAssert.Contains(m => m.Percentage == 50, reachedMilestones);
+        Assert.IsTrue(reachedMilestones.Any(m => m.Percentage == 25));
+        Assert.IsTrue(reachedMilestones.Any(m => m.Percentage == 50));
 
         // Verify 2 notifications were sent (one for each reached milestone)
         _notificationServiceMock.Verify(
@@ -119,8 +119,8 @@ public class GoalMilestoneIntegrationTests : IDisposable
         
         // Assert - Verify history contains reached milestones
         Assert.AreEqual(2, history.Count());
-        Assert.All(history, m => Assert.IsTrue(m.IsReached));
-        Assert.All(history, m => Assert.IsNotNull(m.ReachedAt));
+        foreach (var m in history) { Assert.IsTrue(m.IsReached); }
+        foreach (var m in history) { Assert.IsNotNull(m.ReachedAt); }
     }
 
     [TestMethod]
@@ -162,8 +162,8 @@ public class GoalMilestoneIntegrationTests : IDisposable
         // Assert - Verify both 25% and custom 35% milestones are reached
         var reachedMilestones = await _milestoneService.GetReachedMilestonesAsync(createdGoal.GoalId);
         Assert.AreEqual(2, reachedMilestones.Count());
-        CollectionAssert.Contains(m => m.Percentage == 25 && m.IsAutomatic, reachedMilestones);
-        CollectionAssert.Contains(m => m.Percentage == 35 && !m.IsAutomatic, reachedMilestones);
+        Assert.IsTrue(reachedMilestones.Any(m => m.Percentage == 25 && m.IsAutomatic));
+        Assert.IsTrue(reachedMilestones.Any(m => m.Percentage == 35 && !m.IsAutomatic));
     }
 
     [TestMethod]
@@ -187,8 +187,8 @@ public class GoalMilestoneIntegrationTests : IDisposable
 
         // Assert - All milestones should be reached
         var milestones = await _milestoneService.GetMilestonesByGoalIdAsync(createdGoal.GoalId);
-        Assert.All(milestones, m => Assert.IsTrue(m.IsReached));
-        Assert.All(milestones, m => Assert.IsNotNull(m.ReachedAt));
+        foreach (var m in milestones) { Assert.IsTrue(m.IsReached); }
+        foreach (var m in milestones) { Assert.IsNotNull(m.ReachedAt); }
 
         // Verify 4 notifications were sent (one for each milestone)
         _notificationServiceMock.Verify(

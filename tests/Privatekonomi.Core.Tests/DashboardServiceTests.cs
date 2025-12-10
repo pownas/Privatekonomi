@@ -326,7 +326,7 @@ public class DashboardServiceTests
         // Assert
         Assert.IsNotNull(result);
         Assert.AreEqual(1, result.OverspentCategories.Count());
-        CollectionAssert.Contains(result.OverspentCategories, "Food");
+        StringAssert.Contains(result.OverspentCategories, "Food");
     }
 
     [TestMethod]

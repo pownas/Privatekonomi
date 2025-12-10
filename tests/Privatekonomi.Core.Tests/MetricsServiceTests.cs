@@ -225,7 +225,7 @@ public class MetricsServiceTests
         // Assert
         Assert.IsNotNull(result);
         Assert.AreEqual(6, result.Count);
-        Assert.All(result, snapshot => Assert.AreEqual(MetricsPeriodType.Monthly, snapshot.PeriodType));
+        foreach (var snapshot in result) { Assert.AreEqual(MetricsPeriodType.Monthly, snapshot.PeriodType); }
     }
 
     [TestMethod]
@@ -252,7 +252,7 @@ public class MetricsServiceTests
         // Assert
         Assert.IsNotNull(result);
         Assert.AreEqual(4, result.Count);
-        Assert.All(result, snapshot => Assert.AreEqual(MetricsPeriodType.Quarterly, snapshot.PeriodType));
+        foreach (var snapshot in result) { Assert.AreEqual(MetricsPeriodType.Quarterly, snapshot.PeriodType); }
     }
 
     [TestMethod]

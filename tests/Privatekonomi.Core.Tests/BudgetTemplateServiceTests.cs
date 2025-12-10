@@ -136,7 +136,7 @@ public class BudgetTemplateServiceTests
         var result = BudgetTemplateService.ApplyTemplate(BudgetTemplateType.Custom, totalIncome, _categories);
 
         // Assert
-        Assert.All(result.Values, amount => Assert.AreEqual(0m, amount));
+        foreach (var amount in result.Values) { Assert.AreEqual(0m, amount); }
     }
 
     [TestMethod]

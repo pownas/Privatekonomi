@@ -397,8 +397,7 @@ public class ReceiptServiceTests : IDisposable
         await _context.SaveChangesAsync();
 
         // Act & Assert
-        await Assert.ThrowsExceptionAsync<InvalidOperationException>(
-            () => _receiptService.LinkReceiptToTransactionAsync(999, transaction.TransactionId, TestUserId));
+        Assert.ThrowsException<InvalidOperationException>(() => _receiptService.LinkReceiptToTransactionAsync(999, transaction.TransactionId, TestUserId.Result));
     }
 
     [TestMethod]
@@ -417,8 +416,7 @@ public class ReceiptServiceTests : IDisposable
         var created = await _receiptService.CreateReceiptAsync(receipt);
 
         // Act & Assert
-        await Assert.ThrowsExceptionAsync<InvalidOperationException>(
-            () => _receiptService.LinkReceiptToTransactionAsync(created.ReceiptId, 999, TestUserId));
+        Assert.ThrowsException<InvalidOperationException>(() => _receiptService.LinkReceiptToTransactionAsync(created.ReceiptId, 999, TestUserId.Result));
     }
 
     [TestMethod]
@@ -469,7 +467,6 @@ public class ReceiptServiceTests : IDisposable
     public async Task UnlinkReceiptFromTransactionAsync_ThrowsWhenReceiptNotFound()
     {
         // Act & Assert
-        await Assert.ThrowsExceptionAsync<InvalidOperationException>(
-            () => _receiptService.UnlinkReceiptFromTransactionAsync(999, TestUserId));
+        Assert.ThrowsException<InvalidOperationException>(() => _receiptService.UnlinkReceiptFromTransactionAsync(999, TestUserId.Result));
     }
 }

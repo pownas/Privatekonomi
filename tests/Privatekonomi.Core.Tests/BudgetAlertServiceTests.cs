@@ -377,8 +377,8 @@ public class BudgetAlertServiceTests
 
         // Assert
         Assert.AreNotEqual(0, alerts.Count());
-        CollectionAssert.Contains(a => a.ThresholdPercentage == 75m, alerts);
-        CollectionAssert.Contains(a => a.ThresholdPercentage == 90m, alerts);
+        Assert.IsTrue(alerts.Any(a => a.ThresholdPercentage == 75m));
+        Assert.IsTrue(alerts.Any(a => a.ThresholdPercentage == 90m));
         
         // Verify notification was sent
         _mockNotificationService.Verify(

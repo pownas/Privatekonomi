@@ -207,7 +207,7 @@ public class StorageConfigurationTests
             // Exception is thrown during AddDbContext configuration
         });
 
-        CollectionAssert.Contains(exception.Message, "ConnectionString is required for SqlServer provider");
+        StringAssert.Contains(exception.Message, "ConnectionString is required for SqlServer provider");
     }
 
     [TestMethod]

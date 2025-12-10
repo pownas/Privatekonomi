@@ -82,9 +82,9 @@ public class SubscriptionServiceTests : IDisposable
         // Assert
         Assert.IsNotNull(result);
         Assert.AreEqual(2, result.Count); // subscription1 (60 days old) and subscription3 (never used)
-        CollectionAssert.Contains(s => s.Name == "Netflix", result);
-        CollectionAssert.Contains(s => s.Name == "HBO", result);
-        CollectionAssert.DoesNotContain(s => s.Name == "Spotify", result);
+        Assert.IsTrue(result.Any(s => s.Name == "Netflix"));
+        Assert.IsTrue(result.Any(s => s.Name == "HBO"));
+        Assert.IsFalse(result.Any(s => s.Name == "Spotify"));
     }
 
     [TestMethod]
@@ -371,7 +371,7 @@ public class SubscriptionServiceTests : IDisposable
 
         // Assert
         Assert.IsNotNull(result);
-        CollectionAssert.Contains(result.Name, StringComparison.OrdinalIgnoreCase, "Spotify");
+        StringAssert.Contains(result.Name, StringComparison.OrdinalIgnoreCase, "Spotify");
         Assert.AreEqual(99, result.Price);
         Assert.AreEqual("SEK", result.Currency);
         Assert.IsTrue(result.AutoDetected);
