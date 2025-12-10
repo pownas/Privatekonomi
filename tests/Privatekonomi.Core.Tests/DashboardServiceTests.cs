@@ -530,4 +530,191 @@ public class DashboardServiceTests
         Assert.NotNull(result);
         Assert.Equal(3, result.Count);
     }
+
+    [Fact]
+    public async Task GetFinancialTrendsAsync_ReturnsEmptyForUnauthenticatedUser()
+    {
+        // Arrange
+        _mockCurrentUserService.Setup(x => x.UserId).Returns((string?)null);
+
+        var service = new DashboardService(
+            _context,
+            _mockBudgetService.Object,
+            _mockBillService.Object,
+            _mockNotificationService.Object,
+            _mockCurrentUserService.Object);
+
+        // Act
+        var result = await service.GetFinancialTrendsAsync();
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(0, result.CurrentIncome);
+        Assert.Equal(0, result.CurrentExpenses);
+        Assert.Equal(0, result.CurrentNet);
+    }
+
+    [Fact]
+    public async Task GetFinancialTrendsAsync_CalculatesCurrentAndPreviousMonthData()
+    {
+        // Arrange
+        var now = DateTime.UtcNow;
+        var firstDayOfCurrentMonth = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+        var firstDayOfPreviousMonth = firstDayOfCurrentMonth.AddMonths(-1);
+
+        // Current month transactions
+        _context.Transactions.Add(new Transaction
+        {
+            UserId = TestUserId,
+            Amount = 50000,
+            IsIncome = true,
+            Date = firstDayOfCurrentMonth.AddDays(5),
+            Description = "Current month income"
+        });
+        _context.Transactions.Add(new Transaction
+        {
+            UserId = TestUserId,
+            Amount = 20000,
+            IsIncome = false,
+            Date = firstDayOfCurrentMonth.AddDays(10),
+            Description = "Current month expense"
+        });
+
+        // Previous month transactions
+        _context.Transactions.Add(new Transaction
+        {
+            UserId = TestUserId,
+            Amount = 45000,
+            IsIncome = true,
+            Date = firstDayOfPreviousMonth.AddDays(5),
+            Description = "Previous month income"
+        });
+        _context.Transactions.Add(new Transaction
+        {
+            UserId = TestUserId,
+            Amount = 15000,
+            IsIncome = false,
+            Date = firstDayOfPreviousMonth.AddDays(10),
+            Description = "Previous month expense"
+        });
+
+        await _context.SaveChangesAsync();
+
+        // Act
+        var result = await _service.GetFinancialTrendsAsync();
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(50000, result.CurrentIncome);
+        Assert.Equal(45000, result.PreviousIncome);
+        Assert.Equal(20000, result.CurrentExpenses);
+        Assert.Equal(15000, result.PreviousExpenses);
+        Assert.Equal(30000, result.CurrentNet);
+        Assert.Equal(30000, result.PreviousNet);
+    }
+
+    [Fact]
+    public async Task GetFinancialTrendsAsync_CalculatesPercentageChanges()
+    {
+        // Arrange
+        var now = DateTime.UtcNow;
+        var firstDayOfCurrentMonth = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+        var firstDayOfPreviousMonth = firstDayOfCurrentMonth.AddMonths(-1);
+
+        // Current month: income 60000, expenses 30000, net 30000
+        _context.Transactions.Add(new Transaction
+        {
+            UserId = TestUserId,
+            Amount = 60000,
+            IsIncome = true,
+            Date = firstDayOfCurrentMonth.AddDays(5),
+            Description = "Current month income"
+        });
+        _context.Transactions.Add(new Transaction
+        {
+            UserId = TestUserId,
+            Amount = 30000,
+            IsIncome = false,
+            Date = firstDayOfCurrentMonth.AddDays(10),
+            Description = "Current month expense"
+        });
+
+        // Previous month: income 50000, expenses 20000, net 30000
+        _context.Transactions.Add(new Transaction
+        {
+            UserId = TestUserId,
+            Amount = 50000,
+            IsIncome = true,
+            Date = firstDayOfPreviousMonth.AddDays(5),
+            Description = "Previous month income"
+        });
+        _context.Transactions.Add(new Transaction
+        {
+            UserId = TestUserId,
+            Amount = 20000,
+            IsIncome = false,
+            Date = firstDayOfPreviousMonth.AddDays(10),
+            Description = "Previous month expense"
+        });
+
+        await _context.SaveChangesAsync();
+
+        // Act
+        var result = await _service.GetFinancialTrendsAsync();
+
+        // Assert
+        Assert.NotNull(result);
+        
+        // Income change: (60000 - 50000) / 50000 * 100 = 20%
+        Assert.Equal(10000, result.IncomeChange);
+        Assert.Equal(20, result.IncomePercentageChange);
+        
+        // Expense change: (30000 - 20000) / 20000 * 100 = 50%
+        Assert.Equal(10000, result.ExpenseChange);
+        Assert.Equal(50, result.ExpensePercentageChange);
+        
+        // Net change: (30000 - 30000) / 30000 * 100 = 0%
+        Assert.Equal(0, result.NetChange);
+        Assert.Equal(0, result.NetPercentageChange);
+    }
+
+    [Fact]
+    public async Task GetFinancialTrendsAsync_HandlesNoPreviousData()
+    {
+        // Arrange
+        var now = DateTime.UtcNow;
+        var firstDayOfCurrentMonth = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+
+        // Only current month transactions
+        _context.Transactions.Add(new Transaction
+        {
+            UserId = TestUserId,
+            Amount = 50000,
+            IsIncome = true,
+            Date = firstDayOfCurrentMonth.AddDays(5),
+            Description = "Current month income"
+        });
+        _context.Transactions.Add(new Transaction
+        {
+            UserId = TestUserId,
+            Amount = 20000,
+            IsIncome = false,
+            Date = firstDayOfCurrentMonth.AddDays(10),
+            Description = "Current month expense"
+        });
+
+        await _context.SaveChangesAsync();
+
+        // Act
+        var result = await _service.GetFinancialTrendsAsync();
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(50000, result.CurrentIncome);
+        Assert.Equal(0, result.PreviousIncome);
+        Assert.Equal(20000, result.CurrentExpenses);
+        Assert.Equal(0, result.PreviousExpenses);
+        Assert.Equal(0, result.IncomePercentageChange); // No previous data means 0% change
+        Assert.Equal(0, result.ExpensePercentageChange);
+    }
 }
