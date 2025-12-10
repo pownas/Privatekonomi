@@ -3,10 +3,11 @@ using Moq;
 using Privatekonomi.Core.Data;
 using Privatekonomi.Core.Models;
 using Privatekonomi.Core.Services;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Privatekonomi.Core.Tests;
 
+[TestClass]
 public class BudgetSuggestionServiceTests
 {
     private readonly PrivatekonomyContext _context;
@@ -57,7 +58,7 @@ public class BudgetSuggestionServiceTests
             _mockCurrentUserService.Object);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GenerateSuggestionAsync_FiftyThirtyTwenty_CreatesCorrectSuggestion()
     {
         // Arrange
@@ -68,14 +69,14 @@ public class BudgetSuggestionServiceTests
         var suggestion = await _service.GenerateSuggestionAsync(totalIncome, model);
 
         // Assert
-        Assert.NotNull(suggestion);
-        Assert.Equal(totalIncome, suggestion.TotalIncome);
-        Assert.Equal(model, suggestion.DistributionModel);
-        Assert.False(suggestion.IsAccepted);
-        Assert.True(suggestion.Items.Any());
+        Assert.IsNotNull(suggestion);
+        Assert.AreEqual(totalIncome, suggestion.TotalIncome);
+        Assert.AreEqual(model, suggestion.DistributionModel);
+        Assert.IsFalse(suggestion.IsAccepted);
+        Assert.IsTrue(suggestion.Items.Any());
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GenerateSuggestionAsync_FiftyThirtyTwenty_AllocatesSavingsCorrectly()
     {
         // Arrange
@@ -89,12 +90,12 @@ public class BudgetSuggestionServiceTests
         var savingsItem = suggestion.Items.FirstOrDefault(i => 
             i.Category?.Name.Contains("Sparande") == true);
         
-        Assert.NotNull(savingsItem);
-        Assert.Equal(6000m, savingsItem.SuggestedAmount); // 20% of 30000
-        Assert.Equal(BudgetAllocationCategory.Savings, savingsItem.AllocationCategory);
+        Assert.IsNotNull(savingsItem);
+        Assert.AreEqual(6000m, savingsItem.SuggestedAmount); // 20% of 30000
+        Assert.AreEqual(BudgetAllocationCategory.Savings, savingsItem.AllocationCategory);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GenerateSuggestionAsync_SwedishFamily_Allocates15PercentToSavings()
     {
         // Arrange
@@ -108,11 +109,11 @@ public class BudgetSuggestionServiceTests
         var savingsItem = suggestion.Items.FirstOrDefault(i => 
             i.Category?.Name.Contains("Sparande") == true);
         
-        Assert.NotNull(savingsItem);
-        Assert.Equal(4500m, savingsItem.SuggestedAmount); // 15% of 30000
+        Assert.IsNotNull(savingsItem);
+        Assert.AreEqual(4500m, savingsItem.SuggestedAmount); // 15% of 30000
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GenerateSuggestionAsync_SwedishSingle_Allocates20PercentToSavings()
     {
         // Arrange
@@ -126,11 +127,11 @@ public class BudgetSuggestionServiceTests
         var savingsItem = suggestion.Items.FirstOrDefault(i => 
             i.Category?.Name.Contains("Sparande") == true);
         
-        Assert.NotNull(savingsItem);
-        Assert.Equal(5000m, savingsItem.SuggestedAmount); // 20% of 25000
+        Assert.IsNotNull(savingsItem);
+        Assert.AreEqual(5000m, savingsItem.SuggestedAmount); // 20% of 25000
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GenerateSuggestionAsync_SetsCorrectAllocationCategories()
     {
         // Arrange
@@ -148,17 +149,17 @@ public class BudgetSuggestionServiceTests
         var savingsItem = suggestion.Items.FirstOrDefault(i => 
             i.Category?.Name.Contains("Sparande") == true);
 
-        Assert.NotNull(housingItem);
-        Assert.Equal(BudgetAllocationCategory.Needs, housingItem.AllocationCategory);
+        Assert.IsNotNull(housingItem);
+        Assert.AreEqual(BudgetAllocationCategory.Needs, housingItem.AllocationCategory);
 
-        Assert.NotNull(entertainmentItem);
-        Assert.Equal(BudgetAllocationCategory.Wants, entertainmentItem.AllocationCategory);
+        Assert.IsNotNull(entertainmentItem);
+        Assert.AreEqual(BudgetAllocationCategory.Wants, entertainmentItem.AllocationCategory);
 
-        Assert.NotNull(savingsItem);
-        Assert.Equal(BudgetAllocationCategory.Savings, savingsItem.AllocationCategory);
+        Assert.IsNotNull(savingsItem);
+        Assert.AreEqual(BudgetAllocationCategory.Savings, savingsItem.AllocationCategory);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task AdjustSuggestionItemAsync_UpdatesAmount()
     {
         // Arrange
@@ -174,11 +175,11 @@ public class BudgetSuggestionServiceTests
             "Test adjustment");
 
         // Assert
-        Assert.Equal(newAmount, adjustedItem.AdjustedAmount);
-        Assert.True(adjustedItem.IsManuallyAdjusted);
+        Assert.AreEqual(newAmount, adjustedItem.AdjustedAmount);
+        Assert.IsTrue(adjustedItem.IsManuallyAdjusted);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task AdjustSuggestionItemAsync_RecordsAdjustment()
     {
         // Arrange
@@ -195,11 +196,11 @@ public class BudgetSuggestionServiceTests
 
         // Assert
         var updatedSuggestion = await _service.GetSuggestionByIdAsync(suggestion.BudgetSuggestionId);
-        Assert.Single(updatedSuggestion!.Adjustments);
-        Assert.Equal(AdjustmentType.Modification, updatedSuggestion.Adjustments.First().Type);
+        Assert.AreEqual(1, updatedSuggestion!.Adjustments.Count());
+        Assert.AreEqual(AdjustmentType.Modification, updatedSuggestion.Adjustments.First().Type);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task TransferBetweenItemsAsync_TransfersCorrectly()
     {
         // Arrange
@@ -222,11 +223,11 @@ public class BudgetSuggestionServiceTests
         var updatedFromItem = updatedSuggestion!.Items.First(i => i.CategoryId == fromItem.CategoryId);
         var updatedToItem = updatedSuggestion.Items.First(i => i.CategoryId == toItem.CategoryId);
 
-        Assert.Equal(originalFromAmount - transferAmount, updatedFromItem.AdjustedAmount);
-        Assert.Equal(originalToAmount + transferAmount, updatedToItem.AdjustedAmount);
+        Assert.AreEqual(originalFromAmount - transferAmount, updatedFromItem.AdjustedAmount);
+        Assert.AreEqual(originalToAmount + transferAmount, updatedToItem.AdjustedAmount);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task TransferBetweenItemsAsync_RecordsAdjustment()
     {
         // Arrange
@@ -243,11 +244,11 @@ public class BudgetSuggestionServiceTests
 
         // Assert
         var updatedSuggestion = await _service.GetSuggestionByIdAsync(suggestion.BudgetSuggestionId);
-        Assert.Single(updatedSuggestion!.Adjustments);
-        Assert.Equal(AdjustmentType.Transfer, updatedSuggestion.Adjustments.First().Type);
+        Assert.AreEqual(1, updatedSuggestion!.Adjustments.Count());
+        Assert.AreEqual(AdjustmentType.Transfer, updatedSuggestion.Adjustments.First().Type);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task AcceptSuggestionAsync_CreatesBudget()
     {
         // Arrange
@@ -263,14 +264,14 @@ public class BudgetSuggestionServiceTests
             BudgetPeriod.Monthly);
 
         // Assert
-        Assert.NotNull(budget);
-        Assert.Equal(startDate, budget.StartDate);
-        Assert.Equal(endDate, budget.EndDate);
-        Assert.Equal(BudgetPeriod.Monthly, budget.Period);
-        Assert.True(budget.BudgetCategories.Any());
+        Assert.IsNotNull(budget);
+        Assert.AreEqual(startDate, budget.StartDate);
+        Assert.AreEqual(endDate, budget.EndDate);
+        Assert.AreEqual(BudgetPeriod.Monthly, budget.Period);
+        Assert.IsTrue(budget.BudgetCategories.Any());
     }
 
-    [Fact]
+    [TestMethod]
     public async Task AcceptSuggestionAsync_MarksSuggestionAsAccepted()
     {
         // Arrange
@@ -285,12 +286,12 @@ public class BudgetSuggestionServiceTests
 
         // Assert
         var updatedSuggestion = await _service.GetSuggestionByIdAsync(suggestion.BudgetSuggestionId);
-        Assert.NotNull(updatedSuggestion);
-        Assert.True(updatedSuggestion.IsAccepted);
-        Assert.NotNull(updatedSuggestion.AcceptedAt);
+        Assert.IsNotNull(updatedSuggestion);
+        Assert.IsTrue(updatedSuggestion.IsAccepted);
+        Assert.IsNotNull(updatedSuggestion.AcceptedAt);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task AcceptSuggestionAsync_ThrowsIfAlreadyAccepted()
     {
         // Arrange
@@ -302,7 +303,7 @@ public class BudgetSuggestionServiceTests
             BudgetPeriod.Monthly);
 
         // Act & Assert
-        await Assert.ThrowsAsync<InvalidOperationException>(() => 
+        await Assert.ThrowsExceptionAsync<InvalidOperationException>(() => 
             _service.AcceptSuggestionAsync(
                 suggestion.BudgetSuggestionId,
                 DateTime.Now,
@@ -310,7 +311,7 @@ public class BudgetSuggestionServiceTests
                 BudgetPeriod.Monthly));
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CalculateEffectsAsync_CalculatesCorrectTotals()
     {
         // Arrange
@@ -320,12 +321,12 @@ public class BudgetSuggestionServiceTests
         var effects = await _service.CalculateEffectsAsync(suggestion.BudgetSuggestionId);
 
         // Assert
-        Assert.NotNull(effects);
-        Assert.Equal(effects.TotalOriginalAmount, effects.TotalAdjustedAmount);
-        Assert.Equal(0, effects.TotalDifference);
+        Assert.IsNotNull(effects);
+        Assert.AreEqual(effects.TotalOriginalAmount, effects.TotalAdjustedAmount);
+        Assert.AreEqual(0, effects.TotalDifference);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CalculateEffectsAsync_TracksAdjustmentCount()
     {
         // Arrange
@@ -342,10 +343,10 @@ public class BudgetSuggestionServiceTests
         var effects = await _service.CalculateEffectsAsync(suggestion.BudgetSuggestionId);
 
         // Assert
-        Assert.Equal(1, effects.AdjustmentsCount);
+        Assert.AreEqual(1, effects.AdjustmentsCount);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetPendingSuggestionsAsync_ReturnsOnlyPending()
     {
         // Arrange
@@ -361,11 +362,11 @@ public class BudgetSuggestionServiceTests
         var pendingSuggestions = await _service.GetPendingSuggestionsAsync();
 
         // Assert
-        Assert.Single(pendingSuggestions);
-        Assert.All(pendingSuggestions, s => Assert.False(s.IsAccepted));
+        Assert.AreEqual(1, pendingSuggestions.Count());
+        Assert.All(pendingSuggestions, s => Assert.IsFalse(s.IsAccepted));
     }
 
-    [Fact]
+    [TestMethod]
     public async Task DeleteSuggestionAsync_RemovesSuggestion()
     {
         // Arrange
@@ -376,51 +377,51 @@ public class BudgetSuggestionServiceTests
 
         // Assert
         var deletedSuggestion = await _service.GetSuggestionByIdAsync(suggestion.BudgetSuggestionId);
-        Assert.Null(deletedSuggestion);
+        Assert.IsNull(deletedSuggestion);
     }
 
-    [Fact]
+    [TestMethod]
     public void GetAvailableModels_ReturnsAllModels()
     {
         // Act
         var models = _service.GetAvailableModels().ToList();
 
         // Assert
-        Assert.True(models.Count >= 5); // Should have at least 5 models
-        Assert.Contains(models, m => m.Model == BudgetDistributionModel.FiftyThirtyTwenty);
-        Assert.Contains(models, m => m.Model == BudgetDistributionModel.SwedishFamily);
-        Assert.Contains(models, m => m.Model == BudgetDistributionModel.SwedishSingle);
+        Assert.IsTrue(models.Count >= 5); // Should have at least 5 models
+        CollectionAssert.Contains(m => m.Model == BudgetDistributionModel.FiftyThirtyTwenty, models);
+        CollectionAssert.Contains(m => m.Model == BudgetDistributionModel.SwedishFamily, models);
+        CollectionAssert.Contains(m => m.Model == BudgetDistributionModel.SwedishSingle, models);
     }
 
-    [Theory]
-    [InlineData(BudgetDistributionModel.FiftyThirtyTwenty)]
-    [InlineData(BudgetDistributionModel.SwedishFamily)]
-    [InlineData(BudgetDistributionModel.SwedishSingle)]
-    [InlineData(BudgetDistributionModel.EightyTwenty)]
-    [InlineData(BudgetDistributionModel.SeventyTwentyTen)]
+    [DataTestMethod]
+    [DataRow(BudgetDistributionModel.FiftyThirtyTwenty)]
+    [DataRow(BudgetDistributionModel.SwedishFamily)]
+    [DataRow(BudgetDistributionModel.SwedishSingle)]
+    [DataRow(BudgetDistributionModel.EightyTwenty)]
+    [DataRow(BudgetDistributionModel.SeventyTwentyTen)]
     public void GetDistributionModelDescription_ReturnsNonEmptyDescription(BudgetDistributionModel model)
     {
         // Act
         var description = _service.GetDistributionModelDescription(model);
 
         // Assert
-        Assert.False(string.IsNullOrEmpty(description));
+        Assert.IsFalse(string.IsNullOrEmpty(description));
     }
 
-    [Theory]
-    [InlineData(20000)]
-    [InlineData(30000)]
-    [InlineData(40000)]
-    [InlineData(50000)]
+    [DataTestMethod]
+    [DataRow(20000)]
+    [DataRow(30000)]
+    [DataRow(40000)]
+    [DataRow(50000)]
     public async Task GenerateSuggestionAsync_WorksWithVariousIncomes(decimal income)
     {
         // Act
         var suggestion = await _service.GenerateSuggestionAsync(income, BudgetDistributionModel.FiftyThirtyTwenty);
 
         // Assert
-        Assert.NotNull(suggestion);
-        Assert.Equal(income, suggestion.TotalIncome);
-        Assert.True(suggestion.Items.Any());
-        Assert.True(suggestion.Items.Sum(i => i.SuggestedAmount) > 0);
+        Assert.IsNotNull(suggestion);
+        Assert.AreEqual(income, suggestion.TotalIncome);
+        Assert.IsTrue(suggestion.Items.Any());
+        Assert.IsTrue(suggestion.Items.Sum(i => i.SuggestedAmount) > 0);
     }
 }

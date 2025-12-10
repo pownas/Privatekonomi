@@ -1,4 +1,4 @@
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using Microsoft.EntityFrameworkCore;
 using Privatekonomi.Core.Services;
@@ -7,6 +7,7 @@ using Privatekonomi.Core.Data;
 
 namespace Privatekonomi.Core.Tests;
 
+[TestClass]
 public class KalpServiceTests : IDisposable
 {
     private readonly PrivatekonomyContext _context;
@@ -24,6 +25,7 @@ public class KalpServiceTests : IDisposable
         _service = new KalpService(_context, _mockKonsumentverketService.Object);
     }
 
+    [TestCleanup]
     public void Dispose()
     {
         _context.Database.EnsureDeleted();
@@ -31,7 +33,7 @@ public class KalpServiceTests : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    [Fact]
+    [TestMethod]
     public void CalculateKalp_BasicIncome_ReturnsCorrectCalculation()
     {
         // Arrange
@@ -53,14 +55,14 @@ public class KalpServiceTests : IDisposable
         var result = _service.CalculateKalp(input);
 
         // Assert
-        Assert.Equal(30000m, result.TotalIncome);
-        Assert.Equal(10500m, result.FixedExpenses);
-        Assert.Equal(5000m, result.LoanPayments);
-        Assert.Equal(14500m, result.KalpAmount); // 30000 - 10500 - 5000
-        Assert.Equal(48.33m, Math.Round(result.KalpPercentage, 2)); // (14500/30000)*100
+        Assert.AreEqual(30000m, result.TotalIncome);
+        Assert.AreEqual(10500m, result.FixedExpenses);
+        Assert.AreEqual(5000m, result.LoanPayments);
+        Assert.AreEqual(14500m, result.KalpAmount); // 30000 - 10500 - 5000
+        Assert.AreEqual(48.33m, Math.Round(result.KalpPercentage, 2)); // (14500/30000)*100
     }
 
-    [Fact]
+    [TestMethod]
     public void CalculateKalp_NoFixedExpensesOrLoans_ReturnsFullIncome()
     {
         // Arrange
@@ -75,14 +77,14 @@ public class KalpServiceTests : IDisposable
         var result = _service.CalculateKalp(input);
 
         // Assert
-        Assert.Equal(25000m, result.TotalIncome);
-        Assert.Equal(0m, result.FixedExpenses);
-        Assert.Equal(0m, result.LoanPayments);
-        Assert.Equal(25000m, result.KalpAmount);
-        Assert.Equal(100m, result.KalpPercentage);
+        Assert.AreEqual(25000m, result.TotalIncome);
+        Assert.AreEqual(0m, result.FixedExpenses);
+        Assert.AreEqual(0m, result.LoanPayments);
+        Assert.AreEqual(25000m, result.KalpAmount);
+        Assert.AreEqual(100m, result.KalpPercentage);
     }
 
-    [Fact]
+    [TestMethod]
     public void CalculateKalp_ExpensesExceedIncome_ReturnsNegativeKalp()
     {
         // Arrange
@@ -104,13 +106,13 @@ public class KalpServiceTests : IDisposable
         var result = _service.CalculateKalp(input);
 
         // Assert
-        Assert.Equal(20000m, result.TotalIncome);
-        Assert.Equal(12800m, result.FixedExpenses);
-        Assert.Equal(8000m, result.LoanPayments);
-        Assert.Equal(-800m, result.KalpAmount); // 20000 - 12800 - 8000 = -800
+        Assert.AreEqual(20000m, result.TotalIncome);
+        Assert.AreEqual(12800m, result.FixedExpenses);
+        Assert.AreEqual(8000m, result.LoanPayments);
+        Assert.AreEqual(-800m, result.KalpAmount); // 20000 - 12800 - 8000 = -800
     }
 
-    [Fact]
+    [TestMethod]
     public void CalculateKalp_MultipleLoansOfSameType_AggregatesCorrectly()
     {
         // Arrange
@@ -133,14 +135,14 @@ public class KalpServiceTests : IDisposable
         var result = _service.CalculateKalp(input);
 
         // Assert
-        Assert.Equal(6500m, result.LoanPayments); // 3000 + 2000 + 1500
-        Assert.Equal(23500m, result.KalpAmount); // 40000 - 10000 - 6500
-        Assert.True(result.LoanPaymentBreakdown.ContainsKey("Bolån"));
-        Assert.Equal(5000m, result.LoanPaymentBreakdown["Bolån"]); // 3000 + 2000
-        Assert.Equal(1500m, result.LoanPaymentBreakdown["CSN-lån"]);
+        Assert.AreEqual(6500m, result.LoanPayments); // 3000 + 2000 + 1500
+        Assert.AreEqual(23500m, result.KalpAmount); // 40000 - 10000 - 6500
+        Assert.IsTrue(result.LoanPaymentBreakdown.ContainsKey("Bolån"));
+        Assert.AreEqual(5000m, result.LoanPaymentBreakdown["Bolån"]); // 3000 + 2000
+        Assert.AreEqual(1500m, result.LoanPaymentBreakdown["CSN-lån"]);
     }
 
-    [Fact]
+    [TestMethod]
     public void CalculateKalp_WithHouseholdMembers_CalculatesRecommendedMinimum()
     {
         // Arrange
@@ -174,12 +176,12 @@ public class KalpServiceTests : IDisposable
         var result = _service.CalculateKalp(input);
 
         // Assert
-        Assert.NotNull(result.RecommendedMinimumKalp);
-        Assert.Equal(5820m, result.RecommendedMinimumKalp); // Food (3730) + Individual (2090)
-        Assert.True(result.MeetsRecommendedMinimum); // 22000 >= 5820
+        Assert.IsNotNull(result.RecommendedMinimumKalp);
+        Assert.AreEqual(5820m, result.RecommendedMinimumKalp); // Food (3730) + Individual (2090)
+        Assert.IsTrue(result.MeetsRecommendedMinimum); // 22000 >= 5820
     }
 
-    [Fact]
+    [TestMethod]
     public void CalculateKalp_BelowRecommendedMinimum_ReturnsFalse()
     {
         // Arrange
@@ -215,12 +217,12 @@ public class KalpServiceTests : IDisposable
         var result = _service.CalculateKalp(input);
 
         // Assert
-        Assert.Equal(5000m, result.KalpAmount); // 20000 - 12000 - 3000
-        Assert.Equal(5820m, result.RecommendedMinimumKalp);
-        Assert.False(result.MeetsRecommendedMinimum); // 5000 < 5820
+        Assert.AreEqual(5000m, result.KalpAmount); // 20000 - 12000 - 3000
+        Assert.AreEqual(5820m, result.RecommendedMinimumKalp);
+        Assert.IsFalse(result.MeetsRecommendedMinimum); // 5000 < 5820
     }
 
-    [Fact]
+    [TestMethod]
     public void CalculateKalp_FixedExpenseBreakdown_ContainsAllCategories()
     {
         // Arrange
@@ -241,14 +243,14 @@ public class KalpServiceTests : IDisposable
         var result = _service.CalculateKalp(input);
 
         // Assert
-        Assert.Equal(4, result.FixedExpenseBreakdown.Count);
-        Assert.Equal(10000m, result.FixedExpenseBreakdown["Hyra"]);
-        Assert.Equal(500m, result.FixedExpenseBreakdown["El"]);
-        Assert.Equal(300m, result.FixedExpenseBreakdown["Internet"]);
-        Assert.Equal(200m, result.FixedExpenseBreakdown["Försäkring"]);
+        Assert.AreEqual(4, result.FixedExpenseBreakdown.Count);
+        Assert.AreEqual(10000m, result.FixedExpenseBreakdown["Hyra"]);
+        Assert.AreEqual(500m, result.FixedExpenseBreakdown["El"]);
+        Assert.AreEqual(300m, result.FixedExpenseBreakdown["Internet"]);
+        Assert.AreEqual(200m, result.FixedExpenseBreakdown["Försäkring"]);
     }
 
-    [Fact]
+    [TestMethod]
     public void CalculateRecommendedMinimumKalp_EmptyHousehold_ReturnsZero()
     {
         // Arrange
@@ -258,10 +260,10 @@ public class KalpServiceTests : IDisposable
         var result = _service.CalculateRecommendedMinimumKalp(members);
 
         // Assert
-        Assert.Equal(0m, result);
+        Assert.AreEqual(0m, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void CalculateRecommendedMinimumKalp_SingleAdult_ReturnsCorrectAmount()
     {
         // Arrange
@@ -285,10 +287,10 @@ public class KalpServiceTests : IDisposable
 
         // Assert
         // Should be food + individual costs only (common costs are fixed expenses)
-        Assert.Equal(5820m, result); // 3730 + 2090
+        Assert.AreEqual(5820m, result); // 3730 + 2090
     }
 
-    [Fact]
+    [TestMethod]
     public void CalculateRecommendedMinimumKalp_FamilyOfFour_ReturnsCorrectAmount()
     {
         // Arrange
@@ -314,10 +316,10 @@ public class KalpServiceTests : IDisposable
         var result = _service.CalculateRecommendedMinimumKalp(members);
 
         // Assert
-        Assert.Equal(16950m, result); // 8790 + 8160
+        Assert.AreEqual(16950m, result); // 8790 + 8160
     }
 
-    [Fact]
+    [TestMethod]
     public void CalculateKalpWithComparison_WithoutHouseholdMembers_NoKonsumentverketComparison()
     {
         // Arrange
@@ -333,12 +335,12 @@ public class KalpServiceTests : IDisposable
         var result = _service.CalculateKalpWithComparison(input);
 
         // Assert
-        Assert.NotNull(result.KalpCalculation);
-        Assert.Equal(30000m, result.KalpCalculation.TotalIncome);
-        Assert.Null(result.KonsumentverketComparison);
+        Assert.IsNotNull(result.KalpCalculation);
+        Assert.AreEqual(30000m, result.KalpCalculation.TotalIncome);
+        Assert.IsNull(result.KonsumentverketComparison);
     }
 
-    [Fact]
+    [TestMethod]
     public void CalculateKalpWithComparison_WithHouseholdMembers_IncludesKonsumentverketComparison()
     {
         // Arrange
@@ -374,7 +376,7 @@ public class KalpServiceTests : IDisposable
         var result = _service.CalculateKalpWithComparison(input);
 
         // Assert
-        Assert.NotNull(result.KonsumentverketComparison);
-        Assert.Equal(3730m, result.KonsumentverketComparison.ReferenceFoodCosts);
+        Assert.IsNotNull(result.KonsumentverketComparison);
+        Assert.AreEqual(3730m, result.KonsumentverketComparison.ReferenceFoodCosts);
     }
 }

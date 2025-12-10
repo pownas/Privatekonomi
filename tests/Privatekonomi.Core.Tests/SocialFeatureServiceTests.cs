@@ -3,10 +3,11 @@ using Moq;
 using Privatekonomi.Core.Data;
 using Privatekonomi.Core.Models;
 using Privatekonomi.Core.Services;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Privatekonomi.Core.Tests;
 
+[TestClass]
 public class SocialFeatureServiceTests : IDisposable
 {
     private readonly PrivatekonomyContext _context;
@@ -28,6 +29,7 @@ public class SocialFeatureServiceTests : IDisposable
         _socialFeatureService = new SocialFeatureService(_context, _mockCurrentUserService.Object);
     }
 
+    [TestCleanup]
     public void Dispose()
     {
         _context.Database.EnsureDeleted();
@@ -49,24 +51,24 @@ public class SocialFeatureServiceTests : IDisposable
 
     #region Privacy Settings Tests
 
-    [Fact]
+    [TestMethod]
     public async Task GetPrivacySettingsAsync_FirstTime_CreatesDefaultSettings()
     {
         // Act
         var settings = await _socialFeatureService.GetPrivacySettingsAsync(_testUserId);
 
         // Assert
-        Assert.NotNull(settings);
-        Assert.Equal(_testUserId, settings.UserId);
-        Assert.False(settings.EnableSocialFeatures); // Default is opt-out (GDPR compliant)
-        Assert.False(settings.AllowGoalSharing);
-        Assert.False(settings.AllowSavingsGroups);
-        Assert.False(settings.AllowLeaderboards);
-        Assert.False(settings.AllowCommunityComparison);
-        Assert.True(settings.AnonymousByDefault); // Privacy-first
+        Assert.IsNotNull(settings);
+        Assert.AreEqual(_testUserId, settings.UserId);
+        Assert.IsFalse(settings.EnableSocialFeatures); // Default is opt-out (GDPR compliant)
+        Assert.IsFalse(settings.AllowGoalSharing);
+        Assert.IsFalse(settings.AllowSavingsGroups);
+        Assert.IsFalse(settings.AllowLeaderboards);
+        Assert.IsFalse(settings.AllowCommunityComparison);
+        Assert.IsTrue(settings.AnonymousByDefault); // Privacy-first
     }
 
-    [Fact]
+    [TestMethod]
     public async Task UpdatePrivacySettingsAsync_ValidUpdate_UpdatesSettings()
     {
         // Arrange
@@ -78,22 +80,22 @@ public class SocialFeatureServiceTests : IDisposable
         var updatedSettings = await _socialFeatureService.UpdatePrivacySettingsAsync(settings);
 
         // Assert
-        Assert.True(updatedSettings.EnableSocialFeatures);
-        Assert.True(updatedSettings.AllowGoalSharing);
-        Assert.NotNull(updatedSettings.UpdatedAt);
+        Assert.IsTrue(updatedSettings.EnableSocialFeatures);
+        Assert.IsTrue(updatedSettings.AllowGoalSharing);
+        Assert.IsNotNull(updatedSettings.UpdatedAt);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CanUseSocialFeaturesAsync_WhenDisabled_ReturnsFalse()
     {
         // Act
         var canUse = await _socialFeatureService.CanUseSocialFeaturesAsync(_testUserId);
 
         // Assert
-        Assert.False(canUse);
+        Assert.IsFalse(canUse);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CanUseSocialFeaturesAsync_WhenEnabled_ReturnsTrue()
     {
         // Arrange
@@ -105,14 +107,14 @@ public class SocialFeatureServiceTests : IDisposable
         var canUse = await _socialFeatureService.CanUseSocialFeaturesAsync(_testUserId);
 
         // Assert
-        Assert.True(canUse);
+        Assert.IsTrue(canUse);
     }
 
     #endregion
 
     #region Goal Sharing Tests
 
-    [Fact]
+    [TestMethod]
     public async Task CreateGoalShareAsync_WhenSharingDisabled_ThrowsException()
     {
         // Arrange
@@ -123,11 +125,11 @@ public class SocialFeatureServiceTests : IDisposable
         var shareSettings = new GoalShare { ShowCurrentAmount = true };
 
         // Act & Assert
-        await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+        await Assert.ThrowsExceptionAsync<InvalidOperationException>(async () =>
             await _socialFeatureService.CreateGoalShareAsync(goal.GoalId, shareSettings));
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CreateGoalShareAsync_WhenSharingEnabled_CreatesShare()
     {
         // Arrange
@@ -150,15 +152,15 @@ public class SocialFeatureServiceTests : IDisposable
         var share = await _socialFeatureService.CreateGoalShareAsync(goal.GoalId, shareSettings);
 
         // Assert
-        Assert.NotNull(share);
-        Assert.Equal(goal.GoalId, share.GoalId);
-        Assert.Equal(_testUserId, share.UserId);
-        Assert.NotEmpty(share.ShareToken);
-        Assert.True(share.IsActive);
-        Assert.True(share.ShowCurrentAmount);
+        Assert.IsNotNull(share);
+        Assert.AreEqual(goal.GoalId, share.GoalId);
+        Assert.AreEqual(_testUserId, share.UserId);
+        Assert.AreNotEqual(0, share.ShareToken.Count());
+        Assert.IsTrue(share.IsActive);
+        Assert.IsTrue(share.ShowCurrentAmount);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetGoalShareByTokenAsync_ValidToken_ReturnsShare()
     {
         // Arrange
@@ -184,24 +186,24 @@ public class SocialFeatureServiceTests : IDisposable
         var share = await _socialFeatureService.CreateGoalShareAsync(goal.GoalId, new GoalShare());
         
         // Verify properties
-        Assert.NotNull(share);
-        Assert.NotNull(share.ShareToken);
-        Assert.NotEmpty(share.ShareToken);
-        Assert.True(share.IsActive);
-        Assert.Equal(goal.GoalId, share.GoalId);
-        Assert.Equal(_testUserId, share.UserId);
+        Assert.IsNotNull(share);
+        Assert.IsNotNull(share.ShareToken);
+        Assert.AreNotEqual(0, share.ShareToken.Count());
+        Assert.IsTrue(share.IsActive);
+        Assert.AreEqual(goal.GoalId, share.GoalId);
+        Assert.AreEqual(_testUserId, share.UserId);
 
         // Act
         var retrievedShare = await _socialFeatureService.GetGoalShareByTokenAsync(share.ShareToken);
 
         // Assert
-        Assert.NotNull(retrievedShare);
-        Assert.Equal(share.ShareToken, retrievedShare.ShareToken);
-        Assert.Equal(share.GoalId, retrievedShare.GoalId);
-        Assert.True(retrievedShare.IsActive);
+        Assert.IsNotNull(retrievedShare);
+        Assert.AreEqual(share.ShareToken, retrievedShare.ShareToken);
+        Assert.AreEqual(share.GoalId, retrievedShare.GoalId);
+        Assert.IsTrue(retrievedShare.IsActive);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task IncrementShareViewCountAsync_ValidToken_IncrementsCount()
     {
         // Arrange
@@ -214,7 +216,7 @@ public class SocialFeatureServiceTests : IDisposable
         await _context.SaveChangesAsync();
 
         var share = await _socialFeatureService.CreateGoalShareAsync(goal.GoalId, new GoalShare());
-        Assert.Equal(0, share.ViewCount);
+        Assert.AreEqual(0, share.ViewCount);
 
         // Act
         await _socialFeatureService.IncrementShareViewCountAsync(share.ShareToken);
@@ -222,10 +224,10 @@ public class SocialFeatureServiceTests : IDisposable
 
         // Assert
         var updatedShare = await _context.GoalShares.FindAsync(share.GoalShareId);
-        Assert.Equal(2, updatedShare!.ViewCount);
+        Assert.AreEqual(2, updatedShare!.ViewCount);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task RevokeShareAsync_ValidShare_DeactivatesShare()
     {
         // Arrange
@@ -244,25 +246,25 @@ public class SocialFeatureServiceTests : IDisposable
 
         // Assert
         var updatedShare = await _context.GoalShares.FindAsync(share.GoalShareId);
-        Assert.False(updatedShare!.IsActive);
+        Assert.IsFalse(updatedShare!.IsActive);
     }
 
     #endregion
 
     #region Savings Group Tests
 
-    [Fact]
+    [TestMethod]
     public async Task CreateSavingsGroupAsync_WhenGroupsDisabled_ThrowsException()
     {
         // Arrange
         var group = new SavingsGroup { Name = "Test Group" };
 
         // Act & Assert
-        await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+        await Assert.ThrowsExceptionAsync<InvalidOperationException>(async () =>
             await _socialFeatureService.CreateSavingsGroupAsync(group));
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CreateSavingsGroupAsync_WhenGroupsEnabled_CreatesGroupAndOwnerMember()
     {
         // Arrange
@@ -281,20 +283,21 @@ public class SocialFeatureServiceTests : IDisposable
         var createdGroup = await _socialFeatureService.CreateSavingsGroupAsync(group);
 
         // Assert
-        Assert.NotNull(createdGroup);
-        Assert.Equal(_testUserId, createdGroup.CreatedByUserId);
-        Assert.True(createdGroup.IsActive);
+        Assert.IsNotNull(createdGroup);
+        Assert.AreEqual(_testUserId, createdGroup.CreatedByUserId);
+        Assert.IsTrue(createdGroup.IsActive);
 
         // Verify owner member was created
         var members = await _context.SavingsGroupMembers
             .Where(m => m.SavingsGroupId == createdGroup.SavingsGroupId)
             .ToListAsync();
-        Assert.Single(members);
-        Assert.Equal(GroupMemberRole.Owner, members[0].Role);
-        Assert.Equal(GroupMemberStatus.Active, members[0].Status);
+        Assert.AreEqual(1, members.Count());
+        Assert.AreEqual(GroupMemberRole.Owner, members[0].Role);
+        Assert.AreEqual(GroupMemberStatus.Active, members[0].Status);
     }
 
-    [Fact(Skip = "InMemory database navigation property issue - works with real database")]
+    [TestMethod]
+    [Ignore("InMemory database navigation property issue - works with real database")]
     public async Task GetUserGroupsAsync_ReturnsOnlyUserGroups()
     {
         // Arrange
@@ -306,28 +309,28 @@ public class SocialFeatureServiceTests : IDisposable
             new SavingsGroup { Name = "User's Group" });
 
         // Verify the group was created
-        Assert.NotNull(group1);
-        Assert.Equal("User's Group", group1.Name);
+        Assert.IsNotNull(group1);
+        Assert.AreEqual("User's Group", group1.Name);
 
         // Verify member was created
         var members = await _context.SavingsGroupMembers
             .Where(m => m.SavingsGroupId == group1.SavingsGroupId && m.UserId == _testUserId)
             .ToListAsync();
-        Assert.Single(members);
+        Assert.AreEqual(1, members.Count());
         
         // Act
         var userGroups = await _socialFeatureService.GetUserGroupsAsync();
 
         // Assert
-        Assert.NotEmpty(userGroups);
-        Assert.Contains(userGroups, g => g.SavingsGroupId == group1.SavingsGroupId);
+        Assert.AreNotEqual(0, userGroups.Count());
+        CollectionAssert.Contains(g => g.SavingsGroupId == group1.SavingsGroupId, userGroups);
     }
 
     #endregion
 
     #region Group Member Tests
 
-    [Fact]
+    [TestMethod]
     public async Task InviteMemberAsync_ByOwner_CreatesInvitation()
     {
         // Arrange
@@ -353,13 +356,13 @@ public class SocialFeatureServiceTests : IDisposable
             group.SavingsGroupId, invitedUserId, GroupMemberRole.Member);
 
         // Assert
-        Assert.NotNull(member);
-        Assert.Equal(invitedUserId, member.UserId);
-        Assert.Equal(GroupMemberStatus.Pending, member.Status);
-        Assert.Equal(GroupMemberRole.Member, member.Role);
+        Assert.IsNotNull(member);
+        Assert.AreEqual(invitedUserId, member.UserId);
+        Assert.AreEqual(GroupMemberStatus.Pending, member.Status);
+        Assert.AreEqual(GroupMemberRole.Member, member.Role);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task AcceptGroupInvitationAsync_ValidInvitation_ActivatesMember()
     {
         // Arrange
@@ -408,14 +411,14 @@ public class SocialFeatureServiceTests : IDisposable
         // Assert
         var updatedMember = await _context.SavingsGroupMembers
             .FirstOrDefaultAsync(m => m.SavingsGroupId == group.SavingsGroupId && m.UserId == _testUserId);
-        Assert.Equal(GroupMemberStatus.Active, updatedMember!.Status);
+        Assert.AreEqual(GroupMemberStatus.Active, updatedMember!.Status);
     }
 
     #endregion
 
     #region Group Goal Tests
 
-    [Fact]
+    [TestMethod]
     public async Task ShareGoalToGroupAsync_ValidGoal_SharesGoal()
     {
         // Arrange
@@ -435,15 +438,16 @@ public class SocialFeatureServiceTests : IDisposable
             group.SavingsGroupId, goal.GoalId, isAnonymous: false);
 
         // Assert
-        Assert.NotNull(groupGoal);
-        Assert.Equal(group.SavingsGroupId, groupGoal.SavingsGroupId);
-        Assert.Equal(goal.GoalId, groupGoal.GoalId);
-        Assert.Equal(_testUserId, groupGoal.UserId);
-        Assert.False(groupGoal.IsAnonymous);
-        Assert.True(groupGoal.IsActive);
+        Assert.IsNotNull(groupGoal);
+        Assert.AreEqual(group.SavingsGroupId, groupGoal.SavingsGroupId);
+        Assert.AreEqual(goal.GoalId, groupGoal.GoalId);
+        Assert.AreEqual(_testUserId, groupGoal.UserId);
+        Assert.IsFalse(groupGoal.IsAnonymous);
+        Assert.IsTrue(groupGoal.IsActive);
     }
 
-    [Fact(Skip = "InMemory database navigation property issue - works with real database")]
+    [TestMethod]
+    [Ignore("InMemory database navigation property issue - works with real database")]
     public async Task GetGroupGoalsAsync_ReturnsActiveGoals()
     {
         // Arrange
@@ -459,23 +463,23 @@ public class SocialFeatureServiceTests : IDisposable
         await _context.SaveChangesAsync();
 
         var groupGoal = await _socialFeatureService.ShareGoalToGroupAsync(group.SavingsGroupId, goal1.GoalId, false);
-        Assert.NotNull(groupGoal);
-        Assert.Equal(group.SavingsGroupId, groupGoal.SavingsGroupId);
-        Assert.Equal(goal1.GoalId, groupGoal.GoalId);
+        Assert.IsNotNull(groupGoal);
+        Assert.AreEqual(group.SavingsGroupId, groupGoal.SavingsGroupId);
+        Assert.AreEqual(goal1.GoalId, groupGoal.GoalId);
 
         // Act
         var groupGoals = await _socialFeatureService.GetGroupGoalsAsync(group.SavingsGroupId);
 
         // Assert
-        Assert.NotEmpty(groupGoals);
-        Assert.Contains(groupGoals, gg => gg.GoalId == goal1.GoalId);
+        Assert.AreNotEqual(0, groupGoals.Count());
+        CollectionAssert.Contains(gg => gg.GoalId == goal1.GoalId, groupGoals);
     }
 
     #endregion
 
     #region Comment and Like Tests
 
-    [Fact]
+    [TestMethod]
     public async Task AddCommentAsync_ValidComment_CreatesComment()
     {
         // Arrange
@@ -491,12 +495,12 @@ public class SocialFeatureServiceTests : IDisposable
             group.SavingsGroupId, "Great progress everyone!");
 
         // Assert
-        Assert.NotNull(comment);
-        Assert.Equal("Great progress everyone!", comment.Content);
-        Assert.Equal(_testUserId, comment.UserId);
+        Assert.IsNotNull(comment);
+        Assert.AreEqual("Great progress everyone!", comment.Content);
+        Assert.AreEqual(_testUserId, comment.UserId);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task LikeCommentAsync_ValidComment_CreatesLike()
     {
         // Arrange
@@ -514,12 +518,12 @@ public class SocialFeatureServiceTests : IDisposable
         var like = await _socialFeatureService.LikeCommentAsync(comment.GroupCommentId);
 
         // Assert
-        Assert.NotNull(like);
-        Assert.Equal(comment.GroupCommentId, like.GroupCommentId);
-        Assert.Equal(_testUserId, like.UserId);
+        Assert.IsNotNull(like);
+        Assert.AreEqual(comment.GroupCommentId, like.GroupCommentId);
+        Assert.AreEqual(_testUserId, like.UserId);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task UnlikeCommentAsync_ValidLike_RemovesLike()
     {
         // Arrange
@@ -542,14 +546,14 @@ public class SocialFeatureServiceTests : IDisposable
         var likes = await _context.CommentLikes
             .Where(l => l.GroupCommentId == comment.GroupCommentId)
             .ToListAsync();
-        Assert.Empty(likes);
+        Assert.AreEqual(0, likes.Count());
     }
 
     #endregion
 
     #region Leaderboard Tests
 
-    [Fact]
+    [TestMethod]
     public async Task GetHouseholdLeaderboardAsync_WithMultipleMembers_ReturnsRankedLeaderboard()
     {
         // Arrange
@@ -575,18 +579,18 @@ public class SocialFeatureServiceTests : IDisposable
 
         // Assert
         var entries = leaderboard.ToList();
-        Assert.Single(entries);
-        Assert.Equal(1, entries[0].CompletedGoals);
-        Assert.Equal(1300m, entries[0].TotalSaved);
-        Assert.Equal(1, entries[0].ActiveGoals);
-        Assert.True(entries[0].IsCurrentUser);
+        Assert.AreEqual(1, entries.Count());
+        Assert.AreEqual(1, entries[0].CompletedGoals);
+        Assert.AreEqual(1300m, entries[0].TotalSaved);
+        Assert.AreEqual(1, entries[0].ActiveGoals);
+        Assert.IsTrue(entries[0].IsCurrentUser);
     }
 
     #endregion
 
     #region Community Comparison Tests
 
-    [Fact]
+    [TestMethod]
     public async Task GetCommunityStatsAsync_WithParticipants_ReturnsStats()
     {
         // Arrange
@@ -613,20 +617,20 @@ public class SocialFeatureServiceTests : IDisposable
         var stats = await _socialFeatureService.GetCommunityStatsAsync();
 
         // Assert
-        Assert.Equal(2, stats.TotalUsers);
-        Assert.Equal(2, stats.TotalGoals);
-        Assert.True(stats.AverageSavings > 0);
+        Assert.AreEqual(2, stats.TotalUsers);
+        Assert.AreEqual(2, stats.TotalGoals);
+        Assert.IsTrue(stats.AverageSavings > 0);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CompareToCommunityAsync_WhenDisabled_ThrowsException()
     {
         // Act & Assert
-        await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+        await Assert.ThrowsExceptionAsync<InvalidOperationException>(async () =>
             await _socialFeatureService.CompareToCommunityAsync());
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CompareToCommunityAsync_WhenEnabled_ReturnsComparison()
     {
         // Arrange
@@ -642,9 +646,9 @@ public class SocialFeatureServiceTests : IDisposable
         var comparison = await _socialFeatureService.CompareToCommunityAsync();
 
         // Assert
-        Assert.NotNull(comparison);
-        Assert.Equal(800m, comparison.UserTotalSavings);
-        Assert.Equal(1, comparison.UserGoalCount);
+        Assert.IsNotNull(comparison);
+        Assert.AreEqual(800m, comparison.UserTotalSavings);
+        Assert.AreEqual(1, comparison.UserGoalCount);
     }
 
     #endregion

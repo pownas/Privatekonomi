@@ -1,9 +1,10 @@
 using System.Text;
 using Privatekonomi.Core.Services.Parsers;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Privatekonomi.Core.Tests;
 
+[TestClass]
 public class OfxParserTests
 {
     private readonly OfxParser _parser;
@@ -128,43 +129,43 @@ NEWFILEUID:NONE
 </BANKMSGSRSV1>
 </OFX>";
 
-    [Fact]
+    [TestMethod]
     public void BankName_ReturnsOfxAllman()
     {
-        Assert.Equal("OFX (Allmän)", _parser.BankName);
+        Assert.AreEqual("OFX (Allmän)", _parser.BankName);
     }
 
-    [Fact]
+    [TestMethod]
     public void CanParse_ReturnsTrueForOfxHeader()
     {
         var result = _parser.CanParse(SgmlOfxContent);
-        Assert.True(result);
+        Assert.IsTrue(result);
     }
 
-    [Fact]
+    [TestMethod]
     public void CanParse_ReturnsTrueForXmlOfx()
     {
         var result = _parser.CanParse(XmlOfxContent);
-        Assert.True(result);
+        Assert.IsTrue(result);
     }
 
-    [Fact]
+    [TestMethod]
     public void CanParse_ReturnsTrueForOfxTag()
     {
         var content = "<OFX><SIGNONMSGSRSV1></SIGNONMSGSRSV1></OFX>";
         var result = _parser.CanParse(content);
-        Assert.True(result);
+        Assert.IsTrue(result);
     }
 
-    [Fact]
+    [TestMethod]
     public void CanParse_ReturnsFalseForCsv()
     {
         var csvContent = "Datum;Belopp;Beskrivning\n2025-01-15;-125,50;ICA";
         var result = _parser.CanParse(csvContent);
-        Assert.False(result);
+        Assert.IsFalse(result);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ParseAsync_ParsesSgmlOfxCorrectly()
     {
         // Arrange
@@ -174,25 +175,25 @@ NEWFILEUID:NONE
         var transactions = await _parser.ParseAsync(stream);
 
         // Assert
-        Assert.NotNull(transactions);
-        Assert.Equal(3, transactions.Count);
+        Assert.IsNotNull(transactions);
+        Assert.AreEqual(3, transactions.Count);
 
         // Check first transaction (expense)
         var expense = transactions[0];
-        Assert.Equal(new DateTime(2025, 1, 10), expense.Date.Date);
-        Assert.Equal(125.50m, expense.Amount);
-        Assert.False(expense.IsIncome);
-        Assert.Contains("ICA MAXI STOCKHOLM", expense.Description);
+        Assert.AreEqual(new DateTime(2025, 1, 10), expense.Date.Date);
+        Assert.AreEqual(125.50m, expense.Amount);
+        Assert.IsFalse(expense.IsIncome);
+        CollectionAssert.Contains(expense.Description, "ICA MAXI STOCKHOLM");
 
         // Check second transaction (income)
         var income = transactions[1];
-        Assert.Equal(new DateTime(2025, 1, 15), income.Date.Date);
-        Assert.Equal(3500.00m, income.Amount);
-        Assert.True(income.IsIncome);
-        Assert.Contains("Lön", income.Description);
+        Assert.AreEqual(new DateTime(2025, 1, 15), income.Date.Date);
+        Assert.AreEqual(3500.00m, income.Amount);
+        Assert.IsTrue(income.IsIncome);
+        CollectionAssert.Contains(income.Description, "Lön");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ParseAsync_ParsesXmlOfxCorrectly()
     {
         // Arrange
@@ -202,21 +203,21 @@ NEWFILEUID:NONE
         var transactions = await _parser.ParseAsync(stream);
 
         // Assert
-        Assert.NotNull(transactions);
-        Assert.Equal(2, transactions.Count);
+        Assert.IsNotNull(transactions);
+        Assert.AreEqual(2, transactions.Count);
 
         // Check expense
         var expense = transactions.First(t => !t.IsIncome);
-        Assert.Equal(new DateTime(2025, 1, 10), expense.Date.Date);
-        Assert.Equal(125.50m, expense.Amount);
+        Assert.AreEqual(new DateTime(2025, 1, 10), expense.Date.Date);
+        Assert.AreEqual(125.50m, expense.Amount);
 
         // Check income
         var income = transactions.First(t => t.IsIncome);
-        Assert.Equal(new DateTime(2025, 1, 15), income.Date.Date);
-        Assert.Equal(3500.00m, income.Amount);
+        Assert.AreEqual(new DateTime(2025, 1, 15), income.Date.Date);
+        Assert.AreEqual(3500.00m, income.Amount);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ParseAsync_SetsImportedFlagTrue()
     {
         // Arrange
@@ -226,10 +227,10 @@ NEWFILEUID:NONE
         var transactions = await _parser.ParseAsync(stream);
 
         // Assert
-        Assert.All(transactions, t => Assert.True(t.Imported));
+        Assert.All(transactions, t => Assert.IsTrue(t.Imported));
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ParseAsync_SetsImportSourceToOfx()
     {
         // Arrange
@@ -239,10 +240,10 @@ NEWFILEUID:NONE
         var transactions = await _parser.ParseAsync(stream);
 
         // Assert
-        Assert.All(transactions, t => Assert.Equal("OFX Import", t.ImportSource));
+        Assert.All(transactions, t => Assert.AreEqual("OFX Import", t.ImportSource));
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ParseAsync_SetsCurrencyToSek()
     {
         // Arrange
@@ -252,10 +253,10 @@ NEWFILEUID:NONE
         var transactions = await _parser.ParseAsync(stream);
 
         // Assert
-        Assert.All(transactions, t => Assert.Equal("SEK", t.Currency));
+        Assert.All(transactions, t => Assert.AreEqual("SEK", t.Currency));
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ParseAsync_CombinesNameAndMemo()
     {
         // Arrange
@@ -266,10 +267,10 @@ NEWFILEUID:NONE
 
         // Assert
         var icaTransaction = transactions.First(t => t.Description.Contains("ICA"));
-        Assert.Contains("Kortköp", icaTransaction.Description);
+        CollectionAssert.Contains(icaTransaction.Description, "Kortköp");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ParseAsync_HandlesMissingMemo()
     {
         // Arrange - The COOP transaction has no MEMO
@@ -280,11 +281,11 @@ NEWFILEUID:NONE
 
         // Assert
         var coopTransaction = transactions.FirstOrDefault(t => t.Description.Contains("COOP"));
-        Assert.NotNull(coopTransaction);
-        Assert.Equal("COOP FORUM", coopTransaction.Description);
+        Assert.IsNotNull(coopTransaction);
+        Assert.AreEqual("COOP FORUM", coopTransaction.Description);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ParseAsync_HandlesEmptyFile()
     {
         // Arrange
@@ -294,10 +295,10 @@ NEWFILEUID:NONE
         var transactions = await _parser.ParseAsync(stream);
 
         // Assert
-        Assert.Empty(transactions);
+        Assert.AreEqual(0, transactions.Count());
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ParseAsync_HandlesFileWithNoTransactions()
     {
         // Arrange
@@ -320,10 +321,10 @@ VERSION:102
         var transactions = await _parser.ParseAsync(stream);
 
         // Assert
-        Assert.Empty(transactions);
+        Assert.AreEqual(0, transactions.Count());
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ParseAsync_CorrectlyIdentifiesIncomeVsExpense()
     {
         // Arrange
@@ -336,11 +337,11 @@ VERSION:102
         var expenses = transactions.Where(t => !t.IsIncome).ToList();
         var incomes = transactions.Where(t => t.IsIncome).ToList();
 
-        Assert.Equal(2, expenses.Count); // ICA and COOP
-        Assert.Single(incomes); // Lön
+        Assert.AreEqual(2, expenses.Count); // ICA and COOP
+        Assert.AreEqual(1, incomes.Count()); // Lön
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ParseAsync_HandlesDateWithTimezone()
     {
         // Arrange
@@ -370,11 +371,11 @@ VERSION:102
         var transactions = await _parser.ParseAsync(stream);
 
         // Assert
-        Assert.Single(transactions);
-        Assert.Equal(new DateTime(2025, 1, 10), transactions[0].Date.Date);
+        Assert.AreEqual(1, transactions.Count());
+        Assert.AreEqual(new DateTime(2025, 1, 10), transactions[0].Date.Date);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ParseAsync_HandlesDecimalAmountsWithComma()
     {
         // Arrange - Swedish style with comma decimal separator
@@ -404,11 +405,11 @@ VERSION:102
         var transactions = await _parser.ParseAsync(stream);
 
         // Assert
-        Assert.Single(transactions);
-        Assert.Equal(125.50m, transactions[0].Amount);
+        Assert.AreEqual(1, transactions.Count());
+        Assert.AreEqual(125.50m, transactions[0].Amount);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ParseAsync_SkipsInvalidTransactions()
     {
         // Arrange - Transaction without required fields
@@ -443,7 +444,7 @@ VERSION:102
         var transactions = await _parser.ParseAsync(stream);
 
         // Assert
-        Assert.Single(transactions);
-        Assert.Contains("Valid Transaction", transactions[0].Description);
+        Assert.AreEqual(1, transactions.Count());
+        CollectionAssert.Contains(transactions[0].Description, "Valid Transaction");
     }
 }

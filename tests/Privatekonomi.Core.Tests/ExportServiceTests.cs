@@ -4,10 +4,11 @@ using Privatekonomi.Core.Data;
 using Privatekonomi.Core.Models;
 using Privatekonomi.Core.Services;
 using System.Text;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Privatekonomi.Core.Tests;
 
+[TestClass]
 public class ExportServiceTests : IDisposable
 {
     private readonly PrivatekonomyContext _context;
@@ -29,6 +30,7 @@ public class ExportServiceTests : IDisposable
         _exportService = new ExportService(_context, _mockCurrentUserService.Object);
     }
 
+    [TestCleanup]
     public void Dispose()
     {
         _context.Database.EnsureDeleted();
@@ -160,7 +162,7 @@ public class ExportServiceTests : IDisposable
         await _context.SaveChangesAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetAvailableYearsAsync_ReturnsYearsWithTransactions()
     {
         // Arrange
@@ -170,15 +172,15 @@ public class ExportServiceTests : IDisposable
         var years = await _exportService.GetAvailableYearsAsync();
 
         // Assert
-        Assert.NotNull(years);
-        Assert.Equal(2, years.Count);
-        Assert.Contains(2023, years);
-        Assert.Contains(2024, years);
-        Assert.Equal(2024, years[0]); // Should be sorted descending
-        Assert.Equal(2023, years[1]);
+        Assert.IsNotNull(years);
+        Assert.AreEqual(2, years.Count);
+        CollectionAssert.Contains(years, 2023);
+        CollectionAssert.Contains(years, 2024);
+        Assert.AreEqual(2024, years[0]); // Should be sorted descending
+        Assert.AreEqual(2023, years[1]);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetAvailableYearsAsync_NoTransactions_ReturnsEmptyList()
     {
         // Arrange - no data seeded
@@ -187,11 +189,11 @@ public class ExportServiceTests : IDisposable
         var years = await _exportService.GetAvailableYearsAsync();
 
         // Assert
-        Assert.NotNull(years);
-        Assert.Empty(years);
+        Assert.IsNotNull(years);
+        Assert.AreEqual(0, years.Count());
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ExportYearDataToJsonAsync_ValidYear_ExportsCorrectData()
     {
         // Arrange
@@ -201,14 +203,14 @@ public class ExportServiceTests : IDisposable
         var data = await _exportService.ExportYearDataToJsonAsync(2024);
 
         // Assert
-        Assert.NotNull(data);
-        Assert.True(data.Length > 0);
+        Assert.IsNotNull(data);
+        Assert.IsTrue(data.Length > 0);
 
         // Verify it's valid JSON and contains expected year and structure
         var json = Encoding.UTF8.GetString(data);
-        Assert.Contains("\"year\": 2024", json);
-        Assert.Contains("\"data\"", json.ToLower());
-        Assert.Contains("\"transactions\"", json.ToLower());
+        CollectionAssert.Contains(json, "\"year\": 2024");
+        CollectionAssert.Contains(json.ToLower(), "\"data\"");
+        CollectionAssert.Contains(json.ToLower(), "\"transactions\"");
         
         // Parse to verify it's valid JSON - skip BOM if present
         var jsonBytes = data;
@@ -220,15 +222,15 @@ public class ExportServiceTests : IDisposable
         var jsonDoc = System.Text.Json.JsonDocument.Parse(jsonBytes);
         var root = jsonDoc.RootElement;
         
-        Assert.Equal(2024, root.GetProperty("year").GetInt32());
+        Assert.AreEqual(2024, root.GetProperty("year").GetInt32());
         var dataElement = root.GetProperty("data");
         var transactions = dataElement.GetProperty("transactions");
         
         // Should have 3 transactions for 2024
-        Assert.Equal(3, transactions.GetArrayLength());
+        Assert.AreEqual(3, transactions.GetArrayLength());
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ExportYearDataToCsvAsync_ValidYear_ExportsCorrectData()
     {
         // Arrange
@@ -238,29 +240,29 @@ public class ExportServiceTests : IDisposable
         var data = await _exportService.ExportYearDataToCsvAsync(2024);
 
         // Assert
-        Assert.NotNull(data);
-        Assert.True(data.Length > 0);
+        Assert.IsNotNull(data);
+        Assert.IsTrue(data.Length > 0);
 
         // Verify it's valid CSV with header
         var csv = Encoding.UTF8.GetString(data);
-        Assert.Contains("# Privatekonomi Export - År 2024", csv);
-        Assert.Contains("Datum,Beskrivning,Belopp,Typ", csv);
-        Assert.Contains("Matinköp Willys", csv);
-        Assert.Contains("Lön februari", csv);
-        Assert.Contains("Hyra", csv);
+        CollectionAssert.Contains(csv, "# Privatekonomi Export - År 2024");
+        CollectionAssert.Contains(csv, "Datum,Beskrivning,Belopp,Typ");
+        CollectionAssert.Contains(csv, "Matinköp Willys");
+        CollectionAssert.Contains(csv, "Lön februari");
+        CollectionAssert.Contains(csv, "Hyra");
         
         // Should not contain 2023 data
-        Assert.DoesNotContain("Matinköp ICA", csv);
-        Assert.DoesNotContain("Lön januari", csv);
+        CollectionAssert.DoesNotContain(csv, "Matinköp ICA");
+        CollectionAssert.DoesNotContain(csv, "Lön januari");
 
         // Verify summary section
-        Assert.Contains("# Summering 2024", csv);
-        Assert.Contains("# Totala inkomster: 32000", csv);
-        Assert.Contains("# Totala utgifter: 9500", csv); // 6000 + 3500
-        Assert.Contains("# Nettoresultat: 22500", csv); // 32000 - 9500
+        CollectionAssert.Contains(csv, "# Summering 2024");
+        CollectionAssert.Contains(csv, "# Totala inkomster: 32000");
+        CollectionAssert.Contains(csv, "# Totala utgifter: 9500"); // 6000 + 3500
+        CollectionAssert.Contains(csv, "# Nettoresultat: 22500"); // 32000 - 9500
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ExportYearDataToJsonAsync_IncludesAllRelevantData()
     {
         // Arrange
@@ -273,21 +275,21 @@ public class ExportServiceTests : IDisposable
         var json = Encoding.UTF8.GetString(data);
         
         // Check for all data types (camelCase because of JsonNamingPolicy.CamelCase)
-        Assert.Contains("transactions", json.ToLower());
-        Assert.Contains("budgets", json.ToLower());
-        Assert.Contains("goals", json.ToLower());
-        Assert.Contains("investments", json.ToLower());
-        Assert.Contains("loans", json.ToLower());
+        CollectionAssert.Contains(json.ToLower(), "transactions");
+        CollectionAssert.Contains(json.ToLower(), "budgets");
+        CollectionAssert.Contains(json.ToLower(), "goals");
+        CollectionAssert.Contains(json.ToLower(), "investments");
+        CollectionAssert.Contains(json.ToLower(), "loans");
         // SalaryHistory is serialized as "salaryHistory" in camelCase
-        Assert.Contains("\"salaryHistory\"", json);
+        CollectionAssert.Contains(json, "\"salaryHistory\"");
         
         // Check for metadata (also in camelCase)
-        Assert.Contains("\"year\": 2024", json);
-        Assert.Contains("\"exportDate\"", json); // Property name in camelCase
-        Assert.Contains("\"version\"", json);
+        CollectionAssert.Contains(json, "\"year\": 2024");
+        CollectionAssert.Contains(json, "\"exportDate\""); // Property name in camelCase
+        CollectionAssert.Contains(json, "\"version\"");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ExportYearDataToCsvAsync_CalculatesSummaryCorrectly()
     {
         // Arrange
@@ -300,15 +302,15 @@ public class ExportServiceTests : IDisposable
         var csv = Encoding.UTF8.GetString(data);
         
         // Verify counts
-        Assert.Contains("# Antal transaktioner: 2", csv);
+        CollectionAssert.Contains(csv, "# Antal transaktioner: 2");
         
         // Verify financial summary
-        Assert.Contains("# Totala inkomster: 30000.00 SEK", csv);
-        Assert.Contains("# Totala utgifter: 5000.00 SEK", csv);
-        Assert.Contains("# Nettoresultat: 25000.00 SEK", csv);
+        CollectionAssert.Contains(csv, "# Totala inkomster: 30000.00 SEK");
+        CollectionAssert.Contains(csv, "# Totala utgifter: 5000.00 SEK");
+        CollectionAssert.Contains(csv, "# Nettoresultat: 25000.00 SEK");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ExportYearDataToJsonAsync_FiltersByUserId()
     {
         // Arrange
@@ -344,17 +346,17 @@ public class ExportServiceTests : IDisposable
         var transactions = dataElement.GetProperty("transactions");
         
         // Should only have 3 transactions for current user (not the other user's transaction)
-        Assert.Equal(3, transactions.GetArrayLength());
+        Assert.AreEqual(3, transactions.GetArrayLength());
         
         // Verify none of the transactions have the other user's ID
         foreach (var transaction in transactions.EnumerateArray())
         {
             var userId = transaction.GetProperty("userId").GetString();
-            Assert.Equal(_testUserId, userId);
+            Assert.AreEqual(_testUserId, userId);
         }
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ExportYearDataToCsvAsync_FiltersByUserId()
     {
         // Arrange
@@ -381,13 +383,13 @@ public class ExportServiceTests : IDisposable
         var csv = Encoding.UTF8.GetString(data);
         
         // Should contain current user's data
-        Assert.Contains("Matinköp Willys", csv);
+        CollectionAssert.Contains(csv, "Matinköp Willys");
         
         // Should NOT contain other user's data
-        Assert.DoesNotContain("Other user transaction", csv);
+        CollectionAssert.DoesNotContain(csv, "Other user transaction");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ExportYearDataToJsonAsync_YearWithNoData_ReturnsEmptyDataStructure()
     {
         // Arrange
@@ -397,15 +399,15 @@ public class ExportServiceTests : IDisposable
         var data = await _exportService.ExportYearDataToJsonAsync(2025); // No data for 2025
 
         // Assert
-        Assert.NotNull(data);
+        Assert.IsNotNull(data);
         var json = Encoding.UTF8.GetString(data);
         
         // Should still have structure but empty arrays
-        Assert.Contains("2025", json);
-        Assert.Contains("transactions", json.ToLower());
+        CollectionAssert.Contains(json, "2025");
+        CollectionAssert.Contains(json.ToLower(), "transactions");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ExportYearDataToCsvAsync_YearWithNoData_ReturnsHeaderOnly()
     {
         // Arrange
@@ -415,14 +417,14 @@ public class ExportServiceTests : IDisposable
         var data = await _exportService.ExportYearDataToCsvAsync(2025); // No data for 2025
 
         // Assert
-        Assert.NotNull(data);
+        Assert.IsNotNull(data);
         var csv = Encoding.UTF8.GetString(data);
         
         // Should have header with 0 transactions
-        Assert.Contains("# Privatekonomi Export - År 2025", csv);
-        Assert.Contains("# Antal transaktioner: 0", csv);
-        Assert.Contains("# Totala inkomster: 0.00 SEK", csv);
-        Assert.Contains("# Totala utgifter: 0.00 SEK", csv);
-        Assert.Contains("# Nettoresultat: 0.00 SEK", csv);
+        CollectionAssert.Contains(csv, "# Privatekonomi Export - År 2025");
+        CollectionAssert.Contains(csv, "# Antal transaktioner: 0");
+        CollectionAssert.Contains(csv, "# Totala inkomster: 0.00 SEK");
+        CollectionAssert.Contains(csv, "# Totala utgifter: 0.00 SEK");
+        CollectionAssert.Contains(csv, "# Nettoresultat: 0.00 SEK");
     }
 }

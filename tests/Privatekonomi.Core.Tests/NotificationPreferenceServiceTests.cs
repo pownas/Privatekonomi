@@ -2,10 +2,11 @@ using Microsoft.EntityFrameworkCore;
 using Privatekonomi.Core.Data;
 using Privatekonomi.Core.Models;
 using Privatekonomi.Core.Services;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Privatekonomi.Core.Tests;
 
+[TestClass]
 public class NotificationPreferenceServiceTests
 {
     private readonly PrivatekonomyContext _context;
@@ -22,17 +23,17 @@ public class NotificationPreferenceServiceTests
         _preferenceService = new NotificationPreferenceService(_context);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetUserPreferencesAsync_ReturnsEmptyListForNewUser()
     {
         // Act
         var preferences = await _preferenceService.GetUserPreferencesAsync(_testUserId);
 
         // Assert
-        Assert.Empty(preferences);
+        Assert.AreEqual(0, preferences.Count());
     }
 
-    [Fact]
+    [TestMethod]
     public async Task SavePreferenceAsync_CreatesNewPreference()
     {
         // Arrange
@@ -49,13 +50,13 @@ public class NotificationPreferenceServiceTests
         var saved = await _preferenceService.SavePreferenceAsync(preference);
 
         // Assert
-        Assert.NotNull(saved);
-        Assert.True(saved.NotificationPreferenceId > 0);
-        Assert.Equal(_testUserId, saved.UserId);
-        Assert.Equal(SystemNotificationType.BudgetExceeded, saved.NotificationType);
+        Assert.IsNotNull(saved);
+        Assert.IsTrue(saved.NotificationPreferenceId > 0);
+        Assert.AreEqual(_testUserId, saved.UserId);
+        Assert.AreEqual(SystemNotificationType.BudgetExceeded, saved.NotificationType);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task SavePreferenceAsync_UpdatesExistingPreference()
     {
         // Arrange
@@ -76,12 +77,12 @@ public class NotificationPreferenceServiceTests
         var updated = await _preferenceService.SavePreferenceAsync(created);
 
         // Assert
-        Assert.Equal(created.NotificationPreferenceId, updated.NotificationPreferenceId);
-        Assert.Equal(NotificationChannelFlags.Email | NotificationChannelFlags.SMS, updated.EnabledChannels);
-        Assert.False(updated.IsEnabled);
+        Assert.AreEqual(created.NotificationPreferenceId, updated.NotificationPreferenceId);
+        Assert.AreEqual(NotificationChannelFlags.Email | NotificationChannelFlags.SMS, updated.EnabledChannels);
+        Assert.IsFalse(updated.IsEnabled);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetPreferenceAsync_ReturnsSpecificPreference()
     {
         // Arrange
@@ -100,22 +101,22 @@ public class NotificationPreferenceServiceTests
         var retrieved = await _preferenceService.GetPreferenceAsync(_testUserId, SystemNotificationType.LowBalance);
 
         // Assert
-        Assert.NotNull(retrieved);
-        Assert.Equal(SystemNotificationType.LowBalance, retrieved.NotificationType);
-        Assert.Equal(NotificationChannelFlags.InApp | NotificationChannelFlags.SMS, retrieved.EnabledChannels);
+        Assert.IsNotNull(retrieved);
+        Assert.AreEqual(SystemNotificationType.LowBalance, retrieved.NotificationType);
+        Assert.AreEqual(NotificationChannelFlags.InApp | NotificationChannelFlags.SMS, retrieved.EnabledChannels);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetPreferenceAsync_ReturnsNullForNonExistent()
     {
         // Act
         var preference = await _preferenceService.GetPreferenceAsync(_testUserId, SystemNotificationType.BudgetExceeded);
 
         // Assert
-        Assert.Null(preference);
+        Assert.IsNull(preference);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task SaveDndScheduleAsync_CreatesNewSchedule()
     {
         // Arrange
@@ -133,13 +134,13 @@ public class NotificationPreferenceServiceTests
         var saved = await _preferenceService.SaveDndScheduleAsync(schedule);
 
         // Assert
-        Assert.NotNull(saved);
-        Assert.True(saved.DoNotDisturbScheduleId > 0);
-        Assert.Equal("22:00", saved.StartTime);
-        Assert.Equal("08:00", saved.EndTime);
+        Assert.IsNotNull(saved);
+        Assert.IsTrue(saved.DoNotDisturbScheduleId > 0);
+        Assert.AreEqual("22:00", saved.StartTime);
+        Assert.AreEqual("08:00", saved.EndTime);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetDndSchedulesAsync_ReturnsUserSchedules()
     {
         // Arrange
@@ -168,11 +169,11 @@ public class NotificationPreferenceServiceTests
         var schedules = await _preferenceService.GetDndSchedulesAsync(_testUserId);
 
         // Assert
-        Assert.Equal(2, schedules.Count);
-        Assert.All(schedules, s => Assert.Equal(_testUserId, s.UserId));
+        Assert.AreEqual(2, schedules.Count);
+        Assert.All(schedules, s => Assert.AreEqual(_testUserId, s.UserId));
     }
 
-    [Fact]
+    [TestMethod]
     public async Task DeleteDndScheduleAsync_DeletesSchedule()
     {
         // Arrange
@@ -192,10 +193,10 @@ public class NotificationPreferenceServiceTests
 
         // Assert
         var schedules = await _preferenceService.GetDndSchedulesAsync(_testUserId);
-        Assert.Empty(schedules);
+        Assert.AreEqual(0, schedules.Count());
     }
 
-    [Fact]
+    [TestMethod]
     public async Task SaveIntegrationAsync_CreatesNewIntegration()
     {
         // Arrange
@@ -211,12 +212,12 @@ public class NotificationPreferenceServiceTests
         var saved = await _preferenceService.SaveIntegrationAsync(integration);
 
         // Assert
-        Assert.NotNull(saved);
-        Assert.True(saved.NotificationIntegrationId > 0);
-        Assert.Equal(NotificationChannel.Slack, saved.Channel);
+        Assert.IsNotNull(saved);
+        Assert.IsTrue(saved.NotificationIntegrationId > 0);
+        Assert.AreEqual(NotificationChannel.Slack, saved.Channel);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetIntegrationsAsync_ReturnsUserIntegrations()
     {
         // Arrange
@@ -243,12 +244,12 @@ public class NotificationPreferenceServiceTests
         var integrations = await _preferenceService.GetIntegrationsAsync(_testUserId);
 
         // Assert
-        Assert.Equal(2, integrations.Count);
-        Assert.Contains(integrations, i => i.Channel == NotificationChannel.Slack);
-        Assert.Contains(integrations, i => i.Channel == NotificationChannel.Teams);
+        Assert.AreEqual(2, integrations.Count);
+        CollectionAssert.Contains(i => i.Channel == NotificationChannel.Slack, integrations);
+        CollectionAssert.Contains(i => i.Channel == NotificationChannel.Teams, integrations);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task DeleteIntegrationAsync_DeletesIntegration()
     {
         // Arrange
@@ -267,10 +268,10 @@ public class NotificationPreferenceServiceTests
 
         // Assert
         var integrations = await _preferenceService.GetIntegrationsAsync(_testUserId);
-        Assert.Empty(integrations);
+        Assert.AreEqual(0, integrations.Count());
     }
 
-    [Fact]
+    [TestMethod]
     public async Task InitializeDefaultPreferencesAsync_CreatesDefaultPreferences()
     {
         // Act
@@ -280,16 +281,16 @@ public class NotificationPreferenceServiceTests
         var preferences = await _preferenceService.GetUserPreferencesAsync(_testUserId);
         var dndSchedules = await _preferenceService.GetDndSchedulesAsync(_testUserId);
 
-        Assert.NotEmpty(preferences);
-        Assert.Single(dndSchedules);
+        Assert.AreNotEqual(0, preferences.Count());
+        Assert.AreEqual(1, dndSchedules.Count());
         
         // Check that critical notifications have email enabled
         var lowBalancePref = preferences.FirstOrDefault(p => p.NotificationType == SystemNotificationType.LowBalance);
-        Assert.NotNull(lowBalancePref);
-        Assert.True(lowBalancePref.EnabledChannels.HasFlag(NotificationChannelFlags.Email));
+        Assert.IsNotNull(lowBalancePref);
+        Assert.IsTrue(lowBalancePref.EnabledChannels.HasFlag(NotificationChannelFlags.Email));
     }
 
-    [Fact]
+    [TestMethod]
     public async Task InitializeDefaultPreferencesAsync_DoesNotDuplicatePreferences()
     {
         // Act - Initialize twice
@@ -301,10 +302,10 @@ public class NotificationPreferenceServiceTests
         
         // Should not have duplicates - group by notification type and check count
         var grouped = preferences.GroupBy(p => p.NotificationType);
-        Assert.All(grouped, g => Assert.Single(g));
+        Assert.All(grouped, g => Assert.AreEqual(1, g.Count()));
     }
 
-    [Fact]
+    [TestMethod]
     public async Task SavePreferenceAsync_WithDigestMode_SavesDigestSettings()
     {
         // Arrange
@@ -323,7 +324,7 @@ public class NotificationPreferenceServiceTests
         var saved = await _preferenceService.SavePreferenceAsync(preference);
 
         // Assert
-        Assert.True(saved.DigestMode);
-        Assert.Equal(24, saved.DigestIntervalHours);
+        Assert.IsTrue(saved.DigestMode);
+        Assert.AreEqual(24, saved.DigestIntervalHours);
     }
 }

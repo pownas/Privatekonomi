@@ -5,10 +5,11 @@ using Moq;
 using Privatekonomi.Core.Data;
 using Privatekonomi.Core.Models;
 using Privatekonomi.Core.Services;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Privatekonomi.Core.Tests;
 
+[TestClass]
 public class NotificationServiceTests
 {
     private readonly PrivatekonomyContext _context;
@@ -35,7 +36,7 @@ public class NotificationServiceTests
             serviceProvider);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task SendNotificationAsync_CreatesNotification()
     {
         // Act
@@ -47,15 +48,15 @@ public class NotificationServiceTests
             NotificationPriority.Normal);
 
         // Assert
-        Assert.NotNull(notification);
-        Assert.Equal(_testUserId, notification.UserId);
-        Assert.Equal(SystemNotificationType.BudgetExceeded, notification.Type);
-        Assert.Equal("Test Title", notification.Title);
-        Assert.Equal("Test Message", notification.Message);
-        Assert.False(notification.IsRead);
+        Assert.IsNotNull(notification);
+        Assert.AreEqual(_testUserId, notification.UserId);
+        Assert.AreEqual(SystemNotificationType.BudgetExceeded, notification.Type);
+        Assert.AreEqual("Test Title", notification.Title);
+        Assert.AreEqual("Test Message", notification.Message);
+        Assert.IsFalse(notification.IsRead);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetUserNotificationsAsync_ReturnsUserNotifications()
     {
         // Arrange
@@ -75,12 +76,12 @@ public class NotificationServiceTests
         var notifications = await _notificationService.GetUserNotificationsAsync(_testUserId);
 
         // Assert
-        Assert.NotEmpty(notifications);
-        Assert.True(notifications.Count >= 2);
-        Assert.All(notifications, n => Assert.Equal(_testUserId, n.UserId));
+        Assert.AreNotEqual(0, notifications.Count());
+        Assert.IsTrue(notifications.Count >= 2);
+        Assert.All(notifications, n => Assert.AreEqual(_testUserId, n.UserId));
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetUserNotificationsAsync_UnreadOnly_ReturnsOnlyUnread()
     {
         // Arrange
@@ -102,11 +103,11 @@ public class NotificationServiceTests
         var unreadNotifications = await _notificationService.GetUserNotificationsAsync(_testUserId, unreadOnly: true);
 
         // Assert
-        Assert.NotEmpty(unreadNotifications);
-        Assert.All(unreadNotifications, n => Assert.False(n.IsRead));
+        Assert.AreNotEqual(0, unreadNotifications.Count());
+        Assert.All(unreadNotifications, n => Assert.IsFalse(n.IsRead));
     }
 
-    [Fact]
+    [TestMethod]
     public async Task MarkAsReadAsync_MarksNotificationAsRead()
     {
         // Arrange
@@ -121,12 +122,12 @@ public class NotificationServiceTests
 
         // Assert
         var updated = await _context.Notifications.FindAsync(notification.NotificationId);
-        Assert.NotNull(updated);
-        Assert.True(updated.IsRead);
-        Assert.NotNull(updated.ReadAt);
+        Assert.IsNotNull(updated);
+        Assert.IsTrue(updated.IsRead);
+        Assert.IsNotNull(updated.ReadAt);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task MarkAllAsReadAsync_MarksAllNotificationsAsRead()
     {
         // Arrange
@@ -139,10 +140,10 @@ public class NotificationServiceTests
 
         // Assert
         var notifications = await _context.Notifications.Where(n => n.UserId == _testUserId).ToListAsync();
-        Assert.All(notifications, n => Assert.True(n.IsRead));
+        Assert.All(notifications, n => Assert.IsTrue(n.IsRead));
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetUnreadCountAsync_ReturnsCorrectCount()
     {
         // Arrange
@@ -156,10 +157,10 @@ public class NotificationServiceTests
         var unreadCount = await _notificationService.GetUnreadCountAsync(_testUserId);
 
         // Assert
-        Assert.Equal(2, unreadCount);
+        Assert.AreEqual(2, unreadCount);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task DeleteNotificationAsync_DeletesNotification()
     {
         // Arrange
@@ -174,20 +175,20 @@ public class NotificationServiceTests
 
         // Assert
         var deleted = await _context.Notifications.FindAsync(notification.NotificationId);
-        Assert.Null(deleted);
+        Assert.IsNull(deleted);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task IsDoNotDisturbActiveAsync_WithNoDndSchedule_ReturnsFalse()
     {
         // Act
         var isDndActive = await _notificationService.IsDoNotDisturbActiveAsync(_testUserId);
 
         // Assert
-        Assert.False(isDndActive);
+        Assert.IsFalse(isDndActive);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task IsDoNotDisturbActiveAsync_WithActiveDndSchedule_ReturnsTrue()
     {
         // Arrange
@@ -210,10 +211,10 @@ public class NotificationServiceTests
         var isDndActive = await _notificationService.IsDoNotDisturbActiveAsync(_testUserId);
 
         // Assert
-        Assert.True(isDndActive);
+        Assert.IsTrue(isDndActive);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task SendNotificationAsync_WithDisabledNotificationType_DoesNotSendImmediately()
     {
         // Arrange
@@ -236,11 +237,11 @@ public class NotificationServiceTests
             NotificationPriority.Normal);
 
         // Assert
-        Assert.NotNull(notification);
-        Assert.Null(notification.SentAt); // Not sent immediately because type is disabled
+        Assert.IsNotNull(notification);
+        Assert.IsNull(notification.SentAt); // Not sent immediately because type is disabled
     }
 
-    [Fact]
+    [TestMethod]
     public async Task SendNotificationAsync_WithCriticalPriority_BypassesDisabledSetting()
     {
         // Arrange
@@ -263,11 +264,11 @@ public class NotificationServiceTests
             NotificationPriority.Critical);
 
         // Assert
-        Assert.NotNull(notification);
-        Assert.NotNull(notification.SentAt); // Critical notifications are sent even if disabled
+        Assert.IsNotNull(notification);
+        Assert.IsNotNull(notification.SentAt); // Critical notifications are sent even if disabled
     }
 
-    [Fact]
+    [TestMethod]
     public async Task SendNotificationAsync_WithActionUrl_StoresActionUrl()
     {
         // Act
@@ -281,11 +282,11 @@ public class NotificationServiceTests
             actionUrl: "/goals/123");
 
         // Assert
-        Assert.NotNull(notification);
-        Assert.Equal("/goals/123", notification.ActionUrl);
+        Assert.IsNotNull(notification);
+        Assert.AreEqual("/goals/123", notification.ActionUrl);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task SnoozeNotificationAsync_WithOneHourDuration_SetsSnoozeUntilCorrectly()
     {
         // Arrange
@@ -302,14 +303,14 @@ public class NotificationServiceTests
 
         // Assert
         var snoozedNotification = await _context.Notifications.FindAsync(notification.NotificationId);
-        Assert.NotNull(snoozedNotification);
-        Assert.NotNull(snoozedNotification.SnoozeUntil);
-        Assert.True(snoozedNotification.SnoozeUntil >= beforeSnooze.AddHours(1));
-        Assert.True(snoozedNotification.SnoozeUntil <= afterSnooze.AddHours(1));
-        Assert.Equal(1, snoozedNotification.SnoozeCount);
+        Assert.IsNotNull(snoozedNotification);
+        Assert.IsNotNull(snoozedNotification.SnoozeUntil);
+        Assert.IsTrue(snoozedNotification.SnoozeUntil >= beforeSnooze.AddHours(1));
+        Assert.IsTrue(snoozedNotification.SnoozeUntil <= afterSnooze.AddHours(1));
+        Assert.AreEqual(1, snoozedNotification.SnoozeCount);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task SnoozeNotificationAsync_WithOneDayDuration_SetsSnoozeUntilCorrectly()
     {
         // Arrange
@@ -324,14 +325,14 @@ public class NotificationServiceTests
 
         // Assert
         var snoozedNotification = await _context.Notifications.FindAsync(notification.NotificationId);
-        Assert.NotNull(snoozedNotification);
-        Assert.NotNull(snoozedNotification.SnoozeUntil);
-        Assert.True(snoozedNotification.SnoozeUntil >= DateTime.UtcNow.AddHours(23));
-        Assert.True(snoozedNotification.SnoozeUntil <= DateTime.UtcNow.AddHours(25));
-        Assert.Equal(1, snoozedNotification.SnoozeCount);
+        Assert.IsNotNull(snoozedNotification);
+        Assert.IsNotNull(snoozedNotification.SnoozeUntil);
+        Assert.IsTrue(snoozedNotification.SnoozeUntil >= DateTime.UtcNow.AddHours(23));
+        Assert.IsTrue(snoozedNotification.SnoozeUntil <= DateTime.UtcNow.AddHours(25));
+        Assert.AreEqual(1, snoozedNotification.SnoozeCount);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task SnoozeNotificationAsync_WithOneWeekDuration_SetsSnoozeUntilCorrectly()
     {
         // Arrange
@@ -346,14 +347,14 @@ public class NotificationServiceTests
 
         // Assert
         var snoozedNotification = await _context.Notifications.FindAsync(notification.NotificationId);
-        Assert.NotNull(snoozedNotification);
-        Assert.NotNull(snoozedNotification.SnoozeUntil);
-        Assert.True(snoozedNotification.SnoozeUntil >= DateTime.UtcNow.AddDays(6.9));
-        Assert.True(snoozedNotification.SnoozeUntil <= DateTime.UtcNow.AddDays(7.1));
-        Assert.Equal(1, snoozedNotification.SnoozeCount);
+        Assert.IsNotNull(snoozedNotification);
+        Assert.IsNotNull(snoozedNotification.SnoozeUntil);
+        Assert.IsTrue(snoozedNotification.SnoozeUntil >= DateTime.UtcNow.AddDays(6.9));
+        Assert.IsTrue(snoozedNotification.SnoozeUntil <= DateTime.UtcNow.AddDays(7.1));
+        Assert.AreEqual(1, snoozedNotification.SnoozeCount);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task SnoozeNotificationAsync_MultipleSnoozes_IncrementsSnoozeCount()
     {
         // Arrange
@@ -370,19 +371,19 @@ public class NotificationServiceTests
 
         // Assert
         var snoozedNotification = await _context.Notifications.FindAsync(notification.NotificationId);
-        Assert.NotNull(snoozedNotification);
-        Assert.Equal(3, snoozedNotification.SnoozeCount);
+        Assert.IsNotNull(snoozedNotification);
+        Assert.AreEqual(3, snoozedNotification.SnoozeCount);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task SnoozeNotificationAsync_WithInvalidNotificationId_ThrowsException()
     {
         // Act & Assert
-        await Assert.ThrowsAsync<InvalidOperationException>(
+        await Assert.ThrowsExceptionAsync<InvalidOperationException>(
             () => _notificationService.SnoozeNotificationAsync(999, _testUserId, SnoozeDuration.OneHour));
     }
 
-    [Fact]
+    [TestMethod]
     public async Task MarkReminderAsCompletedAsync_MarksNotificationAsReadAndCompleted()
     {
         // Arrange
@@ -422,22 +423,22 @@ public class NotificationServiceTests
 
         // Assert
         var completedNotification = await _context.Notifications.FindAsync(notification.NotificationId);
-        Assert.NotNull(completedNotification);
-        Assert.True(completedNotification.IsRead);
-        Assert.NotNull(completedNotification.ReadAt);
+        Assert.IsNotNull(completedNotification);
+        Assert.IsTrue(completedNotification.IsRead);
+        Assert.IsNotNull(completedNotification.ReadAt);
 
         var completedReminder = await _context.BillReminders.FindAsync(reminder.BillReminderId);
-        Assert.NotNull(completedReminder);
-        Assert.True(completedReminder.IsCompleted);
-        Assert.NotNull(completedReminder.CompletedDate);
+        Assert.IsNotNull(completedReminder);
+        Assert.IsTrue(completedReminder.IsCompleted);
+        Assert.IsNotNull(completedReminder.CompletedDate);
 
         var paidBill = await _context.Bills.FindAsync(bill.BillId);
-        Assert.NotNull(paidBill);
-        Assert.Equal("Paid", paidBill.Status);
-        Assert.NotNull(paidBill.PaidDate);
+        Assert.IsNotNull(paidBill);
+        Assert.AreEqual("Paid", paidBill.Status);
+        Assert.IsNotNull(paidBill.PaidDate);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetActiveNotificationsAsync_ExcludesSnoozedNotifications()
     {
         // Arrange
@@ -459,12 +460,12 @@ public class NotificationServiceTests
         var activeNotifications = await _notificationService.GetActiveNotificationsAsync(_testUserId);
 
         // Assert
-        Assert.NotEmpty(activeNotifications);
-        Assert.Contains(activeNotifications, n => n.NotificationId == notification1.NotificationId);
-        Assert.DoesNotContain(activeNotifications, n => n.NotificationId == notification2.NotificationId);
+        Assert.AreNotEqual(0, activeNotifications.Count());
+        CollectionAssert.Contains(n => n.NotificationId == notification1.NotificationId, activeNotifications);
+        CollectionAssert.DoesNotContain(n => n.NotificationId == notification2.NotificationId, activeNotifications);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetActiveNotificationsAsync_IncludesExpiredSnoozes()
     {
         // Arrange
@@ -482,10 +483,10 @@ public class NotificationServiceTests
         var activeNotifications = await _notificationService.GetActiveNotificationsAsync(_testUserId);
 
         // Assert
-        Assert.Contains(activeNotifications, n => n.NotificationId == notification.NotificationId);
+        CollectionAssert.Contains(n => n.NotificationId == notification.NotificationId, activeNotifications);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ShouldEscalateReminderAsync_WithHighSnoozeCount_ReturnsTrue()
     {
         // Arrange
@@ -524,10 +525,10 @@ public class NotificationServiceTests
         var shouldEscalate = await _notificationService.ShouldEscalateReminderAsync(notification.NotificationId);
 
         // Assert
-        Assert.True(shouldEscalate);
+        Assert.IsTrue(shouldEscalate);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ShouldEscalateReminderAsync_WithLowSnoozeCount_ReturnsFalse()
     {
         // Arrange
@@ -566,6 +567,6 @@ public class NotificationServiceTests
         var shouldEscalate = await _notificationService.ShouldEscalateReminderAsync(notification.NotificationId);
 
         // Assert
-        Assert.False(shouldEscalate);
+        Assert.IsFalse(shouldEscalate);
     }
 }

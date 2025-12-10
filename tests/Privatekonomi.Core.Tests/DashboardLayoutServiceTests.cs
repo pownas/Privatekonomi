@@ -3,10 +3,11 @@ using Moq;
 using Privatekonomi.Core.Data;
 using Privatekonomi.Core.Models;
 using Privatekonomi.Core.Services;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Privatekonomi.Core.Tests;
 
+[TestClass]
 public class DashboardLayoutServiceTests
 {
     private readonly PrivatekonomyContext _context;
@@ -28,7 +29,7 @@ public class DashboardLayoutServiceTests
         _service = new DashboardLayoutService(_context, _mockCurrentUserService.Object);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetUserLayoutsAsync_ReturnsUserLayouts()
     {
         // Arrange
@@ -64,11 +65,11 @@ public class DashboardLayoutServiceTests
         var result = await _service.GetUserLayoutsAsync(TestUserId);
 
         // Assert
-        Assert.Equal(2, result.Count());
-        Assert.All(result, l => Assert.Equal(TestUserId, l.UserId));
+        Assert.AreEqual(2, result.Count());
+        Assert.All(result, l => Assert.AreEqual(TestUserId, l.UserId));
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetDefaultLayoutAsync_ReturnsDefaultLayout()
     {
         // Arrange
@@ -96,25 +97,25 @@ public class DashboardLayoutServiceTests
         var result = await _service.GetDefaultLayoutAsync(TestUserId);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.True(result.IsDefault);
-        Assert.Equal("Hem", result.Name);
+        Assert.IsNotNull(result);
+        Assert.IsTrue(result.IsDefault);
+        Assert.AreEqual("Hem", result.Name);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetDefaultLayoutAsync_CreatesDefaultWhenNoneExists()
     {
         // Act
         var result = await _service.GetDefaultLayoutAsync(TestUserId);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.True(result.IsDefault);
-        Assert.Equal("Hem", result.Name);
-        Assert.NotEmpty(result.Widgets);
+        Assert.IsNotNull(result);
+        Assert.IsTrue(result.IsDefault);
+        Assert.AreEqual("Hem", result.Name);
+        Assert.AreNotEqual(0, result.Widgets.Count());
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CreateLayoutAsync_CreatesNewLayout()
     {
         // Arrange
@@ -140,14 +141,14 @@ public class DashboardLayoutServiceTests
         var result = await _service.CreateLayoutAsync(newLayout);
 
         // Assert
-        Assert.NotEqual(0, result.LayoutId);
-        Assert.Equal("Test Layout", result.Name);
-        Assert.Single(result.Widgets);
-        Assert.NotEqual(DateTime.MinValue, result.CreatedAt);
-        Assert.NotEqual(DateTime.MinValue, result.UpdatedAt);
+        Assert.AreNotEqual(0, result.LayoutId);
+        Assert.AreEqual("Test Layout", result.Name);
+        Assert.AreEqual(1, result.Widgets.Count());
+        Assert.AreNotEqual(DateTime.MinValue, result.CreatedAt);
+        Assert.AreNotEqual(DateTime.MinValue, result.UpdatedAt);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CreateLayoutAsync_SetsCurrentUserIdWhenAuthenticated()
     {
         // Arrange
@@ -162,10 +163,10 @@ public class DashboardLayoutServiceTests
         var result = await _service.CreateLayoutAsync(newLayout);
 
         // Assert
-        Assert.Equal(TestUserId, result.UserId);
+        Assert.AreEqual(TestUserId, result.UserId);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CreateLayoutAsync_UnsetsOtherDefaultsWhenCreatingDefault()
     {
         // Arrange
@@ -192,11 +193,11 @@ public class DashboardLayoutServiceTests
 
         // Assert
         var oldDefault = await _context.DashboardLayouts.FindAsync(existingDefault.LayoutId);
-        Assert.NotNull(oldDefault);
-        Assert.False(oldDefault.IsDefault);
+        Assert.IsNotNull(oldDefault);
+        Assert.IsFalse(oldDefault.IsDefault);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task UpdateLayoutAsync_UpdatesExistingLayout()
     {
         // Arrange
@@ -217,13 +218,13 @@ public class DashboardLayoutServiceTests
         var result = await _service.UpdateLayoutAsync(layout);
 
         // Assert
-        Assert.Equal("Updated Name", result.Name);
+        Assert.AreEqual("Updated Name", result.Name);
         var updated = await _context.DashboardLayouts.FindAsync(layout.LayoutId);
-        Assert.NotNull(updated);
-        Assert.Equal("Updated Name", updated.Name);
+        Assert.IsNotNull(updated);
+        Assert.AreEqual("Updated Name", updated.Name);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task DeleteLayoutAsync_DeletesLayout()
     {
         // Arrange
@@ -244,10 +245,10 @@ public class DashboardLayoutServiceTests
 
         // Assert
         var deleted = await _context.DashboardLayouts.FindAsync(layoutId);
-        Assert.Null(deleted);
+        Assert.IsNull(deleted);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task DeleteLayoutAsync_SetsAnotherAsDefaultWhenDeletingDefault()
     {
         // Arrange
@@ -275,11 +276,11 @@ public class DashboardLayoutServiceTests
 
         // Assert
         var updated = await _context.DashboardLayouts.FindAsync(otherLayout.LayoutId);
-        Assert.NotNull(updated);
-        Assert.True(updated.IsDefault);
+        Assert.IsNotNull(updated);
+        Assert.IsTrue(updated.IsDefault);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task SetDefaultLayoutAsync_SetsLayoutAsDefault()
     {
         // Arrange
@@ -308,28 +309,28 @@ public class DashboardLayoutServiceTests
         // Assert
         var updated1 = await _context.DashboardLayouts.FindAsync(layout1.LayoutId);
         var updated2 = await _context.DashboardLayouts.FindAsync(layout2.LayoutId);
-        Assert.NotNull(updated1);
-        Assert.NotNull(updated2);
-        Assert.False(updated1.IsDefault);
-        Assert.True(updated2.IsDefault);
+        Assert.IsNotNull(updated1);
+        Assert.IsNotNull(updated2);
+        Assert.IsFalse(updated1.IsDefault);
+        Assert.IsTrue(updated2.IsDefault);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CreateDefaultLayoutForUserAsync_CreatesLayoutWithWidgets()
     {
         // Act
         var result = await _service.CreateDefaultLayoutForUserAsync(TestUserId);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Equal(TestUserId, result.UserId);
-        Assert.Equal("Hem", result.Name);
-        Assert.True(result.IsDefault);
-        Assert.NotEmpty(result.Widgets);
-        Assert.True(result.Widgets.Count >= 5); // Should have at least 5 default widgets
+        Assert.IsNotNull(result);
+        Assert.AreEqual(TestUserId, result.UserId);
+        Assert.AreEqual("Hem", result.Name);
+        Assert.IsTrue(result.IsDefault);
+        Assert.AreNotEqual(0, result.Widgets.Count());
+        Assert.IsTrue(result.Widgets.Count >= 5); // Should have at least 5 default widgets
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetLayoutByIdAsync_ReturnsCorrectLayout()
     {
         // Arrange
@@ -359,9 +360,9 @@ public class DashboardLayoutServiceTests
         var result = await _service.GetLayoutByIdAsync(layout.LayoutId);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Equal(layout.LayoutId, result.LayoutId);
-        Assert.Equal("Test Layout", result.Name);
-        Assert.Single(result.Widgets);
+        Assert.IsNotNull(result);
+        Assert.AreEqual(layout.LayoutId, result.LayoutId);
+        Assert.AreEqual("Test Layout", result.Name);
+        Assert.AreEqual(1, result.Widgets.Count());
     }
 }

@@ -3,10 +3,11 @@ using Moq;
 using Privatekonomi.Core.Data;
 using Privatekonomi.Core.Models;
 using Privatekonomi.Core.Services;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Privatekonomi.Core.Tests;
 
+[TestClass]
 public class SavingsChallengeServiceTests : IDisposable
 {
     private readonly PrivatekonomyContext _context;
@@ -22,13 +23,14 @@ public class SavingsChallengeServiceTests : IDisposable
         _service = new SavingsChallengeService(_context, null);
     }
 
+    [TestCleanup]
     public void Dispose()
     {
         _context.Database.EnsureDeleted();
         _context.Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CreateChallengeAsync_ValidChallenge_SuccessfullyCreatesChallenge()
     {
         // Arrange
@@ -46,14 +48,14 @@ public class SavingsChallengeServiceTests : IDisposable
         var result = await _service.CreateChallengeAsync(challenge);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.True(result.SavingsChallengeId > 0);
-        Assert.Equal(ChallengeStatus.Active, result.Status);
-        Assert.NotNull(result.EndDate);
-        Assert.Equal(30, (result.EndDate.Value - result.StartDate).Days);
+        Assert.IsNotNull(result);
+        Assert.IsTrue(result.SavingsChallengeId > 0);
+        Assert.AreEqual(ChallengeStatus.Active, result.Status);
+        Assert.IsNotNull(result.EndDate);
+        Assert.AreEqual(30, (result.EndDate.Value - result.StartDate).Days);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetAllChallengesAsync_ReturnsChallenges()
     {
         // Arrange
@@ -83,11 +85,11 @@ public class SavingsChallengeServiceTests : IDisposable
         var result = await _service.GetAllChallengesAsync();
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Equal(2, result.Count());
+        Assert.IsNotNull(result);
+        Assert.AreEqual(2, result.Count());
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetActiveChallengesAsync_ReturnsOnlyActiveChallenges()
     {
         // Arrange
@@ -119,12 +121,12 @@ public class SavingsChallengeServiceTests : IDisposable
         var result = await _service.GetActiveChallengesAsync();
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Single(result);
-        Assert.Equal("Active Challenge", result.First().Name);
+        Assert.IsNotNull(result);
+        Assert.AreEqual(1, result.Count());
+        Assert.AreEqual("Active Challenge", result.First().Name);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task RecordProgressAsync_ValidProgress_SuccessfullyRecordsProgress()
     {
         // Arrange
@@ -149,17 +151,17 @@ public class SavingsChallengeServiceTests : IDisposable
             "First day completed");
 
         // Assert
-        Assert.NotNull(progress);
-        Assert.True(progress.Completed);
-        Assert.Equal(100m, progress.AmountSaved);
-        Assert.Equal("First day completed", progress.Notes);
+        Assert.IsNotNull(progress);
+        Assert.IsTrue(progress.Completed);
+        Assert.AreEqual(100m, progress.AmountSaved);
+        Assert.AreEqual("First day completed", progress.Notes);
 
         var updatedChallenge = await _service.GetChallengeByIdAsync(created.SavingsChallengeId);
-        Assert.NotNull(updatedChallenge);
-        Assert.Equal(100m, updatedChallenge.CurrentAmount);
+        Assert.IsNotNull(updatedChallenge);
+        Assert.AreEqual(100m, updatedChallenge.CurrentAmount);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task RecordProgressAsync_MultipleProgressEntries_UpdatesStreak()
     {
         // Arrange
@@ -182,12 +184,12 @@ public class SavingsChallengeServiceTests : IDisposable
 
         // Assert
         var updatedChallenge = await _service.GetChallengeByIdAsync(created.SavingsChallengeId);
-        Assert.NotNull(updatedChallenge);
-        Assert.True(updatedChallenge.CurrentStreak >= 1); // At least 1 day streak
-        Assert.Equal(300m, updatedChallenge.CurrentAmount);
+        Assert.IsNotNull(updatedChallenge);
+        Assert.IsTrue(updatedChallenge.CurrentStreak >= 1); // At least 1 day streak
+        Assert.AreEqual(300m, updatedChallenge.CurrentAmount);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task UpdateChallengeStatusAsync_ValidStatus_SuccessfullyUpdatesStatus()
     {
         // Arrange
@@ -209,11 +211,11 @@ public class SavingsChallengeServiceTests : IDisposable
 
         // Assert
         var updatedChallenge = await _service.GetChallengeByIdAsync(created.SavingsChallengeId);
-        Assert.NotNull(updatedChallenge);
-        Assert.Equal(ChallengeStatus.Completed, updatedChallenge.Status);
+        Assert.IsNotNull(updatedChallenge);
+        Assert.AreEqual(ChallengeStatus.Completed, updatedChallenge.Status);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetTotalActiveChallengesAsync_ReturnsCorrectCount()
     {
         // Arrange
@@ -254,10 +256,10 @@ public class SavingsChallengeServiceTests : IDisposable
         var count = await _service.GetTotalActiveChallengesAsync();
 
         // Assert
-        Assert.Equal(2, count);
+        Assert.AreEqual(2, count);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetTotalAmountSavedAsync_ReturnsCorrectTotal()
     {
         // Arrange
@@ -288,10 +290,10 @@ public class SavingsChallengeServiceTests : IDisposable
         var total = await _service.GetTotalAmountSavedAsync();
 
         // Assert
-        Assert.Equal(300m, total);
+        Assert.AreEqual(300m, total);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task DeleteChallengeAsync_ValidId_SuccessfullyDeletesChallenge()
     {
         // Arrange
@@ -312,10 +314,10 @@ public class SavingsChallengeServiceTests : IDisposable
 
         // Assert
         var deletedChallenge = await _service.GetChallengeByIdAsync(created.SavingsChallengeId);
-        Assert.Null(deletedChallenge);
+        Assert.IsNull(deletedChallenge);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetAllTemplatesAsync_ReturnsActiveTemplates()
     {
         // Arrange - Templates are seeded by the context initialization
@@ -324,12 +326,12 @@ public class SavingsChallengeServiceTests : IDisposable
         var templates = await _service.GetAllTemplatesAsync();
 
         // Assert
-        Assert.NotNull(templates);
+        Assert.IsNotNull(templates);
         // Should have templates if seeded, or empty if not
-        Assert.True(templates.All(t => t.IsActive));
+        Assert.IsTrue(templates.All(t => t.IsActive));
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CreateChallengeFromTemplateAsync_ValidTemplate_SuccessfullyCreatesChallenge()
     {
         // Arrange
@@ -356,14 +358,14 @@ public class SavingsChallengeServiceTests : IDisposable
         var challenge = await _service.CreateChallengeFromTemplateAsync(template.ChallengeTemplateId);
 
         // Assert
-        Assert.NotNull(challenge);
-        Assert.Equal(template.Name, challenge.Name);
-        Assert.Equal(template.Description, challenge.Description);
-        Assert.Equal(template.Icon, challenge.Icon);
-        Assert.Equal(template.Type, challenge.Type);
-        Assert.Equal(template.DurationDays, challenge.DurationDays);
-        Assert.Equal(template.Difficulty, challenge.Difficulty);
-        Assert.Equal(template.Category, challenge.Category);
-        Assert.Equal(ChallengeStatus.Active, challenge.Status);
+        Assert.IsNotNull(challenge);
+        Assert.AreEqual(template.Name, challenge.Name);
+        Assert.AreEqual(template.Description, challenge.Description);
+        Assert.AreEqual(template.Icon, challenge.Icon);
+        Assert.AreEqual(template.Type, challenge.Type);
+        Assert.AreEqual(template.DurationDays, challenge.DurationDays);
+        Assert.AreEqual(template.Difficulty, challenge.Difficulty);
+        Assert.AreEqual(template.Category, challenge.Category);
+        Assert.AreEqual(ChallengeStatus.Active, challenge.Status);
     }
 }

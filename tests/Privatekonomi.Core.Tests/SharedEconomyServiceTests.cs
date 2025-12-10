@@ -2,10 +2,11 @@ using Microsoft.EntityFrameworkCore;
 using Privatekonomi.Core.Data;
 using Privatekonomi.Core.Models;
 using Privatekonomi.Core.Services;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Privatekonomi.Core.Tests;
 
+[TestClass]
 public class SharedEconomyServiceTests : IDisposable
 {
     private readonly PrivatekonomyContext _context;
@@ -21,6 +22,7 @@ public class SharedEconomyServiceTests : IDisposable
         _householdService = new HouseholdService(_context);
     }
 
+    [TestCleanup]
     public void Dispose()
     {
         _context.Database.EnsureDeleted();
@@ -29,7 +31,7 @@ public class SharedEconomyServiceTests : IDisposable
 
     #region Shared Budget Tests
 
-    [Fact]
+    [TestMethod]
     public async Task CreateSharedBudgetAsync_CreatesSharedBudgetSuccessfully()
     {
         // Arrange
@@ -62,19 +64,19 @@ public class SharedEconomyServiceTests : IDisposable
         var result = await _householdService.CreateSharedBudgetAsync(budget, contributions);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Equal("Shared Household Budget", result.Name);
-        Assert.Equal(household.HouseholdId, result.HouseholdId);
+        Assert.IsNotNull(result);
+        Assert.AreEqual("Shared Household Budget", result.Name);
+        Assert.AreEqual(household.HouseholdId, result.HouseholdId);
 
         var shares = await _context.HouseholdBudgetShares
             .Where(s => s.BudgetId == result.BudgetId)
             .ToListAsync();
-        Assert.Equal(2, shares.Count);
-        Assert.Contains(shares, s => s.HouseholdMemberId == member1.HouseholdMemberId && s.SharePercentage == 60m);
-        Assert.Contains(shares, s => s.HouseholdMemberId == member2.HouseholdMemberId && s.SharePercentage == 40m);
+        Assert.AreEqual(2, shares.Count);
+        CollectionAssert.Contains(s => s.HouseholdMemberId == member1.HouseholdMemberId && s.SharePercentage == 60m, shares);
+        CollectionAssert.Contains(s => s.HouseholdMemberId == member2.HouseholdMemberId && s.SharePercentage == 40m, shares);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CreateSharedBudgetAsync_ThrowsWhenContributionsDoNotSumTo100()
     {
         // Arrange
@@ -101,11 +103,11 @@ public class SharedEconomyServiceTests : IDisposable
         };
 
         // Act & Assert
-        await Assert.ThrowsAsync<InvalidOperationException>(
+        await Assert.ThrowsExceptionAsync<InvalidOperationException>(
             () => _householdService.CreateSharedBudgetAsync(budget, contributions));
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetHouseholdBudgetsAsync_ReturnsAllHouseholdBudgets()
     {
         // Arrange
@@ -142,10 +144,10 @@ public class SharedEconomyServiceTests : IDisposable
 
         // Assert
         var budgets = result.ToList();
-        Assert.Equal(2, budgets.Count);
+        Assert.AreEqual(2, budgets.Count);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetBudgetContributionsAsync_ReturnsCorrectContributions()
     {
         // Arrange
@@ -179,16 +181,16 @@ public class SharedEconomyServiceTests : IDisposable
         var result = await _householdService.GetBudgetContributionsAsync(budget.BudgetId);
 
         // Assert
-        Assert.Equal(2, result.Count);
-        Assert.Equal(55m, result[member1.HouseholdMemberId]);
-        Assert.Equal(45m, result[member2.HouseholdMemberId]);
+        Assert.AreEqual(2, result.Count);
+        Assert.AreEqual(55m, result[member1.HouseholdMemberId]);
+        Assert.AreEqual(45m, result[member2.HouseholdMemberId]);
     }
 
     #endregion
 
     #region Debt Settlement Tests
 
-    [Fact]
+    [TestMethod]
     public async Task CreateDebtAsync_CreatesDebtSuccessfully()
     {
         // Arrange
@@ -210,16 +212,16 @@ public class SharedEconomyServiceTests : IDisposable
             "Groceries split");
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Equal(household.HouseholdId, result.HouseholdId);
-        Assert.Equal(debtor.HouseholdMemberId, result.DebtorMemberId);
-        Assert.Equal(creditor.HouseholdMemberId, result.CreditorMemberId);
-        Assert.Equal(150.50m, result.Amount);
-        Assert.Equal("Groceries split", result.Description);
-        Assert.Equal(DebtSettlementStatus.Pending, result.Status);
+        Assert.IsNotNull(result);
+        Assert.AreEqual(household.HouseholdId, result.HouseholdId);
+        Assert.AreEqual(debtor.HouseholdMemberId, result.DebtorMemberId);
+        Assert.AreEqual(creditor.HouseholdMemberId, result.CreditorMemberId);
+        Assert.AreEqual(150.50m, result.Amount);
+        Assert.AreEqual("Groceries split", result.Description);
+        Assert.AreEqual(DebtSettlementStatus.Pending, result.Status);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CreateDebtAsync_ThrowsWhenDebtorAndCreditorAreSame()
     {
         // Arrange
@@ -232,7 +234,7 @@ public class SharedEconomyServiceTests : IDisposable
         await _context.SaveChangesAsync();
 
         // Act & Assert
-        await Assert.ThrowsAsync<InvalidOperationException>(
+        await Assert.ThrowsExceptionAsync<InvalidOperationException>(
             () => _householdService.CreateDebtAsync(
                 household.HouseholdId,
                 member.HouseholdMemberId,
@@ -240,7 +242,7 @@ public class SharedEconomyServiceTests : IDisposable
                 100m));
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CreateDebtAsync_ThrowsWhenAmountIsZeroOrNegative()
     {
         // Arrange
@@ -254,7 +256,7 @@ public class SharedEconomyServiceTests : IDisposable
         await _context.SaveChangesAsync();
 
         // Act & Assert
-        await Assert.ThrowsAsync<InvalidOperationException>(
+        await Assert.ThrowsExceptionAsync<InvalidOperationException>(
             () => _householdService.CreateDebtAsync(
                 household.HouseholdId,
                 debtor.HouseholdMemberId,
@@ -262,7 +264,7 @@ public class SharedEconomyServiceTests : IDisposable
                 0m));
     }
 
-    [Fact]
+    [TestMethod]
     public async Task SettleDebtAsync_SettlesDebtSuccessfully()
     {
         // Arrange
@@ -285,15 +287,15 @@ public class SharedEconomyServiceTests : IDisposable
         var result = await _householdService.SettleDebtAsync(debt.DebtSettlementId, "Paid via Swish");
 
         // Assert
-        Assert.True(result);
+        Assert.IsTrue(result);
         var settledDebt = await _context.DebtSettlements.FindAsync(debt.DebtSettlementId);
-        Assert.NotNull(settledDebt);
-        Assert.Equal(DebtSettlementStatus.Settled, settledDebt.Status);
-        Assert.NotNull(settledDebt.SettledDate);
-        Assert.Equal("Paid via Swish", settledDebt.SettlementNote);
+        Assert.IsNotNull(settledDebt);
+        Assert.AreEqual(DebtSettlementStatus.Settled, settledDebt.Status);
+        Assert.IsNotNull(settledDebt.SettledDate);
+        Assert.AreEqual("Paid via Swish", settledDebt.SettlementNote);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CancelDebtAsync_CancelsDebtSuccessfully()
     {
         // Arrange
@@ -316,13 +318,13 @@ public class SharedEconomyServiceTests : IDisposable
         var result = await _householdService.CancelDebtAsync(debt.DebtSettlementId);
 
         // Assert
-        Assert.True(result);
+        Assert.IsTrue(result);
         var cancelledDebt = await _context.DebtSettlements.FindAsync(debt.DebtSettlementId);
-        Assert.NotNull(cancelledDebt);
-        Assert.Equal(DebtSettlementStatus.Cancelled, cancelledDebt.Status);
+        Assert.IsNotNull(cancelledDebt);
+        Assert.AreEqual(DebtSettlementStatus.Cancelled, cancelledDebt.Status);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetHouseholdDebtsAsync_ReturnsAllDebts()
     {
         // Arrange
@@ -343,10 +345,10 @@ public class SharedEconomyServiceTests : IDisposable
 
         // Assert
         var debts = result.ToList();
-        Assert.Equal(2, debts.Count);
+        Assert.AreEqual(2, debts.Count);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetHouseholdDebtsAsync_FiltersDebtsCorrectly()
     {
         // Arrange
@@ -369,11 +371,11 @@ public class SharedEconomyServiceTests : IDisposable
         var settledDebts = await _householdService.GetHouseholdDebtsAsync(household.HouseholdId, DebtSettlementStatus.Settled);
 
         // Assert
-        Assert.Single(pendingDebts);
-        Assert.Single(settledDebts);
+        Assert.AreEqual(1, pendingDebts.Count());
+        Assert.AreEqual(1, settledDebts.Count());
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetMemberDebtBalanceAsync_CalculatesBalancesCorrectly()
     {
         // Arrange
@@ -398,12 +400,12 @@ public class SharedEconomyServiceTests : IDisposable
         var balances = await _householdService.GetMemberDebtBalanceAsync(household.HouseholdId);
 
         // Assert
-        Assert.Equal(-150m, balances[member1.HouseholdMemberId]); // Owes 150 total
-        Assert.Equal(70m, balances[member2.HouseholdMemberId]);   // Is owed 100, owes 30 = +70
-        Assert.Equal(80m, balances[member3.HouseholdMemberId]);   // Is owed 50 + 30 = +80
+        Assert.AreEqual(-150m, balances[member1.HouseholdMemberId]); // Owes 150 total
+        Assert.AreEqual(70m, balances[member2.HouseholdMemberId]);   // Is owed 100, owes 30 = +70
+        Assert.AreEqual(80m, balances[member3.HouseholdMemberId]);   // Is owed 50 + 30 = +80
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CalculateOptimalSettlementAsync_CreatesOptimalSettlements()
     {
         // Arrange
@@ -427,14 +429,14 @@ public class SharedEconomyServiceTests : IDisposable
 
         // Assert
         var settlementList = settlements.ToList();
-        Assert.NotEmpty(settlementList);
+        Assert.AreNotEqual(0, settlementList.Count());
         
         // Verify total amounts balance out
         var totalDebts = settlementList.Sum(s => s.Amount);
-        Assert.True(totalDebts > 0); // At least some settlements were created
+        Assert.IsTrue(totalDebts > 0); // At least some settlements were created
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CalculateOptimalSettlementAsync_HandlesEmptyDebts()
     {
         // Arrange
@@ -446,7 +448,7 @@ public class SharedEconomyServiceTests : IDisposable
         var settlements = await _householdService.CalculateOptimalSettlementAsync(household.HouseholdId);
 
         // Assert
-        Assert.Empty(settlements);
+        Assert.AreEqual(0, settlements.Count());
     }
 
     #endregion

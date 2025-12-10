@@ -6,6 +6,7 @@ using Privatekonomi.Core.Services;
 
 namespace Privatekonomi.Core.Tests;
 
+[TestClass]
 public class TemporalEntityTests
 {
     private PrivatekonomyContext GetInMemoryContext()
@@ -17,7 +18,7 @@ public class TemporalEntityTests
         return new PrivatekonomyContext(options);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CreateTemporalEntity_ShouldSetValidFromAndValidTo()
     {
         // Arrange
@@ -37,12 +38,12 @@ public class TemporalEntityTests
         var result = await service.CreateTemporalEntityAsync(transaction);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.NotEqual(default(DateTime), result.ValidFrom);
-        Assert.Null(result.ValidTo);
+        Assert.IsNotNull(result);
+        Assert.AreNotEqual(default(DateTime), result.ValidFrom);
+        Assert.IsNull(result.ValidTo);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task UpdateTemporalEntity_ShouldCloseOldVersionAndCreateNew()
     {
         // Arrange
@@ -74,14 +75,14 @@ public class TemporalEntityTests
         var result = await service.UpdateTemporalEntityAsync(created, updatedTransaction);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Equal(150m, result.Amount);
-        Assert.Null(result.ValidTo); // New version is active
-        Assert.NotNull(created.ValidTo); // Old version is closed
-        Assert.Equal(result.ValidFrom, created.ValidTo); // Versions should align
+        Assert.IsNotNull(result);
+        Assert.AreEqual(150m, result.Amount);
+        Assert.IsNull(result.ValidTo); // New version is active
+        Assert.IsNotNull(created.ValidTo); // Old version is closed
+        Assert.AreEqual(result.ValidFrom, created.ValidTo); // Versions should align
     }
 
-    [Fact]
+    [TestMethod]
     public async Task DeleteTemporalEntity_ShouldSetValidTo()
     {
         // Arrange
@@ -103,10 +104,10 @@ public class TemporalEntityTests
         await service.DeleteTemporalEntityAsync(created);
 
         // Assert
-        Assert.NotNull(created.ValidTo);
+        Assert.IsNotNull(created.ValidTo);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task AsOf_ShouldReturnCorrectVersion()
     {
         // Arrange
@@ -168,20 +169,20 @@ public class TemporalEntityTests
             .FirstOrDefaultAsync();
 
         // Assert
-        Assert.NotNull(janResult);
-        Assert.Equal(100m, janResult.Amount);
-        Assert.Equal("Version 1", janResult.Description);
+        Assert.IsNotNull(janResult);
+        Assert.AreEqual(100m, janResult.Amount);
+        Assert.AreEqual("Version 1", janResult.Description);
 
-        Assert.NotNull(febResult);
-        Assert.Equal(200m, febResult.Amount);
-        Assert.Equal("Version 2", febResult.Description);
+        Assert.IsNotNull(febResult);
+        Assert.AreEqual(200m, febResult.Amount);
+        Assert.AreEqual("Version 2", febResult.Description);
 
-        Assert.NotNull(currentResult);
-        Assert.Equal(200m, currentResult.Amount);
-        Assert.Equal("Version 2", currentResult.Description);
+        Assert.IsNotNull(currentResult);
+        Assert.AreEqual(200m, currentResult.Amount);
+        Assert.AreEqual("Version 2", currentResult.Description);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CurrentOnly_ShouldReturnOnlyActiveRecords()
     {
         // Arrange
@@ -223,11 +224,11 @@ public class TemporalEntityTests
             .ToListAsync();
 
         // Assert
-        Assert.Single(currentTransactions);
-        Assert.Equal("Active", currentTransactions[0].Description);
+        Assert.AreEqual(1, currentTransactions.Count());
+        Assert.AreEqual("Active", currentTransactions[0].Description);
     }
 
-    [Fact]
+    [TestMethod]
     public void IsActive_ShouldReturnCorrectValue()
     {
         // Arrange
@@ -244,11 +245,11 @@ public class TemporalEntityTests
         };
 
         // Act & Assert
-        Assert.True(activeEntity.IsActive());
-        Assert.False(closedEntity.IsActive());
+        Assert.IsTrue(activeEntity.IsActive());
+        Assert.IsFalse(closedEntity.IsActive());
     }
 
-    [Fact]
+    [TestMethod]
     public void IsActiveAt_ShouldReturnCorrectValue()
     {
         // Arrange
@@ -260,12 +261,12 @@ public class TemporalEntityTests
         };
 
         // Act & Assert
-        Assert.True(entity.IsActiveAt(new DateTime(2024, 1, 15, 0, 0, 0, DateTimeKind.Utc))); // Within range
-        Assert.False(entity.IsActiveAt(new DateTime(2023, 12, 15, 0, 0, 0, DateTimeKind.Utc))); // Before
-        Assert.False(entity.IsActiveAt(new DateTime(2024, 2, 15, 0, 0, 0, DateTimeKind.Utc))); // After
+        Assert.IsTrue(entity.IsActiveAt(new DateTime(2024, 1, 15, 0, 0, 0, DateTimeKind.Utc))); // Within range
+        Assert.IsFalse(entity.IsActiveAt(new DateTime(2023, 12, 15, 0, 0, 0, DateTimeKind.Utc))); // Before
+        Assert.IsFalse(entity.IsActiveAt(new DateTime(2024, 2, 15, 0, 0, 0, DateTimeKind.Utc))); // After
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetAllVersions_ShouldReturnAllVersionsOrdered()
     {
         // Arrange
@@ -321,9 +322,9 @@ public class TemporalEntityTests
         var allVersions = await service.GetAllVersionsAsync<Asset>(a => a.Name == "House");
 
         // Assert
-        Assert.Equal(3, allVersions.Count);
-        Assert.Equal(100000m, allVersions[0].CurrentValue);
-        Assert.Equal(120000m, allVersions[1].CurrentValue);
-        Assert.Equal(150000m, allVersions[2].CurrentValue);
+        Assert.AreEqual(3, allVersions.Count);
+        Assert.AreEqual(100000m, allVersions[0].CurrentValue);
+        Assert.AreEqual(120000m, allVersions[1].CurrentValue);
+        Assert.AreEqual(150000m, allVersions[2].CurrentValue);
     }
 }

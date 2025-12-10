@@ -1,4 +1,4 @@
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -9,6 +9,7 @@ using Privatekonomi.Core.Services;
 
 namespace Privatekonomi.Api.Tests;
 
+[TestClass]
 public class BulkOperationsControllerTests
 {
     private readonly Mock<ITransactionService> _mockTransactionService;
@@ -27,7 +28,7 @@ public class BulkOperationsControllerTests
             _mockLogger.Object);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task BulkDelete_ShouldReturnOk_WhenSuccessful()
     {
         // Arrange
@@ -61,13 +62,15 @@ public class BulkOperationsControllerTests
         var result = await _controller.BulkDelete(request);
 
         // Assert
-        var okResult = Assert.IsType<OkObjectResult>(result.Result);
-        var bulkResult = Assert.IsType<BulkOperationResult>(okResult.Value);
-        Assert.Equal(3, bulkResult.SuccessCount);
-        Assert.Equal(0, bulkResult.FailureCount);
+        Assert.IsInstanceOfType(result.Result, typeof(OkObjectResult));
+        var okResult = (OkObjectResult)result.Result;
+        Assert.IsInstanceOfType(okResult.Value, typeof(BulkOperationResult));
+        var bulkResult = (BulkOperationResult)okResult.Value;
+        Assert.AreEqual(3, bulkResult.SuccessCount);
+        Assert.AreEqual(0, bulkResult.FailureCount);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task BulkCategorize_ShouldReturnOk_WhenSuccessful()
     {
         // Arrange
@@ -97,12 +100,14 @@ public class BulkOperationsControllerTests
         var result = await _controller.BulkCategorize(request);
 
         // Assert
-        var okResult = Assert.IsType<OkObjectResult>(result.Result);
-        var bulkResult = Assert.IsType<BulkOperationResult>(okResult.Value);
-        Assert.Equal(2, bulkResult.SuccessCount);
+        Assert.IsInstanceOfType(result.Result, typeof(OkObjectResult));
+        var okResult = (OkObjectResult)result.Result;
+        Assert.IsInstanceOfType(okResult.Value, typeof(BulkOperationResult));
+        var bulkResult = (BulkOperationResult)okResult.Value;
+        Assert.AreEqual(2, bulkResult.SuccessCount);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task BulkLinkHousehold_ShouldReturnOk_WhenSuccessful()
     {
         // Arrange
@@ -127,12 +132,14 @@ public class BulkOperationsControllerTests
         var result = await _controller.BulkLinkHousehold(request);
 
         // Assert
-        var okResult = Assert.IsType<OkObjectResult>(result.Result);
-        var bulkResult = Assert.IsType<BulkOperationResult>(okResult.Value);
-        Assert.Equal(3, bulkResult.SuccessCount);
+        Assert.IsInstanceOfType(result.Result, typeof(OkObjectResult));
+        var okResult = (OkObjectResult)result.Result;
+        Assert.IsInstanceOfType(okResult.Value, typeof(BulkOperationResult));
+        var bulkResult = (BulkOperationResult)okResult.Value;
+        Assert.AreEqual(3, bulkResult.SuccessCount);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task BulkLinkHousehold_ShouldUnlink_WhenHouseholdIdIsNull()
     {
         // Arrange
@@ -157,16 +164,18 @@ public class BulkOperationsControllerTests
         var result = await _controller.BulkLinkHousehold(request);
 
         // Assert
-        var okResult = Assert.IsType<OkObjectResult>(result.Result);
-        var bulkResult = Assert.IsType<BulkOperationResult>(okResult.Value);
-        Assert.Equal(2, bulkResult.SuccessCount);
+        Assert.IsInstanceOfType(result.Result, typeof(OkObjectResult));
+        var okResult = (OkObjectResult)result.Result;
+        Assert.IsInstanceOfType(okResult.Value, typeof(BulkOperationResult));
+        var bulkResult = (BulkOperationResult)okResult.Value;
+        Assert.AreEqual(2, bulkResult.SuccessCount);
         
         _mockTransactionService.Verify(
             s => s.BulkLinkToHouseholdAsync(request.TransactionIds, null), 
             Times.Once);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task BulkExport_ShouldReturnCsvFile_WhenFormatIsCsv()
     {
         // Arrange
@@ -185,14 +194,15 @@ public class BulkOperationsControllerTests
         var result = await _controller.BulkExport(request);
 
         // Assert
-        var fileResult = Assert.IsType<FileContentResult>(result);
-        Assert.Equal("text/csv", fileResult.ContentType);
-        Assert.Contains("transaktioner_", fileResult.FileDownloadName);
-        Assert.EndsWith(".csv", fileResult.FileDownloadName);
-        Assert.Equal(csvData, fileResult.FileContents);
+        Assert.IsInstanceOfType(result, typeof(FileContentResult));
+        var fileResult = (FileContentResult)result;
+        Assert.AreEqual("text/csv", fileResult.ContentType);
+        CollectionAssert.Contains(fileResult.FileDownloadName, "transaktioner_");
+        StringAssert.EndsWith(fileResult.FileDownloadName, ".csv");
+        Assert.AreEqual(csvData, fileResult.FileContents);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task BulkExport_ShouldReturnJsonFile_WhenFormatIsJson()
     {
         // Arrange
@@ -211,14 +221,15 @@ public class BulkOperationsControllerTests
         var result = await _controller.BulkExport(request);
 
         // Assert
-        var fileResult = Assert.IsType<FileContentResult>(result);
-        Assert.Equal("application/json", fileResult.ContentType);
-        Assert.Contains("transaktioner_", fileResult.FileDownloadName);
-        Assert.EndsWith(".json", fileResult.FileDownloadName);
-        Assert.Equal(jsonData, fileResult.FileContents);
+        Assert.IsInstanceOfType(result, typeof(FileContentResult));
+        var fileResult = (FileContentResult)result;
+        Assert.AreEqual("application/json", fileResult.ContentType);
+        CollectionAssert.Contains(fileResult.FileDownloadName, "transaktioner_");
+        StringAssert.EndsWith(fileResult.FileDownloadName, ".json");
+        Assert.AreEqual(jsonData, fileResult.FileContents);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CreateSnapshot_ShouldReturnSnapshot()
     {
         // Arrange
@@ -240,13 +251,15 @@ public class BulkOperationsControllerTests
         var result = await _controller.CreateSnapshot(operationType, transactionIds);
 
         // Assert
-        var okResult = Assert.IsType<OkObjectResult>(result.Result);
-        var snapshot = Assert.IsType<BulkOperationSnapshot>(okResult.Value);
-        Assert.Equal(operationType, snapshot.OperationType);
-        Assert.Equal(3, snapshot.AffectedTransactionIds.Count);
+        Assert.IsInstanceOfType(result.Result, typeof(OkObjectResult));
+        var okResult = (OkObjectResult)result.Result;
+        Assert.IsInstanceOfType(okResult.Value, typeof(BulkOperationSnapshot));
+        var snapshot = (BulkOperationSnapshot)okResult.Value;
+        Assert.AreEqual(operationType, snapshot.OperationType);
+        Assert.AreEqual(3, snapshot.AffectedTransactionIds.Count);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task Undo_ShouldReturnOk_WhenSuccessful()
     {
         // Arrange
@@ -272,12 +285,14 @@ public class BulkOperationsControllerTests
         var result = await _controller.Undo(snapshot);
 
         // Assert
-        var okResult = Assert.IsType<OkObjectResult>(result.Result);
-        var undoResult = Assert.IsType<BulkOperationResult>(okResult.Value);
-        Assert.Equal(2, undoResult.SuccessCount);
+        Assert.IsInstanceOfType(result.Result, typeof(OkObjectResult));
+        var okResult = (OkObjectResult)result.Result;
+        Assert.IsInstanceOfType(okResult.Value, typeof(BulkOperationResult));
+        var undoResult = (BulkOperationResult)okResult.Value;
+        Assert.AreEqual(2, undoResult.SuccessCount);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task BulkCategorize_ShouldMapCategories_Correctly()
     {
         // Arrange
@@ -307,11 +322,11 @@ public class BulkOperationsControllerTests
         await _controller.BulkCategorize(request);
 
         // Assert
-        Assert.NotNull(capturedCategories);
-        Assert.Equal(2, capturedCategories.Count);
-        Assert.Equal(1, capturedCategories[0].CategoryId);
-        Assert.Equal(100m, capturedCategories[0].Amount);
-        Assert.Equal(2, capturedCategories[1].CategoryId);
-        Assert.Null(capturedCategories[1].Amount);
+        Assert.IsNotNull(capturedCategories);
+        Assert.AreEqual(2, capturedCategories.Count);
+        Assert.AreEqual(1, capturedCategories[0].CategoryId);
+        Assert.AreEqual(100m, capturedCategories[0].Amount);
+        Assert.AreEqual(2, capturedCategories[1].CategoryId);
+        Assert.IsNull(capturedCategories[1].Amount);
     }
 }

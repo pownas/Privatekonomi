@@ -1,4 +1,4 @@
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
@@ -8,6 +8,7 @@ using Privatekonomi.Core.Services;
 
 namespace Privatekonomi.Core.Tests;
 
+[TestClass]
 public class MetricsServiceTests
 {
     private readonly Mock<ILogger<MetricsService>> _mockLogger;
@@ -26,7 +27,7 @@ public class MetricsServiceTests
         return new PrivatekonomyContext(options);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetCurrentMetricsAsync_ReturnsMetrics()
     {
         // Arrange
@@ -46,15 +47,15 @@ public class MetricsServiceTests
         var result = await service.GetCurrentMetricsAsync();
 
         // Assert
-        Assert.NotNull(result);
-        Assert.NotNull(result.UserMetrics);
-        Assert.NotNull(result.EngagementMetrics);
-        Assert.NotNull(result.PerformanceMetrics);
-        Assert.NotNull(result.SecurityMetrics);
-        Assert.Equal(3, result.UserMetrics.TotalUsers);
+        Assert.IsNotNull(result);
+        Assert.IsNotNull(result.UserMetrics);
+        Assert.IsNotNull(result.EngagementMetrics);
+        Assert.IsNotNull(result.PerformanceMetrics);
+        Assert.IsNotNull(result.SecurityMetrics);
+        Assert.AreEqual(3, result.UserMetrics.TotalUsers);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetCurrentMetricsAsync_CalculatesMAUCorrectly()
     {
         // Arrange
@@ -77,11 +78,11 @@ public class MetricsServiceTests
         var result = await service.GetCurrentMetricsAsync();
 
         // Assert
-        Assert.Equal(2, result.UserMetrics.MAU);
-        Assert.Equal(3, result.UserMetrics.TotalUsers);
+        Assert.AreEqual(2, result.UserMetrics.MAU);
+        Assert.AreEqual(3, result.UserMetrics.TotalUsers);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetCurrentMetricsAsync_CalculatesDAUCorrectly()
     {
         // Arrange
@@ -103,10 +104,10 @@ public class MetricsServiceTests
         var result = await service.GetCurrentMetricsAsync();
 
         // Assert
-        Assert.Equal(1, result.UserMetrics.DAU);
+        Assert.AreEqual(1, result.UserMetrics.DAU);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetCurrentMetricsAsync_CalculatesTransactionsPerUserCorrectly()
     {
         // Arrange
@@ -138,11 +139,11 @@ public class MetricsServiceTests
         var result = await service.GetCurrentMetricsAsync();
 
         // Assert - 6 transactions for 2 active users = 3 per user
-        Assert.Equal(3m, result.EngagementMetrics.TransactionsPerUser);
-        Assert.Equal(6, result.EngagementMetrics.TotalTransactionsThisMonth);
+        Assert.AreEqual(3m, result.EngagementMetrics.TransactionsPerUser);
+        Assert.AreEqual(6, result.EngagementMetrics.TotalTransactionsThisMonth);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetCurrentMetricsAsync_CalculatesNewUsersThisMonthCorrectly()
     {
         // Arrange
@@ -164,11 +165,11 @@ public class MetricsServiceTests
         var result = await service.GetCurrentMetricsAsync();
 
         // Assert
-        Assert.Equal(2, result.UserMetrics.NewUsersThisMonth);
-        Assert.Equal(3, result.UserMetrics.TotalUsers);
+        Assert.AreEqual(2, result.UserMetrics.NewUsersThisMonth);
+        Assert.AreEqual(3, result.UserMetrics.TotalUsers);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetMetricsForPeriodAsync_ReturnsMetricsForSpecificPeriod()
     {
         // Arrange
@@ -195,12 +196,12 @@ public class MetricsServiceTests
         var result = await service.GetMetricsForPeriodAsync(startDate, endDate);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Equal(2, result.UserMetrics.MAU);
-        Assert.Equal(2, result.EngagementMetrics.TotalTransactionsThisMonth);
+        Assert.IsNotNull(result);
+        Assert.AreEqual(2, result.UserMetrics.MAU);
+        Assert.AreEqual(2, result.EngagementMetrics.TotalTransactionsThisMonth);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetHistoricalMetricsAsync_ReturnsCorrectNumberOfSnapshots()
     {
         // Arrange
@@ -222,12 +223,12 @@ public class MetricsServiceTests
         var result = await service.GetHistoricalMetricsAsync(MetricsPeriodType.Monthly, 6);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Equal(6, result.Count);
-        Assert.All(result, snapshot => Assert.Equal(MetricsPeriodType.Monthly, snapshot.PeriodType));
+        Assert.IsNotNull(result);
+        Assert.AreEqual(6, result.Count);
+        Assert.All(result, snapshot => Assert.AreEqual(MetricsPeriodType.Monthly, snapshot.PeriodType));
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetHistoricalMetricsAsync_QuarterlyPeriod_ReturnsQuarterlySnapshots()
     {
         // Arrange
@@ -249,12 +250,12 @@ public class MetricsServiceTests
         var result = await service.GetHistoricalMetricsAsync(MetricsPeriodType.Quarterly, 4);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Equal(4, result.Count);
-        Assert.All(result, snapshot => Assert.Equal(MetricsPeriodType.Quarterly, snapshot.PeriodType));
+        Assert.IsNotNull(result);
+        Assert.AreEqual(4, result.Count);
+        Assert.All(result, snapshot => Assert.AreEqual(MetricsPeriodType.Quarterly, snapshot.PeriodType));
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetCurrentMetricsAsync_WithNoData_ReturnsZeroMetrics()
     {
         // Arrange
@@ -265,14 +266,14 @@ public class MetricsServiceTests
         var result = await service.GetCurrentMetricsAsync();
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Equal(0, result.UserMetrics.TotalUsers);
-        Assert.Equal(0, result.UserMetrics.MAU);
-        Assert.Equal(0, result.UserMetrics.DAU);
-        Assert.Equal(0m, result.EngagementMetrics.TransactionsPerUser);
+        Assert.IsNotNull(result);
+        Assert.AreEqual(0, result.UserMetrics.TotalUsers);
+        Assert.AreEqual(0, result.UserMetrics.MAU);
+        Assert.AreEqual(0, result.UserMetrics.DAU);
+        Assert.AreEqual(0m, result.EngagementMetrics.TransactionsPerUser);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetCurrentMetricsAsync_GDPRCompliance_AlwaysReturns100Percent()
     {
         // Arrange
@@ -283,10 +284,10 @@ public class MetricsServiceTests
         var result = await service.GetCurrentMetricsAsync();
 
         // Assert
-        Assert.Equal(100m, result.SecurityMetrics.GDPRCompliancePercent);
+        Assert.AreEqual(100m, result.SecurityMetrics.GDPRCompliancePercent);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetCurrentMetricsAsync_PerformanceMetrics_ReturnsExpectedValues()
     {
         // Arrange
@@ -297,9 +298,9 @@ public class MetricsServiceTests
         var result = await service.GetCurrentMetricsAsync();
 
         // Assert
-        Assert.True(result.PerformanceMetrics.UptimePercent >= 99.0m);
-        Assert.True(result.PerformanceMetrics.AveragePageLoadTime > 0);
-        Assert.True(result.PerformanceMetrics.LighthouseScore >= 0);
-        Assert.True(result.PerformanceMetrics.CrashRate >= 0);
+        Assert.IsTrue(result.PerformanceMetrics.UptimePercent >= 99.0m);
+        Assert.IsTrue(result.PerformanceMetrics.AveragePageLoadTime > 0);
+        Assert.IsTrue(result.PerformanceMetrics.LighthouseScore >= 0);
+        Assert.IsTrue(result.PerformanceMetrics.CrashRate >= 0);
     }
 }

@@ -4,10 +4,11 @@ using Moq;
 using Privatekonomi.Core.Data;
 using Privatekonomi.Core.Models;
 using Privatekonomi.Core.Services;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Privatekonomi.Core.Tests;
 
+[TestClass]
 public class BudgetAlertServiceTests
 {
     private readonly Mock<ICurrentUserService> _mockCurrentUserService;
@@ -30,7 +31,7 @@ public class BudgetAlertServiceTests
         return new PrivatekonomyContext(options);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CalculateBudgetUsagePercentageAsync_ReturnsCorrectPercentage()
     {
         // Arrange
@@ -81,10 +82,10 @@ public class BudgetAlertServiceTests
         var percentage = await service.CalculateBudgetUsagePercentageAsync(1, 1);
 
         // Assert
-        Assert.Equal(90m, percentage);
+        Assert.AreEqual(90m, percentage);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CalculateDailyRateAsync_ReturnsCorrectRate()
     {
         // Arrange
@@ -141,10 +142,10 @@ public class BudgetAlertServiceTests
         var dailyRate = await service.CalculateDailyRateAsync(1, 1);
 
         // Assert - 940 / 10 days = 94
-        Assert.Equal(94m, dailyRate);
+        Assert.AreEqual(94m, dailyRate);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CalculateDaysUntilExceededAsync_ReturnsCorrectForecast()
     {
         // Arrange
@@ -200,11 +201,11 @@ public class BudgetAlertServiceTests
         var daysUntilExceeded = await service.CalculateDaysUntilExceededAsync(1, 1);
 
         // Assert
-        Assert.NotNull(daysUntilExceeded);
-        Assert.Equal(2, daysUntilExceeded.Value);
+        Assert.IsNotNull(daysUntilExceeded);
+        Assert.AreEqual(2, daysUntilExceeded.Value);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetOrCreateSettingsAsync_CreatesDefaultSettings()
     {
         // Arrange
@@ -219,15 +220,15 @@ public class BudgetAlertServiceTests
         var settings = await service.GetOrCreateSettingsAsync();
 
         // Assert
-        Assert.NotNull(settings);
-        Assert.True(settings.EnableAlert75);
-        Assert.True(settings.EnableAlert90);
-        Assert.True(settings.EnableAlert100);
-        Assert.True(settings.EnableForecastWarnings);
-        Assert.Equal(7, settings.ForecastWarningDays);
+        Assert.IsNotNull(settings);
+        Assert.IsTrue(settings.EnableAlert75);
+        Assert.IsTrue(settings.EnableAlert90);
+        Assert.IsTrue(settings.EnableAlert100);
+        Assert.IsTrue(settings.EnableForecastWarnings);
+        Assert.AreEqual(7, settings.ForecastWarningDays);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task FreezeBudgetAsync_CreatesFreezeSuccessfully()
     {
         // Arrange
@@ -255,13 +256,13 @@ public class BudgetAlertServiceTests
         var freeze = await service.FreezeBudgetAsync(1, null, "Budget överskriden");
 
         // Assert
-        Assert.NotNull(freeze);
-        Assert.Equal(1, freeze.BudgetId);
-        Assert.True(freeze.IsActive);
-        Assert.Equal("Budget överskriden", freeze.Reason);
+        Assert.IsNotNull(freeze);
+        Assert.AreEqual(1, freeze.BudgetId);
+        Assert.IsTrue(freeze.IsActive);
+        Assert.AreEqual("Budget överskriden", freeze.Reason);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task IsBudgetFrozenAsync_ReturnsTrueWhenFrozen()
     {
         // Arrange
@@ -297,10 +298,10 @@ public class BudgetAlertServiceTests
         var isFrozen = await service.IsBudgetFrozenAsync(1);
 
         // Assert
-        Assert.True(isFrozen);
+        Assert.IsTrue(isFrozen);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CheckBudgetAsync_CreatesAlertWhenThresholdExceeded()
     {
         // Arrange
@@ -375,9 +376,9 @@ public class BudgetAlertServiceTests
         var alerts = await service.CheckBudgetAsync(1);
 
         // Assert
-        Assert.NotEmpty(alerts);
-        Assert.Contains(alerts, a => a.ThresholdPercentage == 75m);
-        Assert.Contains(alerts, a => a.ThresholdPercentage == 90m);
+        Assert.AreNotEqual(0, alerts.Count());
+        CollectionAssert.Contains(a => a.ThresholdPercentage == 75m, alerts);
+        CollectionAssert.Contains(a => a.ThresholdPercentage == 90m, alerts);
         
         // Verify notification was sent
         _mockNotificationService.Verify(
@@ -392,7 +393,7 @@ public class BudgetAlertServiceTests
             Times.AtLeastOnce);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task AcknowledgeAlertAsync_MarksAlertAsInactive()
     {
         // Arrange
@@ -425,8 +426,8 @@ public class BudgetAlertServiceTests
 
         // Assert
         var updatedAlert = await context.BudgetAlerts.FindAsync(1);
-        Assert.NotNull(updatedAlert);
-        Assert.False(updatedAlert.IsActive);
-        Assert.NotNull(updatedAlert.AcknowledgedAt);
+        Assert.IsNotNull(updatedAlert);
+        Assert.IsFalse(updatedAlert.IsActive);
+        Assert.IsNotNull(updatedAlert.AcknowledgedAt);
     }
 }

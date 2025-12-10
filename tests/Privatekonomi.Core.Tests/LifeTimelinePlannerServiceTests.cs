@@ -2,10 +2,11 @@ using Microsoft.EntityFrameworkCore;
 using Privatekonomi.Core.Data;
 using Privatekonomi.Core.Models;
 using Privatekonomi.Core.Services;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Privatekonomi.Core.Tests;
 
+[TestClass]
 public class LifeTimelinePlannerServiceTests : IDisposable
 {
     private readonly PrivatekonomyContext _context;
@@ -21,6 +22,7 @@ public class LifeTimelinePlannerServiceTests : IDisposable
         _service = new LifeTimelinePlannerService(_context, null);
     }
 
+    [TestCleanup]
     public void Dispose()
     {
         _context.Database.EnsureDeleted();
@@ -29,7 +31,7 @@ public class LifeTimelinePlannerServiceTests : IDisposable
 
     #region Milestone Tests
 
-    [Fact]
+    [TestMethod]
     public async Task CreateMilestoneAsync_ValidMilestone_SuccessfullyCreatesMilestone()
     {
         // Arrange
@@ -48,13 +50,13 @@ public class LifeTimelinePlannerServiceTests : IDisposable
         var result = await _service.CreateMilestoneAsync(milestone);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.True(result.LifeTimelineMilestoneId > 0);
-        Assert.Equal("Köpa bostad", result.Name);
-        Assert.Equal(1500000m, result.EstimatedCost);
+        Assert.IsNotNull(result);
+        Assert.IsTrue(result.LifeTimelineMilestoneId > 0);
+        Assert.AreEqual("Köpa bostad", result.Name);
+        Assert.AreEqual(1500000m, result.EstimatedCost);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetAllMilestonesAsync_ReturnsMilestones()
     {
         // Arrange
@@ -82,11 +84,11 @@ public class LifeTimelinePlannerServiceTests : IDisposable
         var result = await _service.GetAllMilestonesAsync();
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Equal(2, result.Count());
+        Assert.IsNotNull(result);
+        Assert.AreEqual(2, result.Count());
     }
 
-    [Fact]
+    [TestMethod]
     public async Task UpdateMilestoneAsync_ValidMilestone_UpdatesSuccessfully()
     {
         // Arrange
@@ -107,12 +109,12 @@ public class LifeTimelinePlannerServiceTests : IDisposable
         var result = await _service.UpdateMilestoneAsync(created);
 
         // Assert
-        Assert.Equal("Updated Name", result.Name);
-        Assert.Equal(1500000m, result.EstimatedCost);
-        Assert.NotNull(result.UpdatedAt);
+        Assert.AreEqual("Updated Name", result.Name);
+        Assert.AreEqual(1500000m, result.EstimatedCost);
+        Assert.IsNotNull(result.UpdatedAt);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task DeleteMilestoneAsync_ExistingMilestone_DeletesSuccessfully()
     {
         // Arrange
@@ -132,14 +134,14 @@ public class LifeTimelinePlannerServiceTests : IDisposable
         var result = await _service.GetMilestoneByIdAsync(created.LifeTimelineMilestoneId);
 
         // Assert
-        Assert.Null(result);
+        Assert.IsNull(result);
     }
 
     #endregion
 
     #region Scenario Tests
 
-    [Fact]
+    [TestMethod]
     public async Task CreateScenarioAsync_ValidScenario_SuccessfullyCreatesScenario()
     {
         // Arrange
@@ -158,13 +160,13 @@ public class LifeTimelinePlannerServiceTests : IDisposable
         var result = await _service.CreateScenarioAsync(scenario);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.True(result.LifeTimelineScenarioId > 0);
-        Assert.Equal("Optimistisk", result.Name);
-        Assert.Equal(5000m, result.MonthlySavings);
+        Assert.IsNotNull(result);
+        Assert.IsTrue(result.LifeTimelineScenarioId > 0);
+        Assert.AreEqual("Optimistisk", result.Name);
+        Assert.AreEqual(5000m, result.MonthlySavings);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task SetActiveScenarioAsync_ValidScenario_SetsActiveCorrectly()
     {
         // Arrange
@@ -195,19 +197,19 @@ public class LifeTimelinePlannerServiceTests : IDisposable
 
         // Assert
         var activeScenario = await _service.GetActiveScenarioAsync();
-        Assert.NotNull(activeScenario);
-        Assert.Equal(created2.LifeTimelineScenarioId, activeScenario.LifeTimelineScenarioId);
-        Assert.True(activeScenario.IsActive);
+        Assert.IsNotNull(activeScenario);
+        Assert.AreEqual(created2.LifeTimelineScenarioId, activeScenario.LifeTimelineScenarioId);
+        Assert.IsTrue(activeScenario.IsActive);
         
         var scenario1Updated = await _service.GetScenarioByIdAsync(created1.LifeTimelineScenarioId);
-        Assert.False(scenario1Updated!.IsActive);
+        Assert.IsFalse(scenario1Updated!.IsActive);
     }
 
     #endregion
 
     #region Calculation Tests
 
-    [Fact]
+    [TestMethod]
     public async Task CalculateRequiredMonthlySavingsAsync_ValidMilestone_ReturnsCorrectAmount()
     {
         // Arrange
@@ -227,11 +229,11 @@ public class LifeTimelinePlannerServiceTests : IDisposable
         var result = await _service.CalculateRequiredMonthlySavingsAsync(created.LifeTimelineMilestoneId);
 
         // Assert
-        Assert.True(result > 0, $"Result should be greater than 0, but was {result}");
-        Assert.True(result <= 11000m, $"Result should be around 10000 kr/month for 12 months, but was {result}"); // Allow some margin for calculation
+        Assert.IsTrue(result > 0, $"Result should be greater than 0, but was {result}");
+        Assert.IsTrue(result <= 11000m, $"Result should be around 10000 kr/month for 12 months, but was {result}"); // Allow some margin for calculation
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CalculateRequiredMonthlySavingsAsync_CompletedMilestone_ReturnsZero()
     {
         // Arrange
@@ -251,10 +253,10 @@ public class LifeTimelinePlannerServiceTests : IDisposable
         var result = await _service.CalculateRequiredMonthlySavingsAsync(created.LifeTimelineMilestoneId);
 
         // Assert
-        Assert.Equal(0m, result);
+        Assert.AreEqual(0m, result);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CalculateProjectedRetirementWealthAsync_ValidScenario_ReturnsPositiveValue()
     {
         // Arrange
@@ -273,11 +275,11 @@ public class LifeTimelinePlannerServiceTests : IDisposable
         var result = await _service.CalculateProjectedRetirementWealthAsync(created.LifeTimelineScenarioId);
 
         // Assert
-        Assert.True(result > 0);
+        Assert.IsTrue(result > 0);
         // With compound interest, the result should be significantly higher than just monthly savings * months
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetTotalMilestoneCostsAsync_MultipleMilestones_ReturnsSumOfCosts()
     {
         // Arrange
@@ -317,10 +319,10 @@ public class LifeTimelinePlannerServiceTests : IDisposable
         var result = await _service.GetTotalMilestoneCostsAsync();
 
         // Assert
-        Assert.Equal(1500000m, result); // Should only include non-completed milestones
+        Assert.AreEqual(1500000m, result); // Should only include non-completed milestones
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CalculateExpectedMonthlyPensionAsync_ValidScenario_ReturnsMonthlyPension()
     {
         // Arrange
@@ -339,12 +341,12 @@ public class LifeTimelinePlannerServiceTests : IDisposable
         var monthlyPension = await _service.CalculateExpectedMonthlyPensionAsync(scenario.LifeTimelineScenarioId);
 
         // Assert
-        Assert.True(monthlyPension > 0);
+        Assert.IsTrue(monthlyPension > 0);
         // With 35 years of saving 5000 kr/month at 7% return, monthly pension should be substantial
-        Assert.True(monthlyPension > 10000m); // Should be at least 10,000 kr/month
+        Assert.IsTrue(monthlyPension > 10000m); // Should be at least 10,000 kr/month
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CalculateLifeInsuranceNeedAsync_WithMilestones_ReturnsPositiveAmount()
     {
         // Arrange
@@ -381,12 +383,12 @@ public class LifeTimelinePlannerServiceTests : IDisposable
         var insuranceNeed = await _service.CalculateLifeInsuranceNeedAsync();
 
         // Assert
-        Assert.True(insuranceNeed > 0);
+        Assert.IsTrue(insuranceNeed > 0);
         // Should include outstanding milestone costs plus income replacement
-        Assert.True(insuranceNeed > 1950000m); // Outstanding costs (1,500,000 + 450,000) 
+        Assert.IsTrue(insuranceNeed > 1950000m); // Outstanding costs (1,500,000 + 450,000) 
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CalculateRecommendedLifeInsuranceAsync_ReturnsRoundedAmount()
     {
         // Arrange
@@ -413,9 +415,9 @@ public class LifeTimelinePlannerServiceTests : IDisposable
         var recommended = await _service.CalculateRecommendedLifeInsuranceAsync();
 
         // Assert
-        Assert.True(recommended > 0);
+        Assert.IsTrue(recommended > 0);
         // Should be rounded to nearest 100,000
-        Assert.Equal(0, recommended % 100000);
+        Assert.AreEqual(0, recommended % 100000);
     }
 
     #endregion

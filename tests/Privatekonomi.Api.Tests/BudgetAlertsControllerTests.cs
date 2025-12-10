@@ -7,10 +7,11 @@ using Moq;
 using Privatekonomi.Core.Data;
 using Privatekonomi.Core.Models;
 using Privatekonomi.Core.Services;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Privatekonomi.Api.Tests;
 
+[TestClass]
 public class BudgetAlertsControllerTests
 {
     private WebApplicationFactory<Program> CreateFactory(string databaseName)
@@ -92,7 +93,7 @@ public class BudgetAlertsControllerTests
         return (budget, budgetCategory, category);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetActiveAlerts_ReturnsOkResult()
     {
         // Arrange
@@ -104,10 +105,10 @@ public class BudgetAlertsControllerTests
         var response = await client.GetAsync("/api/budget-alerts");
 
         // Assert
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetAlertsForBudget_ReturnsOkResult()
     {
         // Arrange
@@ -120,10 +121,10 @@ public class BudgetAlertsControllerTests
         var response = await client.GetAsync($"/api/budget-alerts/budget/{budget.BudgetId}");
 
         // Assert
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetAlertsForCategory_ReturnsOkResult()
     {
         // Arrange
@@ -136,10 +137,10 @@ public class BudgetAlertsControllerTests
         var response = await client.GetAsync($"/api/budget-alerts/budget/{budget.BudgetId}/category/{category.CategoryId}");
 
         // Assert
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CheckAllBudgets_ReturnsOkResult()
     {
         // Arrange
@@ -151,10 +152,10 @@ public class BudgetAlertsControllerTests
         var response = await client.PostAsync("/api/budget-alerts/check", null);
 
         // Assert
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CheckBudget_ReturnsOkResult()
     {
         // Arrange
@@ -167,10 +168,10 @@ public class BudgetAlertsControllerTests
         var response = await client.PostAsync($"/api/budget-alerts/check/{budget.BudgetId}", null);
 
         // Assert
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetCategoryUsage_ReturnsOkResult()
     {
         // Arrange
@@ -183,10 +184,10 @@ public class BudgetAlertsControllerTests
         var response = await client.GetAsync($"/api/budget-alerts/budget/{budget.BudgetId}/category/{category.CategoryId}/usage");
 
         // Assert
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetSettings_ReturnsOkResult()
     {
         // Arrange
@@ -198,10 +199,10 @@ public class BudgetAlertsControllerTests
         var response = await client.GetAsync("/api/budget-alerts/settings");
 
         // Assert
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetActiveFreezes_ReturnsOkResult()
     {
         // Arrange
@@ -213,10 +214,10 @@ public class BudgetAlertsControllerTests
         var response = await client.GetAsync("/api/budget-alerts/freeze");
 
         // Assert
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task IsBudgetFrozen_ReturnsOkResult()
     {
         // Arrange
@@ -229,8 +230,8 @@ public class BudgetAlertsControllerTests
         var response = await client.GetAsync($"/api/budget-alerts/freeze/budget/{budget.BudgetId}");
 
         // Assert
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
         var isFrozen = await response.Content.ReadFromJsonAsync<bool>();
-        Assert.False(isFrozen);
+        Assert.IsFalse(isFrozen);
     }
 }

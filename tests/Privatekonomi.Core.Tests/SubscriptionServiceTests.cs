@@ -3,10 +3,11 @@ using Moq;
 using Privatekonomi.Core.Data;
 using Privatekonomi.Core.Models;
 using Privatekonomi.Core.Services;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Privatekonomi.Core.Tests;
 
+[TestClass]
 public class SubscriptionServiceTests : IDisposable
 {
     private readonly PrivatekonomyContext _context;
@@ -25,13 +26,14 @@ public class SubscriptionServiceTests : IDisposable
         _subscriptionService = new SubscriptionService(_context, _auditLogServiceMock.Object);
     }
 
+    [TestCleanup]
     public void Dispose()
     {
         _context.Database.EnsureDeleted();
         _context.Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetUnusedSubscriptionsAsync_ReturnsSubscriptionsNotUsedRecently()
     {
         // Arrange
@@ -78,14 +80,14 @@ public class SubscriptionServiceTests : IDisposable
         var result = await _subscriptionService.GetUnusedSubscriptionsAsync(TestUserId, 45);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Equal(2, result.Count); // subscription1 (60 days old) and subscription3 (never used)
-        Assert.Contains(result, s => s.Name == "Netflix");
-        Assert.Contains(result, s => s.Name == "HBO");
-        Assert.DoesNotContain(result, s => s.Name == "Spotify");
+        Assert.IsNotNull(result);
+        Assert.AreEqual(2, result.Count); // subscription1 (60 days old) and subscription3 (never used)
+        CollectionAssert.Contains(s => s.Name == "Netflix", result);
+        CollectionAssert.Contains(s => s.Name == "HBO", result);
+        CollectionAssert.DoesNotContain(s => s.Name == "Spotify", result);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetSubscriptionsWithUpcomingCancellationDeadlineAsync_ReturnsOnlyUpcomingDeadlines()
     {
         // Arrange
@@ -129,12 +131,12 @@ public class SubscriptionServiceTests : IDisposable
         var result = await _subscriptionService.GetSubscriptionsWithUpcomingCancellationDeadlineAsync(TestUserId, 30);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Single(result);
-        Assert.Equal("Netflix", result[0].Name);
+        Assert.IsNotNull(result);
+        Assert.AreEqual(1, result.Count());
+        Assert.AreEqual("Netflix", result[0].Name);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task UpdateLastUsedDateAsync_UpdatesDateSuccessfully()
     {
         // Arrange
@@ -159,13 +161,13 @@ public class SubscriptionServiceTests : IDisposable
 
         // Assert
         var updated = await _context.Subscriptions.FindAsync(subscription.SubscriptionId);
-        Assert.NotNull(updated);
-        Assert.NotNull(updated.LastUsedDate);
-        Assert.True((updated.LastUsedDate.Value - newDate).TotalSeconds < 1);
-        Assert.NotNull(updated.UpdatedAt);
+        Assert.IsNotNull(updated);
+        Assert.IsNotNull(updated.LastUsedDate);
+        Assert.IsTrue((updated.LastUsedDate.Value - newDate).TotalSeconds < 1);
+        Assert.IsNotNull(updated.UpdatedAt);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task DetectSubscriptionsFromTransactionsAsync_DetectsRecurringPatterns()
     {
         // Arrange
@@ -223,16 +225,16 @@ public class SubscriptionServiceTests : IDisposable
         var result = await _subscriptionService.DetectSubscriptionsFromTransactionsAsync(TestUserId);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Single(result);
+        Assert.IsNotNull(result);
+        Assert.AreEqual(1, result.Count());
         var detected = result[0];
-        Assert.Contains("Netflix", detected.Name, StringComparison.OrdinalIgnoreCase);
-        Assert.Equal(119, detected.Price);
-        Assert.Equal("Monthly", detected.BillingFrequency);
-        Assert.True(detected.AutoDetected);
+        CollectionAssert.Contains(detected.Name, StringComparison.OrdinalIgnoreCase, "Netflix");
+        Assert.AreEqual(119, detected.Price);
+        Assert.AreEqual("Monthly", detected.BillingFrequency);
+        Assert.IsTrue(detected.AutoDetected);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task DetectSubscriptionsFromTransactionsAsync_IgnoresInconsistentAmounts()
     {
         // Arrange
@@ -280,11 +282,11 @@ public class SubscriptionServiceTests : IDisposable
         var result = await _subscriptionService.DetectSubscriptionsFromTransactionsAsync(TestUserId);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Empty(result); // Should not detect inconsistent amounts
+        Assert.IsNotNull(result);
+        Assert.AreEqual(0, result.Count()); // Should not detect inconsistent amounts
     }
 
-    [Fact]
+    [TestMethod]
     public async Task DetectSubscriptionsFromTransactionsAsync_DoesNotDuplicateExistingSubscriptions()
     {
         // Arrange
@@ -342,11 +344,11 @@ public class SubscriptionServiceTests : IDisposable
         var result = await _subscriptionService.DetectSubscriptionsFromTransactionsAsync(TestUserId);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Empty(result); // Should not create duplicate
+        Assert.IsNotNull(result);
+        Assert.AreEqual(0, result.Count()); // Should not create duplicate
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CreateSubscriptionFromTransactionAsync_CreatesSubscriptionSuccessfully()
     {
         // Arrange
@@ -368,29 +370,29 @@ public class SubscriptionServiceTests : IDisposable
         var result = await _subscriptionService.CreateSubscriptionFromTransactionAsync(transaction.TransactionId, TestUserId);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Contains("Spotify", result.Name, StringComparison.OrdinalIgnoreCase);
-        Assert.Equal(99, result.Price);
-        Assert.Equal("SEK", result.Currency);
-        Assert.True(result.AutoDetected);
-        Assert.Equal(transaction.TransactionId, result.DetectedFromTransactionId);
+        Assert.IsNotNull(result);
+        CollectionAssert.Contains(result.Name, StringComparison.OrdinalIgnoreCase, "Spotify");
+        Assert.AreEqual(99, result.Price);
+        Assert.AreEqual("SEK", result.Currency);
+        Assert.IsTrue(result.AutoDetected);
+        Assert.AreEqual(transaction.TransactionId, result.DetectedFromTransactionId);
         
         // Verify it was persisted
         var persisted = await _context.Subscriptions.FindAsync(result.SubscriptionId);
-        Assert.NotNull(persisted);
+        Assert.IsNotNull(persisted);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CreateSubscriptionFromTransactionAsync_ReturnsNullForNonexistentTransaction()
     {
         // Act
         var result = await _subscriptionService.CreateSubscriptionFromTransactionAsync(99999, TestUserId);
 
         // Assert
-        Assert.Null(result);
+        Assert.IsNull(result);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetMonthlySubscriptionCostAsync_CalculatesCorrectly()
     {
         // Arrange
@@ -442,6 +444,6 @@ public class SubscriptionServiceTests : IDisposable
 
         // Assert
         // Expected: 119 (monthly) + 100 (yearly/12) + 100 (quarterly/3) = 319
-        Assert.Equal(319, result);
+        Assert.AreEqual(319, result);
     }
 }

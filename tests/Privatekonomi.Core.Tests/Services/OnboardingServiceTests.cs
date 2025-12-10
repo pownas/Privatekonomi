@@ -2,10 +2,11 @@ using Microsoft.AspNetCore.Identity;
 using Moq;
 using Privatekonomi.Core.Models;
 using Privatekonomi.Core.Services;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Privatekonomi.Core.Tests.Services;
 
+[TestClass]
 public class OnboardingServiceTests
 {
     private readonly Mock<UserManager<ApplicationUser>> _mockUserManager;
@@ -24,7 +25,7 @@ public class OnboardingServiceTests
         _service = new OnboardingService(_mockUserManager.Object, _mockCurrentUserService.Object);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task HasCompletedOnboardingAsync_WhenUserNotFound_ReturnsFalse()
     {
         // Arrange
@@ -36,10 +37,10 @@ public class OnboardingServiceTests
         var result = await _service.HasCompletedOnboardingAsync(userId);
 
         // Assert
-        Assert.False(result);
+        Assert.IsFalse(result);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task HasCompletedOnboardingAsync_WhenOnboardingNotCompleted_ReturnsFalse()
     {
         // Arrange
@@ -57,10 +58,10 @@ public class OnboardingServiceTests
         var result = await _service.HasCompletedOnboardingAsync(userId);
 
         // Assert
-        Assert.False(result);
+        Assert.IsFalse(result);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task HasCompletedOnboardingAsync_WhenOnboardingCompleted_ReturnsTrue()
     {
         // Arrange
@@ -79,10 +80,10 @@ public class OnboardingServiceTests
         var result = await _service.HasCompletedOnboardingAsync(userId);
 
         // Assert
-        Assert.True(result);
+        Assert.IsTrue(result);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CompleteOnboardingAsync_WhenUserExists_SetsOnboardingCompleted()
     {
         // Arrange
@@ -103,12 +104,12 @@ public class OnboardingServiceTests
         await _service.CompleteOnboardingAsync(userId);
 
         // Assert
-        Assert.True(user.OnboardingCompleted);
-        Assert.NotNull(user.OnboardingCompletedAt);
+        Assert.IsTrue(user.OnboardingCompleted);
+        Assert.IsNotNull(user.OnboardingCompletedAt);
         _mockUserManager.Verify(m => m.UpdateAsync(user), Times.Once);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CompleteOnboardingAsync_WhenUserNotFound_DoesNothing()
     {
         // Arrange
@@ -123,7 +124,7 @@ public class OnboardingServiceTests
         _mockUserManager.Verify(m => m.UpdateAsync(It.IsAny<ApplicationUser>()), Times.Never);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetCurrentStepAsync_WhenOnboardingNotCompleted_ReturnsZero()
     {
         // Arrange
@@ -141,10 +142,10 @@ public class OnboardingServiceTests
         var result = await _service.GetCurrentStepAsync(userId);
 
         // Assert
-        Assert.Equal(0, result);
+        Assert.AreEqual(0, result);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetCurrentStepAsync_WhenOnboardingCompleted_ReturnsMinusOne()
     {
         // Arrange
@@ -162,6 +163,6 @@ public class OnboardingServiceTests
         var result = await _service.GetCurrentStepAsync(userId);
 
         // Assert
-        Assert.Equal(-1, result);
+        Assert.AreEqual(-1, result);
     }
 }

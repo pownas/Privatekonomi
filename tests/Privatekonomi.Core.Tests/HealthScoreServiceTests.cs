@@ -2,10 +2,11 @@ using Microsoft.EntityFrameworkCore;
 using Privatekonomi.Core.Data;
 using Privatekonomi.Core.Models;
 using Privatekonomi.Core.Services;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Privatekonomi.Core.Tests;
 
+[TestClass]
 public class HealthScoreServiceTests : IDisposable
 {
     private readonly PrivatekonomyContext _context;
@@ -21,28 +22,29 @@ public class HealthScoreServiceTests : IDisposable
         _reportService = new ReportService(_context);
     }
 
+    [TestCleanup]
     public void Dispose()
     {
         _context.Database.EnsureDeleted();
         _context.Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetHealthScoreAsync_NoData_ReturnsLowScore()
     {
         // Act
         var result = await _reportService.GetHealthScoreAsync();
 
         // Assert
-        Assert.NotNull(result);
-        Assert.True(result.TotalScore >= 0 && result.TotalScore <= 100);
+        Assert.IsNotNull(result);
+        Assert.IsTrue(result.TotalScore >= 0 && result.TotalScore <= 100);
         // 0% savings rate gets 5 points (not negative at least)
-        Assert.Equal(5, result.SavingsRate.Score);
-        Assert.Equal(0, result.EmergencyFund.Score);
-        Assert.Equal(0, result.IncomeStability.Score); // No income data
+        Assert.AreEqual(5, result.SavingsRate.Score);
+        Assert.AreEqual(0, result.EmergencyFund.Score);
+        Assert.AreEqual(0, result.IncomeStability.Score); // No income data
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetHealthScoreAsync_ExcellentSavingsRate_Returns20Points()
     {
         // Arrange - 25% savings rate (5000 income, 3750 expenses)
@@ -70,13 +72,13 @@ public class HealthScoreServiceTests : IDisposable
         var result = await _reportService.GetHealthScoreAsync();
 
         // Assert
-        Assert.Equal(20, result.SavingsRate.Score);
-        Assert.Equal(20, result.SavingsRate.MaxScore);
-        Assert.Equal("Utmärkt", result.SavingsRate.Status);
-        Assert.True(result.SavingsRate.Value >= 20);
+        Assert.AreEqual(20, result.SavingsRate.Score);
+        Assert.AreEqual(20, result.SavingsRate.MaxScore);
+        Assert.AreEqual("Utmärkt", result.SavingsRate.Status);
+        Assert.IsTrue(result.SavingsRate.Value >= 20);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetHealthScoreAsync_NoDebt_Returns20Points()
     {
         // Arrange - No loans
@@ -84,12 +86,12 @@ public class HealthScoreServiceTests : IDisposable
         var result = await _reportService.GetHealthScoreAsync();
 
         // Assert
-        Assert.Equal(20, result.DebtLevel.Score);
-        Assert.Equal(20, result.DebtLevel.MaxScore);
-        Assert.Equal("Utmärkt", result.DebtLevel.Status);
+        Assert.AreEqual(20, result.DebtLevel.Score);
+        Assert.AreEqual(20, result.DebtLevel.MaxScore);
+        Assert.AreEqual("Utmärkt", result.DebtLevel.Status);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetHealthScoreAsync_HighDebt_ReturnsLowScore()
     {
         // Arrange - High debt (500% of annual income)
@@ -117,11 +119,11 @@ public class HealthScoreServiceTests : IDisposable
         var result = await _reportService.GetHealthScoreAsync();
 
         // Assert
-        Assert.True(result.DebtLevel.Score < 10);
-        Assert.Equal(20, result.DebtLevel.MaxScore);
+        Assert.IsTrue(result.DebtLevel.Score < 10);
+        Assert.AreEqual(20, result.DebtLevel.MaxScore);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetHealthScoreAsync_SixMonthsEmergencyFund_Returns20Points()
     {
         // Arrange - 6 months of expenses saved
@@ -150,13 +152,13 @@ public class HealthScoreServiceTests : IDisposable
         var result = await _reportService.GetHealthScoreAsync();
 
         // Assert
-        Assert.Equal(20, result.EmergencyFund.Score);
-        Assert.Equal(20, result.EmergencyFund.MaxScore);
-        Assert.Equal("Utmärkt", result.EmergencyFund.Status);
-        Assert.True(result.EmergencyFund.Value >= 6);
+        Assert.AreEqual(20, result.EmergencyFund.Score);
+        Assert.AreEqual(20, result.EmergencyFund.MaxScore);
+        Assert.AreEqual("Utmärkt", result.EmergencyFund.Status);
+        Assert.IsTrue(result.EmergencyFund.Value >= 6);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetHealthScoreAsync_StableIncome_Returns10Points()
     {
         // Arrange - Stable monthly income (very low variation)
@@ -179,12 +181,12 @@ public class HealthScoreServiceTests : IDisposable
         var result = await _reportService.GetHealthScoreAsync();
 
         // Assert
-        Assert.Equal(10, result.IncomeStability.Score);
-        Assert.Equal(10, result.IncomeStability.MaxScore);
-        Assert.Equal("Utmärkt", result.IncomeStability.Status);
+        Assert.AreEqual(10, result.IncomeStability.Score);
+        Assert.AreEqual(10, result.IncomeStability.MaxScore);
+        Assert.AreEqual("Utmärkt", result.IncomeStability.Status);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetHealthScoreAsync_DiversifiedInvestments_ReturnsHighScore()
     {
         // Arrange - 4 equal investments (good diversification)
@@ -234,11 +236,11 @@ public class HealthScoreServiceTests : IDisposable
         var result = await _reportService.GetHealthScoreAsync();
 
         // Assert
-        Assert.True(result.InvestmentDiversification.Score >= 12);
-        Assert.Equal(15, result.InvestmentDiversification.MaxScore);
+        Assert.IsTrue(result.InvestmentDiversification.Score >= 12);
+        Assert.AreEqual(15, result.InvestmentDiversification.MaxScore);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetHealthScoreAsync_CalculatesCorrectHealthLevel()
     {
         // Arrange - Create data for high score
@@ -275,12 +277,12 @@ public class HealthScoreServiceTests : IDisposable
         var result = await _reportService.GetHealthScoreAsync();
 
         // Assert
-        Assert.NotNull(result.HealthLevel);
-        Assert.True(result.TotalScore > 0);
-        Assert.Contains(result.HealthLevel, new[] { "Utmärkt", "Bra", "Godkänt", "Behöver förbättras" });
+        Assert.IsNotNull(result.HealthLevel);
+        Assert.IsTrue(result.TotalScore > 0);
+        CollectionAssert.Contains(new[] { "Utmärkt", "Bra", "Godkänt", "Behöver förbättras" }, result.HealthLevel);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetHealthScoreAsync_IdentifiesStrengths()
     {
         // Arrange - Create excellent savings rate
@@ -308,10 +310,10 @@ public class HealthScoreServiceTests : IDisposable
         var result = await _reportService.GetHealthScoreAsync();
 
         // Assert
-        Assert.NotEmpty(result.Strengths);
+        Assert.AreNotEqual(0, result.Strengths.Count());
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetHealthScoreAsync_IdentifiesImprovementAreas()
     {
         // Arrange - Create poor savings rate scenario
@@ -339,6 +341,6 @@ public class HealthScoreServiceTests : IDisposable
         var result = await _reportService.GetHealthScoreAsync();
 
         // Assert
-        Assert.NotEmpty(result.ImprovementAreas);
+        Assert.AreNotEqual(0, result.ImprovementAreas.Count());
     }
 }

@@ -3,13 +3,14 @@ using Moq;
 using Privatekonomi.Core.Data;
 using Privatekonomi.Core.Models;
 using Privatekonomi.Core.Services;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Privatekonomi.Core.Tests;
 
 /// <summary>
 /// Integration test to verify the complete goal milestone workflow
 /// </summary>
+[TestClass]
 public class GoalMilestoneIntegrationTests : IDisposable
 {
     private readonly PrivatekonomyContext _context;
@@ -34,13 +35,14 @@ public class GoalMilestoneIntegrationTests : IDisposable
         _goalService = new GoalService(_context, _currentUserServiceMock.Object, _milestoneService);
     }
 
+    [TestCleanup]
     public void Dispose()
     {
         _context.Database.EnsureDeleted();
         _context.Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CompleteWorkflow_CreateGoalAndTrackProgress_MilestonesAreCreatedAndReached()
     {
         // Arrange - Create a new goal
@@ -64,9 +66,9 @@ public class GoalMilestoneIntegrationTests : IDisposable
         var milestones = await _milestoneService.GetMilestonesByGoalIdAsync(createdGoal.GoalId);
         var milestoneList = milestones.ToList();
         
-        Assert.Equal(4, milestoneList.Count);
-        Assert.All(milestoneList, m => Assert.True(m.IsAutomatic));
-        Assert.All(milestoneList, m => Assert.False(m.IsReached));
+        Assert.AreEqual(4, milestoneList.Count);
+        Assert.All(milestoneList, m => Assert.IsTrue(m.IsAutomatic));
+        Assert.All(milestoneList, m => Assert.IsFalse(m.IsReached));
 
         // Act - Update progress to 30% (should reach 25% milestone)
         await _goalService.UpdateGoalProgressAsync(createdGoal.GoalId, 15000m);
@@ -74,8 +76,8 @@ public class GoalMilestoneIntegrationTests : IDisposable
         // Assert - Verify 25% milestone is reached
         var updatedMilestones = await _milestoneService.GetMilestonesByGoalIdAsync(createdGoal.GoalId);
         var milestone25 = updatedMilestones.First(m => m.Percentage == 25);
-        Assert.True(milestone25.IsReached);
-        Assert.NotNull(milestone25.ReachedAt);
+        Assert.IsTrue(milestone25.IsReached);
+        Assert.IsNotNull(milestone25.ReachedAt);
 
         // Verify notification was sent
         _notificationServiceMock.Verify(
@@ -96,9 +98,9 @@ public class GoalMilestoneIntegrationTests : IDisposable
         var finalMilestones = await _milestoneService.GetMilestonesByGoalIdAsync(createdGoal.GoalId);
         var reachedMilestones = finalMilestones.Where(m => m.IsReached).ToList();
         
-        Assert.Equal(2, reachedMilestones.Count);
-        Assert.Contains(reachedMilestones, m => m.Percentage == 25);
-        Assert.Contains(reachedMilestones, m => m.Percentage == 50);
+        Assert.AreEqual(2, reachedMilestones.Count);
+        CollectionAssert.Contains(m => m.Percentage == 25, reachedMilestones);
+        CollectionAssert.Contains(m => m.Percentage == 50, reachedMilestones);
 
         // Verify 2 notifications were sent (one for each reached milestone)
         _notificationServiceMock.Verify(
@@ -116,12 +118,12 @@ public class GoalMilestoneIntegrationTests : IDisposable
         var history = await _milestoneService.GetReachedMilestonesAsync(createdGoal.GoalId);
         
         // Assert - Verify history contains reached milestones
-        Assert.Equal(2, history.Count());
-        Assert.All(history, m => Assert.True(m.IsReached));
-        Assert.All(history, m => Assert.NotNull(m.ReachedAt));
+        Assert.AreEqual(2, history.Count());
+        Assert.All(history, m => Assert.IsTrue(m.IsReached));
+        Assert.All(history, m => Assert.IsNotNull(m.ReachedAt));
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CompleteWorkflow_WithCustomMilestone_BothAutomaticAndCustomWork()
     {
         // Arrange
@@ -151,20 +153,20 @@ public class GoalMilestoneIntegrationTests : IDisposable
 
         // Assert - Verify we have both automatic and custom milestones
         var allMilestones = await _milestoneService.GetMilestonesByGoalIdAsync(createdGoal.GoalId);
-        Assert.Equal(5, allMilestones.Count()); // 4 automatic + 1 custom
-        Assert.Single(allMilestones, m => !m.IsAutomatic);
+        Assert.AreEqual(5, allMilestones.Count()); // 4 automatic + 1 custom
+        Assert.AreEqual(1, allMilestones, m => !m.IsAutomatic.Count());
 
         // Act - Update progress to reach 25% and the custom milestone
         await _goalService.UpdateGoalProgressAsync(createdGoal.GoalId, 15000m);
 
         // Assert - Verify both 25% and custom 35% milestones are reached
         var reachedMilestones = await _milestoneService.GetReachedMilestonesAsync(createdGoal.GoalId);
-        Assert.Equal(2, reachedMilestones.Count());
-        Assert.Contains(reachedMilestones, m => m.Percentage == 25 && m.IsAutomatic);
-        Assert.Contains(reachedMilestones, m => m.Percentage == 35 && !m.IsAutomatic);
+        Assert.AreEqual(2, reachedMilestones.Count());
+        CollectionAssert.Contains(m => m.Percentage == 25 && m.IsAutomatic, reachedMilestones);
+        CollectionAssert.Contains(m => m.Percentage == 35 && !m.IsAutomatic, reachedMilestones);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CompleteWorkflow_GoalCompletion_AllMilestonesReached()
     {
         // Arrange
@@ -185,8 +187,8 @@ public class GoalMilestoneIntegrationTests : IDisposable
 
         // Assert - All milestones should be reached
         var milestones = await _milestoneService.GetMilestonesByGoalIdAsync(createdGoal.GoalId);
-        Assert.All(milestones, m => Assert.True(m.IsReached));
-        Assert.All(milestones, m => Assert.NotNull(m.ReachedAt));
+        Assert.All(milestones, m => Assert.IsTrue(m.IsReached));
+        Assert.All(milestones, m => Assert.IsNotNull(m.ReachedAt));
 
         // Verify 4 notifications were sent (one for each milestone)
         _notificationServiceMock.Verify(

@@ -2,10 +2,11 @@ using Microsoft.EntityFrameworkCore;
 using Privatekonomi.Core.Data;
 using Privatekonomi.Core.Models;
 using Privatekonomi.Core.Services;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Privatekonomi.Core.Tests;
 
+[TestClass]
 public class DebtStrategyServiceTests
 {
     private PrivatekonomyContext CreateInMemoryContext()
@@ -17,7 +18,7 @@ public class DebtStrategyServiceTests
         return new PrivatekonomyContext(options);
     }
 
-    [Fact]
+    [TestMethod]
     public void GenerateAmortizationSchedule_WithValidLoan_ReturnsSchedule()
     {
         // Arrange
@@ -37,13 +38,13 @@ public class DebtStrategyServiceTests
         var schedule = service.GenerateAmortizationSchedule(loan, 0);
 
         // Assert
-        Assert.NotEmpty(schedule);
-        Assert.True(schedule.Count > 0);
-        Assert.Equal(1, schedule.First().PaymentNumber);
-        Assert.True(schedule.Last().EndingBalance <= 0.01m); // Should be paid off
+        Assert.AreNotEqual(0, schedule.Count());
+        Assert.IsTrue(schedule.Count > 0);
+        Assert.AreEqual(1, schedule.First().PaymentNumber);
+        Assert.IsTrue(schedule.Last().EndingBalance <= 0.01m); // Should be paid off
     }
 
-    [Fact]
+    [TestMethod]
     public void GenerateAmortizationSchedule_WithExtraPayment_ReducesMonths()
     {
         // Arrange
@@ -64,11 +65,11 @@ public class DebtStrategyServiceTests
         var scheduleWithExtra = service.GenerateAmortizationSchedule(loan, 500);
 
         // Assert
-        Assert.True(scheduleWithExtra.Count < scheduleWithoutExtra.Count);
-        Assert.True(scheduleWithExtra.Last().TotalInterestPaid < scheduleWithoutExtra.Last().TotalInterestPaid);
+        Assert.IsTrue(scheduleWithExtra.Count < scheduleWithoutExtra.Count);
+        Assert.IsTrue(scheduleWithExtra.Last().TotalInterestPaid < scheduleWithoutExtra.Last().TotalInterestPaid);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CalculateSnowballStrategy_OrdersBySmallestBalance()
     {
         // Arrange
@@ -89,15 +90,15 @@ public class DebtStrategyServiceTests
         var strategy = await service.CalculateSnowballStrategy(2000);
 
         // Assert
-        Assert.Equal("Snöboll", strategy.StrategyName);
-        Assert.NotEmpty(strategy.PayoffPlans);
+        Assert.AreEqual("Snöboll", strategy.StrategyName);
+        Assert.AreNotEqual(0, strategy.PayoffPlans.Count());
         
         // Small loan should be paid off first
         var firstPayoff = strategy.PayoffPlans.OrderBy(p => p.PayoffOrder).First();
-        Assert.Equal("Small Loan", firstPayoff.LoanName);
+        Assert.AreEqual("Small Loan", firstPayoff.LoanName);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CalculateAvalancheStrategy_OrdersByHighestInterest()
     {
         // Arrange
@@ -118,15 +119,15 @@ public class DebtStrategyServiceTests
         var strategy = await service.CalculateAvalancheStrategy(2000);
 
         // Assert
-        Assert.Equal("Lavin", strategy.StrategyName);
-        Assert.NotEmpty(strategy.PayoffPlans);
+        Assert.AreEqual("Lavin", strategy.StrategyName);
+        Assert.AreNotEqual(0, strategy.PayoffPlans.Count());
         
         // High interest loan should be paid off first
         var firstPayoff = strategy.PayoffPlans.OrderBy(p => p.PayoffOrder).First();
-        Assert.Equal("High Interest", firstPayoff.LoanName);
+        Assert.AreEqual("High Interest", firstPayoff.LoanName);
     }
 
-    [Fact]
+    [TestMethod]
     public void AnalyzeExtraPayment_ShowsInterestSavings()
     {
         // Arrange
@@ -146,13 +147,13 @@ public class DebtStrategyServiceTests
         var analysis = service.AnalyzeExtraPayment(loan, 500);
 
         // Assert
-        Assert.Equal(500, analysis.ExtraMonthlyPayment);
-        Assert.True(analysis.MonthsSaved > 0);
-        Assert.True(analysis.InterestSavings > 0);
-        Assert.True(analysis.NewPayoffDate < analysis.OriginalPayoffDate);
+        Assert.AreEqual(500, analysis.ExtraMonthlyPayment);
+        Assert.IsTrue(analysis.MonthsSaved > 0);
+        Assert.IsTrue(analysis.InterestSavings > 0);
+        Assert.IsTrue(analysis.NewPayoffDate < analysis.OriginalPayoffDate);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CompareStrategies_ReturnsSnowballAndAvalanche()
     {
         // Arrange
@@ -172,13 +173,13 @@ public class DebtStrategyServiceTests
         var (snowball, avalanche) = await service.CompareStrategies(2000);
 
         // Assert
-        Assert.Equal("Snöboll", snowball.StrategyName);
-        Assert.Equal("Lavin", avalanche.StrategyName);
-        Assert.NotEmpty(snowball.PayoffPlans);
-        Assert.NotEmpty(avalanche.PayoffPlans);
+        Assert.AreEqual("Snöboll", snowball.StrategyName);
+        Assert.AreEqual("Lavin", avalanche.StrategyName);
+        Assert.AreNotEqual(0, snowball.PayoffPlans.Count());
+        Assert.AreNotEqual(0, avalanche.PayoffPlans.Count());
     }
 
-    [Fact]
+    [TestMethod]
     public void ExportAmortizationScheduleToCsv_ReturnsValidCsv()
     {
         // Arrange
@@ -198,16 +199,16 @@ public class DebtStrategyServiceTests
         var csv = service.ExportAmortizationScheduleToCsv(loan, 0);
 
         // Assert
-        Assert.NotNull(csv);
-        Assert.True(csv.Length > 0);
+        Assert.IsNotNull(csv);
+        Assert.IsTrue(csv.Length > 0);
         
         var content = System.Text.Encoding.UTF8.GetString(csv);
-        Assert.Contains("Amorteringsplan för: Test Loan", content);
-        Assert.Contains("Lånebelopp: 50", content);
-        Assert.Contains("Betalning,Datum,Ingående Saldo", content);
+        CollectionAssert.Contains(content, "Amorteringsplan för: Test Loan");
+        CollectionAssert.Contains(content, "Lånebelopp: 50");
+        CollectionAssert.Contains(content, "Betalning,Datum,Ingående Saldo");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ExportStrategyToCsv_ReturnsValidCsv()
     {
         // Arrange
@@ -229,15 +230,15 @@ public class DebtStrategyServiceTests
         var csv = service.ExportStrategyToCsv(strategy, loans);
 
         // Assert
-        Assert.NotNull(csv);
-        Assert.True(csv.Length > 0);
+        Assert.IsNotNull(csv);
+        Assert.IsTrue(csv.Length > 0);
         
         var content = System.Text.Encoding.UTF8.GetString(csv);
-        Assert.Contains("Avbetalningsstrategi: Snöboll", content);
-        Assert.Contains("Ordning,Lån,Belopp,Ränta", content);
+        CollectionAssert.Contains(content, "Avbetalningsstrategi: Snöboll");
+        CollectionAssert.Contains(content, "Ordning,Lån,Belopp,Ränta");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GenerateDetailedStrategy_Snowball_ReturnsMonthlySchedule()
     {
         // Arrange
@@ -257,22 +258,22 @@ public class DebtStrategyServiceTests
         var detailedStrategy = await service.GenerateDetailedStrategy("Snowball", 2000);
 
         // Assert
-        Assert.Equal("Snowball", detailedStrategy.StrategyName);
-        Assert.NotEmpty(detailedStrategy.MonthlySchedule);
-        Assert.NotEmpty(detailedStrategy.LoanSummaries);
-        Assert.Equal(2, detailedStrategy.LoanSummaries.Count);
+        Assert.AreEqual("Snowball", detailedStrategy.StrategyName);
+        Assert.AreNotEqual(0, detailedStrategy.MonthlySchedule.Count());
+        Assert.AreNotEqual(0, detailedStrategy.LoanSummaries.Count());
+        Assert.AreEqual(2, detailedStrategy.LoanSummaries.Count);
         
         // First month should have payments for both loans
         var firstMonth = detailedStrategy.MonthlySchedule.First();
-        Assert.Equal(1, firstMonth.MonthNumber);
-        Assert.Equal(2, firstMonth.LoanPayments.Count);
+        Assert.AreEqual(1, firstMonth.MonthNumber);
+        Assert.AreEqual(2, firstMonth.LoanPayments.Count);
         
         // Small loan should be focus loan (payoff order 1)
         var smallLoanSummary = detailedStrategy.LoanSummaries.First(s => s.LoanName == "Small Loan");
-        Assert.Equal(1, smallLoanSummary.PayoffOrder);
+        Assert.AreEqual(1, smallLoanSummary.PayoffOrder);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GenerateDetailedStrategy_Avalanche_ReturnsMonthlySchedule()
     {
         // Arrange
@@ -292,15 +293,15 @@ public class DebtStrategyServiceTests
         var detailedStrategy = await service.GenerateDetailedStrategy("Avalanche", 2000);
 
         // Assert
-        Assert.Equal("Avalanche", detailedStrategy.StrategyName);
-        Assert.NotEmpty(detailedStrategy.MonthlySchedule);
+        Assert.AreEqual("Avalanche", detailedStrategy.StrategyName);
+        Assert.AreNotEqual(0, detailedStrategy.MonthlySchedule.Count());
         
         // High interest loan should be focus loan (payoff order 1)
         var highInterestSummary = detailedStrategy.LoanSummaries.First(s => s.LoanName == "High Interest");
-        Assert.Equal(1, highInterestSummary.PayoffOrder);
+        Assert.AreEqual(1, highInterestSummary.PayoffOrder);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GenerateDetailedStrategy_TracksInterestCorrectly()
     {
         // Arrange
@@ -323,13 +324,13 @@ public class DebtStrategyServiceTests
         var detailedStrategy = await service.GenerateDetailedStrategy("Snowball", 1000);
 
         // Assert
-        Assert.True(detailedStrategy.TotalInterestPaid > 0);
+        Assert.IsTrue(detailedStrategy.TotalInterestPaid > 0);
         
         var loanSummary = detailedStrategy.LoanSummaries.First();
-        Assert.Equal(loan.Amount + loanSummary.TotalInterestPaid, loanSummary.TotalAmountPaid);
+        Assert.AreEqual(loan.Amount + loanSummary.TotalInterestPaid, loanSummary.TotalAmountPaid);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CalculateDebtFreeDate_WithNoLoans_ReturnsNull()
     {
         // Arrange
@@ -340,10 +341,10 @@ public class DebtStrategyServiceTests
         var debtFreeDate = await service.CalculateDebtFreeDate();
 
         // Assert
-        Assert.Null(debtFreeDate);
+        Assert.IsNull(debtFreeDate);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CalculateDebtFreeDate_WithLoans_ReturnsLatestPayoffDate()
     {
         // Arrange
@@ -363,7 +364,7 @@ public class DebtStrategyServiceTests
         var debtFreeDate = await service.CalculateDebtFreeDate();
 
         // Assert
-        Assert.NotNull(debtFreeDate);
-        Assert.True(debtFreeDate.Value > DateTime.Today);
+        Assert.IsNotNull(debtFreeDate);
+        Assert.IsTrue(debtFreeDate.Value > DateTime.Today);
     }
 }
