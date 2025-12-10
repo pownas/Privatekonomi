@@ -56,11 +56,11 @@ public class SwedbankParser : ICsvParser
     {
         var transactions = new List<Transaction>();
         
-        // Tab separator for CSN format
-        var separator = '\t';
+        // Detect separator (comma, tab, or semicolon) from header
+        var separator = DetectSeparator(lines[0]);
         
-        // Parse header
-        var header = lines[0].Split(separator);
+        // Parse header - handle quoted fields
+        var header = ParseCsvLine(lines[0], separator).ToArray();
         var dateIndex = FindColumnIndex(header, new[] { "bokföringsdag", "transaktionsdag" });
         var amountIndex = FindColumnIndex(header, new[] { "belopp" });
         var descriptionIndex = FindColumnIndex(header, new[] { "beskrivning" });
@@ -77,7 +77,7 @@ public class SwedbankParser : ICsvParser
         {
             try
             {
-                var columns = lines[i].Split(separator);
+                var columns = ParseCsvLine(lines[i], separator).ToArray();
                 if (columns.Length <= Math.Max(dateIndex, amountIndex))
                     continue;
 
@@ -303,5 +303,36 @@ public class SwedbankParser : ICsvParser
 
         date = DateTime.MinValue;
         return false;
+    }
+
+    private char DetectSeparator(string headerLine)
+    {
+        // Count occurrences of potential separators (excluding those inside quotes)
+        var commaCount = 0;
+        var tabCount = 0;
+        var semicolonCount = 0;
+        var insideQuotes = false;
+
+        foreach (var c in headerLine)
+        {
+            if (c == '"')
+            {
+                insideQuotes = !insideQuotes;
+            }
+            else if (!insideQuotes)
+            {
+                if (c == ',') commaCount++;
+                else if (c == '\t') tabCount++;
+                else if (c == ';') semicolonCount++;
+            }
+        }
+
+        // Return the most common separator
+        if (commaCount >= tabCount && commaCount >= semicolonCount)
+            return ',';
+        else if (tabCount >= semicolonCount)
+            return '\t';
+        else
+            return ';';
     }
 }
