@@ -4,6 +4,7 @@
 @implements IDisposable
 
 <MudNavMenu Class="nav-menu">
+    <div class="nav-section-header">ÖVERSIKT</div>
     <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Dashboard">Dashboard</MudNavLink>
     <MudNavLink Href="/dashboard/custom" Icon="@Icons.Material.Filled.ViewModule">Anpassad Dashboard</MudNavLink>
   
@@ -14,6 +15,7 @@
         </MudNavLink>
     }
 
+    <div class="nav-section-header">EKONOMI</div>
     <MudNavGroup Title="Ekonomi" Icon="@Icons.Material.Filled.AccountBalance" Class="@GetGroupClass(EconomyKey)" Expanded="@IsGroupExpanded(EconomyKey)" ExpandedChanged="@(expanded => OnGroupExpandedChanged(EconomyKey, expanded))">
         <MudNavLink Href="/economy/transactions" Icon="@Icons.Material.Filled.List">Transaktioner</MudNavLink>
         <MudNavLink Href="/economy/transactions/calendar" Icon="@Icons.Material.Filled.CalendarMonth">Kalendervy</MudNavLink>
@@ -34,6 +36,7 @@
         <MudNavLink Href="/economy/health-score" Icon="@Icons.Material.Filled.MonitorHeart">Ekonomisk Hälsa</MudNavLink>
     </MudNavGroup>
 
+    <div class="nav-section-header">SPARANDE</div>
     <MudNavGroup Title="Sparande" Icon="@Icons.Material.Filled.Savings" Class="@GetGroupClass(SavingsKey)" Expanded="@IsGroupExpanded(SavingsKey)" ExpandedChanged="@(expanded => OnGroupExpandedChanged(SavingsKey, expanded))">
         <MudNavLink Href="/savings/goals" Icon="@Icons.Material.Filled.EmojiEvents">Sparmål</MudNavLink>
         <MudNavLink Href="/savings/scenario-analysis" Icon="@Icons.Material.Filled.TrendingUp">Scenarioanalys</MudNavLink>
@@ -44,10 +47,12 @@
         <MudNavLink Href="/savings/life-timeline" Icon="@Icons.Material.Filled.Timeline">Livslinjeplanering</MudNavLink>
     </MudNavGroup>
 
+    <div class="nav-section-header">SOCIALT</div>
     <MudNavGroup Title="Socialt" Icon="@Icons.Material.Filled.Share" Class="@GetGroupClass(SocialKey)" Expanded="@IsGroupExpanded(SocialKey)" ExpandedChanged="@(expanded => OnGroupExpandedChanged(SocialKey, expanded))">
         <MudNavLink Href="/social/privacy-settings" Icon="@Icons.Material.Filled.Security">Integritetsinställningar</MudNavLink>
     </MudNavGroup>
 
+    <div class="nav-section-header">INVESTERINGAR & TILLGÅNGAR</div>
     <MudNavGroup Title="Investeringar & Tillgångar" Icon="@Icons.Material.Filled.TrendingUp" Class="@GetGroupClass(InvestmentsKey)" Expanded="@IsGroupExpanded(InvestmentsKey)" ExpandedChanged="@(expanded => OnGroupExpandedChanged(InvestmentsKey, expanded))">
         <MudNavLink Href="/investments/overview" Icon="@Icons.Material.Filled.ShowChart">Aktier & Fonder</MudNavLink>
         <MudNavLink Href="/investments/pensions" Icon="@Icons.Material.Filled.Elderly">Pension</MudNavLink>
@@ -56,6 +61,7 @@
         <MudNavLink Href="/investments/loans" Icon="@Icons.Material.Filled.CreditCard">Lån & Krediter</MudNavLink>
     </MudNavGroup>
 
+    <div class="nav-section-header">KATEGORIER</div>
     <MudNavGroup Title="Kategorier" Icon="@Icons.Material.Filled.Category" Class="@GetGroupClass(CategoriesKey)" Expanded="@IsGroupExpanded(CategoriesKey)" ExpandedChanged="@(expanded => OnGroupExpandedChanged(CategoriesKey, expanded))">
         <MudNavLink Href="/categories/manage" Icon="@Icons.Material.Filled.Label">Hantera Kategorier</MudNavLink>
         <MudNavLink Href="/categories/tags" Icon="@Icons.Material.Filled.LocalOffer">Taggar</MudNavLink>
@@ -64,17 +70,20 @@
         <MudNavLink Href="/categories/rules" Icon="@Icons.Material.Filled.AutoAwesome">Kategoriseringsregler</MudNavLink>
     </MudNavGroup>
 
+    <div class="nav-section-header">FAMILJ & HUSHÅLL</div>
     <MudNavGroup Title="Familj & Hushåll" Icon="@Icons.Material.Filled.Home" Class="@GetGroupClass(FamilyKey)" Expanded="@IsGroupExpanded(FamilyKey)" ExpandedChanged="@(expanded => OnGroupExpandedChanged(FamilyKey, expanded))">
         <MudNavLink Href="/family/households" Icon="@Icons.Material.Filled.Group">Hushåll</MudNavLink>
         <MudNavLink Href="/family/salary-history" Icon="@Icons.Material.Filled.WorkHistory">Löneutveckling</MudNavLink>
     </MudNavGroup>
     
+    <div class="nav-section-header">SKATTEDEKLARATION</div>
     <MudNavGroup Title="Skattedeklaration" Icon="@Icons.Material.Filled.Description" Class="@GetGroupClass(TaxKey)" Expanded="@IsGroupExpanded(TaxKey)" ExpandedChanged="@(expanded => OnGroupExpandedChanged(TaxKey, expanded))">
         <MudNavLink Href="/tax/deductions" Icon="@Icons.Material.Filled.HomeRepairService">ROT/RUT-avdrag</MudNavLink>
         <MudNavLink Href="/tax/k4-report" Icon="@Icons.Material.Filled.Assessment">K4 Kapitalvinster</MudNavLink>
         <MudNavLink Href="/tax/sie-export" Icon="@Icons.Material.Filled.Download">SIE-export</MudNavLink>
     </MudNavGroup>
 
+    <div class="nav-section-header">INSTÄLLNINGAR</div>
     <MudNavGroup Title="Inställningar" Icon="@Icons.Material.Filled.Settings" Class="@GetGroupClass(SettingsKey)" Expanded="@IsGroupExpanded(SettingsKey)" ExpandedChanged="@(expanded => OnGroupExpandedChanged(SettingsKey, expanded))">
         <MudNavLink Href="/settings/accounts" Icon="@Icons.Material.Filled.AccountBalance">Konton</MudNavLink>
         <MudNavLink Href="/reminders" Icon="@Icons.Material.Filled.NotificationImportant">Påminnelser</MudNavLink>
