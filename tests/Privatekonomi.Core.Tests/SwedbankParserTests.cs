@@ -288,4 +288,112 @@ public class SwedbankParserTests
         Assert.Single(transactions);
         Assert.Contains("quoted", transactions[0].Description);
     }
+
+    [Fact]
+    public void SwedbankParser_CanParse_ReturnsTrueWithMetadataLine()
+    {
+        // Arrange - Example from issue with metadata on row 1, header on row 2
+        var parser = new SwedbankParser();
+        var csvWithMetadata = @"* Transaktioner Period 2024-01-01–2025-11-12 Skapad 2025-11-13 07:35 CET
+Radnummer,Clearingnummer,Kontonummer,Produkt,Valuta,Bokföringsdag,Transaktionsdag,Valutadag,Referens,Beskrivning,Belopp,Bokfört saldo
+1,84525,9141231231,""e-sparkonto"",SEK,2025-11-12,2025-11-12,2025-11-12,""50kr/onsda"",""50kr/onsda"",-50.00,9989.74
+2,84525,9141231231,""e-sparkonto"",SEK,2025-11-12,2025-11-12,2025-11-12,""CSN Centrala stu"",""CSN Centrala stu"",-3277.00,10039.74";
+
+        // Act
+        var result = parser.CanParse(csvWithMetadata);
+
+        // Assert
+        Assert.True(result);
+    }
+
+    [Fact]
+    public async Task SwedbankParser_ParseAsync_ParsesCorrectlyWithMetadataLine()
+    {
+        // Arrange - Example from issue with metadata on row 1, header on row 2
+        var parser = new SwedbankParser();
+        var csvWithMetadata = @"* Transaktioner Period 2024-01-01–2025-11-12 Skapad 2025-11-13 07:35 CET
+Radnummer,Clearingnummer,Kontonummer,Produkt,Valuta,Bokföringsdag,Transaktionsdag,Valutadag,Referens,Beskrivning,Belopp,Bokfört saldo
+1,84525,9141231231,""e-sparkonto"",SEK,2025-11-12,2025-11-12,2025-11-12,""50kr/onsda"",""50kr/onsda"",-50.00,9989.74
+2,84525,9141231231,""e-sparkonto"",SEK,2025-11-12,2025-11-12,2025-11-12,""CSN Centrala stu"",""CSN Centrala stu"",-3277.00,10039.74";
+        var stream = new MemoryStream(Encoding.UTF8.GetBytes(csvWithMetadata));
+
+        // Act
+        var transactions = await parser.ParseAsync(stream);
+
+        // Assert
+        Assert.NotNull(transactions);
+        Assert.Equal(2, transactions.Count);
+
+        // Check first transaction (expense)
+        var transaction1 = transactions[0];
+        Assert.Equal(new DateTime(2025, 11, 12), transaction1.Date);
+        Assert.Equal(50.00m, transaction1.Amount);
+        Assert.False(transaction1.IsIncome); // Negative amount = expense
+        Assert.Equal("50kr/onsda", transaction1.Description);
+
+        // Check second transaction (expense)
+        var transaction2 = transactions[1];
+        Assert.Equal(new DateTime(2025, 11, 12), transaction2.Date);
+        Assert.Equal(3277.00m, transaction2.Amount);
+        Assert.False(transaction2.IsIncome);
+        Assert.Equal("CSN Centrala stu", transaction2.Description);
+    }
+
+    [Fact]
+    public async Task SwedbankParser_ParseAsync_HandlesMultipleMetadataLines()
+    {
+        // Arrange - Test with multiple metadata lines before header
+        var parser = new SwedbankParser();
+        var csvWithMultipleMetadata = @"* Export från Swedbank
+* Transaktioner Period 2024-01-01–2025-11-12
+Radnummer,Clearingnummer,Kontonummer,Produkt,Valuta,Bokföringsdag,Transaktionsdag,Valutadag,Referens,Beskrivning,Belopp,Bokfört saldo
+1,84525,9141231231,""e-sparkonto"",SEK,2025-11-12,2025-11-12,2025-11-12,""Test"",""Test"",-100.00,9989.74";
+        var stream = new MemoryStream(Encoding.UTF8.GetBytes(csvWithMultipleMetadata));
+
+        // Act
+        var transactions = await parser.ParseAsync(stream);
+
+        // Assert
+        Assert.Single(transactions);
+        Assert.Equal(100.00m, transactions[0].Amount);
+        Assert.Equal("Test", transactions[0].Description);
+    }
+
+    [Fact]
+    public void SwedbankParser_CanParse_ReturnsTrueWithMetadataLineEnglishFormat()
+    {
+        // Arrange - Old English format with metadata line
+        var parser = new SwedbankParser();
+        var csvWithMetadata = @"Export from Swedbank
+""Row Type"";""Date"";""Debit/Credit"";""Details"";""Beneficiary/Payer"";""Amount"";""Currency"";""Balance"";""Client Account""
+""20"";""15.11.2025"";""D"";""Matinköp ICA"";""ICA SUPERMARKET"";""245.50"";""SEK"";""8500.00"";""1111222333""";
+
+        // Act
+        var result = parser.CanParse(csvWithMetadata);
+
+        // Assert
+        Assert.True(result);
+    }
+
+    [Fact]
+    public async Task SwedbankParser_ParseAsync_ParsesEnglishFormatWithMetadataLine()
+    {
+        // Arrange - Old English format with metadata line
+        var parser = new SwedbankParser();
+        var csvWithMetadata = @"Export from Swedbank - Account 123456
+""Row Type"";""Date"";""Debit/Credit"";""Details"";""Beneficiary/Payer"";""Amount"";""Currency"";""Balance"";""Client Account""
+""20"";""15.11.2025"";""D"";""Matinköp ICA"";""ICA SUPERMARKET"";""245.50"";""SEK"";""8500.00"";""1111222333""
+""20"";""14.11.2025"";""K"";""Lön"";""FÖRETAG AB"";""25000.00"";""SEK"";""33500.00"";""1111222333""";
+        var stream = new MemoryStream(Encoding.UTF8.GetBytes(csvWithMetadata));
+
+        // Act
+        var transactions = await parser.ParseAsync(stream);
+
+        // Assert
+        Assert.Equal(2, transactions.Count);
+        Assert.Equal(245.50m, transactions[0].Amount);
+        Assert.False(transactions[0].IsIncome);
+        Assert.Equal(25000.00m, transactions[1].Amount);
+        Assert.True(transactions[1].IsIncome);
+    }
 }
