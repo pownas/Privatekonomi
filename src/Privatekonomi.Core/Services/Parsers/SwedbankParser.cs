@@ -6,6 +6,8 @@ namespace Privatekonomi.Core.Services.Parsers;
 
 public class SwedbankParser : ICsvParser
 {
+    private const int MaxHeaderSearchLines = 5;
+    
     public string BankName => "Swedbank";
 
     public bool CanParse(string csvContent)
@@ -359,13 +361,14 @@ public class SwedbankParser : ICsvParser
 
     /// <summary>
     /// Finds the header row in the CSV file. Swedbank exports sometimes include metadata lines
-    /// before the actual header row with column names.
+    /// before the actual header row with column names. This method searches the first few lines
+    /// to locate the header.
     /// </summary>
     /// <param name="lines">All lines from the CSV file</param>
-    /// <returns>Index of the header row, or -1 if not found</returns>
+    /// <returns>Index of the header row, or -1 if not found within the first MaxHeaderSearchLines (5) lines</returns>
     private int FindHeaderRow(string[] lines)
     {
-        for (int i = 0; i < Math.Min(lines.Length, 5); i++) // Check first 5 lines max
+        for (int i = 0; i < Math.Min(lines.Length, MaxHeaderSearchLines); i++)
         {
             var line = lines[i].ToLower();
             
