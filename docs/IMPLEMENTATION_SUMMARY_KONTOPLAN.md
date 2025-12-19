@@ -1,8 +1,8 @@
-# Implementation Summary: BAS 2025-based Chart of Accounts for Personal Finance
+# Implementation Summary: BAS 2026-based Chart of Accounts for Personal Finance
 
 ## Overview
 
-This implementation adds a comprehensive chart of accounts (kontoplan) for personal finance management to the Privatekonomi application. The chart of accounts is based on the Swedish BAS 2025 standard but has been specifically adapted for personal use rather than business accounting.
+This implementation adds a comprehensive chart of accounts (kontoplan) for personal finance management to the Privatekonomi application. The chart of accounts is based on the Swedish BAS 2026 standard but has been specifically adapted for personal use rather than business accounting.
 
 ## What was Implemented
 
@@ -138,10 +138,13 @@ Created comprehensive documentation:
 - Supports unlimited levels of nesting
 - Clear visual hierarchy in the UI
 
-### 3. BAS 2025 Compatibility
+### 3. BAS 2026 Compatibility
 - Account number structure inspired by Swedish BAS standard
 - Familiar to Swedish users who know business accounting
 - Enables potential export to accounting systems (e.g., SIE format)
+
+**Note on BAS 2026 Changes:**
+BAS 2026 introduced approximately 255 changes from BAS 2025, primarily focused on business accounting (reverse charge VAT, periodization funds, shareholder loans, SCB reporting). These changes do not affect the personal finance categories used in Privatekonomi (3000-8999 ranges for income, housing, food, transport, entertainment, health, and savings).
 
 ### 4. User Experience
 - Account numbers are optional - users can choose to use them or not
@@ -223,7 +226,8 @@ For existing users:
 
 ## References
 
-- [BAS 2025 PDF](https://www.bas.se/wp-content/uploads/2025/01/Kontoplan-BAS-2025.pdf)
+- [BAS 2026: Ändringar i kontoplanen](https://www.bas.se/2025/12/04/andringar-i-kontoplanen-2026/)
+- [BAS: Jämför kontoplaner](https://www.bas.se/kontoplaner/jamfor-kontoplaner/)
 - [RikaTillsammans: Strukturera din privatekonomi](https://rikatillsammans.se/strukturera-din-privatekonomi-som-ett-proffs/)
 - [Microsoft Support: Hantera hushållets ekonomi](https://support.microsoft.com/sv-se/office/hantera-hushållets-ekonomi-i-excel)
 
@@ -238,4 +242,4 @@ For existing users:
 
 ## Conclusion
 
-This implementation successfully delivers a comprehensive, BAS 2025-based chart of accounts for personal finance management. The solution is well-tested, documented, and provides significant value to users who want to organize their finances using professional accounting principles.
+This implementation successfully delivers a comprehensive, BAS 2026-based chart of accounts for personal finance management. The solution is well-tested, documented, and provides significant value to users who want to organize their finances using professional accounting principles. The update to BAS 2026 maintains compatibility while referencing the latest standard.

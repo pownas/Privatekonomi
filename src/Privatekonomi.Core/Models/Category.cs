@@ -5,7 +5,7 @@ public class Category
     public int CategoryId { get; set; }
     public string Name { get; set; } = string.Empty;
     public string Color { get; set; } = "#000000";
-    public string? AccountNumber { get; set; } // BAS-inspired account number (e.g., "3000", "7010")
+    public string? AccountNumber { get; set; } // BAS 2026-inspired account number (e.g., "3000", "7010")
     
     // Enhanced fields from proposed model
     public int? ParentId { get; set; } // For hierarchical categories (e.g., "Transport" -> "Public Transport")
