@@ -85,9 +85,9 @@ En privatekonomi-applikation byggd med .NET 10 LTS, Blazor Server och MudBlazor 
   - Automatisk saldoberäkning baserad på transaktioner
   - Se [Kontohantering guide](docs/ACCOUNT_MANAGEMENT_GUIDE.md)
 - **Kategorisystem**: Förkonfigurerade kategorier med färgkodning och hierarkisk struktur
-  - **BAS 2025-baserad kontoplan**: Kontonummer inspirerade av svensk BAS-standard för strukturerad bokföring
+  - **BAS 2026-baserad kontoplan**: Kontonummer inspirerade av svensk BAS-standard för strukturerad bokföring
   - Redigerbar kontoplan med stöd för egna konton och underkategorier
-  - Se [Kontoplan BAS 2025 guide](docs/KONTOPLAN_BAS_2025.md) för detaljerad information
+  - Se [Kontoplan BAS 2026 guide](docs/KONTOPLAN_BAS_2026.md) för detaljerad information
 - **Split-kategorisering**: Möjlighet att dela upp transaktioner i flera kategorier
 - **Automatisk kategorisering**: 
   - Regelbaserad kategorisering med 44+ förkonfigurerade regler

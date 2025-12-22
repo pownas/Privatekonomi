@@ -1,8 +1,8 @@
-# Kontoplan för Privatekonomi - Baserad på BAS 2025
+# Kontoplan för Privatekonomi - Baserad på BAS 2026
 
 ## Bakgrund
 
-Denna kontoplan är speciellt anpassad för privatpersoners ekonomihantering och baseras på det svenska BAS-kontoplansystemet (BAS 2025). Till skillnad från företagens fullständiga kontoplan innehåller denna endast de konton som är relevanta för en privatperson.
+Denna kontoplan är speciellt anpassad för privatpersoners ekonomihantering och baseras på det svenska BAS-kontoplansystemet (BAS 2026). Till skillnad från företagens fullständiga kontoplan innehåller denna endast de konton som är relevanta för en privatperson.
 
 BAS-kontoplanen (Bas Account Schema) är en svensk standard för kontoplanering som används av företag. Genom att använda en liknande struktur för privatekonomi kan du:
 - Få bättre överblick över din ekonomi
@@ -12,7 +12,7 @@ BAS-kontoplanen (Bas Account Schema) är en svensk standard för kontoplanering 
 
 ## Kontoplanens Struktur
 
-Kontoplanen är uppdelad i följande huvudklasser, inspirerad av BAS 2025 men anpassad för privatekonomi:
+Kontoplanen är uppdelad i följande huvudklasser, inspirerad av BAS 2026 men anpassad för privatekonomi:
 
 ### 3000-3999: Intäkter (Inkomster)
 Motsvarar BAS klass 3 (Intäkter). Här registreras alla former av inkomster.
@@ -160,7 +160,7 @@ Vissa kategorier kan vara relevanta för din deklaration:
 
 **OBS:** Detta system är inte ett officiellt bokföringssystem. Kontakta alltid Skatteverket eller en skatterådgivare för råd kring din deklaration.
 
-## Jämförelse med BAS 2025
+## Jämförelse med BAS 2026
 
 ### Likheter:
 - Använder liknande kontonummerstruktur
@@ -201,13 +201,31 @@ A: Detta följer BAS-kontoplanen där:
 - Klass 3 (3000-3999) är intäkter
 - För privatekonomi börjar vi med intäkter (3000) eftersom tillgångar och skulder hanteras annorlunda i ett privatekonomiskt system.
 
+## Ändringar från BAS 2025 till BAS 2026
+
+BAS-kontoplanen för 2026 innehåller cirka 255 ändringar jämfört med 2025 års version. De flesta av dessa ändringar är fokuserade på företagsredovisning och påverkar inte privatekonomisk användning:
+
+### Ändringar som INTE påverkar Privatekonomi:
+- Omstrukturering av kontoklass 4 för handelsvaror och råvaror (företagsspecifikt)
+- Nya konton för omvänd moms (2614, 2624, 2634 m.fl.)
+- Nya konton för lån till delägare och närstående (1360, 1369, 1685)
+- Periodiseringsfonder för företag (2126, 2127, 2136, 2137)
+- Ändringar för SCB-rapportering (statistikändamål för företag)
+
+### Vad påverkas i Privatekonomi:
+Privatekonomi använder en förenklad och anpassad version av BAS-kontoplanen. De konton som används för personlig ekonomi (3000-3999 inkomster, 4000-4999 boende, 5000-5999 mat/konsumtion, 6000-6999 transport, 7000-7999 nöje/hälsa, 8000-8999 sparande) är inte direkt påverkade av de företagsspecifika ändringarna i BAS 2026.
+
+Strukturen och logiken i Privatekonomi förblir densamma, men vi har uppdaterat referenserna till BAS 2026 för att vara aktuella med den senaste versionen av standarden.
+
 ## Referenser och Mer Information
 
-- [BAS 2025 PDF](https://www.bas.se/wp-content/uploads/2025/01/Kontoplan-BAS-2025.pdf)
+- [BAS 2026: Ändringar i kontoplanen](https://www.bas.se/2025/12/04/andringar-i-kontoplanen-2026/)
+- [BAS: Jämför kontoplaner](https://www.bas.se/kontoplaner/jamfor-kontoplaner/)
 - [RikaTillsammans: Strukturera din privatekonomi som ett proffs](https://rikatillsammans.se/strukturera-din-privatekonomi-som-ett-proffs/)
 - [Microsoft Support: Hantera hushållets ekonomi i Excel](https://support.microsoft.com/sv-se/office/hantera-hushållets-ekonomi-i-excel)
 - [Skatteverket: Skatteregler för privatpersoner](https://skatteverket.se)
 
 ## Uppdateringshistorik
 
+- **2025-12**: Uppdaterad till BAS 2026 (inga strukturella ändringar för privatekonomi)
 - **2025-01**: Initial version baserad på BAS 2025

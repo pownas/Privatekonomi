@@ -725,8 +725,8 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
             entity.HasIndex(e => e.TransactionDate);
         });
 
-        // Seed initial categories with BAS 2025-inspired account numbers
-        // Based on BAS 2025, adapted for personal finance (privatekonomi)
+        // Seed initial categories with BAS 2026-inspired account numbers
+        // Based on BAS 2026, adapted for personal finance (privatekonomi)
         // Account number ranges:
         // - 3000-3999: Income (Intäkter) - corresponds to BAS class 3
         // - 4000-4999: Housing & Living (Boende) - corresponds to BAS class 4-5 (operational costs)
@@ -734,6 +734,10 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
         // - 6000-6999: Transportation & Other Costs (Transport & Övriga kostnader) - corresponds to BAS class 7 (personnel costs adapted)
         // - 7000-7999: Entertainment & Health (Nöje & Hälsa) - corresponds to BAS class 8 (other costs)
         // - 8000-8999: Savings & Investments (Sparande) - corresponds to BAS class 1 (assets)
+        // 
+        // Note: BAS 2026 contains ~255 changes from BAS 2025, mostly business-specific (reverse charge VAT,
+        // periodization funds, shareholder loans). The personal finance categories (3000-8999) are not affected
+        // by these business-focused changes.
         modelBuilder.Entity<Category>().HasData(
             new Category { CategoryId = 1, Name = "Mat & Dryck", AccountNumber = "5000", Color = "#FF6B6B", TaxRelated = false, IsSystemCategory = true, OriginalName = "Mat & Dryck", OriginalColor = "#FF6B6B", OriginalAccountNumber = "5000", CreatedAt = DateTime.UtcNow },
             new Category { CategoryId = 2, Name = "Transport", AccountNumber = "6000", Color = "#4ECDC4", TaxRelated = false, IsSystemCategory = true, OriginalName = "Transport", OriginalColor = "#4ECDC4", OriginalAccountNumber = "6000", CreatedAt = DateTime.UtcNow },

@@ -1,8 +1,8 @@
-# Snabbreferens: Kontoplan Privatekonomi (BAS 2025)
+# Snabbreferens: Kontoplan Privatekonomi (BAS 2026)
 
 ## Översikt över Kontonummer
 
-Denna kontoplan är baserad på BAS 2025 men anpassad för privatekonomi. Använd denna guide för snabb referens när du skapar nya kategorier eller vill förstå strukturen.
+Denna kontoplan är baserad på BAS 2026 men anpassad för privatekonomi. Använd denna guide för snabb referens när du skapar nya kategorier eller vill förstå strukturen.
 
 ## Huvudklasser
 
@@ -183,9 +183,9 @@ Denna kontoplan är baserad på BAS 2025 men anpassad för privatekonomi. Använ
 4. **Använd beskrivningar**: Kontonumret hjälper strukturen, men använd också tydliga beskrivningar.
 5. **Granska regelbundet**: Se över din kontoplan varje kvartal och justera vid behov.
 
-## Jämförelse: Privatekonomi vs BAS 2025
+## Jämförelse: Privatekonomi vs BAS 2026
 
-| Privatekonomi | BAS 2025 (Företag) | Kommentar |
+| Privatekonomi | BAS 2026 (Företag) | Kommentar |
 |---------------|-------------------|-----------|
 | 3000: Intäkter | 3000: Intäkter | Samma koncept |
 | 4000: Boende | 4000-5000: Rörelsens kostnader | Förenklat för boende |
@@ -195,12 +195,15 @@ Denna kontoplan är baserad på BAS 2025 men anpassad för privatekonomi. Använ
 | 8000: Sparande | 1000: Tillgångar | Sparande istället för alla tillgångar |
 | - | 2000: Eget kapital/Skulder | Används inte explicit |
 
+**OBS:** BAS 2026 innehåller cirka 255 ändringar från BAS 2025, men de flesta är företagsspecifika (t.ex. omvänd moms, periodiseringsfonder, SCB-rapportering) och påverkar inte denna privata kontoplan.
+
 ## Ytterligare Resurser
 
-- [Fullständig Guide: KONTOPLAN_BAS_2025.md](KONTOPLAN_BAS_2025.md)
-- [BAS 2025 PDF (Original)](https://www.bas.se/wp-content/uploads/2025/01/Kontoplan-BAS-2025.pdf)
+- [Fullständig Guide: KONTOPLAN_BAS_2026.md](KONTOPLAN_BAS_2026.md)
+- [BAS 2026: Ändringar i kontoplanen](https://www.bas.se/2025/12/04/andringar-i-kontoplanen-2026/)
+- [BAS: Jämför kontoplaner](https://www.bas.se/kontoplaner/jamfor-kontoplaner/)
 - [Kategorier i Appen](/categories) - Redigera och anpassa din kontoplan
 
 ---
 
-**Senast uppdaterad:** 2025-01
+**Senast uppdaterad:** 2025-12 (uppdaterad till BAS 2026)
