@@ -127,26 +127,26 @@ public class ExportController : ControllerBase
     /// <summary>
     /// Import a full backup from JSON file
     /// </summary>
-    /// <param name="file">The backup JSON file</param>
-    /// <param name="mergeMode">If true, merges with existing data; if false, replaces all data</param>
+    /// <param name="request">The import request containing the file and options</param>
     /// <returns>Import result with statistics</returns>
     [HttpPost("backup/import")]
-    public async Task<IActionResult> ImportFullBackup([FromForm] IFormFile file, [FromForm] bool mergeMode = false)
+    [Consumes("multipart/form-data")]
+    public async Task<IActionResult> ImportFullBackup([FromForm] BackupImportRequest request)
     {
         try
         {
             // Validate file
-            if (file == null || file.Length == 0)
+            if (request.File == null || request.File.Length == 0)
             {
                 return BadRequest(new { error = "Ingen fil vald" });
             }
 
-            if (file.Length > 50 * 1024 * 1024) // 50 MB
+            if (request.File.Length > 50 * 1024 * 1024) // 50 MB
             {
                 return BadRequest(new { error = "Filen är för stor. Max storlek är 50 MB." });
             }
 
-            var extension = Path.GetExtension(file.FileName).ToLower();
+            var extension = Path.GetExtension(request.File.FileName).ToLower();
             if (extension != ".json")
             {
                 return BadRequest(new { error = "Filtypen stöds inte. Endast .json-filer accepteras." });
@@ -154,11 +154,11 @@ public class ExportController : ControllerBase
 
             // Read file content
             using var memoryStream = new MemoryStream();
-            await file.CopyToAsync(memoryStream);
+            await request.File.CopyToAsync(memoryStream);
             var fileContent = memoryStream.ToArray();
 
             // Import backup
-            var result = await _importService.ImportFullBackupAsync(fileContent, mergeMode);
+            var result = await _importService.ImportFullBackupAsync(fileContent, request.MergeMode);
 
             if (!result.Success)
             {
@@ -168,7 +168,7 @@ public class ExportController : ControllerBase
             return Ok(new
             {
                 success = true,
-                message = mergeMode ? "Backup importerad och sammanslagen med befintlig data" : "Backup importerad framgångsrikt",
+                message = request.MergeMode ? "Backup importerad och sammanslagen med befintlig data" : "Backup importerad framgångsrikt",
                 importedCounts = result.ImportedCounts,
                 warnings = result.Warnings
             });
@@ -178,6 +178,22 @@ public class ExportController : ControllerBase
             _logger.LogError(ex, "Error importing backup");
             return StatusCode(500, new { error = $"Ett fel uppstod vid import av backup: {ex.Message}" });
         }
+    }
+
+    /// <summary>
+    /// Request model for backup import
+    /// </summary>
+    public class BackupImportRequest
+    {
+        /// <summary>
+        /// The backup JSON file to import
+        /// </summary>
+        public IFormFile File { get; set; } = null!;
+
+        /// <summary>
+        /// If true, merges with existing data; if false, replaces all data
+        /// </summary>
+        public bool MergeMode { get; set; } = false;
     }
 
     /// <summary>
