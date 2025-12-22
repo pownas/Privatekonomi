@@ -56,6 +56,11 @@ public static class TestDataSeeder
         SeedMoreTransactions(context, testUserId);
         SeedMoreGoals(context, testUserId);
         SeedMoreSubscriptions(context, testUserId);
+        SeedReceipts(context, testUserId);
+        SeedPortfolioAllocations(context, testUserId);
+        SeedSavingsGroups(context, testUserId);
+        SeedLifeTimelineScenarios(context, testUserId);
+        SeedGoalShares(context, testUserId);
         
         //// Missing seed placeholders for other data types
         // SeedBankConnections(context);
@@ -63,15 +68,10 @@ public static class TestDataSeeder
         // SeedCapitalGains(context, testUserId);
         // SeedCommuteDeductions(context, testUserId);
         // SeedCreditRatings(context, testUserId);
-        // SeedReceipts(context, testUserId);
-        // SeedPortfolioAllocations(context, testUserId);
         // SeedMLModels(context);
         // SeedUserFeedback(context, testUserId);
         // SeedNotificationPreferences(context, testUserId);
         // SeedDoNotDisturbSchedules(context, testUserId);
-        // SeedLifeTimelineScenarios(context, testUserId);
-        // SeedGoalShares(context, testUserId);
-        // SeedSavingsGroups(context, testUserId);
         // SeedUserPrivacySettings(context, testUserId);
     }
     
@@ -3833,6 +3833,547 @@ public static class TestDataSeeder
         };
 
         context.Subscriptions.AddRange(subscriptions);
+        context.SaveChanges();
+    }
+
+    private static void SeedReceipts(PrivatekonomyContext context, string userId)
+    {
+        // Only seed if no receipts exist
+        if (context.Receipts.Any())
+        {
+            return;
+        }
+
+        var categories = context.Categories.ToList();
+        var foodCategoryId = categories.FirstOrDefault(c => c.Name.Contains("Mat"))?.CategoryId;
+
+        var receipts = new List<Receipt>
+        {
+            new Receipt
+            {
+                UserId = userId,
+                Merchant = "ICA Maxi",
+                ReceiptDate = DateTime.UtcNow.AddDays(-5),
+                TotalAmount = 487.50m,
+                Currency = "SEK",
+                ReceiptType = "Physical",
+                ReceiptNumber = "ICA-2024-001234",
+                PaymentMethod = "Kort",
+                Notes = "Veckans matinköp",
+                CreatedAt = DateTime.UtcNow.AddDays(-5),
+                ReceiptLineItems = new List<ReceiptLineItem>
+                {
+                    new ReceiptLineItem
+                    {
+                        Description = "Mjölk 3% 1L",
+                        Quantity = 2,
+                        UnitPrice = 14.50m,
+                        TotalPrice = 29.00m,
+                        TaxRate = 12m,
+                        CategoryId = foodCategoryId,
+                        CreatedAt = DateTime.UtcNow.AddDays(-5)
+                    },
+                    new ReceiptLineItem
+                    {
+                        Description = "Bröd Fullkorn",
+                        Quantity = 3,
+                        UnitPrice = 22.50m,
+                        TotalPrice = 67.50m,
+                        TaxRate = 12m,
+                        CategoryId = foodCategoryId,
+                        CreatedAt = DateTime.UtcNow.AddDays(-5)
+                    },
+                    new ReceiptLineItem
+                    {
+                        Description = "Kött Nötfärs 500g",
+                        Quantity = 2,
+                        UnitPrice = 49.90m,
+                        TotalPrice = 99.80m,
+                        TaxRate = 12m,
+                        CategoryId = foodCategoryId,
+                        CreatedAt = DateTime.UtcNow.AddDays(-5)
+                    },
+                    new ReceiptLineItem
+                    {
+                        Description = "Pasta 500g",
+                        Quantity = 4,
+                        UnitPrice = 12.90m,
+                        TotalPrice = 51.60m,
+                        TaxRate = 12m,
+                        CategoryId = foodCategoryId,
+                        CreatedAt = DateTime.UtcNow.AddDays(-5)
+                    },
+                    new ReceiptLineItem
+                    {
+                        Description = "Grönsaker Blandade",
+                        Quantity = 1,
+                        UnitPrice = 89.60m,
+                        TotalPrice = 89.60m,
+                        TaxRate = 12m,
+                        CategoryId = foodCategoryId,
+                        CreatedAt = DateTime.UtcNow.AddDays(-5)
+                    },
+                    new ReceiptLineItem
+                    {
+                        Description = "Ägg 12-pack",
+                        Quantity = 2,
+                        UnitPrice = 39.90m,
+                        TotalPrice = 79.80m,
+                        TaxRate = 12m,
+                        CategoryId = foodCategoryId,
+                        CreatedAt = DateTime.UtcNow.AddDays(-5)
+                    },
+                    new ReceiptLineItem
+                    {
+                        Description = "Yoghurt Naturell 1kg",
+                        Quantity = 1,
+                        UnitPrice = 35.20m,
+                        TotalPrice = 35.20m,
+                        TaxRate = 12m,
+                        CategoryId = foodCategoryId,
+                        CreatedAt = DateTime.UtcNow.AddDays(-5)
+                    },
+                    new ReceiptLineItem
+                    {
+                        Description = "Ost Kvibille 500g",
+                        Quantity = 1,
+                        UnitPrice = 35.00m,
+                        TotalPrice = 35.00m,
+                        TaxRate = 12m,
+                        CategoryId = foodCategoryId,
+                        CreatedAt = DateTime.UtcNow.AddDays(-5)
+                    }
+                }
+            },
+            new Receipt
+            {
+                UserId = userId,
+                Merchant = "Willys",
+                ReceiptDate = DateTime.UtcNow.AddDays(-12),
+                TotalAmount = 267.80m,
+                Currency = "SEK",
+                ReceiptType = "Physical",
+                ReceiptNumber = "WILLYS-45678",
+                PaymentMethod = "Swish",
+                Notes = "Snabbhandling",
+                CreatedAt = DateTime.UtcNow.AddDays(-12),
+                ReceiptLineItems = new List<ReceiptLineItem>
+                {
+                    new ReceiptLineItem
+                    {
+                        Description = "Vatten Ramlösa 6-pack",
+                        Quantity = 2,
+                        UnitPrice = 39.90m,
+                        TotalPrice = 79.80m,
+                        TaxRate = 25m,
+                        CategoryId = foodCategoryId,
+                        CreatedAt = DateTime.UtcNow.AddDays(-12)
+                    },
+                    new ReceiptLineItem
+                    {
+                        Description = "Kaffe 500g",
+                        Quantity = 1,
+                        UnitPrice = 54.90m,
+                        TotalPrice = 54.90m,
+                        TaxRate = 12m,
+                        CategoryId = foodCategoryId,
+                        CreatedAt = DateTime.UtcNow.AddDays(-12)
+                    },
+                    new ReceiptLineItem
+                    {
+                        Description = "Köttbullar Frysta 1kg",
+                        Quantity = 1,
+                        UnitPrice = 79.90m,
+                        TotalPrice = 79.90m,
+                        TaxRate = 12m,
+                        CategoryId = foodCategoryId,
+                        CreatedAt = DateTime.UtcNow.AddDays(-12)
+                    },
+                    new ReceiptLineItem
+                    {
+                        Description = "Chips Orginal 175g",
+                        Quantity = 2,
+                        UnitPrice = 26.60m,
+                        TotalPrice = 53.20m,
+                        TaxRate = 12m,
+                        CategoryId = foodCategoryId,
+                        CreatedAt = DateTime.UtcNow.AddDays(-12)
+                    }
+                }
+            },
+            new Receipt
+            {
+                UserId = userId,
+                Merchant = "Coop",
+                ReceiptDate = DateTime.UtcNow.AddDays(-20),
+                TotalAmount = 156.40m,
+                Currency = "SEK",
+                ReceiptType = "E-Receipt",
+                ReceiptNumber = "COOP-E-9876",
+                PaymentMethod = "Kort",
+                CreatedAt = DateTime.UtcNow.AddDays(-20),
+                ReceiptLineItems = new List<ReceiptLineItem>
+                {
+                    new ReceiptLineItem
+                    {
+                        Description = "Frukt Äpplen 1kg",
+                        Quantity = 2,
+                        UnitPrice = 29.90m,
+                        TotalPrice = 59.80m,
+                        TaxRate = 12m,
+                        CategoryId = foodCategoryId,
+                        CreatedAt = DateTime.UtcNow.AddDays(-20)
+                    },
+                    new ReceiptLineItem
+                    {
+                        Description = "Bananer 1kg",
+                        Quantity = 1,
+                        UnitPrice = 19.90m,
+                        TotalPrice = 19.90m,
+                        TaxRate = 12m,
+                        CategoryId = foodCategoryId,
+                        CreatedAt = DateTime.UtcNow.AddDays(-20)
+                    },
+                    new ReceiptLineItem
+                    {
+                        Description = "Apelsiner 1kg",
+                        Quantity = 1,
+                        UnitPrice = 24.90m,
+                        TotalPrice = 24.90m,
+                        TaxRate = 12m,
+                        CategoryId = foodCategoryId,
+                        CreatedAt = DateTime.UtcNow.AddDays(-20)
+                    },
+                    new ReceiptLineItem
+                    {
+                        Description = "Tomater 500g",
+                        Quantity = 2,
+                        UnitPrice = 15.90m,
+                        TotalPrice = 31.80m,
+                        TaxRate = 12m,
+                        CategoryId = foodCategoryId,
+                        CreatedAt = DateTime.UtcNow.AddDays(-20)
+                    },
+                    new ReceiptLineItem
+                    {
+                        Description = "Gurka",
+                        Quantity = 2,
+                        UnitPrice = 9.95m,
+                        TotalPrice = 19.90m,
+                        TaxRate = 12m,
+                        CategoryId = foodCategoryId,
+                        CreatedAt = DateTime.UtcNow.AddDays(-20)
+                    }
+                }
+            }
+        };
+
+        context.Receipts.AddRange(receipts);
+        context.SaveChanges();
+    }
+
+    private static void SeedPortfolioAllocations(PrivatekonomyContext context, string userId)
+    {
+        // Only seed if no allocations exist
+        if (context.PortfolioAllocations.Any())
+        {
+            return;
+        }
+
+        var allocations = new List<PortfolioAllocation>
+        {
+            new PortfolioAllocation
+            {
+                Name = "Balanserad Portfölj",
+                AssetClass = "Aktier",
+                TargetPercentage = 60m,
+                MinPercentage = 55m,
+                MaxPercentage = 65m,
+                IsActive = true,
+                Notes = "Huvudsaklig tillväxt genom svenska och globala aktier",
+                CreatedAt = DateTime.UtcNow.AddMonths(-6),
+                UserId = userId
+            },
+            new PortfolioAllocation
+            {
+                Name = "Balanserad Portfölj",
+                AssetClass = "Obligationer",
+                TargetPercentage = 30m,
+                MinPercentage = 25m,
+                MaxPercentage = 35m,
+                IsActive = true,
+                Notes = "Stabilitet genom statsobligationer och företagsobligationer",
+                CreatedAt = DateTime.UtcNow.AddMonths(-6),
+                UserId = userId
+            },
+            new PortfolioAllocation
+            {
+                Name = "Balanserad Portfölj",
+                AssetClass = "Kontanter",
+                TargetPercentage = 5m,
+                MinPercentage = 3m,
+                MaxPercentage = 10m,
+                IsActive = true,
+                Notes = "Likviditet för oväntade utgifter",
+                CreatedAt = DateTime.UtcNow.AddMonths(-6),
+                UserId = userId
+            },
+            new PortfolioAllocation
+            {
+                Name = "Balanserad Portfölj",
+                AssetClass = "Fastigheter",
+                TargetPercentage = 5m,
+                MinPercentage = 0m,
+                MaxPercentage = 10m,
+                IsActive = true,
+                Notes = "REITs och fastighetsfonder",
+                CreatedAt = DateTime.UtcNow.AddMonths(-6),
+                UserId = userId
+            },
+            new PortfolioAllocation
+            {
+                Name = "Aggressiv Tillväxt",
+                AssetClass = "Aktier",
+                TargetPercentage = 90m,
+                MinPercentage = 85m,
+                MaxPercentage = 95m,
+                IsActive = false,
+                Notes = "Maximal tillväxt, högre risk",
+                CreatedAt = DateTime.UtcNow.AddMonths(-12),
+                UserId = userId
+            },
+            new PortfolioAllocation
+            {
+                Name = "Aggressiv Tillväxt",
+                AssetClass = "Obligationer",
+                TargetPercentage = 5m,
+                MinPercentage = 3m,
+                MaxPercentage = 10m,
+                IsActive = false,
+                Notes = "Minimal obligationsandel",
+                CreatedAt = DateTime.UtcNow.AddMonths(-12),
+                UserId = userId
+            },
+            new PortfolioAllocation
+            {
+                Name = "Aggressiv Tillväxt",
+                AssetClass = "Kontanter",
+                TargetPercentage = 5m,
+                MinPercentage = 2m,
+                MaxPercentage = 5m,
+                IsActive = false,
+                Notes = "Minimal kassa",
+                CreatedAt = DateTime.UtcNow.AddMonths(-12),
+                UserId = userId
+            }
+        };
+
+        context.PortfolioAllocations.AddRange(allocations);
+        context.SaveChanges();
+    }
+
+    private static void SeedSavingsGroups(PrivatekonomyContext context, string userId)
+    {
+        // Only seed if no groups exist
+        if (context.SavingsGroups.Any())
+        {
+            return;
+        }
+
+        var groups = new List<SavingsGroup>
+        {
+            new SavingsGroup
+            {
+                Name = "Familjen Andersson",
+                Description = "Familjespargrupp för gemensamma mål",
+                CreatedByUserId = userId,
+                GroupType = SavingsGroupType.Family,
+                PrivacyLevel = GroupPrivacyLevel.Private,
+                AnonymousMembers = false,
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow.AddMonths(-3)
+            },
+            new SavingsGroup
+            {
+                Name = "Jobbkompisarna",
+                Description = "Spara tillsammans med kollegor",
+                CreatedByUserId = userId,
+                GroupType = SavingsGroupType.Friends,
+                PrivacyLevel = GroupPrivacyLevel.Restricted,
+                AnonymousMembers = false,
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow.AddMonths(-2)
+            },
+            new SavingsGroup
+            {
+                Name = "Semesterkassan",
+                Description = "Gruppresa till Thailand 2025",
+                CreatedByUserId = userId,
+                GroupType = SavingsGroupType.Challenge,
+                PrivacyLevel = GroupPrivacyLevel.Restricted,
+                AnonymousMembers = false,
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow.AddMonths(-4)
+            },
+            new SavingsGroup
+            {
+                Name = "Ekonomi Community Stockholm",
+                Description = "Öppen grupp för att dela spartips och motivation",
+                CreatedByUserId = userId,
+                GroupType = SavingsGroupType.Community,
+                PrivacyLevel = GroupPrivacyLevel.Public,
+                AnonymousMembers = true,
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow.AddMonths(-6)
+            }
+        };
+
+        context.SavingsGroups.AddRange(groups);
+        context.SaveChanges();
+    }
+
+    private static void SeedLifeTimelineScenarios(PrivatekonomyContext context, string userId)
+    {
+        // Only seed if no scenarios exist
+        if (context.LifeTimelineScenarios.Any())
+        {
+            return;
+        }
+
+        var scenarios = new List<LifeTimelineScenario>
+        {
+            new LifeTimelineScenario
+            {
+                Name = "Realistisk",
+                Description = "Baserat på historisk avkastning och försiktig prognos",
+                ExpectedReturnRate = 7.0m,
+                MonthlySavings = 5000m,
+                RetirementAge = 65,
+                ExpectedMonthlyPension = 18500m,
+                ProjectedRetirementWealth = 4250000m,
+                InflationRate = 2.0m,
+                SalaryIncreaseRate = 2.5m,
+                IsActive = true,
+                IsBaseline = true,
+                Notes = "Huvudscenario baserat på realistiska antaganden",
+                CreatedAt = DateTime.UtcNow.AddMonths(-3),
+                UserId = userId
+            },
+            new LifeTimelineScenario
+            {
+                Name = "Optimistisk",
+                Description = "Högre avkastning och ökade besparingar",
+                ExpectedReturnRate = 10.0m,
+                MonthlySavings = 7000m,
+                RetirementAge = 62,
+                ExpectedMonthlyPension = 25000m,
+                ProjectedRetirementWealth = 6500000m,
+                InflationRate = 1.5m,
+                SalaryIncreaseRate = 3.5m,
+                IsActive = false,
+                IsBaseline = false,
+                Notes = "Best case scenario med högre sparande och avkastning",
+                CreatedAt = DateTime.UtcNow.AddMonths(-3),
+                UserId = userId
+            },
+            new LifeTimelineScenario
+            {
+                Name = "Pessimistisk",
+                Description = "Lägre avkastning och försiktig ekonomi",
+                ExpectedReturnRate = 4.0m,
+                MonthlySavings = 3500m,
+                RetirementAge = 67,
+                ExpectedMonthlyPension = 14500m,
+                ProjectedRetirementWealth = 2100000m,
+                InflationRate = 3.0m,
+                SalaryIncreaseRate = 1.5m,
+                IsActive = false,
+                IsBaseline = false,
+                Notes = "Worst case scenario för att vara förberedd",
+                CreatedAt = DateTime.UtcNow.AddMonths(-3),
+                UserId = userId
+            },
+            new LifeTimelineScenario
+            {
+                Name = "Tidigt Pension vid 60",
+                Description = "Scenario för att gå i pension vid 60 år",
+                ExpectedReturnRate = 7.5m,
+                MonthlySavings = 8500m,
+                RetirementAge = 60,
+                ExpectedMonthlyPension = 16000m,
+                ProjectedRetirementWealth = 4800000m,
+                InflationRate = 2.0m,
+                SalaryIncreaseRate = 2.5m,
+                IsActive = false,
+                IsBaseline = false,
+                Notes = "Kräver högre månadssparande för tidigare pension",
+                CreatedAt = DateTime.UtcNow.AddMonths(-2),
+                UserId = userId
+            }
+        };
+
+        context.LifeTimelineScenarios.AddRange(scenarios);
+        context.SaveChanges();
+    }
+
+    private static void SeedGoalShares(PrivatekonomyContext context, string userId)
+    {
+        // Only seed if no goal shares exist
+        if (context.GoalShares.Any())
+        {
+            return;
+        }
+
+        // Get existing goals to share
+        var goals = context.Goals.Where(g => g.UserId == userId).Take(3).ToList();
+        
+        if (!goals.Any())
+        {
+            return; // No goals to share
+        }
+
+        var shares = new List<GoalShare>();
+        
+        foreach (var goal in goals)
+        {
+            shares.Add(new GoalShare
+            {
+                GoalId = goal.GoalId,
+                ShareToken = Guid.NewGuid().ToString("N").Substring(0, 16),
+                UserId = userId,
+                ShowCurrentAmount = true,
+                ShowTargetAmount = true,
+                ShowTargetDate = true,
+                ShowTransactions = false,
+                ShowOwnerName = false,
+                ExpiresAt = DateTime.UtcNow.AddDays(30),
+                CreatedAt = DateTime.UtcNow.AddDays(-5),
+                IsActive = true,
+                ViewCount = new Random().Next(0, 25)
+            });
+        }
+
+        // Add one expired share
+        if (goals.Count > 0)
+        {
+            shares.Add(new GoalShare
+            {
+                GoalId = goals[0].GoalId,
+                ShareToken = Guid.NewGuid().ToString("N").Substring(0, 16),
+                UserId = userId,
+                ShowCurrentAmount = true,
+                ShowTargetAmount = true,
+                ShowTargetDate = false,
+                ShowTransactions = false,
+                ShowOwnerName = true,
+                ExpiresAt = DateTime.UtcNow.AddDays(-5),
+                CreatedAt = DateTime.UtcNow.AddDays(-35),
+                IsActive = false,
+                ViewCount = 47
+            });
+        }
+
+        context.GoalShares.AddRange(shares);
         context.SaveChanges();
     }
 }
