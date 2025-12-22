@@ -1,0 +1,205 @@
+﻿@page "/telemetry-example"
+@using Privatekonomi.Web.Components.Base
+@using Privatekonomi.Web.Telemetry
+@inherits TrackedComponentBase
+@rendermode InteractiveServer
+
+<PageTitle>Telemetri Exempel - Privatekonomi</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+    <MudText Typo="Typo.h4" Class="mb-4">🔍 Telemetri-spårning Exempel</MudText>
+
+    <MudAlert Severity="Severity.Info" Class="mb-4">
+        Denna sida demonstrerar hur telemetri-spårning fungerar. Öppna Aspire Dashboard (https://localhost:17033) 
+        och gå till "Traces" för att se alla events som skapas när du klickar på knapparna.
+    </MudAlert>
+
+    <MudPaper Class="pa-4 mb-4">
+        <MudText Typo="Typo.h6" Class="mb-3">Normal Klick (Spåras)</MudText>
+        <MudButton Variant="Variant.Filled" 
+                   Color="Color.Primary" 
+                   OnClick="HandleNormalClick">
+            Klicka här (spårad)
+        </MudButton>
+        @if (!string.IsNullOrEmpty(_lastAction))
+        {
+            <MudText Class="mt-2">Senaste action: @_lastAction</MudText>
+        }
+    </MudPaper>
+
+    <MudPaper Class="pa-4 mb-4">
+        <MudText Typo="Typo.h6" Class="mb-3">Blockerad Klick (Spårar blockeringsorsak)</MudText>
+        <MudButton Variant="Variant.Filled" 
+                   Color="Color.Secondary" 
+                   Disabled="_isBlocked"
+                   OnClick="HandleBlockedClick">
+            Disabled Knapp
+        </MudButton>
+        <MudButton Variant="Variant.Outlined" 
+                   Color="Color.Primary" 
+                   Class="ml-2"
+                   OnClick="AttemptClickOnDisabled">
+            Försök klicka på disabled knapp
+        </MudButton>
+    </MudPaper>
+
+    <MudPaper Class="pa-4 mb-4">
+        <MudText Typo="Typo.h6" Class="mb-3">Formulär med Validering (Spårar valideringsfel)</MudText>
+        <MudTextField @bind-Value="_email" 
+                      Label="E-post" 
+                      Variant="Variant.Outlined"
+                      Class="mb-3" />
+        <MudButton Variant="Variant.Filled" 
+                   Color="Color.Success" 
+                   OnClick="HandleFormSubmit">
+            Skicka formulär
+        </MudButton>
+        @if (!string.IsNullOrEmpty(_validationMessage))
+        {
+            <MudText Color="Color.Error" Class="mt-2">@_validationMessage</MudText>
+        }
+    </MudPaper>
+
+    <MudPaper Class="pa-4">
+        <MudText Typo="Typo.h6" Class="mb-3">Långvarig Operation (Spårar duration)</MudText>
+        <MudButton Variant="Variant.Filled" 
+                   Color="Color.Warning" 
+                   OnClick="HandleLongOperation"
+                   Disabled="_isProcessing">
+            @if (_isProcessing)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate />
+                <span class="ml-2">Bearbetar...</span>
+            }
+            else
+            {
+                <span>Starta långvarig operation</span>
+            }
+        </MudButton>
+    </MudPaper>
+
+    <MudDivider Class="my-4" />
+
+    <MudAlert Severity="Severity.Success">
+        <MudText Typo="Typo.subtitle1" Class="mb-2"><strong>Så här hittar du traces i Aspire Dashboard:</strong></MudText>
+        <ol>
+            <li>Öppna Aspire Dashboard (vanligtvis https://localhost:17033)</li>
+            <li>Klicka på "Traces" i vänstermenyn</li>
+            <li>Filtrera på "privatekonomi-web" under Resources</li>
+            <li>Sök efter traces med namn som börjar på "User.Click", "Form.Submit", etc.</li>
+            <li>Klicka på en trace för att se detaljer, tags och duration</li>
+        </ol>
+    </MudAlert>
+</MudContainer>
+
+@code {
+    private string? _lastAction;
+    private string? _email;
+    private string? _validationMessage;
+    private bool _isBlocked = true;
+    private bool _isProcessing = false;
+
+    private async Task HandleNormalClick()
+    {
+        using var activity = TrackClick("normal-button", "normal-click");
+        
+        try
+        {
+            // Simulera någon logik
+            await Task.Delay(100);
+            _lastAction = $"Normal klick utförd kl {DateTime.Now:HH:mm:ss}";
+            Logger.LogInformation("Normal click completed successfully");
+        }
+        catch (Exception ex)
+        {
+            activity?.RecordException(ex);
+            Logger.LogError(ex, "Error in normal click handler");
+        }
+    }
+
+    private void AttemptClickOnDisabled()
+    {
+        // Detta loggas som en blockerad klick i telemetrin
+        TrackBlockedClick("disabled-button", "Button is disabled because user lacks permission");
+    }
+
+    private async Task HandleBlockedClick()
+    {
+        // Denna kod körs aldrig eftersom knappen är disabled,
+        // men om den skulle köras skulle vi spåra den
+        using var activity = TrackClick("blocked-button", "should-not-happen");
+        await Task.CompletedTask;
+    }
+
+    private async Task HandleFormSubmit()
+    {
+        using var activity = TrackFormSubmit("example-form");
+        
+        try
+        {
+            // Enkel e-postvalidering
+            if (string.IsNullOrWhiteSpace(_email))
+            {
+                TrackValidationBlock("email", "E-post får inte vara tom");
+                _validationMessage = "E-post får inte vara tom";
+                activity?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Validation failed");
+                return;
+            }
+
+            if (!_email.Contains("@"))
+            {
+                TrackValidationBlock("email", "Ogiltig e-postadress");
+                _validationMessage = "Ogiltig e-postadress";
+                activity?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "Validation failed");
+                return;
+            }
+
+            // Simulera formulärbehandling
+            await Task.Delay(200);
+            _validationMessage = null;
+            _lastAction = $"Formulär skickat med e-post: {_email}";
+            Logger.LogInformation("Form submitted successfully with email: {Email}", _email);
+        }
+        catch (Exception ex)
+        {
+            activity?.RecordException(ex);
+            Logger.LogError(ex, "Error submitting form");
+            _validationMessage = "Ett fel uppstod vid inskickning";
+        }
+    }
+
+    private async Task HandleLongOperation()
+    {
+        using var activity = TrackClick("long-operation-button", "start-long-operation");
+        
+        try
+        {
+            _isProcessing = true;
+            StateHasChanged();
+
+            // Simulera en långvarig operation
+            // Activity kommer automatiskt mäta duration
+            await Task.Delay(3000);
+
+            _lastAction = $"Långvarig operation slutförd efter 3 sekunder";
+            Logger.LogInformation("Long operation completed");
+            activity?.SetTag("operation.duration_ms", 3000);
+        }
+        catch (Exception ex)
+        {
+            activity?.RecordException(ex);
+            Logger.LogError(ex, "Error in long operation");
+        }
+        finally
+        {
+            _isProcessing = false;
+            StateHasChanged();
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        Logger.LogInformation("TelemetryExample component initialized");
+    }
+}
