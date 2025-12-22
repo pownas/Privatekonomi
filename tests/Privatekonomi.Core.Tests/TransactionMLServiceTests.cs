@@ -4,10 +4,11 @@ using Moq;
 using Privatekonomi.Core.Data;
 using Privatekonomi.Core.ML;
 using Privatekonomi.Core.Models;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Privatekonomi.Core.Tests;
 
+[TestClass]
 public class TransactionMLServiceTests : IDisposable
 {
     private readonly PrivatekonomyContext _context;
@@ -30,6 +31,7 @@ public class TransactionMLServiceTests : IDisposable
         Directory.CreateDirectory(_testModelPath);
     }
 
+    [TestCleanup]
     public void Dispose()
     {
         _context.Database.EnsureDeleted();
@@ -42,17 +44,17 @@ public class TransactionMLServiceTests : IDisposable
         }
     }
 
-    [Fact]
+    [TestMethod]
     public async Task IsModelTrainedAsync_NoModel_ReturnsFalse()
     {
         // Act
         var result = await _mlService.IsModelTrainedAsync(_testUserId);
 
         // Assert
-        Assert.False(result);
+        Assert.IsFalse(result);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task TrainModelAsync_InsufficientData_ReturnsNull()
     {
         // Arrange - Create less than 50 transactions
@@ -62,10 +64,10 @@ public class TransactionMLServiceTests : IDisposable
         var result = await _mlService.TrainModelAsync(_testUserId);
 
         // Assert
-        Assert.Null(result);
+        Assert.IsNull(result);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task TrainModelAsync_SufficientData_ReturnsMetrics()
     {
         // Arrange - Create sufficient transactions with multiple categories
@@ -75,12 +77,12 @@ public class TransactionMLServiceTests : IDisposable
         var result = await _mlService.TrainModelAsync(_testUserId);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.True(result.Accuracy >= 0 && result.Accuracy <= 1);
-        Assert.True(result.MicroAccuracy >= 0 && result.MicroAccuracy <= 1);
+        Assert.IsNotNull(result);
+        Assert.IsTrue(result.Accuracy >= 0 && result.Accuracy <= 1);
+        Assert.IsTrue(result.MicroAccuracy >= 0 && result.MicroAccuracy <= 1);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task TrainModelAsync_SavesModelMetadata()
     {
         // Arrange
@@ -93,13 +95,13 @@ public class TransactionMLServiceTests : IDisposable
         var modelMetadata = await _context.MLModels
             .FirstOrDefaultAsync(m => m.UserId == _testUserId);
         
-        Assert.NotNull(modelMetadata);
-        Assert.Equal(_testUserId, modelMetadata.UserId);
-        Assert.True(modelMetadata.TrainingRecordsCount > 0);
-        Assert.True(File.Exists(modelMetadata.ModelPath));
+        Assert.IsNotNull(modelMetadata);
+        Assert.AreEqual(_testUserId, modelMetadata.UserId);
+        Assert.IsTrue(modelMetadata.TrainingRecordsCount > 0);
+        Assert.IsTrue(File.Exists(modelMetadata.ModelPath));
     }
 
-    [Fact]
+    [TestMethod]
     public async Task PredictCategoryAsync_NoModel_ReturnsNull()
     {
         // Arrange
@@ -115,10 +117,10 @@ public class TransactionMLServiceTests : IDisposable
         var result = await _mlService.PredictCategoryAsync(transaction, _testUserId);
 
         // Assert
-        Assert.Null(result);
+        Assert.IsNull(result);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task PredictCategoryAsync_WithTrainedModel_ReturnsPrediction()
     {
         // Arrange
@@ -137,12 +139,12 @@ public class TransactionMLServiceTests : IDisposable
         var result = await _mlService.PredictCategoryAsync(transaction, _testUserId);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.False(string.IsNullOrEmpty(result.Category));
-        Assert.True(result.Confidence >= 0 && result.Confidence <= 1);
+        Assert.IsNotNull(result);
+        Assert.IsFalse(string.IsNullOrEmpty(result.Category));
+        Assert.IsTrue(result.Confidence >= 0 && result.Confidence <= 1);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task UpdateModelWithFeedbackAsync_StoresFeedback()
     {
         // Arrange
@@ -170,15 +172,15 @@ public class TransactionMLServiceTests : IDisposable
         var feedback = await _context.UserFeedbacks
             .FirstOrDefaultAsync(f => f.TransactionId == transaction.TransactionId);
         
-        Assert.NotNull(feedback);
-        Assert.Equal(_testUserId, feedback.UserId);
-        Assert.Equal("Shopping", feedback.PredictedCategory);
-        Assert.Equal("Mat & Dryck", feedback.ActualCategory);
-        Assert.True(feedback.WasCorrectionNeeded);
-        Assert.Equal(0.65f, feedback.PredictedConfidence);
+        Assert.IsNotNull(feedback);
+        Assert.AreEqual(_testUserId, feedback.UserId);
+        Assert.AreEqual("Shopping", feedback.PredictedCategory);
+        Assert.AreEqual("Mat & Dryck", feedback.ActualCategory);
+        Assert.IsTrue(feedback.WasCorrectionNeeded);
+        Assert.AreEqual(0.65f, feedback.PredictedConfidence);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task IsModelTrainedAsync_AfterTraining_ReturnsTrue()
     {
         // Arrange
@@ -189,10 +191,10 @@ public class TransactionMLServiceTests : IDisposable
         var result = await _mlService.IsModelTrainedAsync(_testUserId);
 
         // Assert
-        Assert.True(result);
+        Assert.IsTrue(result);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task PredictBatchAsync_ReturnsMultiplePredictions()
     {
         // Arrange
@@ -210,8 +212,8 @@ public class TransactionMLServiceTests : IDisposable
         var results = await _mlService.PredictBatchAsync(transactions, _testUserId);
 
         // Assert
-        Assert.NotEmpty(results);
-        Assert.All(results, r => Assert.False(string.IsNullOrEmpty(r.Category)));
+        Assert.AreNotEqual(0, results.Count());
+        Assert.All(results, r => Assert.IsFalse(string.IsNullOrEmpty(r.Category)));
     }
 
     // Helper methods

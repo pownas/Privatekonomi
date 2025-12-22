@@ -3,10 +3,11 @@ using Moq;
 using Privatekonomi.Core.Data;
 using Privatekonomi.Core.Models;
 using Privatekonomi.Core.Services;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Privatekonomi.Core.Tests;
 
+[TestClass]
 public class DashboardServiceTests
 {
     private readonly PrivatekonomyContext _context;
@@ -50,35 +51,35 @@ public class DashboardServiceTests
             _mockCurrentUserService.Object);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetDashboardDataAsync_ReturnsAggregatedData()
     {
         // Act
         var result = await _service.GetDashboardDataAsync();
 
         // Assert
-        Assert.NotNull(result);
-        Assert.NotNull(result.Balance);
-        Assert.NotNull(result.BudgetStatus);
-        Assert.NotNull(result.UpcomingBills);
-        Assert.NotNull(result.Insights);
-        Assert.True(result.LastUpdated <= DateTime.UtcNow);
+        Assert.IsNotNull(result);
+        Assert.IsNotNull(result.Balance);
+        Assert.IsNotNull(result.BudgetStatus);
+        Assert.IsNotNull(result.UpcomingBills);
+        Assert.IsNotNull(result.Insights);
+        Assert.IsTrue(result.LastUpdated <= DateTime.UtcNow);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetBalanceSummaryAsync_ReturnsEmptyWhenNoAccounts()
     {
         // Act
         var result = await _service.GetBalanceSummaryAsync();
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Equal(0, result.TotalBalance);
-        Assert.Empty(result.Accounts);
-        Assert.Equal("SEK", result.Currency);
+        Assert.IsNotNull(result);
+        Assert.AreEqual(0, result.TotalBalance);
+        Assert.AreEqual(0, result.Accounts.Count());
+        Assert.AreEqual("SEK", result.Currency);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetBalanceSummaryAsync_CalculatesTotalBalanceFromAccounts()
     {
         // Arrange
@@ -108,12 +109,12 @@ public class DashboardServiceTests
         var result = await _service.GetBalanceSummaryAsync();
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Equal(60000, result.TotalBalance);
-        Assert.Equal(2, result.Accounts.Count);
+        Assert.IsNotNull(result);
+        Assert.AreEqual(60000, result.TotalBalance);
+        Assert.AreEqual(2, result.Accounts.Count);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetBalanceSummaryAsync_IncludesTransactionsInBalance()
     {
         // Arrange
@@ -159,12 +160,12 @@ public class DashboardServiceTests
         var result = await _service.GetBalanceSummaryAsync();
 
         // Assert
-        Assert.NotNull(result);
+        Assert.IsNotNull(result);
         // 10000 (initial) + 25000 (income) - 8000 (expense) = 27000
-        Assert.Equal(27000, result.TotalBalance);
+        Assert.AreEqual(27000, result.TotalBalance);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetBalanceSummaryAsync_ExcludesClosedAccounts()
     {
         // Arrange
@@ -194,12 +195,12 @@ public class DashboardServiceTests
         var result = await _service.GetBalanceSummaryAsync();
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Equal(10000, result.TotalBalance);
-        Assert.Single(result.Accounts);
+        Assert.IsNotNull(result);
+        Assert.AreEqual(10000, result.TotalBalance);
+        Assert.AreEqual(1, result.Accounts.Count());
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetBalanceSummaryAsync_FiltersAccountsByIds()
     {
         // Arrange
@@ -227,13 +228,13 @@ public class DashboardServiceTests
         var result = await _service.GetBalanceSummaryAsync(new[] { account1.BankSourceId });
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Equal(10000, result.TotalBalance);
-        Assert.Single(result.Accounts);
-        Assert.Equal("Account 1", result.Accounts.First().Name);
+        Assert.IsNotNull(result);
+        Assert.AreEqual(10000, result.TotalBalance);
+        Assert.AreEqual(1, result.Accounts.Count());
+        Assert.AreEqual("Account 1", result.Accounts.First().Name);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetBudgetStatusAsync_ReturnsNoActiveBudgetsWhenEmpty()
     {
         // Arrange
@@ -244,12 +245,12 @@ public class DashboardServiceTests
         var result = await _service.GetBudgetStatusAsync();
 
         // Assert
-        Assert.NotNull(result);
-        Assert.False(result.HasActiveBudgets);
-        Assert.Empty(result.Budgets);
+        Assert.IsNotNull(result);
+        Assert.IsFalse(result.HasActiveBudgets);
+        Assert.AreEqual(0, result.Budgets.Count());
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetBudgetStatusAsync_CalculatesTotalPlannedAndSpent()
     {
         // Arrange
@@ -282,15 +283,15 @@ public class DashboardServiceTests
         var result = await _service.GetBudgetStatusAsync();
 
         // Assert
-        Assert.NotNull(result);
-        Assert.True(result.HasActiveBudgets);
-        Assert.Equal(7000, result.TotalPlanned);
-        Assert.Equal(5500, result.TotalSpent);
-        Assert.Equal(1500, result.Remaining);
-        Assert.Single(result.Budgets);
+        Assert.IsNotNull(result);
+        Assert.IsTrue(result.HasActiveBudgets);
+        Assert.AreEqual(7000, result.TotalPlanned);
+        Assert.AreEqual(5500, result.TotalSpent);
+        Assert.AreEqual(1500, result.Remaining);
+        Assert.AreEqual(1, result.Budgets.Count());
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetBudgetStatusAsync_IdentifiesOverspentCategories()
     {
         // Arrange
@@ -323,12 +324,12 @@ public class DashboardServiceTests
         var result = await _service.GetBudgetStatusAsync();
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Single(result.OverspentCategories);
-        Assert.Contains("Food", result.OverspentCategories);
+        Assert.IsNotNull(result);
+        Assert.AreEqual(1, result.OverspentCategories.Count());
+        StringAssert.Contains(result.OverspentCategories, "Food");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetBudgetStatusAsync_DeterminesCorrectStatus()
     {
         // Arrange - Budget at 80% usage (Warning status)
@@ -357,11 +358,11 @@ public class DashboardServiceTests
         var result = await _service.GetBudgetStatusAsync();
 
         // Assert
-        Assert.Equal(BudgetHealthStatus.Warning, result.Status);
-        Assert.Equal(80, result.PercentageUsed);
+        Assert.AreEqual(BudgetHealthStatus.Warning, result.Status);
+        Assert.AreEqual(80, result.PercentageUsed);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetUpcomingBillsAsync_ReturnsEmptyForUnauthenticatedUser()
     {
         // Arrange
@@ -378,11 +379,11 @@ public class DashboardServiceTests
         var result = await service.GetUpcomingBillsAsync();
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Empty(result);
+        Assert.IsNotNull(result);
+        Assert.AreEqual(0, result.Count());
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetUpcomingBillsAsync_CombinesUpcomingAndOverdueBills()
     {
         // Arrange
@@ -416,13 +417,13 @@ public class DashboardServiceTests
         var result = await _service.GetUpcomingBillsAsync();
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Equal(2, result.Count);
-        Assert.True(result.First().IsOverdue);
-        Assert.Equal("Overdue Rent", result.First().Name);
+        Assert.IsNotNull(result);
+        Assert.AreEqual(2, result.Count);
+        Assert.IsTrue(result.First().IsOverdue);
+        Assert.AreEqual("Overdue Rent", result.First().Name);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetUpcomingBillsAsync_CorrectlyCalculatesDaysUntilDue()
     {
         // Arrange
@@ -445,13 +446,13 @@ public class DashboardServiceTests
         var result = await _service.GetUpcomingBillsAsync();
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Single(result);
-        Assert.Equal(5, result.First().DaysUntilDue);
-        Assert.False(result.First().IsOverdue);
+        Assert.IsNotNull(result);
+        Assert.AreEqual(1, result.Count());
+        Assert.AreEqual(5, result.First().DaysUntilDue);
+        Assert.IsFalse(result.First().IsOverdue);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetRecentInsightsAsync_ReturnsEmptyForUnauthenticatedUser()
     {
         // Arrange
@@ -468,11 +469,11 @@ public class DashboardServiceTests
         var result = await service.GetRecentInsightsAsync();
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Empty(result);
+        Assert.IsNotNull(result);
+        Assert.AreEqual(0, result.Count());
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetRecentInsightsAsync_MapsNotificationsToInsights()
     {
         // Arrange
@@ -496,16 +497,16 @@ public class DashboardServiceTests
         var result = await _service.GetRecentInsightsAsync();
 
         // Assert
-        Assert.NotNull(result);
-        Assert.NotEmpty(result);
+        Assert.IsNotNull(result);
+        Assert.AreNotEqual(0, result.Count());
         var insight = result.First();
-        Assert.Equal(InsightType.BudgetAlert, insight.Type);
-        Assert.Equal("Budget Alert", insight.Title);
-        Assert.Equal(InsightPriority.High, insight.Priority);
-        Assert.False(insight.IsRead);
+        Assert.AreEqual(InsightType.BudgetAlert, insight.Type);
+        Assert.AreEqual("Budget Alert", insight.Title);
+        Assert.AreEqual(InsightPriority.High, insight.Priority);
+        Assert.IsFalse(insight.IsRead);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetRecentInsightsAsync_RespectsLimitParameter()
     {
         // Arrange
@@ -527,8 +528,8 @@ public class DashboardServiceTests
         var result = await _service.GetRecentInsightsAsync(limit: 3);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Equal(3, result.Count);
+        Assert.IsNotNull(result);
+        Assert.AreEqual(3, result.Count);
     }
 
     [Fact]

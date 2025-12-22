@@ -3,10 +3,11 @@ using Moq;
 using Privatekonomi.Core.Data;
 using Privatekonomi.Core.Models;
 using Privatekonomi.Core.Services;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Privatekonomi.Core.Tests;
 
+[TestClass]
 public class RoundUpServiceTests
 {
     private readonly Mock<ICurrentUserService> _mockCurrentUserService;
@@ -33,21 +34,21 @@ public class RoundUpServiceTests
         _service = new RoundUpService(_context, _mockGoalService.Object, _mockCurrentUserService.Object);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetOrCreateSettingsAsync_CreatesNewSettings_WhenNoneExist()
     {
         // Act
         var settings = await _service.GetOrCreateSettingsAsync();
 
         // Assert
-        Assert.NotNull(settings);
-        Assert.Equal(TestUserId, settings.UserId);
-        Assert.False(settings.IsEnabled);
-        Assert.Equal(10M, settings.RoundUpAmount);
-        Assert.True(settings.OnlyExpenses);
+        Assert.IsNotNull(settings);
+        Assert.AreEqual(TestUserId, settings.UserId);
+        Assert.IsFalse(settings.IsEnabled);
+        Assert.AreEqual(10M, settings.RoundUpAmount);
+        Assert.IsTrue(settings.OnlyExpenses);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetOrCreateSettingsAsync_ReturnsExistingSettings_WhenAlreadyExists()
     {
         // Arrange
@@ -65,29 +66,29 @@ public class RoundUpServiceTests
         var settings = await _service.GetOrCreateSettingsAsync();
 
         // Assert
-        Assert.NotNull(settings);
-        Assert.Equal(existingSettings.RoundUpSettingsId, settings.RoundUpSettingsId);
-        Assert.True(settings.IsEnabled);
-        Assert.Equal(5M, settings.RoundUpAmount);
+        Assert.IsNotNull(settings);
+        Assert.AreEqual(existingSettings.RoundUpSettingsId, settings.RoundUpSettingsId);
+        Assert.IsTrue(settings.IsEnabled);
+        Assert.AreEqual(5M, settings.RoundUpAmount);
     }
 
-    [Theory]
-    [InlineData(127, 10, 3)]      // 127 -> 130 (3 kr saved)
-    [InlineData(245, 10, 5)]      // 245 -> 250 (5 kr saved)
-    [InlineData(587, 10, 3)]      // 587 -> 590 (3 kr saved)
-    [InlineData(100, 10, 0)]      // 100 -> 100 (0 kr saved, already rounded)
-    [InlineData(99.50, 10, 0.50)] // 99.50 -> 100 (0.50 kr saved)
-    [InlineData(1, 10, 9)]        // 1 -> 10 (9 kr saved)
+    [DataTestMethod]
+    [DataRow(127, 10, 3)]      // 127 -> 130 (3 kr saved)
+    [DataRow(245, 10, 5)]      // 245 -> 250 (5 kr saved)
+    [DataRow(587, 10, 3)]      // 587 -> 590 (3 kr saved)
+    [DataRow(100, 10, 0)]      // 100 -> 100 (0 kr saved, already rounded)
+    [DataRow(99.50, 10, 0.50)] // 99.50 -> 100 (0.50 kr saved)
+    [DataRow(1, 10, 9)]        // 1 -> 10 (9 kr saved)
     public void CalculateRoundUp_ReturnsCorrectAmount(decimal amount, decimal roundUpTo, decimal expected)
     {
         // Act
         var result = _service.CalculateRoundUp(amount, roundUpTo);
 
         // Assert
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ProcessRoundUpForTransactionAsync_CreatesRoundUpTransaction_WhenEnabled()
     {
         // Arrange
@@ -131,21 +132,21 @@ public class RoundUpServiceTests
         var roundUp = await _service.ProcessRoundUpForTransactionAsync(transaction.TransactionId);
 
         // Assert
-        Assert.NotNull(roundUp);
-        Assert.Equal(127M, roundUp.OriginalAmount);
-        Assert.Equal(130M, roundUp.RoundedAmount);
-        Assert.Equal(3M, roundUp.RoundUpAmount);
-        Assert.Equal(3M, roundUp.TotalSaved);
-        Assert.Equal(goal.GoalId, roundUp.GoalId);
-        Assert.Equal(RoundUpType.StandardRoundUp, roundUp.Type);
+        Assert.IsNotNull(roundUp);
+        Assert.AreEqual(127M, roundUp.OriginalAmount);
+        Assert.AreEqual(130M, roundUp.RoundedAmount);
+        Assert.AreEqual(3M, roundUp.RoundUpAmount);
+        Assert.AreEqual(3M, roundUp.TotalSaved);
+        Assert.AreEqual(goal.GoalId, roundUp.GoalId);
+        Assert.AreEqual(RoundUpType.StandardRoundUp, roundUp.Type);
 
         // Verify goal was updated
         var updatedGoal = await _context.Goals.FindAsync(goal.GoalId);
-        Assert.NotNull(updatedGoal);
-        Assert.Equal(3M, updatedGoal.CurrentAmount);
+        Assert.IsNotNull(updatedGoal);
+        Assert.AreEqual(3M, updatedGoal.CurrentAmount);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ProcessRoundUpForTransactionAsync_ReturnsNull_WhenDisabled()
     {
         // Arrange
@@ -174,10 +175,10 @@ public class RoundUpServiceTests
         var roundUp = await _service.ProcessRoundUpForTransactionAsync(transaction.TransactionId);
 
         // Assert
-        Assert.Null(roundUp);
+        Assert.IsNull(roundUp);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ProcessRoundUpForTransactionAsync_SkipsIncomeTransactions_WhenOnlyExpensesEnabled()
     {
         // Arrange
@@ -221,10 +222,10 @@ public class RoundUpServiceTests
         var roundUp = await _service.ProcessRoundUpForTransactionAsync(transaction.TransactionId);
 
         // Assert
-        Assert.Null(roundUp);
+        Assert.IsNull(roundUp);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ProcessRoundUpForTransactionAsync_IncludesEmployerMatching_WhenEnabled()
     {
         // Arrange
@@ -269,18 +270,18 @@ public class RoundUpServiceTests
         var roundUp = await _service.ProcessRoundUpForTransactionAsync(transaction.TransactionId);
 
         // Assert
-        Assert.NotNull(roundUp);
-        Assert.Equal(3M, roundUp.RoundUpAmount);
-        Assert.Equal(3M, roundUp.EmployerMatchingAmount); // 100% of 3 kr
-        Assert.Equal(6M, roundUp.TotalSaved); // 3 + 3
+        Assert.IsNotNull(roundUp);
+        Assert.AreEqual(3M, roundUp.RoundUpAmount);
+        Assert.AreEqual(3M, roundUp.EmployerMatchingAmount); // 100% of 3 kr
+        Assert.AreEqual(6M, roundUp.TotalSaved); // 3 + 3
 
         // Verify goal was updated with total
         var updatedGoal = await _context.Goals.FindAsync(goal.GoalId);
-        Assert.NotNull(updatedGoal);
-        Assert.Equal(6M, updatedGoal.CurrentAmount);
+        Assert.IsNotNull(updatedGoal);
+        Assert.AreEqual(6M, updatedGoal.CurrentAmount);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ProcessSalaryAutoSaveAsync_CreatesSalaryAutoSave_WhenEnabled()
     {
         // Arrange
@@ -323,19 +324,19 @@ public class RoundUpServiceTests
         var autoSave = await _service.ProcessSalaryAutoSaveAsync(transaction.TransactionId);
 
         // Assert
-        Assert.NotNull(autoSave);
-        Assert.Equal(5000M, autoSave.OriginalAmount);
-        Assert.Equal(500M, autoSave.RoundUpAmount); // 10% of 5000
-        Assert.Equal(500M, autoSave.TotalSaved);
-        Assert.Equal(RoundUpType.SalaryAutoSave, autoSave.Type);
+        Assert.IsNotNull(autoSave);
+        Assert.AreEqual(5000M, autoSave.OriginalAmount);
+        Assert.AreEqual(500M, autoSave.RoundUpAmount); // 10% of 5000
+        Assert.AreEqual(500M, autoSave.TotalSaved);
+        Assert.AreEqual(RoundUpType.SalaryAutoSave, autoSave.Type);
 
         // Verify goal was updated
         var updatedGoal = await _context.Goals.FindAsync(goal.GoalId);
-        Assert.NotNull(updatedGoal);
-        Assert.Equal(500M, updatedGoal.CurrentAmount);
+        Assert.IsNotNull(updatedGoal);
+        Assert.AreEqual(500M, updatedGoal.CurrentAmount);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetStatisticsAsync_ReturnsCorrectStatistics()
     {
         // Arrange
@@ -386,16 +387,16 @@ public class RoundUpServiceTests
         var stats = await _service.GetStatisticsAsync(fromDate, toDate);
 
         // Assert
-        Assert.Equal(8M, stats.TotalRoundUp); // 3 + 5
-        Assert.Equal(8M, stats.TotalEmployerMatching); // 3 + 5
-        Assert.Equal(500M, stats.TotalSalaryAutoSave);
-        Assert.Equal(516M, stats.TotalSaved); // 6 + 10 + 500
-        Assert.Equal(3, stats.TransactionCount);
-        Assert.Equal(4M, stats.AverageRoundUp); // (3 + 5) / 2
-        Assert.Equal(5M, stats.LargestRoundUp);
+        Assert.AreEqual(8M, stats.TotalRoundUp); // 3 + 5
+        Assert.AreEqual(8M, stats.TotalEmployerMatching); // 3 + 5
+        Assert.AreEqual(500M, stats.TotalSalaryAutoSave);
+        Assert.AreEqual(516M, stats.TotalSaved); // 6 + 10 + 500
+        Assert.AreEqual(3, stats.TransactionCount);
+        Assert.AreEqual(4M, stats.AverageRoundUp); // (3 + 5) / 2
+        Assert.AreEqual(5M, stats.LargestRoundUp);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetMonthlyTotalAsync_ReturnsCurrentMonthTotal()
     {
         // Arrange
@@ -437,6 +438,6 @@ public class RoundUpServiceTests
         var total = await _service.GetMonthlyTotalAsync();
 
         // Assert
-        Assert.Equal(16M, total); // 6 + 10
+        Assert.AreEqual(16M, total); // 6 + 10
     }
 }

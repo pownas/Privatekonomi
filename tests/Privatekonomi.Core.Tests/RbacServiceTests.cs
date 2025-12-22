@@ -3,10 +3,11 @@ using Moq;
 using Privatekonomi.Core.Data;
 using Privatekonomi.Core.Models;
 using Privatekonomi.Core.Services;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Privatekonomi.Core.Tests;
 
+[TestClass]
 public class RbacServiceTests : IDisposable
 {
     private readonly PrivatekonomyContext _context;
@@ -87,6 +88,7 @@ public class RbacServiceTests : IDisposable
         await _context.SaveChangesAsync();
     }
 
+    [TestCleanup]
     public void Dispose()
     {
         _context.Database.EnsureDeleted();
@@ -95,49 +97,49 @@ public class RbacServiceTests : IDisposable
 
     // ==================== Role Management Tests ====================
 
-    [Fact]
+    [TestMethod]
     public async Task GetUserRoleInHouseholdAsync_ReturnsAdminRole()
     {
         // Act
         var role = await _rbacService.GetUserRoleInHouseholdAsync(_testUserId, _testHouseholdId);
 
         // Assert
-        Assert.NotNull(role);
-        Assert.Equal(HouseholdRoleType.Admin, role.RoleType);
-        Assert.True(role.IsActive);
+        Assert.IsNotNull(role);
+        Assert.AreEqual(HouseholdRoleType.Admin, role.RoleType);
+        Assert.IsTrue(role.IsActive);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetUserRoleInHouseholdAsync_ReturnsNullForNonMember()
     {
         // Act
         var role = await _rbacService.GetUserRoleInHouseholdAsync("non-existent-user", _testHouseholdId);
 
         // Assert
-        Assert.Null(role);
+        Assert.IsNull(role);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task HasRoleAsync_ReturnsTrueForCorrectRole()
     {
         // Act
         var hasRole = await _rbacService.HasRoleAsync(_testUserId, _testHouseholdId, HouseholdRoleType.Admin);
 
         // Assert
-        Assert.True(hasRole);
+        Assert.IsTrue(hasRole);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task HasRoleAsync_ReturnsFalseForIncorrectRole()
     {
         // Act
         var hasRole = await _rbacService.HasRoleAsync(_testUserId, _testHouseholdId, HouseholdRoleType.ViewOnly);
 
         // Assert
-        Assert.False(hasRole);
+        Assert.IsFalse(hasRole);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task HasMinimumRoleAsync_ReturnsTrueForSameOrHigherRole()
     {
         // Admin should pass minimum role check for FullAccess, Editor, etc.
@@ -145,10 +147,10 @@ public class RbacServiceTests : IDisposable
         var hasMinRole = await _rbacService.HasMinimumRoleAsync(_testUserId, _testHouseholdId, HouseholdRoleType.FullAccess);
 
         // Assert
-        Assert.True(hasMinRole);
+        Assert.IsTrue(hasMinRole);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task AssignRoleAsync_CreatesNewRoleSuccessfully()
     {
         // Arrange
@@ -158,10 +160,10 @@ public class RbacServiceTests : IDisposable
         var newRole = await _rbacService.AssignRoleAsync(_testUserId, targetMemberId, HouseholdRoleType.Editor);
 
         // Assert
-        Assert.NotNull(newRole);
-        Assert.Equal(HouseholdRoleType.Editor, newRole.RoleType);
-        Assert.True(newRole.IsActive);
-        Assert.Equal(_testUserId, newRole.AssignedBy);
+        Assert.IsNotNull(newRole);
+        Assert.AreEqual(HouseholdRoleType.Editor, newRole.RoleType);
+        Assert.IsTrue(newRole.IsActive);
+        Assert.AreEqual(_testUserId, newRole.AssignedBy);
         
         // Verify audit log was called
         _mockAuditService.Verify(x => x.LogAsync(
@@ -173,18 +175,17 @@ public class RbacServiceTests : IDisposable
             null), Times.Once);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task AssignRoleAsync_ThrowsExceptionWhenNonAdminTriesToAssign()
     {
         // Arrange - First assign Editor role to user 2
         await _rbacService.AssignRoleAsync(_testUserId, 2, HouseholdRoleType.Editor);
 
         // Act & Assert
-        await Assert.ThrowsAsync<InvalidOperationException>(
-            () => _rbacService.AssignRoleAsync(_testUser2Id, 1, HouseholdRoleType.FullAccess));
+        Assert.ThrowsException<InvalidOperationException>(() => _rbacService.AssignRoleAsync(_testUser2Id, 1, HouseholdRoleType.FullAccess.Result));
     }
 
-    [Fact]
+    [TestMethod]
     public async Task AssignRoleAsync_RevokesExistingRoleWhenAssigningNew()
     {
         // Arrange
@@ -202,44 +203,43 @@ public class RbacServiceTests : IDisposable
         var activeRoles = roles.Where(r => r.IsActive).ToList();
         var revokedRoles = roles.Where(r => !r.IsActive).ToList();
 
-        Assert.Single(activeRoles);
-        Assert.Equal(HouseholdRoleType.FullAccess, activeRoles[0].RoleType);
-        Assert.Single(revokedRoles);
-        Assert.Equal(HouseholdRoleType.Editor, revokedRoles[0].RoleType);
+        Assert.AreEqual(1, activeRoles.Count());
+        Assert.AreEqual(HouseholdRoleType.FullAccess, activeRoles[0].RoleType);
+        Assert.AreEqual(1, revokedRoles.Count());
+        Assert.AreEqual(HouseholdRoleType.Editor, revokedRoles[0].RoleType);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task TransferAdminRoleAsync_TransfersAdminRoleSuccessfully()
     {
         // Act
         var newAdminRole = await _rbacService.TransferAdminRoleAsync(_testUserId, _testUser2Id, _testHouseholdId);
 
         // Assert
-        Assert.NotNull(newAdminRole);
-        Assert.Equal(HouseholdRoleType.Admin, newAdminRole.RoleType);
+        Assert.IsNotNull(newAdminRole);
+        Assert.AreEqual(HouseholdRoleType.Admin, newAdminRole.RoleType);
 
         // Verify old admin now has Limited role
         var oldAdminRole = await _rbacService.GetUserRoleInHouseholdAsync(_testUserId, _testHouseholdId);
-        Assert.NotNull(oldAdminRole);
-        Assert.Equal(HouseholdRoleType.Limited, oldAdminRole.RoleType);
+        Assert.IsNotNull(oldAdminRole);
+        Assert.AreEqual(HouseholdRoleType.Limited, oldAdminRole.RoleType);
 
         // Verify new admin has Admin role
         var newRole = await _rbacService.GetUserRoleInHouseholdAsync(_testUser2Id, _testHouseholdId);
-        Assert.NotNull(newRole);
-        Assert.Equal(HouseholdRoleType.Admin, newRole.RoleType);
+        Assert.IsNotNull(newRole);
+        Assert.AreEqual(HouseholdRoleType.Admin, newRole.RoleType);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task RemoveRoleAsync_CannotRemoveLastAdminRole()
     {
         // Act & Assert
-        await Assert.ThrowsAsync<InvalidOperationException>(
-            () => _rbacService.RemoveRoleAsync(_testUserId, 1));
+        Assert.ThrowsException<InvalidOperationException>(() => _rbacService.RemoveRoleAsync(_testUserId, 1.Result));
     }
 
     // ==================== Permission Check Tests ====================
 
-    [Fact]
+    [TestMethod]
     public async Task HasPermissionAsync_AdminHasAllPermissions()
     {
         // Act
@@ -247,11 +247,11 @@ public class RbacServiceTests : IDisposable
         var hasBudgetPermission = await _rbacService.HasPermissionAsync(_testUserId, _testHouseholdId, "budget.edit.all");
 
         // Assert
-        Assert.True(hasTransactionPermission);
-        Assert.True(hasBudgetPermission);
+        Assert.IsTrue(hasTransactionPermission);
+        Assert.IsTrue(hasBudgetPermission);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CanPerformActionAsync_RespectsAmountLimits()
     {
         // Arrange - Assign Editor role to user 2
@@ -262,11 +262,11 @@ public class RbacServiceTests : IDisposable
         var canCreateLargeTransaction = await _rbacService.CanPerformActionAsync(_testUser2Id, _testHouseholdId, "transaction.create", 10000m);
 
         // Assert
-        Assert.True(canCreateSmallTransaction);
-        Assert.False(canCreateLargeTransaction); // Editor limit is 5000 SEK
+        Assert.IsTrue(canCreateSmallTransaction);
+        Assert.IsFalse(canCreateLargeTransaction); // Editor limit is 5000 SEK
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CheckPermissionAsync_ReturnsCorrectAmountLimitForEditor()
     {
         // Arrange - Assign Editor role to user 2
@@ -276,14 +276,14 @@ public class RbacServiceTests : IDisposable
         var result = await _rbacService.CheckPermissionAsync(_testUser2Id, _testHouseholdId, "transaction.create");
 
         // Assert
-        Assert.True(result.IsAllowed);
-        Assert.Equal(5000m, result.AmountLimit);
-        Assert.True(result.RequiresApproval);
+        Assert.IsTrue(result.IsAllowed);
+        Assert.AreEqual(5000m, result.AmountLimit);
+        Assert.IsTrue(result.RequiresApproval);
     }
 
     // ==================== Delegation Tests ====================
 
-    [Fact]
+    [TestMethod]
     public async Task DelegateRoleAsync_AdminCanDelegateFullAccess()
     {
         // Act
@@ -295,27 +295,26 @@ public class RbacServiceTests : IDisposable
             DateTime.UtcNow.AddDays(30));
 
         // Assert
-        Assert.NotNull(delegatedRole);
-        Assert.Equal(HouseholdRoleType.FullAccess, delegatedRole.RoleType);
-        Assert.True(delegatedRole.IsDelegated);
-        Assert.Equal(_testUserId, delegatedRole.DelegatedBy);
-        Assert.NotNull(delegatedRole.DelegationEndDate);
+        Assert.IsNotNull(delegatedRole);
+        Assert.AreEqual(HouseholdRoleType.FullAccess, delegatedRole.RoleType);
+        Assert.IsTrue(delegatedRole.IsDelegated);
+        Assert.AreEqual(_testUserId, delegatedRole.DelegatedBy);
+        Assert.IsNotNull(delegatedRole.DelegationEndDate);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task DelegateRoleAsync_ThrowsExceptionWhenExceedingMaxPeriod()
     {
         // Act & Assert
-        await Assert.ThrowsAsync<ArgumentException>(
-            () => _rbacService.DelegateRoleAsync(
+        Assert.ThrowsException<ArgumentException>(() => _rbacService.DelegateRoleAsync(
                 _testUserId,
                 _testUser2Id,
                 _testHouseholdId,
                 HouseholdRoleType.FullAccess,
-                DateTime.UtcNow.AddDays(365))); // Max is 90 days for FullAccess
+                DateTime.UtcNow.AddDays(365.Result))); // Max is 90 days for FullAccess
     }
 
-    [Fact]
+    [TestMethod]
     public async Task DelegateRoleAsync_DelegatedRoleCannotDelegateFurther()
     {
         // Arrange - Create a delegation
@@ -340,16 +339,15 @@ public class RbacServiceTests : IDisposable
         await _context.SaveChangesAsync();
 
         // Act & Assert - User 2 (with delegated role) tries to delegate to user 3
-        await Assert.ThrowsAsync<InvalidOperationException>(
-            () => _rbacService.DelegateRoleAsync(
+        Assert.ThrowsException<InvalidOperationException>(() => _rbacService.DelegateRoleAsync(
                 _testUser2Id,
                 "test-user-3",
                 _testHouseholdId,
                 HouseholdRoleType.Editor,
-                DateTime.UtcNow.AddDays(7)));
+                DateTime.UtcNow.AddDays(7.Result)));
     }
 
-    [Fact]
+    [TestMethod]
     public async Task RevokeDelegationAsync_RevokesSuccessfully()
     {
         // Arrange - Create a delegation
@@ -364,15 +362,15 @@ public class RbacServiceTests : IDisposable
         var result = await _rbacService.RevokeDelegationAsync(_testUserId, delegation.HouseholdRoleId);
 
         // Assert
-        Assert.True(result);
+        Assert.IsTrue(result);
 
         var revokedDelegation = await _context.HouseholdRoles.FindAsync(delegation.HouseholdRoleId);
-        Assert.NotNull(revokedDelegation);
-        Assert.False(revokedDelegation.IsActive);
-        Assert.NotNull(revokedDelegation.RevokedDate);
+        Assert.IsNotNull(revokedDelegation);
+        Assert.IsFalse(revokedDelegation.IsActive);
+        Assert.IsNotNull(revokedDelegation.RevokedDate);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetActiveDelegationsAsync_ReturnsOnlyActiveDelegations()
     {
         // Arrange - Create two delegations, revoke one
@@ -408,13 +406,13 @@ public class RbacServiceTests : IDisposable
         var activeDelegations = await _rbacService.GetActiveDelegationsAsync(_testHouseholdId);
 
         // Assert
-        Assert.Single(activeDelegations);
-        Assert.Equal(delegation2.HouseholdRoleId, activeDelegations.First().HouseholdRoleId);
+        Assert.AreEqual(1, activeDelegations.Count());
+        Assert.AreEqual(delegation2.HouseholdRoleId, activeDelegations.First().HouseholdRoleId);
     }
 
     // ==================== Validation Tests ====================
 
-    [Fact]
+    [TestMethod]
     public async Task ValidateRoleAssignmentAsync_FailsWhenNonAdminTriesToAssign()
     {
         // Arrange - Assign Editor role to user 2
@@ -424,43 +422,43 @@ public class RbacServiceTests : IDisposable
         var validation = await _rbacService.ValidateRoleAssignmentAsync(_testUser2Id, _testHouseholdId, 1, HouseholdRoleType.FullAccess);
 
         // Assert
-        Assert.False(validation.IsValid);
-        Assert.Contains("Only Admin can assign roles", validation.Errors);
+        Assert.IsFalse(validation.IsValid);
+        CollectionAssert.Contains(validation.Errors, "Only Admin can assign roles");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ValidateRoleAssignmentAsync_WarnsWhenReplacingAdmin()
     {
         // Act
         var validation = await _rbacService.ValidateRoleAssignmentAsync(_testUserId, _testHouseholdId, 2, HouseholdRoleType.Admin);
 
         // Assert
-        Assert.True(validation.IsValid);
-        Assert.Contains(validation.Warnings, w => w.Contains("replace the existing admin"));
+        Assert.IsTrue(validation.IsValid);
+        CollectionAssert.Contains(w => w.Contains("replace the existing admin", validation.Warnings));
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ValidateRoleAssignmentAsync_RequiresDateOfBirthForChildRole()
     {
         // Act
         var validation = await _rbacService.ValidateRoleAssignmentAsync(_testUserId, _testHouseholdId, 2, HouseholdRoleType.Child);
 
         // Assert
-        Assert.False(validation.IsValid);
-        Assert.Contains("Date of birth required for Child role", validation.Errors);
+        Assert.IsFalse(validation.IsValid);
+        CollectionAssert.Contains(validation.Errors, "Date of birth required for Child role");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ValidateHouseholdRolesAsync_PassesWithOneAdmin()
     {
         // Act
         var isValid = await _rbacService.ValidateHouseholdRolesAsync(_testHouseholdId);
 
         // Assert
-        Assert.True(isValid);
+        Assert.IsTrue(isValid);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ValidateHouseholdRolesAsync_FailsWithNoAdmin()
     {
         // Arrange - Remove admin role
@@ -475,56 +473,56 @@ public class RbacServiceTests : IDisposable
         var isValid = await _rbacService.ValidateHouseholdRolesAsync(_testHouseholdId);
 
         // Assert
-        Assert.False(isValid);
+        Assert.IsFalse(isValid);
     }
 
     // ==================== Utility Tests ====================
 
-    [Fact]
+    [TestMethod]
     public void CanDelegate_AdminCanDelegateAllExceptAdmin()
     {
         // Assert
-        Assert.False(_rbacService.CanDelegate(HouseholdRoleType.Admin, HouseholdRoleType.Admin));
-        Assert.True(_rbacService.CanDelegate(HouseholdRoleType.Admin, HouseholdRoleType.FullAccess));
-        Assert.True(_rbacService.CanDelegate(HouseholdRoleType.Admin, HouseholdRoleType.Editor));
-        Assert.True(_rbacService.CanDelegate(HouseholdRoleType.Admin, HouseholdRoleType.ViewOnly));
+        Assert.IsFalse(_rbacService.CanDelegate(HouseholdRoleType.Admin, HouseholdRoleType.Admin));
+        Assert.IsTrue(_rbacService.CanDelegate(HouseholdRoleType.Admin, HouseholdRoleType.FullAccess));
+        Assert.IsTrue(_rbacService.CanDelegate(HouseholdRoleType.Admin, HouseholdRoleType.Editor));
+        Assert.IsTrue(_rbacService.CanDelegate(HouseholdRoleType.Admin, HouseholdRoleType.ViewOnly));
     }
 
-    [Fact]
+    [TestMethod]
     public void CanDelegate_FullAccessCanDelegateLimitedRoles()
     {
         // Assert
-        Assert.True(_rbacService.CanDelegate(HouseholdRoleType.FullAccess, HouseholdRoleType.Editor));
-        Assert.True(_rbacService.CanDelegate(HouseholdRoleType.FullAccess, HouseholdRoleType.ViewOnly));
-        Assert.True(_rbacService.CanDelegate(HouseholdRoleType.FullAccess, HouseholdRoleType.Limited));
-        Assert.False(_rbacService.CanDelegate(HouseholdRoleType.FullAccess, HouseholdRoleType.FullAccess));
+        Assert.IsTrue(_rbacService.CanDelegate(HouseholdRoleType.FullAccess, HouseholdRoleType.Editor));
+        Assert.IsTrue(_rbacService.CanDelegate(HouseholdRoleType.FullAccess, HouseholdRoleType.ViewOnly));
+        Assert.IsTrue(_rbacService.CanDelegate(HouseholdRoleType.FullAccess, HouseholdRoleType.Limited));
+        Assert.IsFalse(_rbacService.CanDelegate(HouseholdRoleType.FullAccess, HouseholdRoleType.FullAccess));
     }
 
-    [Fact]
+    [TestMethod]
     public void CanDelegate_OtherRolesCannotDelegate()
     {
         // Assert
-        Assert.False(_rbacService.CanDelegate(HouseholdRoleType.Editor, HouseholdRoleType.ViewOnly));
-        Assert.False(_rbacService.CanDelegate(HouseholdRoleType.ViewOnly, HouseholdRoleType.Limited));
-        Assert.False(_rbacService.CanDelegate(HouseholdRoleType.Limited, HouseholdRoleType.Child));
+        Assert.IsFalse(_rbacService.CanDelegate(HouseholdRoleType.Editor, HouseholdRoleType.ViewOnly));
+        Assert.IsFalse(_rbacService.CanDelegate(HouseholdRoleType.ViewOnly, HouseholdRoleType.Limited));
+        Assert.IsFalse(_rbacService.CanDelegate(HouseholdRoleType.Limited, HouseholdRoleType.Child));
     }
 
-    [Fact]
+    [TestMethod]
     public void GetMaxDelegationPeriod_ReturnsCorrectPeriods()
     {
         // Assert
-        Assert.Equal(90, _rbacService.GetMaxDelegationPeriod(HouseholdRoleType.Admin, HouseholdRoleType.FullAccess));
-        Assert.Equal(365, _rbacService.GetMaxDelegationPeriod(HouseholdRoleType.Admin, HouseholdRoleType.ViewOnly));
-        Assert.Equal(30, _rbacService.GetMaxDelegationPeriod(HouseholdRoleType.FullAccess, HouseholdRoleType.Editor));
+        Assert.AreEqual(90, _rbacService.GetMaxDelegationPeriod(HouseholdRoleType.Admin, HouseholdRoleType.FullAccess));
+        Assert.AreEqual(365, _rbacService.GetMaxDelegationPeriod(HouseholdRoleType.Admin, HouseholdRoleType.ViewOnly));
+        Assert.AreEqual(30, _rbacService.GetMaxDelegationPeriod(HouseholdRoleType.FullAccess, HouseholdRoleType.Editor));
     }
 
-    [Fact]
+    [TestMethod]
     public void RequiresApprovalForDelegation_ReturnsCorrectValue()
     {
         // Assert
-        Assert.False(_rbacService.RequiresApprovalForDelegation(HouseholdRoleType.Admin, HouseholdRoleType.FullAccess));
-        Assert.True(_rbacService.RequiresApprovalForDelegation(HouseholdRoleType.FullAccess, HouseholdRoleType.Editor));
-        Assert.True(_rbacService.RequiresApprovalForDelegation(HouseholdRoleType.FullAccess, HouseholdRoleType.Limited));
-        Assert.False(_rbacService.RequiresApprovalForDelegation(HouseholdRoleType.FullAccess, HouseholdRoleType.ViewOnly));
+        Assert.IsFalse(_rbacService.RequiresApprovalForDelegation(HouseholdRoleType.Admin, HouseholdRoleType.FullAccess));
+        Assert.IsTrue(_rbacService.RequiresApprovalForDelegation(HouseholdRoleType.FullAccess, HouseholdRoleType.Editor));
+        Assert.IsTrue(_rbacService.RequiresApprovalForDelegation(HouseholdRoleType.FullAccess, HouseholdRoleType.Limited));
+        Assert.IsFalse(_rbacService.RequiresApprovalForDelegation(HouseholdRoleType.FullAccess, HouseholdRoleType.ViewOnly));
     }
 }

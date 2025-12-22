@@ -2,10 +2,11 @@ using Microsoft.EntityFrameworkCore;
 using Privatekonomi.Core.Data;
 using Privatekonomi.Core.Models;
 using Privatekonomi.Core.Services;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Privatekonomi.Core.Tests;
 
+[TestClass]
 public class CategoryServiceTests : IDisposable
 {
     private readonly PrivatekonomyContext _context;
@@ -21,13 +22,14 @@ public class CategoryServiceTests : IDisposable
         _categoryService = new CategoryService(_context);
     }
 
+    [TestCleanup]
     public void Dispose()
     {
         _context.Database.EnsureDeleted();
         _context.Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CreateCategoryAsync_GeneratesRandomColorWhenNotProvided()
     {
         // Arrange
@@ -41,13 +43,13 @@ public class CategoryServiceTests : IDisposable
         var result = await _categoryService.CreateCategoryAsync(category);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.NotEqual("#000000", result.Color);
-        Assert.StartsWith("#", result.Color);
-        Assert.Equal(7, result.Color.Length); // #RRGGBB format
+        Assert.IsNotNull(result);
+        Assert.AreNotEqual("#000000", result.Color);
+        StringAssert.StartsWith(result.Color, "#");
+        Assert.AreEqual(7, result.Color.Length); // #RRGGBB format
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CreateCategoryAsync_PreservesProvidedColor()
     {
         // Arrange
@@ -62,11 +64,11 @@ public class CategoryServiceTests : IDisposable
         var result = await _categoryService.CreateCategoryAsync(category);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Equal(expectedColor, result.Color);
+        Assert.IsNotNull(result);
+        Assert.AreEqual(expectedColor, result.Color);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CreateCategoryAsync_SetsCreatedAt()
     {
         // Arrange
@@ -80,11 +82,11 @@ public class CategoryServiceTests : IDisposable
         var result = await _categoryService.CreateCategoryAsync(category);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.NotEqual(DateTime.MinValue, result.CreatedAt);
+        Assert.IsNotNull(result);
+        Assert.AreNotEqual(DateTime.MinValue, result.CreatedAt);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CreateCategoryAsync_CreatesSubcategory()
     {
         // Arrange
@@ -106,11 +108,11 @@ public class CategoryServiceTests : IDisposable
         var result = await _categoryService.CreateCategoryAsync(subCategory);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Equal(parentCategory.CategoryId, result.ParentId);
+        Assert.IsNotNull(result);
+        Assert.AreEqual(parentCategory.CategoryId, result.ParentId);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task UpdateCategoryAsync_UpdatesNameAndColor()
     {
         // Arrange
@@ -127,13 +129,13 @@ public class CategoryServiceTests : IDisposable
         var result = await _categoryService.UpdateCategoryAsync(category);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Equal("Updated Name", result.Name);
-        Assert.Equal("#4ECDC4", result.Color);
-        Assert.NotNull(result.UpdatedAt);
+        Assert.IsNotNull(result);
+        Assert.AreEqual("Updated Name", result.Name);
+        Assert.AreEqual("#4ECDC4", result.Color);
+        Assert.IsNotNull(result.UpdatedAt);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ResetSystemCategoryAsync_RestoresOriginalValues()
     {
         // Arrange
@@ -153,13 +155,13 @@ public class CategoryServiceTests : IDisposable
         var result = await _categoryService.ResetSystemCategoryAsync(category.CategoryId);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Equal("Original Name", result.Name);
-        Assert.Equal("#FF6B6B", result.Color);
-        Assert.NotNull(result.UpdatedAt);
+        Assert.IsNotNull(result);
+        Assert.AreEqual("Original Name", result.Name);
+        Assert.AreEqual("#FF6B6B", result.Color);
+        Assert.IsNotNull(result.UpdatedAt);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ResetSystemCategoryAsync_ReturnsNullForNonSystemCategory()
     {
         // Arrange
@@ -175,20 +177,20 @@ public class CategoryServiceTests : IDisposable
         var result = await _categoryService.ResetSystemCategoryAsync(category.CategoryId);
 
         // Assert
-        Assert.Null(result);
+        Assert.IsNull(result);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ResetSystemCategoryAsync_ReturnsNullForNonExistentCategory()
     {
         // Act
         var result = await _categoryService.ResetSystemCategoryAsync(999);
 
         // Assert
-        Assert.Null(result);
+        Assert.IsNull(result);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetAllCategoriesAsync_ReturnsMainCategoriesWithSubcategories()
     {
         // Arrange
@@ -212,15 +214,15 @@ public class CategoryServiceTests : IDisposable
 
         // Assert
         var categories = result.ToList();
-        Assert.Equal(2, categories.Count);
+        Assert.AreEqual(2, categories.Count);
         
         var parent = categories.FirstOrDefault(c => c.Name == "Parent");
-        Assert.NotNull(parent);
-        Assert.Single(parent.SubCategories);
-        Assert.Equal("Sub", parent.SubCategories.First().Name);
+        Assert.IsNotNull(parent);
+        Assert.AreEqual(1, parent.SubCategories.Count());
+        Assert.AreEqual("Sub", parent.SubCategories.First().Name);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task DeleteCategoryAsync_RemovesCategory()
     {
         // Arrange
@@ -236,10 +238,10 @@ public class CategoryServiceTests : IDisposable
 
         // Assert
         var result = await _categoryService.GetCategoryByIdAsync(category.CategoryId);
-        Assert.Null(result);
+        Assert.IsNull(result);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CreateCategoryAsync_PreservesAccountNumber()
     {
         // Arrange
@@ -254,11 +256,11 @@ public class CategoryServiceTests : IDisposable
         var result = await _categoryService.CreateCategoryAsync(category);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Equal("5000", result.AccountNumber);
+        Assert.IsNotNull(result);
+        Assert.AreEqual("5000", result.AccountNumber);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task UpdateCategoryAsync_UpdatesAccountNumber()
     {
         // Arrange
@@ -275,11 +277,11 @@ public class CategoryServiceTests : IDisposable
         var result = await _categoryService.UpdateCategoryAsync(category);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Equal("3100", result.AccountNumber);
+        Assert.IsNotNull(result);
+        Assert.AreEqual("3100", result.AccountNumber);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ResetSystemCategoryAsync_RestoresOriginalAccountNumber()
     {
         // Arrange
@@ -301,14 +303,14 @@ public class CategoryServiceTests : IDisposable
         var result = await _categoryService.ResetSystemCategoryAsync(category.CategoryId);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Equal("Original Name", result.Name);
-        Assert.Equal("#FF6B6B", result.Color);
-        Assert.Equal("5000", result.AccountNumber);
-        Assert.NotNull(result.UpdatedAt);
+        Assert.IsNotNull(result);
+        Assert.AreEqual("Original Name", result.Name);
+        Assert.AreEqual("#FF6B6B", result.Color);
+        Assert.AreEqual("5000", result.AccountNumber);
+        Assert.IsNotNull(result.UpdatedAt);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task SeededCategories_HaveCorrectAccountNumbers()
     {
         // This test verifies that the database seeding includes account numbers
@@ -328,30 +330,30 @@ public class CategoryServiceTests : IDisposable
 
         // Assert - Verify main categories have account numbers
         var matOchDryck = categoryList.FirstOrDefault(c => c.Name == "Mat & Dryck");
-        Assert.NotNull(matOchDryck);
-        Assert.Equal("5000", matOchDryck.AccountNumber);
+        Assert.IsNotNull(matOchDryck);
+        Assert.AreEqual("5000", matOchDryck.AccountNumber);
 
         var boende = categoryList.FirstOrDefault(c => c.Name == "Boende");
-        Assert.NotNull(boende);
-        Assert.Equal("4000", boende.AccountNumber);
+        Assert.IsNotNull(boende);
+        Assert.AreEqual("4000", boende.AccountNumber);
 
         var lon = categoryList.FirstOrDefault(c => c.Name == "Lön");
-        Assert.NotNull(lon);
-        Assert.Equal("3000", lon.AccountNumber);
+        Assert.IsNotNull(lon);
+        Assert.AreEqual("3000", lon.AccountNumber);
 
         var sparande = categoryList.FirstOrDefault(c => c.Name == "Sparande");
-        Assert.NotNull(sparande);
-        Assert.Equal("8000", sparande.AccountNumber);
+        Assert.IsNotNull(sparande);
+        Assert.AreEqual("8000", sparande.AccountNumber);
 
         // Verify subcategories exist and have account numbers
         var livsmedel = categoryList.FirstOrDefault(c => c.Name == "Livsmedel");
-        Assert.NotNull(livsmedel);
-        Assert.Equal("5100", livsmedel.AccountNumber);
-        Assert.Equal(matOchDryck.CategoryId, livsmedel.ParentId);
+        Assert.IsNotNull(livsmedel);
+        Assert.AreEqual("5100", livsmedel.AccountNumber);
+        Assert.AreEqual(matOchDryck.CategoryId, livsmedel.ParentId);
 
         var hyra = categoryList.FirstOrDefault(c => c.Name == "Hyra/Avgift");
-        Assert.NotNull(hyra);
-        Assert.Equal("4100", hyra.AccountNumber);
-        Assert.Equal(boende.CategoryId, hyra.ParentId);
+        Assert.IsNotNull(hyra);
+        Assert.AreEqual("4100", hyra.AccountNumber);
+        Assert.AreEqual(boende.CategoryId, hyra.ParentId);
     }
 }

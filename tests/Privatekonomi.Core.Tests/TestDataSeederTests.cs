@@ -3,10 +3,11 @@ using Microsoft.EntityFrameworkCore;
 using Moq;
 using Privatekonomi.Core.Data;
 using Privatekonomi.Core.Models;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Privatekonomi.Core.Tests;
 
+[TestClass]
 public class TestDataSeederTests : IDisposable
 {
     private const int ExpectedCategorizedTransactions = 300;
@@ -61,13 +62,14 @@ public class TestDataSeederTests : IDisposable
             });
     }
 
+    [TestCleanup]
     public void Dispose()
     {
         _context.Database.EnsureDeleted();
         _context.Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task SeedTestDataAsync_GeneratesTransactionsWithin18MonthsDateRange()
     {
         // Arrange
@@ -81,15 +83,15 @@ public class TestDataSeederTests : IDisposable
         var transactions = await _context.Transactions.ToListAsync();
         
         // Should have generated the expected number of transactions
-        Assert.True(transactions.Count >= ExpectedCategorizedTransactions, 
+        Assert.IsTrue(transactions.Count >= ExpectedCategorizedTransactions, 
             $"Expected at least {ExpectedCategorizedTransactions} transactions, but got {transactions.Count}");
         
         // Verify all transaction dates are within the expected range
         foreach (var transaction in transactions)
         {
-            Assert.True(transaction.Date >= expectedMinDate, 
+            Assert.IsTrue(transaction.Date >= expectedMinDate, 
                 $"Transaction date {transaction.Date:yyyy-MM-dd} is before expected minimum {expectedMinDate:yyyy-MM-dd}");
-            Assert.True(transaction.Date <= today, 
+            Assert.IsTrue(transaction.Date <= today, 
                 $"Transaction date {transaction.Date:yyyy-MM-dd} is after today {today:yyyy-MM-dd}");
         }
         
@@ -99,11 +101,11 @@ public class TestDataSeederTests : IDisposable
         var dateRangeDays = (newestTransaction - oldestTransaction).TotalDays;
         
         // We expect the range to be close to ExpectedDateRangeDays (with some margin for randomness)
-        Assert.True(dateRangeDays >= MinimumExpectedDateRangeDays, 
+        Assert.IsTrue(dateRangeDays >= MinimumExpectedDateRangeDays, 
             $"Date range should be at least {MinimumExpectedDateRangeDays} days, but was {dateRangeDays:F0} days");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task SeedTestDataAsync_GeneratesCorrectNumberOfTransactions()
     {
         // Act
@@ -113,10 +115,10 @@ public class TestDataSeederTests : IDisposable
         var transactions = await _context.Transactions.ToListAsync();
         
         // Should have the expected total (categorized + unmapped transactions)
-        Assert.Equal(ExpectedTotalTransactions, transactions.Count);
+        Assert.AreEqual(ExpectedTotalTransactions, transactions.Count);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task SeedTestDataAsync_TransactionDatesAreRelativeToCurrentDate()
     {
         // Arrange
@@ -135,14 +137,14 @@ public class TestDataSeederTests : IDisposable
         
         foreach (var transaction in transactions)
         {
-            Assert.True(transaction.Date >= expectedMinDate.AddDays(-1), // Small margin for test execution time
+            Assert.IsTrue(transaction.Date >= expectedMinDate.AddDays(-1), // Small margin for test execution time
                 $"Transaction date {transaction.Date:yyyy-MM-dd HH:mm:ss} should be after {expectedMinDate:yyyy-MM-dd HH:mm:ss}");
-            Assert.True(transaction.Date <= expectedMaxDate.AddDays(1), // Small margin for test execution time
+            Assert.IsTrue(transaction.Date <= expectedMaxDate.AddDays(1), // Small margin for test execution time
                 $"Transaction date {transaction.Date:yyyy-MM-dd HH:mm:ss} should be before {expectedMaxDate:yyyy-MM-dd HH:mm:ss}");
         }
     }
 
-    [Fact]
+    [TestMethod]
     public void SeedProductionReferenceData_SeedsChallengeTemplates()
     {
         // Act
@@ -152,19 +154,19 @@ public class TestDataSeederTests : IDisposable
         var templates = _context.ChallengeTemplates.ToList();
         
         // Verify that challenge templates were seeded
-        Assert.NotEmpty(templates);
+        Assert.AreNotEqual(0, templates.Count());
         
         // Verify that at least some expected templates exist
-        Assert.Contains(templates, t => t.Name == "No Spend Weekend");
-        Assert.Contains(templates, t => t.Name == "Matlåda varje dag");
-        Assert.Contains(templates, t => t.Type == ChallengeType.NoSpendWeekend);
-        Assert.Contains(templates, t => t.Type == ChallengeType.LunchBox);
+        Assert.IsTrue(templates.Any(t => t.Name == "No Spend Weekend"));
+        Assert.IsTrue(templates.Any(t => t.Name == "Matlåda varje dag"));
+        Assert.IsTrue(templates.Any(t => t.Type == ChallengeType.NoSpendWeekend));
+        Assert.IsTrue(templates.Any(t => t.Type == ChallengeType.LunchBox));
         
         // Verify all templates are active by default
-        Assert.All(templates, t => Assert.True(t.IsActive));
+        foreach (var t in templates) { Assert.IsTrue(t.IsActive); }
     }
 
-    [Fact]
+    [TestMethod]
     public void SeedProductionReferenceData_DoesNotDuplicateTemplates()
     {
         // Act - Seed twice
@@ -175,10 +177,10 @@ public class TestDataSeederTests : IDisposable
         var secondCount = _context.ChallengeTemplates.Count();
         
         // Assert - Count should be the same after second seeding
-        Assert.Equal(firstCount, secondCount);
+        Assert.AreEqual(firstCount, secondCount);
     }
 
-    [Fact]
+    [TestMethod]
     public void SeedProductionReferenceData_TemplatesHaveRequiredProperties()
     {
         // Act
@@ -190,11 +192,11 @@ public class TestDataSeederTests : IDisposable
         foreach (var template in templates)
         {
             // Verify each template has required properties
-            Assert.False(string.IsNullOrEmpty(template.Name), "Template should have a name");
-            Assert.False(string.IsNullOrEmpty(template.Description), "Template should have a description");
-            Assert.False(string.IsNullOrEmpty(template.Icon), "Template should have an icon");
-            Assert.True(template.DurationDays > 0, "Template should have a positive duration");
-            Assert.True(template.Difficulty >= DifficultyLevel.VeryEasy && template.Difficulty <= DifficultyLevel.VeryHard, 
+            Assert.IsFalse(string.IsNullOrEmpty(template.Name), "Template should have a name");
+            Assert.IsFalse(string.IsNullOrEmpty(template.Description), "Template should have a description");
+            Assert.IsFalse(string.IsNullOrEmpty(template.Icon), "Template should have an icon");
+            Assert.IsTrue(template.DurationDays > 0, "Template should have a positive duration");
+            Assert.IsTrue(template.Difficulty >= DifficultyLevel.VeryEasy && template.Difficulty <= DifficultyLevel.VeryHard, 
                 "Template should have a valid difficulty level");
         }
     }

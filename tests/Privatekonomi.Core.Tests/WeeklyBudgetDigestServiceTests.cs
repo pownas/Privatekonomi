@@ -5,10 +5,11 @@ using Moq;
 using Privatekonomi.Core.Data;
 using Privatekonomi.Core.Models;
 using Privatekonomi.Core.Services;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Privatekonomi.Core.Tests;
 
+[TestClass]
 public class WeeklyBudgetDigestServiceTests
 {
     private readonly Mock<ILogger<BudgetAlertService>> _mockLogger;
@@ -18,7 +19,7 @@ public class WeeklyBudgetDigestServiceTests
         _mockLogger = new Mock<ILogger<BudgetAlertService>>();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task SendUserDigest_IncludesAllBudgetCategories()
     {
         // Arrange
@@ -118,18 +119,18 @@ public class WeeklyBudgetDigestServiceTests
         var userBudgets = activeBudgets.Where(b => b.UserId == userId).ToList();
 
         // Assert
-        Assert.Single(userBudgets);
-        Assert.Equal(2, userBudgets[0].BudgetCategories.Count);
+        Assert.AreEqual(1, userBudgets.Count());
+        Assert.AreEqual(2, userBudgets[0].BudgetCategories.Count);
 
         // Verify budget calculations
         var usage1 = await budgetAlertService.CalculateBudgetUsagePercentageAsync(1, 1);
-        Assert.Equal(90m, usage1); // 6750 / 7500 = 90%
+        Assert.AreEqual(90m, usage1); // 6750 / 7500 = 90%
 
         var usage2 = await budgetAlertService.CalculateBudgetUsagePercentageAsync(1, 2);
-        Assert.Equal(50m, usage2); // 1500 / 3000 = 50%
+        Assert.AreEqual(50m, usage2); // 1500 / 3000 = 50%
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CalculateDailyRate_ReturnsCorrectRate()
     {
         // Arrange
@@ -189,10 +190,10 @@ public class WeeklyBudgetDigestServiceTests
 
         // Assert
         // 1000kr / 10 days = 100kr/day
-        Assert.Equal(100m, dailyRate);
+        Assert.AreEqual(100m, dailyRate);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CalculateForecast_PredictsCorrectDaysUntilExceeded()
     {
         // Arrange
@@ -253,8 +254,8 @@ public class WeeklyBudgetDigestServiceTests
         var daysUntilExceeded = await service.CalculateDaysUntilExceededAsync(1, 1);
 
         // Assert
-        Assert.NotNull(daysUntilExceeded);
-        Assert.Equal(7, daysUntilExceeded.Value);
+        Assert.IsNotNull(daysUntilExceeded);
+        Assert.AreEqual(7, daysUntilExceeded.Value);
     }
 }
 

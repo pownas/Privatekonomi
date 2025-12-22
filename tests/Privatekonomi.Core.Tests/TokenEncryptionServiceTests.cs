@@ -1,10 +1,11 @@
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.DependencyInjection;
 using Privatekonomi.Core.Services;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Privatekonomi.Core.Tests;
 
+[TestClass]
 public class TokenEncryptionServiceTests
 {
     private readonly ITokenEncryptionService _encryptionService;
@@ -20,7 +21,7 @@ public class TokenEncryptionServiceTests
         _encryptionService = new TokenEncryptionService(dataProtectionProvider);
     }
 
-    [Fact]
+    [TestMethod]
     public void Encrypt_ShouldReturnEncryptedString()
     {
         // Arrange
@@ -30,12 +31,12 @@ public class TokenEncryptionServiceTests
         var encrypted = _encryptionService.Encrypt(plaintext);
 
         // Assert
-        Assert.NotNull(encrypted);
-        Assert.NotEqual(plaintext, encrypted);
-        Assert.StartsWith("ENC:", encrypted);
+        Assert.IsNotNull(encrypted);
+        Assert.AreNotEqual(plaintext, encrypted);
+        StringAssert.StartsWith(encrypted, "ENC:");
     }
 
-    [Fact]
+    [TestMethod]
     public void Decrypt_ShouldReturnOriginalString()
     {
         // Arrange
@@ -46,10 +47,10 @@ public class TokenEncryptionServiceTests
         var decrypted = _encryptionService.Decrypt(encrypted);
 
         // Assert
-        Assert.Equal(plaintext, decrypted);
+        Assert.AreEqual(plaintext, decrypted);
     }
 
-    [Fact]
+    [TestMethod]
     public void Encrypt_ShouldNotDoubleEncrypt()
     {
         // Arrange
@@ -60,10 +61,10 @@ public class TokenEncryptionServiceTests
         var encryptedAgain = _encryptionService.Encrypt(encrypted);
 
         // Assert
-        Assert.Equal(encrypted, encryptedAgain);
+        Assert.AreEqual(encrypted, encryptedAgain);
     }
 
-    [Fact]
+    [TestMethod]
     public void Decrypt_UnencryptedString_ShouldReturnAsIs()
     {
         // Arrange
@@ -73,10 +74,10 @@ public class TokenEncryptionServiceTests
         var result = _encryptionService.Decrypt(plaintext);
 
         // Assert
-        Assert.Equal(plaintext, result);
+        Assert.AreEqual(plaintext, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void IsEncrypted_ShouldDetectEncryptedStrings()
     {
         // Arrange
@@ -84,27 +85,27 @@ public class TokenEncryptionServiceTests
         var encrypted = _encryptionService.Encrypt(plaintext);
 
         // Act & Assert
-        Assert.True(_encryptionService.IsEncrypted(encrypted));
-        Assert.False(_encryptionService.IsEncrypted(plaintext));
+        Assert.IsTrue(_encryptionService.IsEncrypted(encrypted));
+        Assert.IsFalse(_encryptionService.IsEncrypted(plaintext));
     }
 
-    [Fact]
+    [TestMethod]
     public void Encrypt_NullOrEmpty_ShouldReturnAsIs()
     {
         // Arrange & Act & Assert
-        Assert.Null(_encryptionService.Encrypt(null!));
-        Assert.Equal(string.Empty, _encryptionService.Encrypt(string.Empty));
+        Assert.IsNull(_encryptionService.Encrypt(null!));
+        Assert.AreEqual(string.Empty, _encryptionService.Encrypt(string.Empty));
     }
 
-    [Fact]
+    [TestMethod]
     public void Decrypt_NullOrEmpty_ShouldReturnAsIs()
     {
         // Arrange & Act & Assert
-        Assert.Null(_encryptionService.Decrypt(null!));
-        Assert.Equal(string.Empty, _encryptionService.Decrypt(string.Empty));
+        Assert.IsNull(_encryptionService.Decrypt(null!));
+        Assert.AreEqual(string.Empty, _encryptionService.Decrypt(string.Empty));
     }
 
-    [Fact]
+    [TestMethod]
     public void RoundTrip_MultipleTokens_ShouldWork()
     {
         // Arrange
@@ -121,9 +122,9 @@ public class TokenEncryptionServiceTests
             var encrypted = _encryptionService.Encrypt(token);
             var decrypted = _encryptionService.Decrypt(encrypted);
             
-            Assert.Equal(token, decrypted);
-            Assert.NotEqual(token, encrypted);
-            Assert.True(_encryptionService.IsEncrypted(encrypted));
+            Assert.AreEqual(token, decrypted);
+            Assert.AreNotEqual(token, encrypted);
+            Assert.IsTrue(_encryptionService.IsEncrypted(encrypted));
         }
     }
 }
