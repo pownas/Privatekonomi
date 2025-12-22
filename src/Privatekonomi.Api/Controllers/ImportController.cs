@@ -23,22 +23,23 @@ public class ImportController : ControllerBase
     /// Upload a file for preview (CSV or OFX format).
     /// </summary>
     [HttpPost("upload")]
-    public async Task<ActionResult<PreviewResponse>> Upload([FromForm] IFormFile file, [FromForm] string bankName)
+    [Consumes("multipart/form-data")]
+    public async Task<ActionResult<PreviewResponse>> Upload([FromForm] FileUploadRequest request)
     {
         try
         {
             // Validate file
-            if (file == null || file.Length == 0)
+            if (request.File == null || request.File.Length == 0)
             {
                 return BadRequest(new { error = "Ingen fil vald" });
             }
 
-            if (file.Length > 10 * 1024 * 1024) // 10 MB
+            if (request.File.Length > 10 * 1024 * 1024) // 10 MB
             {
                 return BadRequest(new { error = "Filen är för stor. Max storlek är 10 MB." });
             }
 
-            var extension = Path.GetExtension(file.FileName).ToLower();
+            var extension = Path.GetExtension(request.File.FileName).ToLower();
             if (extension != ".csv" && extension != ".txt" && extension != ".ofx" && extension != ".qfx")
             {
                 return BadRequest(new { error = "Filtypen stöds inte. Endast .csv, .ofx och .qfx-filer accepteras." });
@@ -46,15 +47,15 @@ public class ImportController : ControllerBase
 
             // Read file content
             using var memoryStream = new MemoryStream();
-            await file.CopyToAsync(memoryStream);
+            await request.File.CopyToAsync(memoryStream);
             var fileContent = memoryStream.ToArray();
 
             // Parse and preview
             memoryStream.Position = 0;
             
             // Determine bank name for OFX files
-            var effectiveBankName = bankName;
-            if ((extension == ".ofx" || extension == ".qfx") && !bankName.Contains("OFX", StringComparison.OrdinalIgnoreCase))
+            var effectiveBankName = request.BankName;
+            if ((extension == ".ofx" || extension == ".qfx") && !request.BankName.Contains("OFX", StringComparison.OrdinalIgnoreCase))
             {
                 effectiveBankName = "OFX (Allmän)";
             }
@@ -68,7 +69,7 @@ public class ImportController : ControllerBase
 
             // Store file temporarily
             var fileId = Guid.NewGuid().ToString();
-            _tempFiles[fileId] = (fileContent, file.FileName, file.Length);
+            _tempFiles[fileId] = (fileContent, request.File.FileName, request.File.Length);
 
             // Clean up old temp files (older than 1 hour)
             CleanupOldTempFiles();
@@ -286,4 +287,17 @@ public class BankInfo
     public string Name { get; set; } = string.Empty;
     public string[] FileTypes { get; set; } = Array.Empty<string>();
     public string Description { get; set; } = string.Empty;
+}
+
+public class FileUploadRequest
+{
+    /// <summary>
+    /// The file to upload
+    /// </summary>
+    public IFormFile File { get; set; } = null!;
+
+    /// <summary>
+    /// The name of the bank
+    /// </summary>
+    public string BankName { get; set; } = string.Empty;
 }

@@ -81,6 +81,9 @@ builder.Services.AddScoped<INotificationPreferenceService, NotificationPreferenc
 builder.Services.AddScoped<IBillService, BillService>();
 builder.Services.AddScoped<IDashboardLayoutService, DashboardLayoutService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
+builder.Services.AddScoped<ISavingsChallengeService, SavingsChallengeService>();
+builder.Services.AddScoped<IBankConnectionService, BankConnectionService>();
+builder.Services.AddSingleton<IOAuthStateService, OAuthStateService>();
 
 // HTTP context accessor for current user service
 builder.Services.AddHttpContextAccessor();
