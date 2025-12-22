@@ -1,0 +1,157 @@
+﻿@page "/navigation-performance"
+@using Privatekonomi.Core.Services
+@using Privatekonomi.Web.Components.Shared
+@inject INavigationPerformanceService NavigationPerformanceService
+@inherits PerformanceTrackedPageBase
+@attribute [Authorize]
+
+<PageTitle>Navigation Performance Tracking</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
+    <MudText Typo="Typo.h4" Class="mb-4">
+        <MudIcon Icon="@Icons.Material.Filled.Speed" Class="mr-2" />
+        Navigation Performance Tracking
+    </MudText>
+
+    <MudAlert Severity="Severity.Info" Class="mb-4">
+        Denna sida visar realtidsspårning av användarens navigationsklick från menyn till att sidan renderas.
+        Klicka på olika menyalternativ för att se mätningar.
+    </MudAlert>
+
+    <MudGrid>
+        <MudItem xs="12" md="6">
+            <MudPaper Class="pa-4">
+                <MudText Typo="Typo.h6" Class="mb-3">
+                    <MudIcon Icon="@Icons.Material.Filled.PendingActions" Size="Size.Small" Class="mr-1" />
+                    Aktiva Navigeringar
+                </MudText>
+                
+                @if (!_activeNavigations.Any())
+                {
+                    <MudText Typo="Typo.body2" Color="Color.Tertiary">
+                        Inga aktiva navigeringar just nu. Klicka på ett menyalternativ för att se spårning.
+                    </MudText>
+                }
+                else
+                {
+                    <MudStack Spacing="2">
+                        @foreach (var nav in _activeNavigations)
+                        {
+                            <MudPaper Outlined="true" Class="pa-3">
+                                <MudStack Spacing="1">
+                                    <MudText Typo="Typo.body1">
+                                        <strong>Mål:</strong> @nav.TargetUrl
+                                    </MudText>
+                                    <MudText Typo="Typo.body2">
+                                        <strong>Källa:</strong> @nav.SourceName
+                                    </MudText>
+                                    <MudText Typo="Typo.caption">
+                                        Starttid: @nav.StartTime.ToLocalTime().ToString("HH:mm:ss.fff")
+                                    </MudText>
+                                    <MudProgressLinear Indeterminate="true" Color="Color.Primary" Size="Size.Small" />
+                                </MudStack>
+                            </MudPaper>
+                        }
+                    </MudStack>
+                }
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="12">
+            <MudPaper Class="pa-4">
+                <MudText Typo="Typo.h6" Class="mb-3">
+                    <MudIcon Icon="@Icons.Material.Filled.BarChart" Size="Size.Small" Class="mr-1" />
+                    Information
+                </MudText>
+
+                <MudText Typo="Typo.body2" Color="Color.Tertiary">
+                    Navigationsmetriker spåras automatiskt och syns i Aspire Dashboard under "Traces".
+                    Aktiva navigeringar uppdateras var 500:e millisekund.
+                </MudText>
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="12">
+            <MudPaper Class="pa-4">
+                <MudText Typo="Typo.h6" Class="mb-3">
+                    <MudIcon Icon="@Icons.Material.Filled.Code" Size="Size.Small" Class="mr-1" />
+                    Implementationsguide
+                </MudText>
+
+                <MudText Typo="Typo.body2" Class="mb-2">
+                    För att spåra navigation performance på dina sidor, gör så här:
+                </MudText>
+
+                <MudPaper Outlined="true" Class="pa-3 mb-3">
+                    <MudText Typo="Typo.subtitle2" Class="mb-2">1. Ärv från PerformanceTrackedPageBase</MudText>
+                    <pre style="background-color: #f5f5f5; padding: 12px; border-radius: 4px; overflow-x: auto;">
+@@page "/min-sida"
+@@inherits Privatekonomi.Web.Components.Shared.PerformanceTrackedPageBase
+
+@@code {
+    protected override string PageName => "Min Sida";
+}</pre>
+                </MudPaper>
+
+                <MudPaper Outlined="true" Class="pa-3 mb-3">
+                    <MudText Typo="Typo.subtitle2" Class="mb-2">2. Alternativt: Manuell spårning</MudText>
+                    <pre style="background-color: #f5f5f5; padding: 12px; border-radius: 4px; overflow-x: auto;">
+@@inject INavigationPerformanceService NavigationPerformanceService
+
+@@code {
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var currentUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
+            NavigationPerformanceService.CompleteNavigation(currentUrl, "Sidnamn");
+        }
+    }
+}</pre>
+                </MudPaper>
+
+                <MudAlert Severity="Severity.Success" Class="mt-3">
+                    <MudText Typo="Typo.body2">
+                        Spårningen sker automatiskt när användaren klickar i menyn och rapporteras när sidan är färdigrenderad.
+                        All data syns i Aspire Dashboard under Traces.
+                    </MudText>
+                </MudAlert>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+</MudContainer>
+
+@code {
+    private List<NavigationMetric> _activeNavigations = new();
+    private System.Threading.Timer? _refreshTimer;
+
+    protected override string PageName => "Navigation Performance";
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        _refreshTimer = new System.Threading.Timer(_ => InvokeAsync(RefreshData), null, TimeSpan.Zero, TimeSpan.FromMilliseconds(500));
+    }
+
+    private void RefreshData()
+    {
+        _activeNavigations = NavigationPerformanceService.GetAllActiveNavigations().ToList();
+        StateHasChanged();
+    }
+
+    private Color GetColorForDuration(double durationMs)
+    {
+        return durationMs switch
+        {
+            < 100 => Color.Success,
+            < 300 => Color.Info,
+            < 500 => Color.Warning,
+            _ => Color.Error
+        };
+    }
+
+    public void Dispose()
+    {
+        _refreshTimer?.Dispose();
+    }
+}
