@@ -49,6 +49,30 @@ public static class TestDataSeeder
         SeedCurrencyAccounts(context, testUserId);
         SeedLifeTimelineMilestones(context, testUserId);
         SeedNotifications(context, testUserId);
+        SeedAuditLogs(context, testUserId);
+        SeedAdditionalBudgets(context, testUserId);
+        SeedMoreInvestmentHistory(context, testUserId);
+        SeedMoreNetWorthSnapshots(context, testUserId);
+        SeedMoreTransactions(context, testUserId);
+        SeedMoreGoals(context, testUserId);
+        SeedMoreSubscriptions(context, testUserId);
+        SeedReceipts(context, testUserId);
+        SeedPortfolioAllocations(context, testUserId);
+        SeedSavingsGroups(context, testUserId);
+        SeedLifeTimelineScenarios(context, testUserId);
+        SeedGoalShares(context, testUserId);
+        
+        //// Missing seed placeholders for other data types
+        // SeedBankConnections(context);
+        // SeedTaxDeductions(context, testUserId);
+        // SeedCapitalGains(context, testUserId);
+        // SeedCommuteDeductions(context, testUserId);
+        // SeedCreditRatings(context, testUserId);
+        // SeedMLModels(context);
+        // SeedUserFeedback(context, testUserId);
+        // SeedNotificationPreferences(context, testUserId);
+        // SeedDoNotDisturbSchedules(context, testUserId);
+        // SeedUserPrivacySettings(context, testUserId);
     }
     
     private static async Task<string> SeedUsers(UserManager<ApplicationUser> userManager)
@@ -3325,6 +3349,1031 @@ public static class TestDataSeeder
         };
 
         context.Notifications.AddRange(notifications);
+        context.SaveChanges();
+    }
+
+
+
+    private static void SeedAuditLogs(PrivatekonomyContext context, string userId)
+    {
+        // Only seed if no audit logs exist
+        if (context.AuditLogs.Any())
+        {
+            return;
+        }
+
+        var auditLogs = new List<AuditLog>();
+        var random = new Random(42);
+        var startDate = DateTime.UtcNow.AddDays(-550);
+
+        var actions = new[] { "Create", "Update", "Delete", "Login", "Logout", "Import", "Export" };
+        var entityTypes = new[] { "Transaction", "Budget", "Goal", "Investment", "User", "Category" };
+
+        for (int i = 1; i <= 200; i++)
+        {
+            var auditDate = startDate.AddDays(random.Next(0, 550));
+            var action = actions[random.Next(actions.Length)];
+            var entityType = entityTypes[random.Next(entityTypes.Length)];
+
+            var auditLog = new AuditLog
+            {
+                AuditLogId = i,
+                Action = action,
+                EntityType = entityType,
+                EntityId = random.Next(1, 100),
+                UserId = userId,
+                IpAddress = $"192.168.1.{random.Next(1, 255)}",
+                Details = $"{action} {entityType.ToLower()} with ID {random.Next(1, 100)}",
+                CreatedAt = auditDate
+            };
+
+            auditLogs.Add(auditLog);
+        }
+
+        context.AuditLogs.AddRange(auditLogs);
+        context.SaveChanges();
+    }
+
+    private static void SeedAdditionalBudgets(PrivatekonomyContext context, string userId)
+    {
+        // Only seed additional budgets if less than 10 budgets exist
+        if (context.Budgets.Count() >= 10)
+        {
+            return;
+        }
+
+        var budgets = new List<Budget>();
+        var budgetCategories = new List<BudgetCategory>();
+        var random = new Random(42);
+        var startDate = DateTime.UtcNow.AddDays(-550);
+
+        // Create budgets for each month over the last 18 months
+        for (int i = 0; i < 16; i++) // 16 more months (already have 2)
+        {
+            var monthDate = startDate.AddMonths(i);
+            var startOfMonth = new DateTime(monthDate.Year, monthDate.Month, 1);
+            var endOfMonth = startOfMonth.AddMonths(1).AddDays(-1);
+
+            var budget = new Budget
+            {
+                BudgetId = i + 3, // Start from ID 3 (1-2 already exist)
+                Name = "Månadsbudget " + monthDate.ToString("MMMM yyyy", new System.Globalization.CultureInfo("sv-SE")),
+                Description = $"Budget för {monthDate:MMMM yyyy}",
+                StartDate = startOfMonth,
+                EndDate = endOfMonth,
+                Period = BudgetPeriod.Monthly,
+                CreatedAt = startOfMonth.AddDays(-5),
+                UserId = userId
+            };
+
+            budgets.Add(budget);
+
+            // Add budget categories for this budget
+            var categoryBudgets = new[]
+            {
+                new { CategoryId = 1, BaseAmount = 4500m }, // Mat & Dryck
+                new { CategoryId = 2, BaseAmount = 1400m }, // Transport
+                new { CategoryId = 3, BaseAmount = 11500m }, // Boende
+                new { CategoryId = 4, BaseAmount = 1800m }, // Nöje
+                new { CategoryId = 5, BaseAmount = 2800m }, // Shopping
+                new { CategoryId = 6, BaseAmount = 900m },  // Hälsa
+            };
+
+            foreach (var cat in categoryBudgets)
+            {
+                var variation = random.Next(-200, 300);
+                budgetCategories.Add(new BudgetCategory
+                {
+                    BudgetCategoryId = (i * 6) + cat.CategoryId + 6, // Offset by existing budget categories
+                    BudgetId = budget.BudgetId,
+                    CategoryId = cat.CategoryId,
+                    PlannedAmount = cat.BaseAmount + variation
+                });
+            }
+        }
+
+        context.Budgets.AddRange(budgets);
+        context.BudgetCategories.AddRange(budgetCategories);
+        context.SaveChanges();
+    }
+
+    private static void SeedMoreInvestmentHistory(PrivatekonomyContext context, string userId)
+    {
+        // Only seed if we don't have many investment transactions yet
+        if (context.InvestmentTransactions.Count() >= 50)
+        {
+            return;
+        }
+
+        var investmentTransactions = new List<InvestmentTransaction>();
+        var random = new Random(42);
+        var startDate = DateTime.UtcNow.AddDays(-550);
+
+        // Get existing investments
+        var investmentIds = new[] { 1, 2, 3, 4, 5, 6, 7, 8 };
+        var transactionTypes = new[] { "Köp", "Sälj" }; // Only Buy and Sell are supported
+
+        // Generate investment transactions over 18 months
+        for (int i = 1; i <= 100; i++)
+        {
+            var transactionDate = startDate.AddDays(random.Next(0, 550));
+            var investmentId = investmentIds[random.Next(investmentIds.Length)];
+            var transactionType = transactionTypes[random.Next(transactionTypes.Length)];
+            
+            var quantity = random.Next(1, 100);
+            var pricePerShare = random.Next(50, 500);
+            var totalAmount = quantity * pricePerShare;
+            var fees = random.Next(29, 150) + (decimal)(random.NextDouble() * 0.99);
+
+            var transaction = new InvestmentTransaction
+            {
+                InvestmentTransactionId = i + 20, // Offset existing ones
+                InvestmentId = investmentId,
+                TransactionType = transactionType,
+                Quantity = quantity,
+                PricePerShare = pricePerShare,
+                TotalAmount = totalAmount,
+                Fees = fees,
+                Currency = "SEK",
+                TransactionDate = transactionDate,
+                Notes = GetInvestmentTransactionDescription(transactionType, investmentId),
+                CreatedAt = transactionDate.AddHours(2),
+                UserId = userId
+            };
+
+            investmentTransactions.Add(transaction);
+        }
+
+        context.InvestmentTransactions.AddRange(investmentTransactions);
+        context.SaveChanges();
+    }
+
+    private static string GetInvestmentTransactionDescription(string type, int investmentId)
+    {
+        var investmentNames = new Dictionary<int, string>
+        {
+            { 1, "Volvo B" },
+            { 2, "SEB A" },
+            { 3, "Investor B" },
+            { 4, "SPP Aktiefond Global" },
+            { 5, "Länsförsäkringar Sverige" },
+            { 6, "Avanza Global" },
+            { 7, "Ericsson B" },
+            { 8, "Nordea" }
+        };
+
+        var name = investmentNames.GetValueOrDefault(investmentId, "Okänd investering");
+        
+        return type switch
+        {
+            "Köp" => $"Köp av {name}",
+            "Sälj" => $"Försäljning av {name}",
+            _ => $"Transaktion för {name}"
+        };
+    }
+
+    private static void SeedMoreNetWorthSnapshots(PrivatekonomyContext context, string userId)
+    {
+        // Only seed if we don't have many snapshots
+        if (context.NetWorthSnapshots.Count() >= 20)
+        {
+            return;
+        }
+
+        var snapshots = new List<NetWorthSnapshot>();
+        var random = new Random(42);
+        var startDate = DateTime.UtcNow.AddDays(-550);
+
+        // Generate monthly net worth snapshots over 18 months
+        for (int i = 0; i < 18; i++)
+        {
+            var snapshotDate = startDate.AddDays(i * 30);
+            var baseNetWorth = 850000m + (i * 15000m); // Growing net worth over time
+            var variation = random.Next(-20000, 30000);
+            var totalNetWorth = baseNetWorth + variation;
+
+            var assets = totalNetWorth * (decimal)(0.85 + random.NextDouble() * 0.1); // 85-95% of net worth
+            var liabilities = totalNetWorth - assets;
+
+            // Breakdown of assets
+            var bankBalance = assets * 0.25m;
+            var investmentValue = assets * 0.45m;
+            var physicalAssetValue = assets * 0.30m;
+            var loanBalance = Math.Abs(liabilities);
+
+            var snapshot = new NetWorthSnapshot
+            {
+                NetWorthSnapshotId = i + 5, // Offset existing ones
+                UserId = userId,
+                Date = snapshotDate,
+                TotalAssets = Math.Max(0, assets),
+                TotalLiabilities = Math.Max(0, loanBalance),
+                NetWorth = totalNetWorth,
+                BankBalance = bankBalance,
+                InvestmentValue = investmentValue,
+                PhysicalAssetValue = physicalAssetValue,
+                LoanBalance = loanBalance,
+                Notes = i % 6 == 0 ? "Halvårsutvärdering av ekonomin" : 
+                       i % 3 == 0 ? "Kvartalsutvärdering" : null,
+                CreatedAt = snapshotDate,
+                IsManual = i % 4 == 0 // Every 4th snapshot is manually created
+            };
+
+            snapshots.Add(snapshot);
+        }
+
+        context.NetWorthSnapshots.AddRange(snapshots);
+        context.SaveChanges();
+    }
+
+    private static void SeedMoreTransactions(PrivatekonomyContext context, string userId)
+    {
+        // Only seed if we don't have too many transactions already
+        if (context.Transactions.Count() >= 500)
+        {
+            return;
+        }
+
+        var transactions = new List<Transaction>();
+        var random = new Random(42);
+        var startDate = DateTime.UtcNow.AddDays(-730); // 2 years of data
+
+        var categories = context.Categories.ToList();
+        var paymentMethods = new[] { "Swish", "Kort", "Banköverföring", "Autogiro", "Kontant" };
+        
+        // Common Swedish expense merchants
+        var merchants = new[]
+        {
+            "ICA Maxi", "Coop", "Willys", "Hemköp", "Lidl",
+            "Circle K", "Preem", "Shell", "OKQ8",
+            "H&M", "Zara", "KappAhl", "Lindex",
+            "IKEA", "Jula", "Bauhaus", "Hornbach",
+            "Systembolaget", "Restaurang", "Café",
+            "SL", "Västtrafik", "Skånetrafiken",
+            "SF Bio", "Filmstaden", "Spotify", "Netflix"
+        };
+
+        // Generate 300 more transactions over 2 years
+        for (int i = 0; i < 300; i++)
+        {
+            var transactionDate = startDate.AddDays(random.Next(0, 730));
+            var isIncome = random.Next(0, 100) < 15; // 15% income transactions
+            var amount = isIncome 
+                ? random.Next(15000, 55000) // Salary or income
+                : random.Next(25, 3500); // Expenses
+            
+            var merchant = isIncome ? "Lön" : merchants[random.Next(merchants.Length)];
+            var paymentMethod = paymentMethods[random.Next(paymentMethods.Length)];
+            
+            var transaction = new Transaction
+            {
+                Amount = amount,
+                Description = isIncome ? $"Lön {transactionDate:yyyy-MM}" : $"{merchant} - {transactionDate:yyyy-MM-dd}",
+                Date = transactionDate,
+                IsIncome = isIncome,
+                Payee = merchant,
+                PaymentMethod = paymentMethod,
+                Currency = "SEK",
+                Cleared = random.Next(0, 100) < 80, // 80% cleared
+                Imported = random.Next(0, 100) < 60, // 60% imported
+                ImportSource = random.Next(0, 100) < 60 ? "Swedbank API" : null,
+                ValidFrom = transactionDate,
+                CreatedAt = transactionDate.AddHours(random.Next(1, 24)),
+                UserId = userId
+            };
+            
+            transactions.Add(transaction);
+        }
+
+        context.Transactions.AddRange(transactions);
+        context.SaveChanges();
+    }
+
+    private static void SeedMoreGoals(PrivatekonomyContext context, string userId)
+    {
+        // Only seed if we don't have many goals already
+        if (context.Goals.Count() >= 10)
+        {
+            return;
+        }
+
+        var goals = new List<Goal>
+        {
+            new Goal
+            {
+                Name = "Ny cykel",
+                Description = "En bra mountainbike för terräng",
+                TargetAmount = 15000m,
+                CurrentAmount = 8500m,
+                TargetDate = DateTime.UtcNow.AddMonths(4),
+                Priority = 2,
+                CreatedAt = DateTime.UtcNow.AddMonths(-2),
+                UserId = userId
+            },
+            new Goal
+            {
+                Name = "Nödfondsreserv",
+                Description = "6 månaders levnadskostnader i buffert",
+                TargetAmount = 180000m,
+                CurrentAmount = 95000m,
+                TargetDate = DateTime.UtcNow.AddMonths(14),
+                Priority = 1,
+                CreatedAt = DateTime.UtcNow.AddMonths(-8),
+                UserId = userId
+            },
+            new Goal
+            {
+                Name = "Julklappar 2025",
+                Description = "Budget för julklappar till familjen",
+                TargetAmount = 12000m,
+                CurrentAmount = 2400m,
+                TargetDate = DateTime.UtcNow.AddMonths(11),
+                Priority = 3,
+                CreatedAt = DateTime.UtcNow.AddMonths(-1),
+                UserId = userId
+            },
+            new Goal
+            {
+                Name = "Körkort",
+                Description = "Spara ihop till körkort och körskola",
+                TargetAmount = 18000m,
+                CurrentAmount = 5000m,
+                TargetDate = DateTime.UtcNow.AddMonths(8),
+                Priority = 2,
+                CreatedAt = DateTime.UtcNow.AddMonths(-3),
+                UserId = userId
+            },
+            new Goal
+            {
+                Name = "Ny mobil",
+                Description = "iPhone 16 Pro",
+                TargetAmount = 14995m,
+                CurrentAmount = 14995m,
+                TargetDate = DateTime.UtcNow.AddMonths(-1),
+                Priority = 3,
+                CreatedAt = DateTime.UtcNow.AddMonths(-5),
+                UserId = userId
+            }
+        };
+
+        context.Goals.AddRange(goals);
+        context.SaveChanges();
+    }
+
+    private static void SeedMoreSubscriptions(PrivatekonomyContext context, string userId)
+    {
+        // Only seed if we don't have many subscriptions already
+        if (context.Subscriptions.Count() >= 15)
+        {
+            return;
+        }
+
+        var subscriptions = new List<Subscription>
+        {
+            new Subscription
+            {
+                Name = "Apple Music Family",
+                Description = "Musikstreaming för hela familjen",
+                Price = 169m,
+                Currency = "SEK",
+                BillingFrequency = "Monthly",
+                StartDate = DateTime.UtcNow.AddMonths(-18),
+                NextBillingDate = DateTime.UtcNow.AddDays(12),
+                IsActive = true,
+                Notes = "Familjeplan med 6 konton",
+                CreatedAt = DateTime.UtcNow.AddMonths(-18),
+                UserId = userId
+            },
+            new Subscription
+            {
+                Name = "YouTube Premium",
+                Description = "Reklamfri YouTube och YouTube Music",
+                Price = 139m,
+                Currency = "SEK",
+                BillingFrequency = "Monthly",
+                StartDate = DateTime.UtcNow.AddMonths(-8),
+                NextBillingDate = DateTime.UtcNow.AddDays(20),
+                IsActive = true,
+                Notes = "Inkluderar YouTube Music",
+                CreatedAt = DateTime.UtcNow.AddMonths(-8),
+                UserId = userId
+            },
+            new Subscription
+            {
+                Name = "Viaplay Total",
+                Description = "Sport, serier och filmer",
+                Price = 699m,
+                Currency = "SEK",
+                BillingFrequency = "Monthly",
+                StartDate = DateTime.UtcNow.AddMonths(-4),
+                NextBillingDate = DateTime.UtcNow.AddDays(8),
+                IsActive = true,
+                Notes = "Familjepaket med alla kanaler",
+                CreatedAt = DateTime.UtcNow.AddMonths(-4),
+                UserId = userId
+            },
+            new Subscription
+            {
+                Name = "Adobe Creative Cloud",
+                Description = "Photoshop, Illustrator, och mer",
+                Price = 599m,
+                Currency = "SEK",
+                BillingFrequency = "Monthly",
+                StartDate = DateTime.UtcNow.AddMonths(-24),
+                NextBillingDate = DateTime.UtcNow.AddDays(5),
+                IsActive = true,
+                Notes = "Alla Creative Cloud-appar ingår",
+                CreatedAt = DateTime.UtcNow.AddMonths(-24),
+                UserId = userId
+            },
+            new Subscription
+            {
+                Name = "Gym & Fitness",
+                Description = "Medlemskap på lokalt gym",
+                Price = 349m,
+                Currency = "SEK",
+                BillingFrequency = "Monthly",
+                StartDate = DateTime.UtcNow.AddMonths(-12),
+                NextBillingDate = DateTime.UtcNow.AddDays(15),
+                IsActive = true,
+                CancellationNoticeDays = 90,
+                LastUsedDate = DateTime.UtcNow.AddDays(-3),
+                Notes = "Medlemskap på hemmastudion",
+                CreatedAt = DateTime.UtcNow.AddMonths(-12),
+                UserId = userId
+            },
+            new Subscription
+            {
+                Name = "Nintendo Switch Online",
+                Description = "Online-spel för Nintendo Switch",
+                Price = 199m,
+                Currency = "SEK",
+                BillingFrequency = "Yearly",
+                StartDate = DateTime.UtcNow.AddMonths(-9),
+                NextBillingDate = DateTime.UtcNow.AddMonths(3),
+                IsActive = true,
+                Notes = "Familjeplan för upp till 8 användare",
+                CreatedAt = DateTime.UtcNow.AddMonths(-9),
+                UserId = userId
+            },
+            new Subscription
+            {
+                Name = "LinkedIn Premium",
+                Description = "Karriärutveckling och nätverkande",
+                Price = 399m,
+                Currency = "SEK",
+                BillingFrequency = "Monthly",
+                StartDate = DateTime.UtcNow.AddMonths(-6),
+                EndDate = DateTime.UtcNow.AddMonths(-2),
+                IsActive = false,
+                Notes = "Avslutad efter provperiod",
+                CreatedAt = DateTime.UtcNow.AddMonths(-6),
+                UserId = userId
+            }
+        };
+
+        context.Subscriptions.AddRange(subscriptions);
+        context.SaveChanges();
+    }
+
+    private static void SeedReceipts(PrivatekonomyContext context, string userId)
+    {
+        // Only seed if no receipts exist
+        if (context.Receipts.Any())
+        {
+            return;
+        }
+
+        var categories = context.Categories.ToList();
+        var foodCategoryId = categories.FirstOrDefault(c => c.Name.Contains("Mat"))?.CategoryId;
+
+        var receipts = new List<Receipt>
+        {
+            new Receipt
+            {
+                UserId = userId,
+                Merchant = "ICA Maxi",
+                ReceiptDate = DateTime.UtcNow.AddDays(-5),
+                TotalAmount = 487.50m,
+                Currency = "SEK",
+                ReceiptType = "Physical",
+                ReceiptNumber = "ICA-2024-001234",
+                PaymentMethod = "Kort",
+                Notes = "Veckans matinköp",
+                CreatedAt = DateTime.UtcNow.AddDays(-5),
+                ReceiptLineItems = new List<ReceiptLineItem>
+                {
+                    new ReceiptLineItem
+                    {
+                        Description = "Mjölk 3% 1L",
+                        Quantity = 2,
+                        UnitPrice = 14.50m,
+                        TotalPrice = 29.00m,
+                        TaxRate = 12m,
+                        CategoryId = foodCategoryId,
+                        CreatedAt = DateTime.UtcNow.AddDays(-5)
+                    },
+                    new ReceiptLineItem
+                    {
+                        Description = "Bröd Fullkorn",
+                        Quantity = 3,
+                        UnitPrice = 22.50m,
+                        TotalPrice = 67.50m,
+                        TaxRate = 12m,
+                        CategoryId = foodCategoryId,
+                        CreatedAt = DateTime.UtcNow.AddDays(-5)
+                    },
+                    new ReceiptLineItem
+                    {
+                        Description = "Kött Nötfärs 500g",
+                        Quantity = 2,
+                        UnitPrice = 49.90m,
+                        TotalPrice = 99.80m,
+                        TaxRate = 12m,
+                        CategoryId = foodCategoryId,
+                        CreatedAt = DateTime.UtcNow.AddDays(-5)
+                    },
+                    new ReceiptLineItem
+                    {
+                        Description = "Pasta 500g",
+                        Quantity = 4,
+                        UnitPrice = 12.90m,
+                        TotalPrice = 51.60m,
+                        TaxRate = 12m,
+                        CategoryId = foodCategoryId,
+                        CreatedAt = DateTime.UtcNow.AddDays(-5)
+                    },
+                    new ReceiptLineItem
+                    {
+                        Description = "Grönsaker Blandade",
+                        Quantity = 1,
+                        UnitPrice = 89.60m,
+                        TotalPrice = 89.60m,
+                        TaxRate = 12m,
+                        CategoryId = foodCategoryId,
+                        CreatedAt = DateTime.UtcNow.AddDays(-5)
+                    },
+                    new ReceiptLineItem
+                    {
+                        Description = "Ägg 12-pack",
+                        Quantity = 2,
+                        UnitPrice = 39.90m,
+                        TotalPrice = 79.80m,
+                        TaxRate = 12m,
+                        CategoryId = foodCategoryId,
+                        CreatedAt = DateTime.UtcNow.AddDays(-5)
+                    },
+                    new ReceiptLineItem
+                    {
+                        Description = "Yoghurt Naturell 1kg",
+                        Quantity = 1,
+                        UnitPrice = 35.20m,
+                        TotalPrice = 35.20m,
+                        TaxRate = 12m,
+                        CategoryId = foodCategoryId,
+                        CreatedAt = DateTime.UtcNow.AddDays(-5)
+                    },
+                    new ReceiptLineItem
+                    {
+                        Description = "Ost Kvibille 500g",
+                        Quantity = 1,
+                        UnitPrice = 35.00m,
+                        TotalPrice = 35.00m,
+                        TaxRate = 12m,
+                        CategoryId = foodCategoryId,
+                        CreatedAt = DateTime.UtcNow.AddDays(-5)
+                    }
+                }
+            },
+            new Receipt
+            {
+                UserId = userId,
+                Merchant = "Willys",
+                ReceiptDate = DateTime.UtcNow.AddDays(-12),
+                TotalAmount = 267.80m,
+                Currency = "SEK",
+                ReceiptType = "Physical",
+                ReceiptNumber = "WILLYS-45678",
+                PaymentMethod = "Swish",
+                Notes = "Snabbhandling",
+                CreatedAt = DateTime.UtcNow.AddDays(-12),
+                ReceiptLineItems = new List<ReceiptLineItem>
+                {
+                    new ReceiptLineItem
+                    {
+                        Description = "Vatten Ramlösa 6-pack",
+                        Quantity = 2,
+                        UnitPrice = 39.90m,
+                        TotalPrice = 79.80m,
+                        TaxRate = 25m,
+                        CategoryId = foodCategoryId,
+                        CreatedAt = DateTime.UtcNow.AddDays(-12)
+                    },
+                    new ReceiptLineItem
+                    {
+                        Description = "Kaffe 500g",
+                        Quantity = 1,
+                        UnitPrice = 54.90m,
+                        TotalPrice = 54.90m,
+                        TaxRate = 12m,
+                        CategoryId = foodCategoryId,
+                        CreatedAt = DateTime.UtcNow.AddDays(-12)
+                    },
+                    new ReceiptLineItem
+                    {
+                        Description = "Köttbullar Frysta 1kg",
+                        Quantity = 1,
+                        UnitPrice = 79.90m,
+                        TotalPrice = 79.90m,
+                        TaxRate = 12m,
+                        CategoryId = foodCategoryId,
+                        CreatedAt = DateTime.UtcNow.AddDays(-12)
+                    },
+                    new ReceiptLineItem
+                    {
+                        Description = "Chips Orginal 175g",
+                        Quantity = 2,
+                        UnitPrice = 26.60m,
+                        TotalPrice = 53.20m,
+                        TaxRate = 12m,
+                        CategoryId = foodCategoryId,
+                        CreatedAt = DateTime.UtcNow.AddDays(-12)
+                    }
+                }
+            },
+            new Receipt
+            {
+                UserId = userId,
+                Merchant = "Coop",
+                ReceiptDate = DateTime.UtcNow.AddDays(-20),
+                TotalAmount = 156.40m,
+                Currency = "SEK",
+                ReceiptType = "E-Receipt",
+                ReceiptNumber = "COOP-E-9876",
+                PaymentMethod = "Kort",
+                CreatedAt = DateTime.UtcNow.AddDays(-20),
+                ReceiptLineItems = new List<ReceiptLineItem>
+                {
+                    new ReceiptLineItem
+                    {
+                        Description = "Frukt Äpplen 1kg",
+                        Quantity = 2,
+                        UnitPrice = 29.90m,
+                        TotalPrice = 59.80m,
+                        TaxRate = 12m,
+                        CategoryId = foodCategoryId,
+                        CreatedAt = DateTime.UtcNow.AddDays(-20)
+                    },
+                    new ReceiptLineItem
+                    {
+                        Description = "Bananer 1kg",
+                        Quantity = 1,
+                        UnitPrice = 19.90m,
+                        TotalPrice = 19.90m,
+                        TaxRate = 12m,
+                        CategoryId = foodCategoryId,
+                        CreatedAt = DateTime.UtcNow.AddDays(-20)
+                    },
+                    new ReceiptLineItem
+                    {
+                        Description = "Apelsiner 1kg",
+                        Quantity = 1,
+                        UnitPrice = 24.90m,
+                        TotalPrice = 24.90m,
+                        TaxRate = 12m,
+                        CategoryId = foodCategoryId,
+                        CreatedAt = DateTime.UtcNow.AddDays(-20)
+                    },
+                    new ReceiptLineItem
+                    {
+                        Description = "Tomater 500g",
+                        Quantity = 2,
+                        UnitPrice = 15.90m,
+                        TotalPrice = 31.80m,
+                        TaxRate = 12m,
+                        CategoryId = foodCategoryId,
+                        CreatedAt = DateTime.UtcNow.AddDays(-20)
+                    },
+                    new ReceiptLineItem
+                    {
+                        Description = "Gurka",
+                        Quantity = 2,
+                        UnitPrice = 9.95m,
+                        TotalPrice = 19.90m,
+                        TaxRate = 12m,
+                        CategoryId = foodCategoryId,
+                        CreatedAt = DateTime.UtcNow.AddDays(-20)
+                    }
+                }
+            }
+        };
+
+        context.Receipts.AddRange(receipts);
+        context.SaveChanges();
+    }
+
+    private static void SeedPortfolioAllocations(PrivatekonomyContext context, string userId)
+    {
+        // Only seed if no allocations exist
+        if (context.PortfolioAllocations.Any())
+        {
+            return;
+        }
+
+        var allocations = new List<PortfolioAllocation>
+        {
+            new PortfolioAllocation
+            {
+                Name = "Balanserad Portfölj",
+                AssetClass = "Aktier",
+                TargetPercentage = 60m,
+                MinPercentage = 55m,
+                MaxPercentage = 65m,
+                IsActive = true,
+                Notes = "Huvudsaklig tillväxt genom svenska och globala aktier",
+                CreatedAt = DateTime.UtcNow.AddMonths(-6),
+                UserId = userId
+            },
+            new PortfolioAllocation
+            {
+                Name = "Balanserad Portfölj",
+                AssetClass = "Obligationer",
+                TargetPercentage = 30m,
+                MinPercentage = 25m,
+                MaxPercentage = 35m,
+                IsActive = true,
+                Notes = "Stabilitet genom statsobligationer och företagsobligationer",
+                CreatedAt = DateTime.UtcNow.AddMonths(-6),
+                UserId = userId
+            },
+            new PortfolioAllocation
+            {
+                Name = "Balanserad Portfölj",
+                AssetClass = "Kontanter",
+                TargetPercentage = 5m,
+                MinPercentage = 3m,
+                MaxPercentage = 10m,
+                IsActive = true,
+                Notes = "Likviditet för oväntade utgifter",
+                CreatedAt = DateTime.UtcNow.AddMonths(-6),
+                UserId = userId
+            },
+            new PortfolioAllocation
+            {
+                Name = "Balanserad Portfölj",
+                AssetClass = "Fastigheter",
+                TargetPercentage = 5m,
+                MinPercentage = 0m,
+                MaxPercentage = 10m,
+                IsActive = true,
+                Notes = "REITs och fastighetsfonder",
+                CreatedAt = DateTime.UtcNow.AddMonths(-6),
+                UserId = userId
+            },
+            new PortfolioAllocation
+            {
+                Name = "Aggressiv Tillväxt",
+                AssetClass = "Aktier",
+                TargetPercentage = 90m,
+                MinPercentage = 85m,
+                MaxPercentage = 95m,
+                IsActive = false,
+                Notes = "Maximal tillväxt, högre risk",
+                CreatedAt = DateTime.UtcNow.AddMonths(-12),
+                UserId = userId
+            },
+            new PortfolioAllocation
+            {
+                Name = "Aggressiv Tillväxt",
+                AssetClass = "Obligationer",
+                TargetPercentage = 5m,
+                MinPercentage = 3m,
+                MaxPercentage = 10m,
+                IsActive = false,
+                Notes = "Minimal obligationsandel",
+                CreatedAt = DateTime.UtcNow.AddMonths(-12),
+                UserId = userId
+            },
+            new PortfolioAllocation
+            {
+                Name = "Aggressiv Tillväxt",
+                AssetClass = "Kontanter",
+                TargetPercentage = 5m,
+                MinPercentage = 2m,
+                MaxPercentage = 5m,
+                IsActive = false,
+                Notes = "Minimal kassa",
+                CreatedAt = DateTime.UtcNow.AddMonths(-12),
+                UserId = userId
+            }
+        };
+
+        context.PortfolioAllocations.AddRange(allocations);
+        context.SaveChanges();
+    }
+
+    private static void SeedSavingsGroups(PrivatekonomyContext context, string userId)
+    {
+        // Only seed if no groups exist
+        if (context.SavingsGroups.Any())
+        {
+            return;
+        }
+
+        var groups = new List<SavingsGroup>
+        {
+            new SavingsGroup
+            {
+                Name = "Familjen Andersson",
+                Description = "Familjespargrupp för gemensamma mål",
+                CreatedByUserId = userId,
+                GroupType = SavingsGroupType.Family,
+                PrivacyLevel = GroupPrivacyLevel.Private,
+                AnonymousMembers = false,
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow.AddMonths(-3)
+            },
+            new SavingsGroup
+            {
+                Name = "Jobbkompisarna",
+                Description = "Spara tillsammans med kollegor",
+                CreatedByUserId = userId,
+                GroupType = SavingsGroupType.Friends,
+                PrivacyLevel = GroupPrivacyLevel.Restricted,
+                AnonymousMembers = false,
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow.AddMonths(-2)
+            },
+            new SavingsGroup
+            {
+                Name = "Semesterkassan",
+                Description = "Gruppresa till Thailand 2025",
+                CreatedByUserId = userId,
+                GroupType = SavingsGroupType.Challenge,
+                PrivacyLevel = GroupPrivacyLevel.Restricted,
+                AnonymousMembers = false,
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow.AddMonths(-4)
+            },
+            new SavingsGroup
+            {
+                Name = "Ekonomi Community Stockholm",
+                Description = "Öppen grupp för att dela spartips och motivation",
+                CreatedByUserId = userId,
+                GroupType = SavingsGroupType.Community,
+                PrivacyLevel = GroupPrivacyLevel.Public,
+                AnonymousMembers = true,
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow.AddMonths(-6)
+            }
+        };
+
+        context.SavingsGroups.AddRange(groups);
+        context.SaveChanges();
+    }
+
+    private static void SeedLifeTimelineScenarios(PrivatekonomyContext context, string userId)
+    {
+        // Only seed if no scenarios exist
+        if (context.LifeTimelineScenarios.Any())
+        {
+            return;
+        }
+
+        var scenarios = new List<LifeTimelineScenario>
+        {
+            new LifeTimelineScenario
+            {
+                Name = "Realistisk",
+                Description = "Baserat på historisk avkastning och försiktig prognos",
+                ExpectedReturnRate = 7.0m,
+                MonthlySavings = 5000m,
+                RetirementAge = 65,
+                ExpectedMonthlyPension = 18500m,
+                ProjectedRetirementWealth = 4250000m,
+                InflationRate = 2.0m,
+                SalaryIncreaseRate = 2.5m,
+                IsActive = true,
+                IsBaseline = true,
+                Notes = "Huvudscenario baserat på realistiska antaganden",
+                CreatedAt = DateTime.UtcNow.AddMonths(-3),
+                UserId = userId
+            },
+            new LifeTimelineScenario
+            {
+                Name = "Optimistisk",
+                Description = "Högre avkastning och ökade besparingar",
+                ExpectedReturnRate = 10.0m,
+                MonthlySavings = 7000m,
+                RetirementAge = 62,
+                ExpectedMonthlyPension = 25000m,
+                ProjectedRetirementWealth = 6500000m,
+                InflationRate = 1.5m,
+                SalaryIncreaseRate = 3.5m,
+                IsActive = false,
+                IsBaseline = false,
+                Notes = "Best case scenario med högre sparande och avkastning",
+                CreatedAt = DateTime.UtcNow.AddMonths(-3),
+                UserId = userId
+            },
+            new LifeTimelineScenario
+            {
+                Name = "Pessimistisk",
+                Description = "Lägre avkastning och försiktig ekonomi",
+                ExpectedReturnRate = 4.0m,
+                MonthlySavings = 3500m,
+                RetirementAge = 67,
+                ExpectedMonthlyPension = 14500m,
+                ProjectedRetirementWealth = 2100000m,
+                InflationRate = 3.0m,
+                SalaryIncreaseRate = 1.5m,
+                IsActive = false,
+                IsBaseline = false,
+                Notes = "Worst case scenario för att vara förberedd",
+                CreatedAt = DateTime.UtcNow.AddMonths(-3),
+                UserId = userId
+            },
+            new LifeTimelineScenario
+            {
+                Name = "Tidigt Pension vid 60",
+                Description = "Scenario för att gå i pension vid 60 år",
+                ExpectedReturnRate = 7.5m,
+                MonthlySavings = 8500m,
+                RetirementAge = 60,
+                ExpectedMonthlyPension = 16000m,
+                ProjectedRetirementWealth = 4800000m,
+                InflationRate = 2.0m,
+                SalaryIncreaseRate = 2.5m,
+                IsActive = false,
+                IsBaseline = false,
+                Notes = "Kräver högre månadssparande för tidigare pension",
+                CreatedAt = DateTime.UtcNow.AddMonths(-2),
+                UserId = userId
+            }
+        };
+
+        context.LifeTimelineScenarios.AddRange(scenarios);
+        context.SaveChanges();
+    }
+
+    private static void SeedGoalShares(PrivatekonomyContext context, string userId)
+    {
+        // Only seed if no goal shares exist
+        if (context.GoalShares.Any())
+        {
+            return;
+        }
+
+        // Get existing goals to share
+        var goals = context.Goals.Where(g => g.UserId == userId).Take(3).ToList();
+        
+        if (!goals.Any())
+        {
+            return; // No goals to share
+        }
+
+        var shares = new List<GoalShare>();
+        
+        foreach (var goal in goals)
+        {
+            shares.Add(new GoalShare
+            {
+                GoalId = goal.GoalId,
+                ShareToken = Guid.NewGuid().ToString("N").Substring(0, 16),
+                UserId = userId,
+                ShowCurrentAmount = true,
+                ShowTargetAmount = true,
+                ShowTargetDate = true,
+                ShowTransactions = false,
+                ShowOwnerName = false,
+                ExpiresAt = DateTime.UtcNow.AddDays(30),
+                CreatedAt = DateTime.UtcNow.AddDays(-5),
+                IsActive = true,
+                ViewCount = new Random().Next(0, 25)
+            });
+        }
+
+        // Add one expired share
+        if (goals.Count > 0)
+        {
+            shares.Add(new GoalShare
+            {
+                GoalId = goals[0].GoalId,
+                ShareToken = Guid.NewGuid().ToString("N").Substring(0, 16),
+                UserId = userId,
+                ShowCurrentAmount = true,
+                ShowTargetAmount = true,
+                ShowTargetDate = false,
+                ShowTransactions = false,
+                ShowOwnerName = true,
+                ExpiresAt = DateTime.UtcNow.AddDays(-5),
+                CreatedAt = DateTime.UtcNow.AddDays(-35),
+                IsActive = false,
+                ViewCount = 47
+            });
+        }
+
+        context.GoalShares.AddRange(shares);
         context.SaveChanges();
     }
 }
