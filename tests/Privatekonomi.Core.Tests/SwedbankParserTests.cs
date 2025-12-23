@@ -1,9 +1,9 @@
-using System.Text;
+﻿using System.Text;
 using Privatekonomi.Core.Services.Parsers;
-using Xunit;
 
 namespace Privatekonomi.Core.Tests;
 
+[TestClass]
 public class SwedbankParserTests
 {
     // Example from the issue - Swedish format with comma separator and quoted fields
@@ -23,7 +23,7 @@ public class SwedbankParserTests
 ""20"";""15.11.2025"";""D"";""Matinköp ICA"";""ICA SUPERMARKET"";""245.50"";""SEK"";""8500.00"";""1111222333""
 ""20"";""14.11.2025"";""K"";""Lön"";""FÖRETAG AB"";""25000.00"";""SEK"";""33500.00"";""1111222333""";
 
-    [Fact]
+    [TestMethod]
     public void SwedbankParser_CanParse_ReturnsTrueForSwedishCommaSeparated()
     {
         // Arrange
@@ -33,10 +33,10 @@ public class SwedbankParserTests
         var result = parser.CanParse(SwedishFormatCommaSeparated);
 
         // Assert
-        Assert.True(result);
+        Assert.IsTrue(result);
     }
 
-    [Fact]
+    [TestMethod]
     public void SwedbankParser_CanParse_ReturnsTrueForSwedishTabSeparated()
     {
         // Arrange
@@ -46,10 +46,10 @@ public class SwedbankParserTests
         var result = parser.CanParse(SwedishFormatTabSeparated);
 
         // Assert
-        Assert.True(result);
+        Assert.IsTrue(result);
     }
 
-    [Fact]
+    [TestMethod]
     public void SwedbankParser_CanParse_ReturnsTrueForEnglishFormat()
     {
         // Arrange
@@ -59,10 +59,10 @@ public class SwedbankParserTests
         var result = parser.CanParse(EnglishFormatSemicolonSeparated);
 
         // Assert
-        Assert.True(result);
+        Assert.IsTrue(result);
     }
 
-    [Fact]
+    [TestMethod]
     public void SwedbankParser_CanParse_ReturnsFalseForInvalidFormat()
     {
         // Arrange
@@ -73,10 +73,10 @@ public class SwedbankParserTests
         var result = parser.CanParse(invalidCsv);
 
         // Assert
-        Assert.False(result);
+        Assert.IsFalse(result);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task SwedbankParser_ParseAsync_ParsesSwedishCommaSeparatedCorrectly()
     {
         // Arrange
@@ -87,32 +87,32 @@ public class SwedbankParserTests
         var transactions = await parser.ParseAsync(stream);
 
         // Assert
-        Assert.NotNull(transactions);
-        Assert.Equal(3, transactions.Count);
+        Assert.IsNotNull(transactions);
+        Assert.AreEqual(3, transactions.Count);
 
         // Check first transaction (expense)
         var transaction1 = transactions[0];
-        Assert.Equal(new DateTime(2025, 11, 12), transaction1.Date);
-        Assert.Equal(50.00m, transaction1.Amount);
-        Assert.False(transaction1.IsIncome); // Negative amount = expense
-        Assert.Equal("50kr/onsda", transaction1.Description);
+        Assert.AreEqual(new DateTime(2025, 11, 12), transaction1.Date);
+        Assert.AreEqual(50.00m, transaction1.Amount);
+        Assert.IsFalse(transaction1.IsIncome); // Negative amount = expense
+        Assert.AreEqual("50kr/onsda", transaction1.Description);
 
         // Check second transaction (expense)
         var transaction2 = transactions[1];
-        Assert.Equal(new DateTime(2025, 11, 12), transaction2.Date);
-        Assert.Equal(3277.00m, transaction2.Amount);
-        Assert.False(transaction2.IsIncome);
-        Assert.Equal("CSN Centrala stu", transaction2.Description);
+        Assert.AreEqual(new DateTime(2025, 11, 12), transaction2.Date);
+        Assert.AreEqual(3277.00m, transaction2.Amount);
+        Assert.IsFalse(transaction2.IsIncome);
+        Assert.AreEqual("CSN Centrala stu", transaction2.Description);
 
         // Check third transaction (income)
         var transaction3 = transactions[2];
-        Assert.Equal(new DateTime(2025, 11, 11), transaction3.Date);
-        Assert.Equal(3280.00m, transaction3.Amount);
-        Assert.True(transaction3.IsIncome); // Positive amount = income
-        Assert.Equal("CSN LÅN NOV", transaction3.Description);
+        Assert.AreEqual(new DateTime(2025, 11, 11), transaction3.Date);
+        Assert.AreEqual(3280.00m, transaction3.Amount);
+        Assert.IsTrue(transaction3.IsIncome); // Positive amount = income
+        Assert.AreEqual("CSN LÅN NOV", transaction3.Description);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task SwedbankParser_ParseAsync_ParsesSwedishTabSeparatedCorrectly()
     {
         // Arrange
@@ -123,16 +123,16 @@ public class SwedbankParserTests
         var transactions = await parser.ParseAsync(stream);
 
         // Assert
-        Assert.NotNull(transactions);
-        Assert.Equal(3, transactions.Count);
+        Assert.IsNotNull(transactions);
+        Assert.AreEqual(3, transactions.Count);
 
         // Verify same data as comma-separated
-        Assert.Equal(50.00m, transactions[0].Amount);
-        Assert.Equal(3277.00m, transactions[1].Amount);
-        Assert.Equal(3280.00m, transactions[2].Amount);
+        Assert.AreEqual(50.00m, transactions[0].Amount);
+        Assert.AreEqual(3277.00m, transactions[1].Amount);
+        Assert.AreEqual(3280.00m, transactions[2].Amount);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task SwedbankParser_ParseAsync_ParsesEnglishFormatCorrectly()
     {
         // Arrange
@@ -143,25 +143,25 @@ public class SwedbankParserTests
         var transactions = await parser.ParseAsync(stream);
 
         // Assert
-        Assert.NotNull(transactions);
-        Assert.Equal(2, transactions.Count);
+        Assert.IsNotNull(transactions);
+        Assert.AreEqual(2, transactions.Count);
 
         // Check expense transaction
         var expense = transactions[0];
-        Assert.Equal(new DateTime(2025, 11, 15), expense.Date);
-        Assert.Equal(245.50m, expense.Amount);
-        Assert.False(expense.IsIncome); // D = Debit = expense
-        Assert.Equal("ICA SUPERMARKET - Matinköp ICA", expense.Description);
+        Assert.AreEqual(new DateTime(2025, 11, 15), expense.Date);
+        Assert.AreEqual(245.50m, expense.Amount);
+        Assert.IsFalse(expense.IsIncome); // D = Debit = expense
+        Assert.AreEqual("ICA SUPERMARKET - Matinköp ICA", expense.Description);
 
         // Check income transaction
         var income = transactions[1];
-        Assert.Equal(new DateTime(2025, 11, 14), income.Date);
-        Assert.Equal(25000.00m, income.Amount);
-        Assert.True(income.IsIncome); // K = Kredit = income
-        Assert.Equal("FÖRETAG AB - Lön", income.Description);
+        Assert.AreEqual(new DateTime(2025, 11, 14), income.Date);
+        Assert.AreEqual(25000.00m, income.Amount);
+        Assert.IsTrue(income.IsIncome); // K = Kredit = income
+        Assert.AreEqual("FÖRETAG AB - Lön", income.Description);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task SwedbankParser_ParseAsync_SkipsNonSEKTransactions()
     {
         // Arrange
@@ -176,11 +176,14 @@ public class SwedbankParserTests
         var transactions = await parser.ParseAsync(stream);
 
         // Assert
-        Assert.Equal(2, transactions.Count); // Only SEK transactions
-        Assert.All(transactions, t => Assert.NotEqual("USD Transaction", t.Description));
+        Assert.AreEqual(2, transactions.Count); // Only SEK transactions
+        foreach (var transaction in transactions)
+        {
+            Assert.AreNotEqual("USD Transaction", transaction.Description);
+        }
     }
 
-    [Fact]
+    [TestMethod]
     public async Task SwedbankParser_ParseAsync_HandlesDecimalCommasCorrectly()
     {
         // Arrange
@@ -193,11 +196,11 @@ public class SwedbankParserTests
         var transactions = await parser.ParseAsync(stream);
 
         // Assert
-        Assert.Single(transactions);
-        Assert.Equal(1234.56m, transactions[0].Amount);
+        Assert.AreEqual(1, transactions.Count);
+        Assert.AreEqual(1234.56m, transactions[0].Amount);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task SwedbankParser_ParseAsync_SkipsRowsWithMissingDescription()
     {
         // Arrange
@@ -211,11 +214,11 @@ public class SwedbankParserTests
         var transactions = await parser.ParseAsync(stream);
 
         // Assert
-        Assert.Single(transactions); // Only the row with valid description
-        Assert.Equal("Valid", transactions[0].Description);
+        Assert.AreEqual(1, transactions.Count); // Only the row with valid description
+        Assert.AreEqual("Valid", transactions[0].Description);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task SwedbankParser_ParseAsync_FallbackToReferenceIfDescriptionEmpty()
     {
         // Arrange
@@ -228,11 +231,11 @@ public class SwedbankParserTests
         var transactions = await parser.ParseAsync(stream);
 
         // Assert
-        Assert.Single(transactions);
-        Assert.Equal("Reference Text", transactions[0].Description);
+        Assert.AreEqual(1, transactions.Count);
+        Assert.AreEqual("Reference Text", transactions[0].Description);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task SwedbankParser_ParseAsync_TruncatesLongDescriptions()
     {
         // Arrange
@@ -246,21 +249,21 @@ public class SwedbankParserTests
         var transactions = await parser.ParseAsync(stream);
 
         // Assert
-        Assert.Single(transactions);
-        Assert.Equal(500, transactions[0].Description.Length); // Truncated to 500
+        Assert.AreEqual(1, transactions.Count);
+        Assert.AreEqual(500, transactions[0].Description.Length); // Truncated to 500
     }
 
-    [Fact]
+    [TestMethod]
     public void SwedbankParser_BankName_ReturnsSwedbank()
     {
         // Arrange
         var parser = new SwedbankParser();
 
         // Act & Assert
-        Assert.Equal("Swedbank", parser.BankName);
+        Assert.AreEqual("Swedbank", parser.BankName);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task SwedbankParser_ParseAsync_ThrowsExceptionForInvalidFormat()
     {
         // Arrange
@@ -269,10 +272,20 @@ public class SwedbankParserTests
         var stream = new MemoryStream(Encoding.UTF8.GetBytes(invalidCsv));
 
         // Act & Assert
-        await Assert.ThrowsAsync<InvalidOperationException>(async () => await parser.ParseAsync(stream));
+        bool exceptionThrown = false;
+        try
+        {
+            await parser.ParseAsync(stream);
+        }
+        catch (InvalidOperationException)
+        {
+            exceptionThrown = true;
+        }
+        
+        Assert.IsTrue(exceptionThrown, "Expected InvalidOperationException was not thrown");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task SwedbankParser_ParseAsync_HandlesEscapedQuotesInDescription()
     {
         // Arrange
@@ -285,11 +298,11 @@ public class SwedbankParserTests
         var transactions = await parser.ParseAsync(stream);
 
         // Assert
-        Assert.Single(transactions);
-        Assert.Contains("quoted", transactions[0].Description);
+        Assert.AreEqual(1, transactions.Count);
+        StringAssert.Contains(transactions[0].Description, "quoted");
     }
 
-    [Fact]
+    [TestMethod]
     public void SwedbankParser_CanParse_ReturnsTrueWithMetadataLine()
     {
         // Arrange - Example from issue with metadata on row 1, header on row 2
@@ -303,10 +316,10 @@ Radnummer,Clearingnummer,Kontonummer,Produkt,Valuta,Bokföringsdag,Transaktionsd
         var result = parser.CanParse(csvWithMetadata);
 
         // Assert
-        Assert.True(result);
+        Assert.IsTrue(result);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task SwedbankParser_ParseAsync_ParsesCorrectlyWithMetadataLine()
     {
         // Arrange - Example from issue with metadata on row 1, header on row 2
@@ -321,25 +334,25 @@ Radnummer,Clearingnummer,Kontonummer,Produkt,Valuta,Bokföringsdag,Transaktionsd
         var transactions = await parser.ParseAsync(stream);
 
         // Assert
-        Assert.NotNull(transactions);
-        Assert.Equal(2, transactions.Count);
+        Assert.IsNotNull(transactions);
+        Assert.AreEqual(2, transactions.Count);
 
         // Check first transaction (expense)
         var transaction1 = transactions[0];
-        Assert.Equal(new DateTime(2025, 11, 12), transaction1.Date);
-        Assert.Equal(50.00m, transaction1.Amount);
-        Assert.False(transaction1.IsIncome); // Negative amount = expense
-        Assert.Equal("50kr/onsda", transaction1.Description);
+        Assert.AreEqual(new DateTime(2025, 11, 12), transaction1.Date);
+        Assert.AreEqual(50.00m, transaction1.Amount);
+        Assert.IsFalse(transaction1.IsIncome); // Negative amount = expense
+        Assert.AreEqual("50kr/onsda", transaction1.Description);
 
         // Check second transaction (expense)
         var transaction2 = transactions[1];
-        Assert.Equal(new DateTime(2025, 11, 12), transaction2.Date);
-        Assert.Equal(3277.00m, transaction2.Amount);
-        Assert.False(transaction2.IsIncome);
-        Assert.Equal("CSN Centrala stu", transaction2.Description);
+        Assert.AreEqual(new DateTime(2025, 11, 12), transaction2.Date);
+        Assert.AreEqual(3277.00m, transaction2.Amount);
+        Assert.IsFalse(transaction2.IsIncome);
+        Assert.AreEqual("CSN Centrala stu", transaction2.Description);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task SwedbankParser_ParseAsync_HandlesMultipleMetadataLines()
     {
         // Arrange - Test with multiple metadata lines before header
@@ -354,12 +367,12 @@ Radnummer,Clearingnummer,Kontonummer,Produkt,Valuta,Bokföringsdag,Transaktionsd
         var transactions = await parser.ParseAsync(stream);
 
         // Assert
-        Assert.Single(transactions);
-        Assert.Equal(100.00m, transactions[0].Amount);
-        Assert.Equal("Test", transactions[0].Description);
+        Assert.AreEqual(1, transactions.Count);
+        Assert.AreEqual(100.00m, transactions[0].Amount);
+        Assert.AreEqual("Test", transactions[0].Description);
     }
 
-    [Fact]
+    [TestMethod]
     public void SwedbankParser_CanParse_ReturnsTrueWithMetadataLineEnglishFormat()
     {
         // Arrange - Old English format with metadata line
@@ -372,10 +385,10 @@ Radnummer,Clearingnummer,Kontonummer,Produkt,Valuta,Bokföringsdag,Transaktionsd
         var result = parser.CanParse(csvWithMetadata);
 
         // Assert
-        Assert.True(result);
+        Assert.IsTrue(result);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task SwedbankParser_ParseAsync_ParsesEnglishFormatWithMetadataLine()
     {
         // Arrange - Old English format with metadata line
@@ -390,10 +403,10 @@ Radnummer,Clearingnummer,Kontonummer,Produkt,Valuta,Bokföringsdag,Transaktionsd
         var transactions = await parser.ParseAsync(stream);
 
         // Assert
-        Assert.Equal(2, transactions.Count);
-        Assert.Equal(245.50m, transactions[0].Amount);
-        Assert.False(transactions[0].IsIncome);
-        Assert.Equal(25000.00m, transactions[1].Amount);
-        Assert.True(transactions[1].IsIncome);
+        Assert.AreEqual(2, transactions.Count);
+        Assert.AreEqual(245.50m, transactions[0].Amount);
+        Assert.IsFalse(transactions[0].IsIncome);
+        Assert.AreEqual(25000.00m, transactions[1].Amount);
+        Assert.IsTrue(transactions[1].IsIncome);
     }
 }
