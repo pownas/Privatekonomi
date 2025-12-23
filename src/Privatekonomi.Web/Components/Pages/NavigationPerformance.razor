@@ -4,6 +4,7 @@
 @inject INavigationPerformanceService NavigationPerformanceService
 @inherits PerformanceTrackedPageBase
 @attribute [Authorize]
+@implements IDisposable
 
 <PageTitle>Navigation Performance Tracking</PageTitle>
 
@@ -19,7 +20,7 @@
     </MudAlert>
 
     <MudGrid>
-        <MudItem xs="12" md="6">
+        <MudItem xs="12">
             <MudPaper Class="pa-4">
                 <MudText Typo="Typo.h6" Class="mb-3">
                     <MudIcon Icon="@Icons.Material.Filled.PendingActions" Size="Size.Small" Class="mr-1" />
@@ -84,30 +85,28 @@
 
                 <MudPaper Outlined="true" Class="pa-3 mb-3">
                     <MudText Typo="Typo.subtitle2" Class="mb-2">1. Ärv från PerformanceTrackedPageBase</MudText>
-                    <pre style="background-color: #f5f5f5; padding: 12px; border-radius: 4px; overflow-x: auto;">
-@@page "/min-sida"
+                    <pre style="background-color: #f5f5f5; padding: 12px; border-radius: 4px; overflow-x: auto;">@@page "/min-sida"
 @@inherits Privatekonomi.Web.Components.Shared.PerformanceTrackedPageBase
 
-@@code {
+@@code {{
     protected override string PageName => "Min Sida";
-}</pre>
+}}</pre>
                 </MudPaper>
 
                 <MudPaper Outlined="true" Class="pa-3 mb-3">
                     <MudText Typo="Typo.subtitle2" Class="mb-2">2. Alternativt: Manuell spårning</MudText>
-                    <pre style="background-color: #f5f5f5; padding: 12px; border-radius: 4px; overflow-x: auto;">
-@@inject INavigationPerformanceService NavigationPerformanceService
+                    <pre style="background-color: #f5f5f5; padding: 12px; border-radius: 4px; overflow-x: auto;">@@inject INavigationPerformanceService NavigationPerformanceService
 
-@@code {
+@@code {{
     protected override void OnAfterRender(bool firstRender)
-    {
+    {{
         if (firstRender)
-        {
+        {{
             var currentUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
             NavigationPerformanceService.CompleteNavigation(currentUrl, "Sidnamn");
-        }
-    }
-}</pre>
+        }}
+    }}
+}}</pre>
                 </MudPaper>
 
                 <MudAlert Severity="Severity.Success" Class="mt-3">
@@ -137,17 +136,6 @@
     {
         _activeNavigations = NavigationPerformanceService.GetAllActiveNavigations().ToList();
         StateHasChanged();
-    }
-
-    private Color GetColorForDuration(double durationMs)
-    {
-        return durationMs switch
-        {
-            < 100 => Color.Success,
-            < 300 => Color.Info,
-            < 500 => Color.Warning,
-            _ => Color.Error
-        };
     }
 
     public void Dispose()
