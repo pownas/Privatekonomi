@@ -3439,16 +3439,19 @@ public static class TestDataSeeder
                 new { CategoryId = 6, BaseAmount = 900m },  // Hälsa
             };
 
+            int categoryIndex = 0;
             foreach (var cat in categoryBudgets)
             {
                 var variation = random.Next(-200, 300);
                 budgetCategories.Add(new BudgetCategory
                 {
-                    BudgetCategoryId = (i * 6) + cat.CategoryId + 6, // Offset by existing budget categories
+                    // Start from ID 13 (after existing 12 categories), increment by 1 for each category
+                    BudgetCategoryId = 13 + (i * 6) + categoryIndex,
                     BudgetId = budget.BudgetId,
                     CategoryId = cat.CategoryId,
                     PlannedAmount = cat.BaseAmount + variation
                 });
+                categoryIndex++;
             }
         }
 

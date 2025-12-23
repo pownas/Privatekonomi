@@ -1,3 +1,89 @@
+﻿// Blazor reconnection handling
+window.Blazor = window.Blazor || {};
+
+// Handle circuit errors gracefully
+if (window.Blazor && !window.Blazor._reconnectHandlerAttached) {
+    window.Blazor._reconnectHandlerAttached = true;
+    
+    // Suppress excessive error logging for component operations
+    const originalConsoleError = console.error;
+    console.error = function(...args) {
+        const message = args[0]?.toString() || '';
+        
+        // Filter out known component operation errors during navigation/state changes
+        if (message.includes('The list of component operations is not valid') ||
+            message.includes('Cannot send data if the connection is not in the Connected State')) {
+            // Log as warning instead of error
+            console.warn('[Blazor] Suppressed component operation error:', ...args);
+            return;
+        }
+        
+        originalConsoleError.apply(console, args);
+    };
+}
+
+// Debug logging for MudBlazor NavMenu interactions (Development only)
+window.mudNavMenuDebug = {
+    enabled: false,
+    
+    init: function() {
+        // Enable debug logging if in development mode
+        const isDevelopment = document.documentElement.hasAttribute('data-development-mode');
+        this.enabled = isDevelopment;
+        
+        if (this.enabled) {
+            console.log('[MudNavMenu Debug] Debug logging enabled');
+            this.attachEventListeners();
+        }
+    },
+    
+    attachEventListeners: function() {
+        // Listen for clicks on nav groups
+        document.addEventListener('click', (e) => {
+            const navGroup = e.target.closest('.mud-nav-group');
+            if (navGroup) {
+                const title = navGroup.querySelector('.mud-nav-group-text')?.textContent;
+                const isExpanded = navGroup.classList.contains('mud-nav-group-expanded');
+                console.log('[MudNavMenu Debug] NavGroup clicked:', {
+                    title: title,
+                    currentlyExpanded: isExpanded,
+                    element: navGroup
+                });
+            }
+        }, true);
+        
+        // Monitor DOM mutations for NavGroup state changes
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                    const element = mutation.target;
+                    if (element.classList.contains('mud-nav-group')) {
+                        const title = element.querySelector('.mud-nav-group-text')?.textContent;
+                        const isExpanded = element.classList.contains('mud-nav-group-expanded');
+                        console.log('[MudNavMenu Debug] NavGroup state changed:', {
+                            title: title,
+                            isExpanded: isExpanded
+                        });
+                    }
+                }
+            });
+        });
+        
+        // Observe the nav menu for changes
+        setTimeout(() => {
+            const navMenu = document.querySelector('.mud-navmenu');
+            if (navMenu) {
+                observer.observe(navMenu, {
+                    attributes: true,
+                    subtree: true,
+                    attributeFilter: ['class']
+                });
+                console.log('[MudNavMenu Debug] Mutation observer attached to nav menu');
+            }
+        }, 1000);
+    }
+};
+
 // Download file function for CSV exports
 window.downloadFile = function(filename, contentType, base64Content) {
     const blob = base64ToBlob(base64Content, contentType);

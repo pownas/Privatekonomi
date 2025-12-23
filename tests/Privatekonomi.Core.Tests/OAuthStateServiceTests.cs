@@ -117,8 +117,8 @@ public class OAuthStateServiceTests
         var nonExistentState = "non-existent-state";
 
         // Act & Assert
-        var exception = Record.Exception(() => _stateService.RemoveState(nonExistentState));
-        Assert.IsNull(exception);
+        // Should not throw exception
+        _stateService.RemoveState(nonExistentState);
     }
 
     [TestMethod]

@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Moq;
 using Privatekonomi.Core.Data;
 using Privatekonomi.Core.Models;
@@ -182,7 +182,17 @@ public class RbacServiceTests : IDisposable
         await _rbacService.AssignRoleAsync(_testUserId, 2, HouseholdRoleType.Editor);
 
         // Act & Assert
-        Assert.ThrowsException<InvalidOperationException>(() => _rbacService.AssignRoleAsync(_testUser2Id, 1, HouseholdRoleType.FullAccess.Result));
+        bool exceptionThrown = false;
+        try
+        {
+            await _rbacService.AssignRoleAsync(_testUser2Id, 1, HouseholdRoleType.FullAccess);
+        }
+        catch (InvalidOperationException)
+        {
+            exceptionThrown = true;
+        }
+        
+        Assert.IsTrue(exceptionThrown, "Expected InvalidOperationException was not thrown");
     }
 
     [TestMethod]
@@ -234,7 +244,17 @@ public class RbacServiceTests : IDisposable
     public async Task RemoveRoleAsync_CannotRemoveLastAdminRole()
     {
         // Act & Assert
-        Assert.ThrowsException<InvalidOperationException>(() => _rbacService.RemoveRoleAsync(_testUserId, 1.Result));
+        bool exceptionThrown = false;
+        try
+        {
+            await _rbacService.RemoveRoleAsync(_testUserId, 1);
+        }
+        catch (InvalidOperationException)
+        {
+            exceptionThrown = true;
+        }
+        
+        Assert.IsTrue(exceptionThrown, "Expected InvalidOperationException was not thrown");
     }
 
     // ==================== Permission Check Tests ====================
@@ -306,12 +326,22 @@ public class RbacServiceTests : IDisposable
     public async Task DelegateRoleAsync_ThrowsExceptionWhenExceedingMaxPeriod()
     {
         // Act & Assert
-        Assert.ThrowsException<ArgumentException>(() => _rbacService.DelegateRoleAsync(
+        bool exceptionThrown = false;
+        try
+        {
+            await _rbacService.DelegateRoleAsync(
                 _testUserId,
                 _testUser2Id,
                 _testHouseholdId,
                 HouseholdRoleType.FullAccess,
-                DateTime.UtcNow.AddDays(365.Result))); // Max is 90 days for FullAccess
+                DateTime.UtcNow.AddDays(365)); // Max is 90 days for FullAccess
+        }
+        catch (ArgumentException)
+        {
+            exceptionThrown = true;
+        }
+        
+        Assert.IsTrue(exceptionThrown, "Expected ArgumentException was not thrown");
     }
 
     [TestMethod]
@@ -339,12 +369,22 @@ public class RbacServiceTests : IDisposable
         await _context.SaveChangesAsync();
 
         // Act & Assert - User 2 (with delegated role) tries to delegate to user 3
-        Assert.ThrowsException<InvalidOperationException>(() => _rbacService.DelegateRoleAsync(
+        bool exceptionThrown = false;
+        try
+        {
+            await _rbacService.DelegateRoleAsync(
                 _testUser2Id,
                 "test-user-3",
                 _testHouseholdId,
                 HouseholdRoleType.Editor,
-                DateTime.UtcNow.AddDays(7.Result)));
+                DateTime.UtcNow.AddDays(7));
+        }
+        catch (InvalidOperationException)
+        {
+            exceptionThrown = true;
+        }
+        
+        Assert.IsTrue(exceptionThrown, "Expected InvalidOperationException was not thrown");
     }
 
     [TestMethod]
@@ -423,7 +463,7 @@ public class RbacServiceTests : IDisposable
 
         // Assert
         Assert.IsFalse(validation.IsValid);
-        CollectionAssert.Contains(validation.Errors, "Only Admin can assign roles");
+        CollectionAssert.Contains(validation.Errors.ToList(), "Only Admin can assign roles");
     }
 
     [TestMethod]
@@ -434,7 +474,8 @@ public class RbacServiceTests : IDisposable
 
         // Assert
         Assert.IsTrue(validation.IsValid);
-        CollectionAssert.Contains(w => w.Contains("replace the existing admin", validation.Warnings));
+        var hasWarning = validation.Warnings.Any(w => w.Contains("replace the existing admin"));
+        Assert.IsTrue(hasWarning, "Expected warning about replacing admin was not found");
     }
 
     [TestMethod]
@@ -445,7 +486,7 @@ public class RbacServiceTests : IDisposable
 
         // Assert
         Assert.IsFalse(validation.IsValid);
-        CollectionAssert.Contains(validation.Errors, "Date of birth required for Child role");
+        CollectionAssert.Contains(validation.Errors.ToList(), "Date of birth required for Child role");
     }
 
     [TestMethod]

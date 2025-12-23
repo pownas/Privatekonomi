@@ -79,7 +79,7 @@ public class BulkOperationTests
         Assert.AreEqual(1, result.SuccessCount);
         Assert.AreEqual(1, result.FailureCount);
         Assert.IsTrue(result.IsPartialSuccess);
-        CollectionAssert.Contains(result.Errors[0], "locked");
+        StringAssert.Contains(result.Errors[0], "locked");
         Assert.AreEqual(1, await context.Transactions.CountAsync());
     }
 
@@ -149,7 +149,7 @@ public class BulkOperationTests
         // Assert
         Assert.AreEqual(0, result.SuccessCount);
         Assert.AreNotEqual(0, result.Errors.Count());
-        CollectionAssert.Contains(result.Errors[0], "Invalid category");
+        StringAssert.Contains(result.Errors[0], "Invalid category");
     }
 
     [TestMethod]
@@ -357,7 +357,7 @@ public class BulkOperationTests
         // Assert
         Assert.AreEqual(2, result.FailureCount);
         Assert.AreNotEqual(0, result.Errors.Count());
-        CollectionAssert.Contains(result.Errors[0], "Cannot undo delete");
+        StringAssert.Contains(result.Errors[0], "Cannot undo delete");
     }
 
     [TestMethod]
