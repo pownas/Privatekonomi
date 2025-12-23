@@ -125,8 +125,15 @@ public class SocialFeatureServiceTests : IDisposable
         var shareSettings = new GoalShare { ShowCurrentAmount = true };
 
         // Act & Assert
-        Assert.ThrowsException<InvalidOperationException>(() =>
-            _socialFeatureService.CreateGoalShareAsync(goal.GoalId, shareSettings));
+        try
+        {
+            await _socialFeatureService.CreateGoalShareAsync(goal.GoalId, shareSettings);
+            Assert.Fail("Expected InvalidOperationException was not thrown");
+        }
+        catch (InvalidOperationException)
+        {
+            // Expected exception
+        }
     }
 
     [TestMethod]
@@ -260,8 +267,15 @@ public class SocialFeatureServiceTests : IDisposable
         var group = new SavingsGroup { Name = "Test Group" };
 
         // Act & Assert
-        Assert.ThrowsException<InvalidOperationException>(() =>
-            _socialFeatureService.CreateSavingsGroupAsync(group));
+        try
+        {
+            await _socialFeatureService.CreateSavingsGroupAsync(group);
+            Assert.Fail("Expected InvalidOperationException was not thrown");
+        }
+        catch (InvalidOperationException)
+        {
+            // Expected exception
+        }
     }
 
     [TestMethod]
@@ -626,8 +640,15 @@ public class SocialFeatureServiceTests : IDisposable
     public async Task CompareToCommunityAsync_WhenDisabled_ThrowsException()
     {
         // Act & Assert
-        Assert.ThrowsException<InvalidOperationException>(() =>
-            _socialFeatureService.CompareToCommunityAsync());
+        try
+        {
+            await _socialFeatureService.CompareToCommunityAsync();
+            Assert.Fail("Expected InvalidOperationException was not thrown");
+        }
+        catch (InvalidOperationException)
+        {
+            // Expected exception
+        }
     }
 
     [TestMethod]

@@ -183,14 +183,14 @@ NEWFILEUID:NONE
         Assert.AreEqual(new DateTime(2025, 1, 10), expense.Date.Date);
         Assert.AreEqual(125.50m, expense.Amount);
         Assert.IsFalse(expense.IsIncome);
-        CollectionAssert.Contains(expense.Description, "ICA MAXI STOCKHOLM");
+        StringAssert.Contains(expense.Description, "ICA MAXI STOCKHOLM");
 
         // Check second transaction (income)
         var income = transactions[1];
         Assert.AreEqual(new DateTime(2025, 1, 15), income.Date.Date);
         Assert.AreEqual(3500.00m, income.Amount);
         Assert.IsTrue(income.IsIncome);
-        CollectionAssert.Contains(income.Description, "Lön");
+        StringAssert.Contains(income.Description, "Lön");
     }
 
     [TestMethod]
@@ -267,7 +267,7 @@ NEWFILEUID:NONE
 
         // Assert
         var icaTransaction = transactions.First(t => t.Description.Contains("ICA"));
-        CollectionAssert.Contains(icaTransaction.Description, "Kortköp");
+        StringAssert.Contains(icaTransaction.Description, "Kortköp");
     }
 
     [TestMethod]
@@ -445,6 +445,6 @@ VERSION:102
 
         // Assert
         Assert.AreEqual(1, transactions.Count());
-        CollectionAssert.Contains(transactions[0].Description, "Valid Transaction");
+        StringAssert.Contains(transactions[0].Description, "Valid Transaction");
     }
 }

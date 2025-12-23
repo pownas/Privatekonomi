@@ -213,7 +213,10 @@ public class TransactionMLServiceTests : IDisposable
 
         // Assert
         Assert.AreNotEqual(0, results.Count());
-        Assert.All(results, r => Assert.IsFalse(string.IsNullOrEmpty(r.Category)));
+        foreach (var r in results)
+        {
+            Assert.IsFalse(string.IsNullOrEmpty(r.Category));
+        }
     }
 
     // Helper methods

@@ -154,7 +154,7 @@ public class GoalMilestoneIntegrationTests : IDisposable
         // Assert - Verify we have both automatic and custom milestones
         var allMilestones = await _milestoneService.GetMilestonesByGoalIdAsync(createdGoal.GoalId);
         Assert.AreEqual(5, allMilestones.Count()); // 4 automatic + 1 custom
-        Assert.AreEqual(1, allMilestones, m => !m.IsAutomatic.Count());
+        Assert.AreEqual(1, allMilestones.Count(m => !m.IsAutomatic));
 
         // Act - Update progress to reach 25% and the custom milestone
         await _goalService.UpdateGoalProgressAsync(createdGoal.GoalId, 15000m);
