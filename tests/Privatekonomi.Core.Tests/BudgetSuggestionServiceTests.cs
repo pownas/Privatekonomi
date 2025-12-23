@@ -303,11 +303,19 @@ public class BudgetSuggestionServiceTests
             BudgetPeriod.Monthly);
 
         // Act & Assert
-        Assert.ThrowsException<InvalidOperationException>(() => _service.AcceptSuggestionAsync(
+        try
+        {
+            await _service.AcceptSuggestionAsync(
                 suggestion.BudgetSuggestionId,
                 DateTime.Now,
-                DateTime.Now.AddMonths(1.Result),
-                BudgetPeriod.Monthly));
+                DateTime.Now.AddMonths(1),
+                BudgetPeriod.Monthly);
+            Assert.Fail("Expected InvalidOperationException was not thrown");
+        }
+        catch (InvalidOperationException)
+        {
+            // Expected exception
+        }
     }
 
     [TestMethod]

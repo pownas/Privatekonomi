@@ -252,8 +252,8 @@ public class ExportServiceTests : IDisposable
         StringAssert.Contains(csv, "Hyra");
         
         // Should not contain 2023 data
-        CollectionAssert.DoesNotContain(csv, "Matinköp ICA");
-        CollectionAssert.DoesNotContain(csv, "Lön januari");
+        Assert.IsFalse(csv.Contains("Matinköp ICA"));
+        Assert.IsFalse(csv.Contains("Lön januari"));
 
         // Verify summary section
         StringAssert.Contains(csv, "# Summering 2024");
@@ -386,7 +386,7 @@ public class ExportServiceTests : IDisposable
         StringAssert.Contains(csv, "Matinköp Willys");
         
         // Should NOT contain other user's data
-        CollectionAssert.DoesNotContain(csv, "Other user transaction");
+        Assert.IsFalse(csv.Contains("Other user transaction"));
     }
 
     [TestMethod]
