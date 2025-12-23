@@ -2,6 +2,7 @@
 @inject Microsoft.AspNetCore.Identity.UserManager<Privatekonomi.Core.Models.ApplicationUser> UserManager
 @inject Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider AuthenticationStateProvider
 @inject Privatekonomi.Core.Services.INavigationPerformanceService NavigationPerformanceService
+@inject ILogger<NavMenu> Logger
 @implements IDisposable
 
 <MudNavMenu Class="nav-menu">
@@ -41,7 +42,7 @@
         <MudNavLink Href="/savings/roundup" Icon="@Icons.Material.Filled.AccountBalanceWallet" OnClick="@(() => TrackNavigation("/savings/roundup", "Round-up Sparande"))">Round-up Sparande</MudNavLink>
         <MudNavLink Href="/savings/challenges" Icon="@Icons.Material.Filled.Flag" OnClick="@(() => TrackNavigation("/savings/challenges", "Sparmåls-utmaningar"))">Sparmåls-utmaningar</MudNavLink>
         <MudNavLink Href="/savings/shared-goals" Icon="@Icons.Material.Filled.Groups" OnClick="@(() => TrackNavigation("/savings/shared-goals", "Gemensamma Sparmål"))">Gemensamma Sparmål</MudNavLink>
-        <MudNavLink Href="/savings/pockets" Icon="@Icons.Material.Filled.Wallet" OnClick="@(() => TrackNavigation("/savings/pockets", "Sparfickor"))">Sparfickor</MudNavLink>
+        <MudNavLink Href="/savings/pockets" Icon="@Icons.Material.Filled.Wallet" OnClick="@(() => TrackNavigation("/savings/pockets", "Sparfickor"))">Sparflickor</MudNavLink>
         <MudNavLink Href="/savings/life-timeline" Icon="@Icons.Material.Filled.Timeline" OnClick="@(() => TrackNavigation("/savings/life-timeline", "Livslinjeplanering"))">Livslinjeplanering</MudNavLink>
     </MudNavGroup>
 
@@ -252,6 +253,8 @@
 
     protected override async Task OnInitializedAsync()
     {
+        Logger.LogInformation("[NavMenu] OnInitializedAsync started");
+        
         UpdateCurrentPath(NavigationManager.Uri);
         EnsureGroupForCurrentRoute();
         NavigationManager.LocationChanged += OnLocationChanged;
@@ -260,6 +263,9 @@
         // Check if user is system admin and if we're in development mode
         await CheckIfSystemAdminAsync();
         CheckIfDevelopmentMode();
+        
+        Logger.LogInformation("[NavMenu] OnInitializedAsync completed - Current Path: {Path}, Active Group: {Group}, IsDev: {IsDev}, IsAdmin: {IsAdmin}", 
+            currentPath, activeGroupKey, _isDevelopment, _isSystemAdmin);
     }
     
     private void CheckIfDevelopmentMode()
@@ -315,8 +321,14 @@
 
     private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
     {
+        Logger.LogInformation("[NavMenu] OnLocationChanged - New Location: {Location}", e.Location);
+        
         UpdateCurrentPath(e.Location);
         EnsureGroupForCurrentRoute();
+        
+        Logger.LogInformation("[NavMenu] After location change - Current Path: {Path}, Active Group: {Group}", 
+            currentPath, activeGroupKey);
+        
         _ = InvokeAsync(StateHasChanged);
     }
 
@@ -446,27 +458,6 @@
         return currentPath.StartsWith(normalizedRoute + "/", System.StringComparison.OrdinalIgnoreCase);
     }
 
-    private void OnGroupExpandedChanged(string key, bool expanded)
-    {
-        if (!expanded)
-        {
-            if (string.Equals(activeGroupKey, key, System.StringComparison.OrdinalIgnoreCase))
-            {
-                activeGroupKey = null;
-            }
-            StateHasChanged();
-            return;
-        }
-
-        activeGroupKey = key;
-        StateHasChanged();
-    }
-
-    private bool IsGroupExpanded(string key)
-    {
-        return !string.IsNullOrEmpty(activeGroupKey) && string.Equals(activeGroupKey, key, System.StringComparison.OrdinalIgnoreCase);
-    }
-
     private string GetGroupClass(string key)
     {
         return IsGroupActive(key)
@@ -479,14 +470,47 @@
         return !string.IsNullOrEmpty(currentRouteGroupKey) && string.Equals(currentRouteGroupKey, key, System.StringComparison.OrdinalIgnoreCase);
     }
 
+    private bool IsGroupExpanded(string key)
+    {
+        var isExpanded = !string.IsNullOrEmpty(activeGroupKey) && string.Equals(activeGroupKey, key, System.StringComparison.OrdinalIgnoreCase);
+        
+        if (_isDevelopment)
+        {
+            Logger.LogDebug("[NavMenu] IsGroupExpanded - Key: {Key}, Result: {IsExpanded}, ActiveGroupKey: {ActiveGroupKey}", 
+                key, isExpanded, activeGroupKey);
+        }
+        
+        return isExpanded;
+    }
+
+    private void OnGroupExpandedChanged(string key, bool expanded)
+    {
+        Logger.LogInformation("[NavMenu] OnGroupExpandedChanged called - Key: {Key}, Expanded: {Expanded}, Current ActiveGroupKey: {ActiveGroupKey}", 
+            key, expanded, activeGroupKey);
+
+        if (!expanded)
+        {
+            if (string.Equals(activeGroupKey, key, System.StringComparison.OrdinalIgnoreCase))
+            {
+                Logger.LogInformation("[NavMenu] Collapsing group: {Key}", key);
+                activeGroupKey = null;
+            }
+            return;
+        }
+
+        Logger.LogInformation("[NavMenu] Expanding group: {Key}", key);
+        activeGroupKey = key;
+    }
+
+    private void TrackNavigation(string path, string name)
+    {
+        Logger.LogInformation("[NavMenu] TrackNavigation - Path: {Path}, Name: {Name}", path, name);
+        NavigationPerformanceService.StartNavigation(path, $"NavMenu:{name}");
+    }
+
     public void Dispose()
     {
         NavigationManager.LocationChanged -= OnLocationChanged;
         AuthenticationStateProvider.AuthenticationStateChanged -= OnAuthenticationStateChanged;
-    }
-
-    private void TrackNavigation(string targetUrl, string linkName)
-    {
-        NavigationPerformanceService.StartNavigation(targetUrl, $"NavMenu:{linkName}");
     }
 }

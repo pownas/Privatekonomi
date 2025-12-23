@@ -60,6 +60,15 @@
                 document.documentElement.classList.add('view-density-spacious');
             }
         })();
+        
+        // Mark as development mode for debugging
+        (function() {
+            var env = '@(Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production")';
+            if (env === 'Development' || env === 'Local') {
+                document.documentElement.setAttribute('data-development-mode', 'true');
+                console.log('[App] Running in development mode - debug logging enabled');
+            }
+        })();
     </script>
     <HeadOutlet @rendermode="InteractiveServer" />
 </head>
@@ -73,6 +82,11 @@
     <script>
         // Register service worker for PWA support
         window.pwaManager.init();
+        
+        // Initialize MudNavMenu debug logging
+        if (window.mudNavMenuDebug) {
+            window.mudNavMenuDebug.init();
+        }
     </script>
 </body>
 

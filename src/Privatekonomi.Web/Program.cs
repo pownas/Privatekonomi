@@ -57,6 +57,12 @@ builder.Services.Configure<Microsoft.AspNetCore.Components.Server.CircuitOptions
     {
         options.DetailedErrors = true;
     }
+    // Increase disconnect and JS interop timeouts to prevent premature disconnects
+    options.DisconnectedCircuitRetentionPeriod = TimeSpan.FromMinutes(3);
+    options.DisconnectedCircuitMaxRetained = 100;
+    options.JSInteropDefaultCallTimeout = TimeSpan.FromMinutes(1);
+    // Increase max buffer size for large component updates
+    options.MaxBufferedUnacknowledgedRenderBatches = 10;
 });
 
 // Add MudBlazor services with configuration for better accessibility
