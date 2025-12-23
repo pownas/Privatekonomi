@@ -1,0 +1,36 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Folder Name="/docs/">
+    <File Path="docs/*.md" />
+    <File Path="docs/*.json" />
+    <File Path="docs/*.txt" />
+  </Folder>
+  <Folder Name="/Solution Items/">
+    <File Path="app-install.sh" />
+    <File Path="app-start.sh" />
+    <File Path="LICENSE" />
+    <File Path="local-app-install.ps1" />
+    <File Path="local-app-start.ps1" />
+    <File Path="raspberry-pi-debug.sh" />
+    <File Path="raspberry-pi-install.sh" />
+    <File Path="raspberry-pi-start.sh" />
+    <File Path="raspberry-pi-update.sh" />
+    <File Path="README.md" />
+    <File Path="setup-tesseract.sh" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/Privatekonomi.Api/Privatekonomi.Api.csproj" />
+    <Project Path="src/Privatekonomi.AppHost/Privatekonomi.AppHost.csproj" />
+    <Project Path="src/Privatekonomi.Core/Privatekonomi.Core.csproj" />
+    <Project Path="src/Privatekonomi.ServiceDefaults/Privatekonomi.ServiceDefaults.csproj" />
+    <Project Path="src/Privatekonomi.Web/Privatekonomi.Web.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Privatekonomi.Api.Tests/Privatekonomi.Api.Tests.csproj" />
+    <Project Path="tests/Privatekonomi.Core.Tests/Privatekonomi.Core.Tests.csproj" />
+  </Folder>
+</Solution>
