@@ -6,6 +6,8 @@ namespace Privatekonomi.Core.Services.Parsers;
 
 public class SwedbankParser : ICsvParser
 {
+    private const int MaxHeaderSearchLines = 5;
+    
     public string BankName => "Swedbank";
 
     public bool CanParse(string csvContent)
@@ -13,7 +15,11 @@ public class SwedbankParser : ICsvParser
         var lines = csvContent.Split('\n', StringSplitOptions.RemoveEmptyEntries);
         if (lines.Length < 2) return false;
 
-        var header = lines[0].ToLower();
+        // Find header row (might not be on line 0 due to metadata lines)
+        var headerIndex = FindHeaderRow(lines);
+        if (headerIndex == -1) return false;
+        
+        var header = lines[headerIndex].ToLower();
         
         // Check for new CSN format (Swedish column names, tab-separated)
         if (header.Contains("radnummer") && header.Contains("bokföringsdag") && 
@@ -37,30 +43,37 @@ public class SwedbankParser : ICsvParser
         var lines = content.Split('\n', StringSplitOptions.RemoveEmptyEntries);
         if (lines.Length < 2) return transactions;
 
-        var header = lines[0].ToLower();
+        // Find header row (might not be on line 0 due to metadata lines)
+        var headerIndex = FindHeaderRow(lines);
+        if (headerIndex == -1)
+        {
+            throw new InvalidOperationException("Kunde inte hitta rubriker i Swedbank CSV-filen");
+        }
+
+        var header = lines[headerIndex].ToLower();
         
         // Detect format and parse accordingly
         if (header.Contains("radnummer") && header.Contains("bokföringsdag"))
         {
             // New CSN format with Swedish column names (tab-separated)
-            return await ParseCsnFormatAsync(lines);
+            return await ParseCsnFormatAsync(lines, headerIndex);
         }
         else
         {
             // Old format with English column names (semicolon-separated)
-            return await ParseOldFormatAsync(lines);
+            return await ParseOldFormatAsync(lines, headerIndex);
         }
     }
 
-    private async Task<List<Transaction>> ParseCsnFormatAsync(string[] lines)
+    private async Task<List<Transaction>> ParseCsnFormatAsync(string[] lines, int headerIndex)
     {
         var transactions = new List<Transaction>();
         
         // Detect separator (comma, tab, or semicolon) from header
-        var separator = DetectSeparator(lines[0]);
+        var separator = DetectSeparator(lines[headerIndex]);
         
         // Parse header - handle quoted fields
-        var header = ParseCsvLine(lines[0], separator).ToArray();
+        var header = ParseCsvLine(lines[headerIndex], separator).ToArray();
         var dateIndex = FindColumnIndex(header, new[] { "bokföringsdag", "transaktionsdag" });
         var amountIndex = FindColumnIndex(header, new[] { "belopp" });
         var descriptionIndex = FindColumnIndex(header, new[] { "beskrivning" });
@@ -72,8 +85,8 @@ public class SwedbankParser : ICsvParser
             throw new InvalidOperationException("Kunde inte hitta nödvändiga kolumner i Swedbank CSV-filen");
         }
 
-        // Parse data rows
-        for (int i = 1; i < lines.Length; i++)
+        // Parse data rows (start from headerIndex + 1)
+        for (int i = headerIndex + 1; i < lines.Length; i++)
         {
             try
             {
@@ -137,7 +150,7 @@ public class SwedbankParser : ICsvParser
         return await Task.FromResult(transactions);
     }
 
-    private async Task<List<Transaction>> ParseOldFormatAsync(string[] lines)
+    private async Task<List<Transaction>> ParseOldFormatAsync(string[] lines, int headerIndex)
     {
         var transactions = new List<Transaction>();
         
@@ -145,7 +158,7 @@ public class SwedbankParser : ICsvParser
         var separator = ';';
         
         // Parse header
-        var header = ParseCsvLine(lines[0], separator).ToArray();
+        var header = ParseCsvLine(lines[headerIndex], separator).ToArray();
         var rowTypeIndex = FindColumnIndex(header, new[] { "row type" });
         var dateIndex = FindColumnIndex(header, new[] { "date" });
         var amountIndex = FindColumnIndex(header, new[] { "amount" });
@@ -159,8 +172,8 @@ public class SwedbankParser : ICsvParser
             throw new InvalidOperationException("Kunde inte hitta nödvändiga kolumner i Swedbank CSV-filen");
         }
 
-        // Parse data rows
-        for (int i = 1; i < lines.Length; i++)
+        // Parse data rows (start from headerIndex + 1)
+        for (int i = headerIndex + 1; i < lines.Length; i++)
         {
             try
             {
@@ -344,5 +357,36 @@ public class SwedbankParser : ICsvParser
             return '\t';
         else
             return ';';
+    }
+
+    /// <summary>
+    /// Finds the header row in the CSV file. Swedbank exports sometimes include metadata lines
+    /// before the actual header row with column names. This method searches the first few lines
+    /// to locate the header.
+    /// </summary>
+    /// <param name="lines">All lines from the CSV file</param>
+    /// <returns>Index of the header row, or -1 if not found within the first MaxHeaderSearchLines (5) lines</returns>
+    private int FindHeaderRow(string[] lines)
+    {
+        for (int i = 0; i < Math.Min(lines.Length, MaxHeaderSearchLines); i++)
+        {
+            var line = lines[i].ToLower();
+            
+            // Check for Swedish CSN format headers
+            if (line.Contains("radnummer") && line.Contains("bokföringsdag") && 
+                line.Contains("belopp") && line.Contains("beskrivning"))
+            {
+                return i;
+            }
+            
+            // Check for English format headers
+            if (line.Contains("row type") && line.Contains("debit/credit") && 
+                (line.Contains("client account") || line.Contains("details")))
+            {
+                return i;
+            }
+        }
+        
+        return -1; // Header not found
     }
 }

@@ -109,8 +109,9 @@ public class TransactionServiceTests : IDisposable
         await _context.SaveChangesAsync();
 
         // Act & Assert
-        Assert.ThrowsException<ArgumentException>(() =>
-            _transactionService.UpdateTransactionWithAuditAsync(
+        try
+        {
+            await _transactionService.UpdateTransactionWithAuditAsync(
                 transaction.TransactionId,
                 0m, // Invalid amount
                 DateTime.UtcNow.Date,
@@ -121,7 +122,13 @@ public class TransactionServiceTests : IDisposable
                 null,
                 null,
                 null,
-                null));
+                null);
+            Assert.Fail("Expected ArgumentException was not thrown");
+        }
+        catch (ArgumentException)
+        {
+            // Expected exception
+        }
     }
 
     [TestMethod]
@@ -141,8 +148,9 @@ public class TransactionServiceTests : IDisposable
         await _context.SaveChangesAsync();
 
         // Act & Assert
-        Assert.ThrowsException<ArgumentException>(() =>
-            _transactionService.UpdateTransactionWithAuditAsync(
+        try
+        {
+            await _transactionService.UpdateTransactionWithAuditAsync(
                 transaction.TransactionId,
                 -50m, // Invalid amount
                 DateTime.UtcNow.Date,
@@ -153,7 +161,13 @@ public class TransactionServiceTests : IDisposable
                 null,
                 null,
                 null,
-                null));
+                null);
+            Assert.Fail("Expected ArgumentException was not thrown");
+        }
+        catch (ArgumentException)
+        {
+            // Expected exception
+        }
     }
 
     [TestMethod]
@@ -173,8 +187,9 @@ public class TransactionServiceTests : IDisposable
         await _context.SaveChangesAsync();
 
         // Act & Assert
-        Assert.ThrowsException<ArgumentException>(() =>
-            _transactionService.UpdateTransactionWithAuditAsync(
+        try
+        {
+            await _transactionService.UpdateTransactionWithAuditAsync(
                 transaction.TransactionId,
                 100m,
                 DateTime.UtcNow.Date,
@@ -185,7 +200,13 @@ public class TransactionServiceTests : IDisposable
                 null,
                 null,
                 null,
-                null));
+                null);
+            Assert.Fail("Expected ArgumentException was not thrown");
+        }
+        catch (ArgumentException)
+        {
+            // Expected exception
+        }
     }
 
     [TestMethod]
@@ -205,8 +226,10 @@ public class TransactionServiceTests : IDisposable
         await _context.SaveChangesAsync();
 
         // Act & Assert
-        var exception = Assert.ThrowsException<InvalidOperationException>(() =>
-            _transactionService.UpdateTransactionWithAuditAsync(
+        InvalidOperationException? exception = null;
+        try
+        {
+            await _transactionService.UpdateTransactionWithAuditAsync(
                 transaction.TransactionId,
                 100m,
                 DateTime.UtcNow.Date,
@@ -217,8 +240,15 @@ public class TransactionServiceTests : IDisposable
                 null,
                 null,
                 null,
-                null));
+                null);
+            Assert.Fail("Expected InvalidOperationException was not thrown");
+        }
+        catch (InvalidOperationException ex)
+        {
+            exception = ex;
+        }
 
+        Assert.IsNotNull(exception);
         StringAssert.Contains(exception.Message, "locked");
     }
 
@@ -240,8 +270,10 @@ public class TransactionServiceTests : IDisposable
         await _context.SaveChangesAsync();
 
         // Act & Assert
-        var exception = Assert.ThrowsException<InvalidOperationException>(() =>
-            _transactionService.UpdateTransactionWithAuditAsync(
+        InvalidOperationException? exception = null;
+        try
+        {
+            await _transactionService.UpdateTransactionWithAuditAsync(
                 transaction.TransactionId,
                 100m,
                 DateTime.UtcNow.Date,
@@ -252,8 +284,15 @@ public class TransactionServiceTests : IDisposable
                 null,
                 DateTime.UtcNow.AddMinutes(-5), // Old timestamp indicating concurrent modification
                 null,
-                null));
+                null);
+            Assert.Fail("Expected InvalidOperationException was not thrown");
+        }
+        catch (InvalidOperationException ex)
+        {
+            exception = ex;
+        }
 
+        Assert.IsNotNull(exception);
         StringAssert.Contains(exception.Message, "modified by another user");
     }
 
@@ -261,8 +300,10 @@ public class TransactionServiceTests : IDisposable
     public async Task UpdateTransactionWithAuditAsync_TransactionNotFound_ThrowsInvalidOperationException()
     {
         // Act & Assert
-        var exception = Assert.ThrowsException<InvalidOperationException>(() =>
-            _transactionService.UpdateTransactionWithAuditAsync(
+        InvalidOperationException? exception = null;
+        try
+        {
+            await _transactionService.UpdateTransactionWithAuditAsync(
                 999, // Non-existent ID
                 100m,
                 DateTime.UtcNow.Date,
@@ -273,8 +314,15 @@ public class TransactionServiceTests : IDisposable
                 null,
                 null,
                 null,
-                null));
+                null);
+            Assert.Fail("Expected InvalidOperationException was not thrown");
+        }
+        catch (InvalidOperationException ex)
+        {
+            exception = ex;
+        }
 
+        Assert.IsNotNull(exception);
         StringAssert.Contains(exception.Message, "not found");
     }
 
