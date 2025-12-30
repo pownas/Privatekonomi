@@ -1,20 +1,15 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
-  <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
+  <PropertyGroup Label="General">
     <UserSecretsId>eb8f9493-8e5f-4f49-95ce-0bf639dddbd5</UserSecretsId>
-    <!-- Suppress NU1608 until Pomelo.EntityFrameworkCore.MySql releases 10.0 compatible version -->
-    <NoWarn>$(NoWarn);NU1608</NoWarn>
   </PropertyGroup>
 
-  <ItemGroup>
+  <ItemGroup Label="Packages">
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="10.0.0" />
   </ItemGroup>
 
-  <ItemGroup>
+  <ItemGroup Label="Projects">
     <ProjectReference Include="..\Privatekonomi.Core\Privatekonomi.Core.csproj" />
     <ProjectReference Include="..\Privatekonomi.ServiceDefaults\Privatekonomi.ServiceDefaults.csproj" />
   </ItemGroup>

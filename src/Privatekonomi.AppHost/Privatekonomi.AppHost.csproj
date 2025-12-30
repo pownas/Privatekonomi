@@ -1,20 +1,17 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <Sdk Name="Aspire.AppHost.Sdk" Version="13.0.0" />
 
-  <PropertyGroup>
+  <PropertyGroup Label="General">
     <OutputType>Exe</OutputType>
-    <TargetFramework>net10.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
     <IsAspireHost>true</IsAspireHost>
     <UserSecretsId>a1d43a2c-e345-4da9-b866-2a39d5009e40</UserSecretsId>
   </PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Aspire.Hosting.AppHost" Version="13.0.0" />
+  <ItemGroup Label="Packages">
+    <PackageReference Include="Aspire.Hosting.AppHost" Version="13.1.0" />
   </ItemGroup>
 
-  <ItemGroup>
+  <ItemGroup Label="Projects">
     <ProjectReference Include="..\Privatekonomi.Api\Privatekonomi.Api.csproj" />
     <ProjectReference Include="..\Privatekonomi.Web\Privatekonomi.Web.csproj" />
     <ProjectReference Include="..\Privatekonomi.ServiceDefaults\Privatekonomi.ServiceDefaults.csproj" IsAspireProjectResource="false" />
