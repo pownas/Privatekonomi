@@ -388,24 +388,11 @@
     private string[] _chartLabels = Array.Empty<string>();
     private ChartOptions _chartOptions = new()
     {
-        ChartPalette = GetChartPalette()
+        ChartPalette = new[] { "#2196F3", "#4CAF50" },
+        TooltipSubtitleFormat = "{0}: {1:N0} kr",
+        TooltipTitleFormat = "{0}",
+        ShowToolTips = true
     };
-
-    private static string[] GetChartPalette()
-    {
-        // WCAG AA compliant colors for both light and dark mode
-        // In real implementation, check theme state
-        return new[]
-        {
-            "#1976D2", // Primary Blue
-            "#388E3C", // Success Green
-            "#F57C00", // Warning Orange
-            "#7B1FA2", // Secondary Purple
-            "#0097A7", // Info Cyan
-            "#C2185B"  // Pink
-        };
-    }
-
     private static readonly System.Globalization.CultureInfo SwedishCulture = System.Globalization.CultureInfo.GetCultureInfo("sv-SE");
     private const int MaxChartCategories = 6;
 

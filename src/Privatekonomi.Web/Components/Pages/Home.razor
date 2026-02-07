@@ -587,7 +587,12 @@ else
     private string[] _barChartLabels = Array.Empty<string>();
     private List<ChartSeries<double>> _cashFlowSeries = new();
     private string[] _cashFlowLabels = Array.Empty<string>();
-    private ChartOptions _chartOptions = new ChartOptions();
+    private ChartOptions _chartOptions = new ChartOptions
+    {
+        ChartPalette = new[] { "#4caf50", "#f44336", "#2196f3", "#ff9800", "#9c27b0", "#009688" },
+        TooltipSubtitleFormat = "Kategori: {0}",
+        TooltipTitleFormat = "Belopp: {0:C}",
+    };
 
     // Net Worth data
     private NetWorthReport? _netWorthReport = null;

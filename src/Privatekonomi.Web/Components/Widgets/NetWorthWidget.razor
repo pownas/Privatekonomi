@@ -75,7 +75,9 @@
     private string[] _netWorthLabels = Array.Empty<string>();
     private ChartOptions _chartOptions = new ChartOptions
     {
-        ChartPalette = new[] { "#4caf50", "#f44336", "#2196f3" },
+        ChartPalette = new[] { Colors.Green.Default },
+        TooltipSubtitleFormat = "Nettoförmögenhet: {0:C}",
+        TooltipTitleFormat = "{0}",
     };
 
     protected override async Task OnInitializedAsync()
