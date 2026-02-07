@@ -1,4 +1,4 @@
-@page "/economy/transactions"
+﻿@page "/economy/transactions"
 @page "/transactions"
 @rendermode InteractiveServer
 @using Privatekonomi.Web.Components.Dialogs
@@ -395,6 +395,7 @@
     private bool _filterPanelExpanded = false;
     private DotNetObjectReference<Transactions>? _dotNetHelper;
     private Stack<BulkOperationSnapshot> _undoStack = new();
+    private string? _errorMessage = null;
 
     protected override async Task OnInitializedAsync()
     {
@@ -460,12 +461,23 @@
     private async Task LoadData()
     {
         _loading = true;
-        var households = await HouseholdService.GetAllHouseholdsAsync();
-        _households = households.ToList();
-        var categories = await CategoryService.GetAllCategoriesAsync();
-        _categories = categories.ToList();
-        _transactions = await TransactionService.GetAllTransactionsAsync();
-        ApplyFilter();
+        _errorMessage = null;
+        try
+        {
+            var households = await HouseholdService.GetAllHouseholdsAsync();
+            _households = households.ToList();
+            var categories = await CategoryService.GetAllCategoriesAsync();
+            _categories = categories.ToList();
+            _transactions = await TransactionService.GetAllTransactionsAsync();
+            ApplyFilter();
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = "Kunde inte ladda transaktioner: " + ex.Message;
+            Snackbar.Add(_errorMessage, Severity.Error);
+            _transactions = new List<Transaction>();
+            ApplyFilter();
+        }
         _loading = false;
     }
 

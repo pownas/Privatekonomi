@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Privatekonomi.Core.Data;
@@ -26,7 +26,7 @@ public static class StorageExtensions
         switch (storageSettings.Provider.ToLowerInvariant())
         {
             case "sqlite":
-                services.AddDbContext<PrivatekonomyContext>(options =>
+                services.AddDbContextFactory<PrivatekonomyContext>(options =>
                 {
                     var connectionString = storageSettings.ConnectionString;
                     if (string.IsNullOrEmpty(connectionString))
@@ -36,7 +36,7 @@ public static class StorageExtensions
                     options.UseSqlite(connectionString);
                 });
                 break;
-                
+
             case "sqlserver":
                 if (string.IsNullOrEmpty(storageSettings.ConnectionString))
                 {
@@ -44,12 +44,12 @@ public static class StorageExtensions
                         "ConnectionString is required for SqlServer provider. " +
                         "Please specify a connection string in Storage:ConnectionString configuration.");
                 }
-                services.AddDbContext<PrivatekonomyContext>(options =>
+                services.AddDbContextFactory<PrivatekonomyContext>(options =>
                 {
                     options.UseSqlServer(storageSettings.ConnectionString);
                 });
                 break;
-                
+
             case "mysql":
             case "mariadb":
                 if (string.IsNullOrEmpty(storageSettings.ConnectionString))
@@ -58,24 +58,24 @@ public static class StorageExtensions
                         "ConnectionString is required for MySQL/MariaDB provider. " +
                         "Please specify a connection string in Storage:ConnectionString configuration.");
                 }
-                services.AddDbContext<PrivatekonomyContext>(options =>
+                services.AddDbContextFactory<PrivatekonomyContext>(options =>
                 {
                     var serverVersion = ServerVersion.AutoDetect(storageSettings.ConnectionString);
                     options.UseMySql(storageSettings.ConnectionString, serverVersion);
                 });
                 break;
-                
+
             case "jsonfile":
                 // JsonFile uses InMemory with persistence layer
-                services.AddDbContext<PrivatekonomyContext>(options =>
+                services.AddDbContextFactory<PrivatekonomyContext>(options =>
                     options.UseInMemoryDatabase("PrivatekonomyDb"));
                 services.AddSingleton<IDataPersistenceService, JsonFilePersistenceService>();
                 services.AddHostedService<JsonFilePersistenceHostedService>();
                 break;
-                
+
             case "inmemory":
             default:
-                services.AddDbContext<PrivatekonomyContext>(options =>
+                services.AddDbContextFactory<PrivatekonomyContext>(options =>
                     options.UseInMemoryDatabase("PrivatekonomyDb"));
                 break;
         }
