@@ -273,6 +273,13 @@ window.pwaManager = {
     
     // Register service worker
     register: function() {
+        // Disable service worker in development/debug mode
+        const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        const isDevMode = document.documentElement.hasAttribute('data-development-mode');
+        if (isLocalhost || isDevMode) {
+            console.log('[PWA] Service Worker disabled in development/debug mode');
+            return;
+        }
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('/service-worker.js')
                 .then((registration) => {
