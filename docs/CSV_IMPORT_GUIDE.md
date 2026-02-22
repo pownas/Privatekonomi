@@ -8,9 +8,10 @@ This guide explains how to use the import functionality to import transactions f
 
 ### CSV Format
 CSV (Comma/Semicolon Separated Values) files are supported from the following banks:
-- Avanza (transaktionshistorik)
 - ICA-banken
 - Swedbank (both CSN and old formats)
+
+> **Note:** Avanza CSV exports (transaktionshistorik) are imported as **Investeringstransaktioner** — see the [Avanza section](#avanza-csv--transaktionshistorik) below and use the **Investeringar** import flow.
 
 ### OFX/QFX Format
 OFX (Open Financial Exchange) is a standardized format supported by most banks worldwide. QFX is Quicken's variant of OFX.
@@ -22,7 +23,8 @@ OFX (Open Financial Exchange) is a standardized format supported by most banks w
 
 ## Supported Banks
 
-### Avanza (CSV)
+### Avanza (CSV) — Transaktionshistorik
+**Importeras som:** Investeringstransaktioner (aktier/fonder)
 **Format:** Semicolon-separated (`;`) CSV file
 **Required columns:**
 - Datum (Date)
@@ -30,8 +32,13 @@ OFX (Open Financial Exchange) is a standardized format supported by most banks w
 - Belopp (Amount)
 
 **Optional columns parsed:**
-- Värdepapper/beskrivning (Security/description — combined with type for description)
+- Värdepapper/beskrivning (Security name, used to identify the investment)
+- ISIN (links transaction to a specific security)
+- Antal (Quantity)
+- Kurs (Price per share)
+- Courtage (Fees)
 - Valuta (Currency, defaults to SEK)
+- Konto (Account number)
 
 **Example format:**
 ```csv
@@ -48,9 +55,11 @@ Datum;Konto;Typ av transaktion;Värdepapper/beskrivning;Antal;Kurs;Belopp;Courta
 3. Click **Exportera till CSV**
 
 **Notes:**
-- Negative amounts are treated as expenses (Köp, Uttag, Avkastningsskatt, etc.)
-- Positive amounts are treated as income (Insättning, Utdelning, Sälj, etc.)
-- The description is built from *Typ av transaktion* and *Värdepapper/beskrivning* (e.g. `Köp: Apple Inc`)
+- Rows with an ISIN or security name are imported as `InvestmentTransaction` records.
+- Rows without a security (e.g. Insättning, Uttag) are skipped — these are not investment activities.
+- For each unique security (ISIN), an `Investment` stub is created automatically if it does not already exist.
+- Duplicate detection: same date + type + amount on the same investment is treated as a duplicate.
+- Use the **Investeringar** import flow in the UI (not Transaktioner).
 
 ### ICA-banken (CSV)
 **Format:** Semicolon-separated (`;`) CSV file

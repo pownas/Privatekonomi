@@ -11,6 +11,7 @@ public class InvestmentService : IInvestmentService
 {
     private readonly PrivatekonomyContext _context;
     private readonly List<IInvestmentCsvParser> _parsers;
+    private readonly AvanzaTransactionParser _transactionParser;
     private readonly ICurrentUserService? _currentUserService;
 
     public InvestmentService(PrivatekonomyContext context, ICurrentUserService? currentUserService = null)
@@ -22,6 +23,7 @@ public class InvestmentService : IInvestmentService
             new AvanzaHoldingsPerAccountParser(),
             new AvanzaConsolidatedHoldingsParser()
         };
+        _transactionParser = new AvanzaTransactionParser();
     }
 
     public async Task<IEnumerable<Investment>> GetAllInvestmentsAsync()
@@ -98,8 +100,14 @@ public class InvestmentService : IInvestmentService
             csvStream.Position = 0;
             using var reader = new StreamReader(csvStream, Encoding.UTF8, leaveOpen: true);
             var content = await reader.ReadToEndAsync();
+
+            // Detect Avanza transaction history format first
+            if (_transactionParser.CanParse(content))
+            {
+                return await ImportTransactionHistoryAsync(content, bankSourceId);
+            }
             
-            // Find appropriate parser
+            // Find appropriate holdings parser
             IInvestmentCsvParser? parser = null;
             foreach (var p in _parsers)
             {
@@ -237,6 +245,125 @@ public class InvestmentService : IInvestmentService
             .Where(i => i.AccountNumber == accountNumber)
             .OrderByDescending(i => i.LastUpdated)
             .ToListAsync();
+    }
+
+    /// <summary>
+    /// Imports Avanza transaction history rows as <see cref="InvestmentTransaction"/> records.
+    /// For each unique security (identified by ISIN or name), a stub <see cref="Investment"/>
+    /// is created if one does not already exist. Rows without a security (deposits, withdrawals)
+    /// are skipped.
+    /// </summary>
+    private async Task<CsvImportResult> ImportTransactionHistoryAsync(string csvContent, int bankSourceId)
+    {
+        var result = new CsvImportResult();
+
+        try
+        {
+            using var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(csvContent));
+            var rows = await _transactionParser.ParseTransactionsAsync(stream);
+
+            result.TotalRows = rows.Count;
+
+            var userId = _currentUserService?.IsAuthenticated == true ? _currentUserService.UserId : null;
+
+            // Cache of Investment lookups to avoid repeated DB queries within the same import
+            var investmentCache = new Dictionary<string, Investment>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var row in rows)
+            {
+                // Only import rows that refer to a security
+                if (string.IsNullOrWhiteSpace(row.ISIN) && string.IsNullOrWhiteSpace(row.SecurityName))
+                    continue;
+
+                try
+                {
+                    var cacheKey = row.ISIN ?? row.SecurityName!;
+                    if (!investmentCache.TryGetValue(cacheKey, out var investment))
+                    {
+                        // Find or create Investment stub for this security
+                        investment = string.IsNullOrWhiteSpace(row.ISIN)
+                            ? await _context.Investments.FirstOrDefaultAsync(i =>
+                                  i.Name == row.SecurityName && i.BankSourceId == bankSourceId)
+                            : await _context.Investments.FirstOrDefaultAsync(i =>
+                                  i.ISIN == row.ISIN);
+
+                        if (investment == null)
+                        {
+                            investment = new Investment
+                            {
+                                Name = row.SecurityName ?? row.ISIN!,
+                                ISIN = row.ISIN,
+                                Currency = row.Currency,
+                                BankSourceId = bankSourceId,
+                                AccountNumber = row.AccountNumber,
+                                LastUpdated = DateTime.Now,
+                                UserId = userId
+                            };
+                            _context.Investments.Add(investment);
+                            await _context.SaveChangesAsync(); // persist to get an ID
+                        }
+
+                        investmentCache[cacheKey] = investment;
+                    }
+
+                    // Check duplicate: same date + type + amount on same investment
+                    var isDuplicate = await _context.InvestmentTransactions.AnyAsync(t =>
+                        t.InvestmentId == investment.InvestmentId &&
+                        t.TransactionDate == row.Date &&
+                        t.TransactionType == row.TransactionType &&
+                        t.TotalAmount == row.TotalAmount);
+
+                    if (isDuplicate)
+                    {
+                        result.DuplicateCount++;
+                        continue;
+                    }
+
+                    var invTransaction = new InvestmentTransaction
+                    {
+                        InvestmentId = investment.InvestmentId,
+                        TransactionType = row.TransactionType,
+                        TransactionDate = row.Date,
+                        Quantity = row.Quantity,
+                        PricePerShare = row.PricePerShare,
+                        // TotalAmount is always stored as a positive magnitude; directionality
+                        // is already encoded in TransactionType ("Köp", "Sälj", "Utdelning", etc.).
+                        TotalAmount = Math.Abs(row.TotalAmount),
+                        Fees = row.Fees,
+                        Currency = row.Currency,
+                        CreatedAt = DateTime.UtcNow,
+                        UserId = userId
+                    };
+
+                    _context.InvestmentTransactions.Add(invTransaction);
+                    result.ImportedCount++;
+                }
+                catch (Exception ex)
+                {
+                    result.Errors.Add(new CsvImportError
+                    {
+                        ErrorType = "Row",
+                        ErrorMessage = $"Kunde inte importera rad: {ex.Message}"
+                    });
+                    result.ErrorCount++;
+                }
+            }
+
+            await _context.SaveChangesAsync();
+            result.Success = true;
+        }
+        catch (Exception ex)
+        {
+            result.Success = false;
+            result.Errors.Add(new CsvImportError
+            {
+                ErrorType = "Import",
+                ErrorMessage = $"Ett fel uppstod vid import: {ex.Message}"
+            });
+            result.ErrorCount++;
+        }
+
+        return result;
     }
 
     private string EscapeCsv(string value)

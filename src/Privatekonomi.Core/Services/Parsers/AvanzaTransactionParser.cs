@@ -1,118 +1,121 @@
 using System.Globalization;
 using System.Text;
-using Privatekonomi.Core.Models;
 
 namespace Privatekonomi.Core.Services.Parsers;
 
 /// <summary>
-/// Parser for Avanza transaction history CSV exports.
-/// Handles the format exported from Avanza's "Transaktioner" page.
+/// Structured row parsed from an Avanza transaction history CSV export.
+/// Rows with a non-empty <see cref="ISIN"/> represent investment activity (buy/sell/dividend).
 /// </summary>
-public class AvanzaTransactionParser : ICsvParser
+public class AvanzaTransactionRow
+{
+    public DateTime Date { get; set; }
+    /// <summary>Typ av transaktion, e.g. "Köp", "Sälj", "Utdelning", "Insättning".</summary>
+    public string TransactionType { get; set; } = string.Empty;
+    public string? SecurityName { get; set; }
+    public string? ISIN { get; set; }
+    public string? AccountNumber { get; set; }
+    public decimal Quantity { get; set; }
+    public decimal PricePerShare { get; set; }
+    /// <summary>Signed total amount (negative for buys/withdrawals).</summary>
+    public decimal TotalAmount { get; set; }
+    public decimal? Fees { get; set; }
+    public string Currency { get; set; } = "SEK";
+}
+
+/// <summary>
+/// Parser for Avanza transaction history CSV exports
+/// (exported from Avanza "Min ekonomi → Transaktioner → Exportera till CSV").
+/// Rows are returned as <see cref="AvanzaTransactionRow"/> objects; use
+/// <see cref="InvestmentService.ImportFromCsvAsync"/> to persist them as investment records.
+/// </summary>
+public class AvanzaTransactionParser
 {
     public string BankName => "Avanza";
 
+    /// <summary>
+    /// Returns true when the CSV content looks like an Avanza transaction history export.
+    /// The header must contain "datum", "typ av transaktion", and "belopp".
+    /// </summary>
     public bool CanParse(string csvContent)
     {
+        if (string.IsNullOrWhiteSpace(csvContent)) return false;
+
         var lines = csvContent.Split('\n', StringSplitOptions.RemoveEmptyEntries);
         if (lines.Length < 2) return false;
 
-        // Detect separator
-        var firstLine = lines[0];
-        var separator = DetectSeparator(firstLine);
-        var header = firstLine.ToLower();
-
-        // Avanza transaction format has "datum", "typ av transaktion" and "belopp"
-        return header.Contains("datum") &&
-               header.Contains("typ av transaktion") &&
-               header.Contains("belopp");
+        var header = lines[0].ToLowerInvariant();
+        return header.Contains("datum", StringComparison.OrdinalIgnoreCase) &&
+               header.Contains("typ av transaktion", StringComparison.OrdinalIgnoreCase) &&
+               header.Contains("belopp", StringComparison.OrdinalIgnoreCase);
     }
 
-    public async Task<List<Transaction>> ParseAsync(Stream csvStream)
+    /// <summary>
+    /// Parses the CSV stream and returns one <see cref="AvanzaTransactionRow"/> per data row.
+    /// Rows with missing mandatory fields are silently skipped.
+    /// </summary>
+    public async Task<List<AvanzaTransactionRow>> ParseTransactionsAsync(Stream csvStream)
     {
-        var transactions = new List<Transaction>();
+        var rows = new List<AvanzaTransactionRow>();
 
         using var reader = new StreamReader(csvStream, Encoding.UTF8, detectEncodingFromByteOrderMarks: true);
         var content = await reader.ReadToEndAsync();
 
         var lines = content.Split('\n', StringSplitOptions.RemoveEmptyEntries);
-        if (lines.Length < 2) return transactions;
+        if (lines.Length < 2) return rows;
 
         var separator = DetectSeparator(lines[0]);
         var header = SplitLine(lines[0], separator);
 
-        var dateIndex = FindColumnIndex(header, new[] { "datum" });
-        var typeIndex = FindColumnIndex(header, new[] { "typ av transaktion" });
-        var descriptionIndex = FindColumnIndex(header, new[] { "värdepapper/beskrivning", "värdepapper", "beskrivning" });
-        var amountIndex = FindColumnIndex(header, new[] { "belopp" });
-        var currencyIndex = FindColumnIndex(header, new[] { "valuta" });
+        var dateIndex        = FindColumnIndex(header, "datum");
+        var typeIndex        = FindColumnIndex(header, "typ av transaktion");
+        var securityIndex    = FindColumnIndex(header, "värdepapper/beskrivning", "värdepapper", "beskrivning");
+        var quantityIndex    = FindColumnIndex(header, "antal");
+        var priceIndex       = FindColumnIndex(header, "kurs");
+        var amountIndex      = FindColumnIndex(header, "belopp");
+        var feesIndex        = FindColumnIndex(header, "courtage");
+        var currencyIndex    = FindColumnIndex(header, "valuta");
+        var isinIndex        = FindColumnIndex(header, "isin");
+        var accountIndex     = FindColumnIndex(header, "konto");
 
         if (dateIndex == -1 || typeIndex == -1 || amountIndex == -1)
-        {
-            throw new InvalidOperationException("Kunde inte hitta nödvändiga kolumner (Datum, Typ av transaktion, Belopp) i CSV-filen.");
-        }
+            throw new InvalidOperationException(
+                "Kunde inte hitta nödvändiga kolumner (Datum, Typ av transaktion, Belopp) i CSV-filen.");
 
         for (int i = 1; i < lines.Length; i++)
         {
             try
             {
-                var columns = SplitLine(lines[i], separator);
-                int maxIndex = Math.Max(dateIndex, Math.Max(typeIndex, amountIndex));
-                if (columns.Length <= maxIndex)
+                var cols = SplitLine(lines[i], separator);
+                int maxRequired = Math.Max(dateIndex, Math.Max(typeIndex, amountIndex));
+                if (cols.Length <= maxRequired) continue;
+
+                var dateStr = cols[dateIndex].Trim().Trim('"');
+                var transactionType = cols[typeIndex].Trim().Trim('"');
+                var amountStr = cols[amountIndex].Trim().Trim('"');
+
+                if (string.IsNullOrWhiteSpace(dateStr) || string.IsNullOrWhiteSpace(transactionType))
                     continue;
 
-                var dateStr = columns[dateIndex].Trim().Trim('"');
-                var transactionType = columns[typeIndex].Trim().Trim('"');
-                var amountStr = columns[amountIndex].Trim().Trim('"');
+                if (!TryParseDate(dateStr, out var date)) continue;
 
-                // Build description from type and security/description
-                string description;
-                if (descriptionIndex != -1 && descriptionIndex < columns.Length)
-                {
-                    var securityDesc = columns[descriptionIndex].Trim().Trim('"');
-                    description = string.IsNullOrWhiteSpace(securityDesc)
-                        ? transactionType
-                        : $"{transactionType}: {securityDesc}";
-                }
-                else
-                {
-                    description = transactionType;
-                }
+                if (!TryParseDecimal(amountStr, out var totalAmount)) continue;
 
-                if (string.IsNullOrWhiteSpace(description) || string.IsNullOrWhiteSpace(dateStr))
-                    continue;
-
-                if (!TryParseDate(dateStr, out var date))
-                    continue;
-
-                // Normalize amount: remove spaces (thousand separators) and convert decimal comma
-                var normalizedAmount = amountStr
-                    .Replace("\u00a0", "") // non-breaking space
-                    .Replace(" ", "")
-                    .Replace(".", "")     // remove potential thousand separator dot
-                    .Replace(",", ".");   // decimal comma to dot
-
-                if (!decimal.TryParse(normalizedAmount, NumberStyles.Any, CultureInfo.InvariantCulture, out var amount))
-                    continue;
-
-                var currency = "SEK";
-                if (currencyIndex != -1 && currencyIndex < columns.Length)
-                {
-                    var c = columns[currencyIndex].Trim().Trim('"');
-                    if (!string.IsNullOrWhiteSpace(c))
-                        currency = c;
-                }
-
-                var transaction = new Transaction
+                var row = new AvanzaTransactionRow
                 {
                     Date = date,
-                    Amount = Math.Abs(amount),
-                    IsIncome = amount > 0,
-                    Description = description.Length > 500 ? description[..500] : description,
-                    Currency = currency
+                    TransactionType = transactionType,
+                    TotalAmount = totalAmount,
+                    Currency = GetColumn(cols, currencyIndex) is { Length: > 0 } c ? c : "SEK",
+                    ISIN = GetColumn(cols, isinIndex),
+                    SecurityName = GetColumn(cols, securityIndex),
+                    AccountNumber = GetColumn(cols, accountIndex),
+                    Fees = TryParseDecimal(GetColumn(cols, feesIndex) ?? "", out var fees) && fees != 0 ? fees : null,
+                    Quantity = TryParseDecimal(GetColumn(cols, quantityIndex) ?? "", out var qty) ? qty : 0m,
+                    PricePerShare = TryParseDecimal(GetColumn(cols, priceIndex) ?? "", out var price) ? price : 0m,
                 };
 
-                transactions.Add(transaction);
+                rows.Add(row);
             }
             catch
             {
@@ -120,7 +123,16 @@ public class AvanzaTransactionParser : ICsvParser
             }
         }
 
-        return transactions;
+        return rows;
+    }
+
+    // ── helpers ──────────────────────────────────────────────────────────────
+
+    private static string? GetColumn(string[] cols, int index)
+    {
+        if (index < 0 || index >= cols.Length) return null;
+        var v = cols[index].Trim().Trim('"');
+        return string.IsNullOrWhiteSpace(v) ? null : v;
     }
 
     private static char DetectSeparator(string line)
@@ -132,14 +144,12 @@ public class AvanzaTransactionParser : ICsvParser
 
     private static string[] SplitLine(string line, char separator)
     {
-        // Handle quoted fields
         var result = new List<string>();
         var current = new StringBuilder();
         bool inQuotes = false;
 
-        for (int i = 0; i < line.Length; i++)
+        foreach (char c in line)
         {
-            char c = line[i];
             if (c == '"')
             {
                 inQuotes = !inQuotes;
@@ -158,36 +168,38 @@ public class AvanzaTransactionParser : ICsvParser
         return result.ToArray();
     }
 
-    private static int FindColumnIndex(string[] header, string[] possibleNames)
+    private static int FindColumnIndex(string[] header, params string[] possibleNames)
     {
         for (int i = 0; i < header.Length; i++)
         {
-            var columnName = header[i].Trim().Trim('"').ToLower();
+            var col = header[i].Trim().Trim('"').ToLowerInvariant();
             foreach (var name in possibleNames)
             {
-                if (columnName.Contains(name.ToLower()))
+                if (col.Contains(name, StringComparison.OrdinalIgnoreCase))
                     return i;
             }
         }
         return -1;
     }
 
-    private static bool TryParseDate(string dateStr, out DateTime date)
+    private static bool TryParseDecimal(string raw, out decimal value)
     {
-        var formats = new[]
-        {
-            "yyyy-MM-dd",
-            "dd.MM.yyyy",
-            "dd-MM-yyyy",
-            "yyyy/MM/dd"
-        };
+        var normalised = raw
+            .Replace("\u00a0", "")  // non-breaking space
+            .Replace(" ", "")
+            .Replace(".", "")       // Swedish thousand separator
+            .Replace(",", ".");     // decimal comma → dot
+        return decimal.TryParse(normalised, NumberStyles.Any, CultureInfo.InvariantCulture, out value);
+    }
 
-        foreach (var format in formats)
+    private static bool TryParseDate(string s, out DateTime date)
+    {
+        string[] formats = { "yyyy-MM-dd", "dd.MM.yyyy", "dd-MM-yyyy", "yyyy/MM/dd" };
+        foreach (var fmt in formats)
         {
-            if (DateTime.TryParseExact(dateStr, format, CultureInfo.InvariantCulture, DateTimeStyles.None, out date))
+            if (DateTime.TryParseExact(s, fmt, CultureInfo.InvariantCulture, DateTimeStyles.None, out date))
                 return true;
         }
-
         date = DateTime.MinValue;
         return false;
     }

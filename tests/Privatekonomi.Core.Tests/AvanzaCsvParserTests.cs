@@ -41,65 +41,67 @@ public class AvanzaCsvParserTests
     }
 
     [TestMethod]
-    public async Task AvanzaTransactionParser_ParseAsync_ParsesCorrectRowCount()
+    public async Task AvanzaTransactionParser_ParseTransactionsAsync_ParsesCorrectRowCount()
     {
         var parser = new AvanzaTransactionParser();
         var stream = new MemoryStream(Encoding.UTF8.GetBytes(TransactionCsvContent));
 
-        var transactions = await parser.ParseAsync(stream);
+        var rows = await parser.ParseTransactionsAsync(stream);
 
-        Assert.AreEqual(4, transactions.Count);
+        Assert.AreEqual(4, rows.Count);
     }
 
     [TestMethod]
-    public async Task AvanzaTransactionParser_ParseAsync_ParsesExpenseCorrectly()
+    public async Task AvanzaTransactionParser_ParseTransactionsAsync_ParsesBuyRowCorrectly()
     {
         var parser = new AvanzaTransactionParser();
         var stream = new MemoryStream(Encoding.UTF8.GetBytes(TransactionCsvContent));
 
-        var transactions = await parser.ParseAsync(stream);
+        var rows = await parser.ParseTransactionsAsync(stream);
 
-        var buy = transactions[0]; // Köp – negative amount
+        var buy = rows[0]; // Köp – negative amount
         Assert.AreEqual(new DateTime(2024, 1, 15), buy.Date);
-        Assert.AreEqual(1805.00m, buy.Amount);
-        Assert.IsFalse(buy.IsIncome);
-        Assert.IsTrue(buy.Description.Contains("Köp"));
-        Assert.IsTrue(buy.Description.Contains("Apple Inc"));
+        Assert.AreEqual(-1805.00m, buy.TotalAmount);
+        Assert.AreEqual("Köp", buy.TransactionType);
+        Assert.AreEqual("Apple Inc", buy.SecurityName);
+        Assert.AreEqual("US0378331005", buy.ISIN);
         Assert.AreEqual("SEK", buy.Currency);
+        Assert.AreEqual(10m, buy.Quantity);
+        Assert.AreEqual(180.50m, buy.PricePerShare);
+        Assert.AreEqual(39.00m, buy.Fees);
     }
 
     [TestMethod]
-    public async Task AvanzaTransactionParser_ParseAsync_ParsesIncomeCorrectly()
+    public async Task AvanzaTransactionParser_ParseTransactionsAsync_ParsesDepositRowCorrectly()
     {
         var parser = new AvanzaTransactionParser();
         var stream = new MemoryStream(Encoding.UTF8.GetBytes(TransactionCsvContent));
 
-        var transactions = await parser.ParseAsync(stream);
+        var rows = await parser.ParseTransactionsAsync(stream);
 
-        var deposit = transactions[1]; // Insättning – positive amount
+        var deposit = rows[1]; // Insättning – positive amount, no ISIN
         Assert.AreEqual(new DateTime(2024, 1, 10), deposit.Date);
-        Assert.AreEqual(5000.00m, deposit.Amount);
-        Assert.IsTrue(deposit.IsIncome);
-        Assert.IsTrue(deposit.Description.Contains("Insättning"));
+        Assert.AreEqual(5000.00m, deposit.TotalAmount);
+        Assert.AreEqual("Insättning", deposit.TransactionType);
+        Assert.IsNull(deposit.ISIN);
     }
 
     [TestMethod]
-    public async Task AvanzaTransactionParser_ParseAsync_ParsesDividendCorrectly()
+    public async Task AvanzaTransactionParser_ParseTransactionsAsync_ParsesDividendRowCorrectly()
     {
         var parser = new AvanzaTransactionParser();
         var stream = new MemoryStream(Encoding.UTF8.GetBytes(TransactionCsvContent));
 
-        var transactions = await parser.ParseAsync(stream);
+        var rows = await parser.ParseTransactionsAsync(stream);
 
-        var dividend = transactions[2]; // Utdelning
-        Assert.AreEqual(200.00m, dividend.Amount);
-        Assert.IsTrue(dividend.IsIncome);
-        Assert.IsTrue(dividend.Description.Contains("Utdelning"));
-        Assert.IsTrue(dividend.Description.Contains("Company XYZ"));
+        var dividend = rows[2]; // Utdelning
+        Assert.AreEqual(200.00m, dividend.TotalAmount);
+        Assert.AreEqual("Utdelning", dividend.TransactionType);
+        Assert.AreEqual("Company XYZ", dividend.SecurityName);
     }
 
     [TestMethod]
-    public async Task AvanzaTransactionParser_ParseAsync_SkipsRowsWithMissingAmount()
+    public async Task AvanzaTransactionParser_ParseTransactionsAsync_SkipsRowsWithMissingAmount()
     {
         var parser = new AvanzaTransactionParser();
         var csv = "Datum;Konto;Typ av transaktion;Värdepapper/beskrivning;Antal;Kurs;Belopp;Courtage;Valuta;ISIN;Resultat\n" +
@@ -107,24 +109,24 @@ public class AvanzaCsvParserTests
                   "2024-01-14;ISK;Köp;Bad Row;1;10,00;;0;SEK;;\n"; // missing Belopp
         var stream = new MemoryStream(Encoding.UTF8.GetBytes(csv));
 
-        var transactions = await parser.ParseAsync(stream);
+        var rows = await parser.ParseTransactionsAsync(stream);
 
-        Assert.AreEqual(1, transactions.Count);
+        Assert.AreEqual(1, rows.Count);
     }
 
     [TestMethod]
-    public async Task AvanzaTransactionParser_ParseAsync_HandlesSemicolonSeparator()
+    public async Task AvanzaTransactionParser_ParseTransactionsAsync_HandlesSemicolonSeparator()
     {
         var parser = new AvanzaTransactionParser();
         var csv = "Datum;Konto;Typ av transaktion;Värdepapper/beskrivning;Antal;Kurs;Belopp;Courtage;Valuta;ISIN;Resultat\n" +
                   "2024-03-01;ISK;Insättning;;;;10000,00;;SEK;;";
         var stream = new MemoryStream(Encoding.UTF8.GetBytes(csv));
 
-        var transactions = await parser.ParseAsync(stream);
+        var rows = await parser.ParseTransactionsAsync(stream);
 
-        Assert.AreEqual(1, transactions.Count);
-        Assert.AreEqual(10000.00m, transactions[0].Amount);
-        Assert.IsTrue(transactions[0].IsIncome);
+        Assert.AreEqual(1, rows.Count);
+        Assert.AreEqual(10000.00m, rows[0].TotalAmount);
+        Assert.AreEqual("Insättning", rows[0].TransactionType);
     }
 
 
