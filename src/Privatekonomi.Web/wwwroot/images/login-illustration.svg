@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" fill="none">
+  <!-- Background circle -->
+  <circle cx="200" cy="150" r="130" fill="rgba(255,255,255,0.08)" />
+  <circle cx="200" cy="150" r="100" fill="rgba(255,255,255,0.06)" />
+
+  <!-- Coin stack left -->
+  <ellipse cx="100" cy="220" rx="30" ry="10" fill="rgba(255,255,255,0.25)" />
+  <rect x="70" y="200" width="60" height="20" rx="2" fill="rgba(255,255,255,0.2)" />
+  <ellipse cx="100" cy="200" rx="30" ry="10" fill="rgba(255,255,255,0.3)" />
+  <rect x="70" y="182" width="60" height="18" rx="2" fill="rgba(255,255,255,0.18)" />
+  <ellipse cx="100" cy="182" rx="30" ry="10" fill="rgba(255,255,255,0.28)" />
+  <rect x="70" y="164" width="60" height="18" rx="2" fill="rgba(255,255,255,0.16)" />
+  <ellipse cx="100" cy="164" rx="30" ry="10" fill="rgba(255,255,255,0.26)" />
+  <!-- Coin symbol -->
+  <text x="93" y="175" font-size="12" fill="rgba(255,255,255,0.7)" font-family="Arial" font-weight="bold">kr</text>
+
+  <!-- Growth chart -->
+  <rect x="145" y="80" width="170" height="140" rx="12" fill="rgba(255,255,255,0.12)" />
+  <rect x="145" y="80" width="170" height="28" rx="12" fill="rgba(255,255,255,0.15)" />
+  <!-- Chart lines -->
+  <line x1="160" y1="200" x2="160" y2="120" stroke="rgba(255,255,255,0.2)" stroke-width="1" />
+  <line x1="185" y1="200" x2="185" y2="120" stroke="rgba(255,255,255,0.2)" stroke-width="1" />
+  <line x1="210" y1="200" x2="210" y2="120" stroke="rgba(255,255,255,0.2)" stroke-width="1" />
+  <line x1="235" y1="200" x2="235" y2="120" stroke="rgba(255,255,255,0.2)" stroke-width="1" />
+  <line x1="260" y1="200" x2="260" y2="120" stroke="rgba(255,255,255,0.2)" stroke-width="1" />
+  <line x1="155" y1="130" x2="300" y2="130" stroke="rgba(255,255,255,0.2)" stroke-width="1" />
+  <line x1="155" y1="155" x2="300" y2="155" stroke="rgba(255,255,255,0.2)" stroke-width="1" />
+  <line x1="155" y1="180" x2="300" y2="180" stroke="rgba(255,255,255,0.2)" stroke-width="1" />
+  <!-- Bar chart -->
+  <rect x="163" y="175" width="15" height="25" rx="3" fill="rgba(255,255,255,0.4)" />
+  <rect x="188" y="163" width="15" height="37" rx="3" fill="rgba(255,255,255,0.5)" />
+  <rect x="213" y="150" width="15" height="50" rx="3" fill="rgba(255,255,255,0.6)" />
+  <rect x="238" y="138" width="15" height="62" rx="3" fill="rgba(255,255,255,0.7)" />
+  <rect x="263" y="125" width="15" height="75" rx="3" fill="rgba(255,255,255,0.85)" />
+  <!-- Trend line -->
+  <polyline points="170,183 195,171 220,158 245,145 271,132" 
+            fill="none" stroke="rgba(167,243,208,0.9)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+  <!-- Dots on trend -->
+  <circle cx="170" cy="183" r="3" fill="rgba(167,243,208,0.9)" />
+  <circle cx="195" cy="171" r="3" fill="rgba(167,243,208,0.9)" />
+  <circle cx="220" cy="158" r="3" fill="rgba(167,243,208,0.9)" />
+  <circle cx="245" cy="145" r="3" fill="rgba(167,243,208,0.9)" />
+  <circle cx="271" cy="132" r="4" fill="white" />
+  <!-- Chart header text -->
+  <text x="158" y="99" font-size="9" fill="rgba(255,255,255,0.8)" font-family="Arial" font-weight="600">Ekonomiöversikt</text>
+  <text x="270" y="99" font-size="8" fill="rgba(167,243,208,0.9)" font-family="Arial" font-weight="600">▲ 18%</text>
+
+  <!-- Savings goal circle right -->
+  <circle cx="330" cy="180" r="38" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.2)" stroke-width="2" />
+  <circle cx="330" cy="180" r="38" fill="none" stroke="rgba(167,243,208,0.7)" stroke-width="5"
+          stroke-dasharray="178" stroke-dashoffset="44" stroke-linecap="round"
+          transform="rotate(-90 330 180)" />
+  <text x="316" y="176" font-size="10" fill="white" font-family="Arial" font-weight="bold">Sparmål</text>
+  <text x="320" y="190" font-size="10" fill="rgba(167,243,208,0.9)" font-family="Arial" font-weight="bold">75%</text>
+
+  <!-- Floating badge -->
+  <rect x="60" y="90" width="80" height="32" rx="16" fill="rgba(255,255,255,0.2)" />
+  <text x="75" y="111" font-size="10" fill="white" font-family="Arial" font-weight="600">📈 +2 340 kr</text>
+
+  <!-- Small star decorations -->
+  <circle cx="345" cy="100" r="3" fill="rgba(255,255,255,0.4)" />
+  <circle cx="60" cy="145" r="2" fill="rgba(255,255,255,0.3)" />
+  <circle cx="380" cy="240" r="4" fill="rgba(255,255,255,0.25)" />
+  <circle cx="25" cy="250" r="5" fill="rgba(255,255,255,0.2)" />
+</svg>
