@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Privatekonomi.Core.Data;
@@ -93,12 +93,26 @@ public class InvestmentService : IInvestmentService
     public async Task<CsvImportResult> ImportFromCsvAsync(Stream csvStream, int bankSourceId)
     {
         var result = new CsvImportResult();
+        Stream workingStream = csvStream;
+        MemoryStream? bufferedStream = null;
         
         try
         {
+            // Some upload streams (e.g. browser streams) are not seekable; buffer to allow multiple passes.
+            if (!csvStream.CanSeek)
+            {
+                bufferedStream = new MemoryStream();
+                await csvStream.CopyToAsync(bufferedStream);
+                bufferedStream.Position = 0;
+                workingStream = bufferedStream;
+            }
+            else
+            {
+                csvStream.Position = 0;
+            }
+
             // Read CSV content to detect format
-            csvStream.Position = 0;
-            using var reader = new StreamReader(csvStream, Encoding.UTF8, leaveOpen: true);
+            using var reader = new StreamReader(workingStream, Encoding.UTF8, leaveOpen: true);
             var content = await reader.ReadToEndAsync();
 
             // Detect Avanza transaction history format first
@@ -130,8 +144,11 @@ public class InvestmentService : IInvestmentService
             }
             
             // Parse investments
-            csvStream.Position = 0;
-            var parsedInvestments = await parser.ParseAsync(csvStream);
+            if (workingStream.CanSeek)
+            {
+                workingStream.Position = 0;
+            }
+            var parsedInvestments = await parser.ParseAsync(workingStream);
             
             result.TotalRows = parsedInvestments.Count;
             
@@ -201,6 +218,10 @@ public class InvestmentService : IInvestmentService
                 ErrorMessage = $"Ett fel uppstod vid import: {ex.Message}" 
             });
             result.ErrorCount++;
+        }
+        finally
+        {
+            bufferedStream?.Dispose();
         }
         
         return result;
