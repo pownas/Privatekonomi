@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Moq;
 using Privatekonomi.Core.Data;
 using Privatekonomi.Core.Models;
@@ -11,7 +11,7 @@ namespace Privatekonomi.Core.Tests;
 /// Integration test to verify the complete goal milestone workflow
 /// </summary>
 [TestClass]
-public class GoalMilestoneIntegrationTests : IDisposable
+public class GoalMilestoneIntegrationTests
 {
     private readonly PrivatekonomyContext _context;
     private readonly GoalService _goalService;
@@ -36,7 +36,7 @@ public class GoalMilestoneIntegrationTests : IDisposable
     }
 
     [TestCleanup]
-    public void Dispose()
+    public void Cleanup()
     {
         _context.Database.EnsureDeleted();
         _context.Dispose();

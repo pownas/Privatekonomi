@@ -1,4 +1,7 @@
-using System.Text;
+﻿using System.Text;
+using Microsoft.EntityFrameworkCore;
+using Privatekonomi.Core.Data;
+using Privatekonomi.Core.Services;
 using Privatekonomi.Core.Services.Parsers;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -16,11 +19,27 @@ public class AvanzaCsvParserTests
         "2024-01-05;ISK;Utdelning;Company XYZ;;;200,00;;SEK;;\n" +
         "2024-01-03;ISK;Uttag;;;; -3000,00;;SEK;;";
 
+    // Newer Avanza export variant where the currency column is named "Transaktionsvaluta"
+    // and additional columns are present.
+    private const string TransactionCsvContentWithTransactionCurrency =
+        "Datum;Konto;Typ av transaktion;Värdepapper/beskrivning;Antal;Kurs;Belopp;Transaktionsvaluta;Courtage;Valutakurs;Instrumentvaluta;ISIN;Resultat\n" +
+        "2025-12-31;6465175;Preliminärskatt kapitalränta;;;;-0,73;SEK;;;;;\n" +
+        "2025-12-31;6465175;Inlåningsränta;;;;2,44;SEK;;;;;\n" +
+        "2025-12-31;Pensions KF;Köp;Storebrand Emerging Markets A SEK;0,332;225,8516;-74,98;SEK;;;SEK;SE0003455658;\n" +
+        "2025-12-30;50kr per dag (start2025-01-01);Insättning;50KR/TISDA;;;50;SEK;;;;;";
+
     [TestMethod]
     public void AvanzaTransactionParser_CanParse_ReturnsTrueForTransactionFormat()
     {
         var parser = new AvanzaTransactionParser();
         Assert.IsTrue(parser.CanParse(TransactionCsvContent));
+    }
+
+    [TestMethod]
+    public void AvanzaTransactionParser_CanParse_ReturnsTrueForTransactionFormat_WithTransaktionsvaluta()
+    {
+        var parser = new AvanzaTransactionParser();
+        Assert.IsTrue(parser.CanParse(TransactionCsvContentWithTransactionCurrency));
     }
 
     [TestMethod]
@@ -49,6 +68,20 @@ public class AvanzaCsvParserTests
         var rows = await parser.ParseTransactionsAsync(stream);
 
         Assert.AreEqual(4, rows.Count);
+    }
+
+    [TestMethod]
+    public async Task AvanzaTransactionParser_ParseTransactionsAsync_ParsesTransaktionsvalutaFormat()
+    {
+        var parser = new AvanzaTransactionParser();
+        var stream = new MemoryStream(Encoding.UTF8.GetBytes(TransactionCsvContentWithTransactionCurrency));
+
+        var rows = await parser.ParseTransactionsAsync(stream);
+
+        Assert.AreEqual(4, rows.Count);
+        Assert.AreEqual("SEK", rows[0].Currency);
+        Assert.AreEqual(new DateTime(2025, 12, 31), rows[0].Date);
+        Assert.AreEqual(-0.73m, rows[0].TotalAmount);
     }
 
     [TestMethod]
@@ -381,5 +414,68 @@ Valid Fund|VALID|5|500,00|100,00|100,00|SEK|SE|SE0000000004|XSTO|FUND";
         // Assert
         Assert.AreEqual(1, investments.Count());
         Assert.AreEqual("AFRY", investments[0].Name);
+    }
+
+    [TestMethod]
+    public async Task InvestmentService_ImportFromCsvAsync_HandlesNonSeekableStream_ForTransactionHistory()
+    {
+        await using var context = CreateInMemoryContext();
+        var service = new InvestmentService(context);
+
+        var csv =
+            "Datum;Konto;Typ av transaktion;Värdepapper/beskrivning;Antal;Kurs;Belopp;Courtage;Valuta;ISIN;Resultat\n" +
+            "2024-01-15;ISK;Köp;Apple Inc;10;180,50;-1805,00;39,00;SEK;US0378331005;\n" +
+            "2024-01-10;ISK;Insättning;;;;5000,00;;SEK;;\n";
+
+        using var inner = new MemoryStream(Encoding.UTF8.GetBytes(csv));
+        using var nonSeekable = new NonSeekableReadStream(inner);
+
+        var result = await service.ImportFromCsvAsync(nonSeekable, bankSourceId: 1);
+
+        Assert.IsTrue(result.Success);
+        Assert.AreEqual(0, result.ErrorCount);
+        Assert.IsTrue(result.ImportedCount > 0);
+    }
+
+    private static PrivatekonomyContext CreateInMemoryContext()
+    {
+        var options = new DbContextOptionsBuilder<PrivatekonomyContext>()
+            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .Options;
+
+        return new PrivatekonomyContext(options);
+    }
+
+    private sealed class NonSeekableReadStream(Stream inner) : Stream
+    {
+        public override bool CanRead => inner.CanRead;
+        public override bool CanSeek => false;
+        public override bool CanWrite => false;
+        public override long Length => throw new NotSupportedException();
+
+        public override long Position
+        {
+            get => throw new NotSupportedException();
+            set => throw new NotSupportedException();
+        }
+
+        public override void Flush() => throw new NotSupportedException();
+        public override int Read(byte[] buffer, int offset, int count) => inner.Read(buffer, offset, count);
+        public override int Read(Span<byte> buffer) => inner.Read(buffer);
+        public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken) =>
+            inner.ReadAsync(buffer, offset, count, cancellationToken);
+        public override ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default) =>
+            inner.ReadAsync(buffer, cancellationToken);
+        public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+        public override void SetLength(long value) => throw new NotSupportedException();
+        public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing) inner.Dispose();
+            base.Dispose(disposing);
+        }
+
+        public override ValueTask DisposeAsync() => inner.DisposeAsync();
     }
 }

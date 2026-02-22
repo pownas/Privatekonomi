@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Moq;
 using Privatekonomi.Core.Data;
 using Privatekonomi.Core.Models;
@@ -8,7 +8,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace Privatekonomi.Core.Tests;
 
 [TestClass]
-public class GoalMilestoneServiceTests : IDisposable
+public class GoalMilestoneServiceTests
 {
     private readonly PrivatekonomyContext _context;
     private readonly GoalMilestoneService _service;
@@ -31,7 +31,7 @@ public class GoalMilestoneServiceTests : IDisposable
     }
 
     [TestCleanup]
-    public void Dispose()
+    public void Cleanup()
     {
         _context.Database.EnsureDeleted();
         _context.Dispose();

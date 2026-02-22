@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Privatekonomi.Core.Data;
@@ -9,9 +9,10 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace Privatekonomi.Core.Tests;
 
 [TestClass]
-public class TransactionServiceTests : IDisposable
+public class TransactionServiceTests
 {
     private readonly PrivatekonomyContext _context;
+    private readonly IDbContextFactory<PrivatekonomyContext> _contextFactory;
     private readonly Mock<IAuditLogService> _mockAuditLogService;
     private readonly Mock<ICategoryRuleService> _mockCategoryRuleService;
     private readonly TransactionService _transactionService;
@@ -23,18 +24,19 @@ public class TransactionServiceTests : IDisposable
             .Options;
 
         _context = new PrivatekonomyContext(options);
+        _contextFactory = new TestDbContextFactory(options);
         _mockAuditLogService = new Mock<IAuditLogService>();
         _mockCategoryRuleService = new Mock<ICategoryRuleService>();
 
         _transactionService = new TransactionService(
-            _context,
+            _contextFactory,
             _mockCategoryRuleService.Object,
             _mockAuditLogService.Object,
             null);
     }
 
     [TestCleanup]
-    public void Dispose()
+    public void Cleanup()
     {
         _context.Database.EnsureDeleted();
         _context.Dispose();
@@ -367,7 +369,8 @@ public class TransactionServiceTests : IDisposable
             null);
 
         // Assert
-        var updatedTransaction = await _context.Transactions
+        await using var verifyContext = _contextFactory.CreateDbContext();
+        var updatedTransaction = await verifyContext.Transactions
             .Include(t => t.TransactionCategories)
             .FirstOrDefaultAsync(t => t.TransactionId == transaction.TransactionId);
 

@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Privatekonomi.Core.Data;
 using Privatekonomi.Core.Models;
 using Privatekonomi.Core.Services;
@@ -7,7 +7,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace Privatekonomi.Core.Tests;
 
 [TestClass]
-public class ReportServiceTests : IDisposable
+public class ReportServiceTests
 {
     private readonly PrivatekonomyContext _context;
     private readonly ReportService _reportService;
@@ -24,7 +24,7 @@ public class ReportServiceTests : IDisposable
     }
 
     [TestCleanup]
-    public void Dispose()
+    public void Cleanup()
     {
         _context.Database.EnsureDeleted();
         _context.Dispose();

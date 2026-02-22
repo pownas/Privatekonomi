@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Moq;
 using Privatekonomi.Core.Data;
 using Privatekonomi.Core.Models;
@@ -79,13 +79,13 @@ public class RoundUpServiceTests
     [DataRow(100, 10, 0)]      // 100 -> 100 (0 kr saved, already rounded)
     [DataRow(99.50, 10, 0.50)] // 99.50 -> 100 (0.50 kr saved)
     [DataRow(1, 10, 9)]        // 1 -> 10 (9 kr saved)
-    public void CalculateRoundUp_ReturnsCorrectAmount(decimal amount, decimal roundUpTo, decimal expected)
+    public void CalculateRoundUp_ReturnsCorrectAmount(double amount, int roundUpTo, double expected)
     {
         // Act
-        var result = _service.CalculateRoundUp(amount, roundUpTo);
+        var result = _service.CalculateRoundUp((decimal)amount, (decimal)roundUpTo);
 
         // Assert
-        Assert.AreEqual(expected, result);
+        Assert.AreEqual((decimal)expected, result);
     }
 
     [TestMethod]

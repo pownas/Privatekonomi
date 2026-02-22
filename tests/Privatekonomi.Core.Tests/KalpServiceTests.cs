@@ -1,4 +1,4 @@
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using Microsoft.EntityFrameworkCore;
 using Privatekonomi.Core.Services;
@@ -8,7 +8,7 @@ using Privatekonomi.Core.Data;
 namespace Privatekonomi.Core.Tests;
 
 [TestClass]
-public class KalpServiceTests : IDisposable
+public class KalpServiceTests
 {
     private readonly PrivatekonomyContext _context;
     private readonly Mock<IKonsumentverketComparisonService> _mockKonsumentverketService;

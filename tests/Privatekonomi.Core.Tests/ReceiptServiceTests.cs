@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Moq;
 using Privatekonomi.Core.Data;
 using Privatekonomi.Core.Models;
@@ -8,7 +8,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace Privatekonomi.Core.Tests;
 
 [TestClass]
-public class ReceiptServiceTests : IDisposable
+public class ReceiptServiceTests
 {
     private readonly PrivatekonomyContext _context;
     private readonly ReceiptService _receiptService;
@@ -27,7 +27,7 @@ public class ReceiptServiceTests : IDisposable
     }
 
     [TestCleanup]
-    public void Dispose()
+    public void Cleanup()
     {
         _context.Database.EnsureDeleted();
         _context.Dispose();
