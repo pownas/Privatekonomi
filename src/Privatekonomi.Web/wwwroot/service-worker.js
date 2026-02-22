@@ -57,6 +57,7 @@ self.addEventListener('activate', (event) => {
         );
       })
       .then(() => self.clients.claim())
+      .then(() => notifyClients({ type: 'SW_ACTIVATED', version: CACHE_VERSION }))
   );
 });
 
@@ -283,6 +284,12 @@ self.addEventListener('message', (event) => {
   
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
+  }
+  
+  if (event.data && event.data.type === 'GET_VERSION') {
+    if (event.source) {
+      event.source.postMessage({ type: 'SW_VERSION', version: CACHE_VERSION });
+    }
   }
   
   if (event.data && event.data.type === 'CACHE_URLS') {
