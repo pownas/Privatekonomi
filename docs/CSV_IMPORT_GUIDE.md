@@ -8,6 +8,7 @@ This guide explains how to use the import functionality to import transactions f
 
 ### CSV Format
 CSV (Comma/Semicolon Separated Values) files are supported from the following banks:
+- Avanza (transaktionshistorik)
 - ICA-banken
 - Swedbank (both CSN and old formats)
 
@@ -20,6 +21,36 @@ OFX (Open Financial Exchange) is a standardized format supported by most banks w
 - Can include transaction types (debit/credit)
 
 ## Supported Banks
+
+### Avanza (CSV)
+**Format:** Semicolon-separated (`;`) CSV file
+**Required columns:**
+- Datum (Date)
+- Typ av transaktion (Transaction type)
+- Belopp (Amount)
+
+**Optional columns parsed:**
+- Värdepapper/beskrivning (Security/description — combined with type for description)
+- Valuta (Currency, defaults to SEK)
+
+**Example format:**
+```csv
+Datum;Konto;Typ av transaktion;Värdepapper/beskrivning;Antal;Kurs;Belopp;Courtage;Valuta;ISIN;Resultat
+2025-01-15;ISK;Köp;Apple Inc;10;180,50;-1805,00;39,00;SEK;US0378331005;
+2025-01-10;ISK;Insättning;;;;5000,00;;SEK;;
+2025-01-05;ISK;Utdelning;Company XYZ;;;200,00;;SEK;;
+2025-01-03;ISK;Uttag;;;;-3000,00;;SEK;;
+```
+
+**How to export from Avanza:**
+1. Log in to Avanza and navigate to **Min ekonomi → Transaktioner**
+2. Filter to the desired date range
+3. Click **Exportera till CSV**
+
+**Notes:**
+- Negative amounts are treated as expenses (Köp, Uttag, Avkastningsskatt, etc.)
+- Positive amounts are treated as income (Insättning, Utdelning, Sälj, etc.)
+- The description is built from *Typ av transaktion* and *Värdepapper/beskrivning* (e.g. `Köp: Apple Inc`)
 
 ### ICA-banken (CSV)
 **Format:** Semicolon-separated (`;`) CSV file

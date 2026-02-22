@@ -7,6 +7,127 @@ namespace Privatekonomi.Core.Tests;
 [TestClass]
 public class AvanzaCsvParserTests
 {
+    // ── AvanzaTransactionParser tests ───────────────────────────────────────
+
+    private const string TransactionCsvContent =
+        "Datum;Konto;Typ av transaktion;Värdepapper/beskrivning;Antal;Kurs;Belopp;Courtage;Valuta;ISIN;Resultat\n" +
+        "2024-01-15;Aktie- & fondkonto;Köp;Apple Inc;10;180,50;-1805,00;39,00;SEK;US0378331005;\n" +
+        "2024-01-10;ISK;Insättning;;;; 5000,00;;SEK;;\n" +
+        "2024-01-05;ISK;Utdelning;Company XYZ;;;200,00;;SEK;;\n" +
+        "2024-01-03;ISK;Uttag;;;; -3000,00;;SEK;;";
+
+    [TestMethod]
+    public void AvanzaTransactionParser_CanParse_ReturnsTrueForTransactionFormat()
+    {
+        var parser = new AvanzaTransactionParser();
+        Assert.IsTrue(parser.CanParse(TransactionCsvContent));
+    }
+
+    [TestMethod]
+    public void AvanzaTransactionParser_CanParse_ReturnsFalseForHoldingsFormat()
+    {
+        var parser = new AvanzaTransactionParser();
+        // Holdings format does not contain "Typ av transaktion"
+        var holdings = "Kontonummer|Namn|Kortnamn|Volym|Marknadsvärde|GAV (SEK)|GAV|Valuta|Land|ISIN|Marknad|Typ\n" +
+                       "1111-2223332|Telia Company|TELIA|5|180,90|54,78|54,78|SEK|SE|SE0000667925|XSTO|STOCK";
+        Assert.IsFalse(parser.CanParse(holdings));
+    }
+
+    [TestMethod]
+    public void AvanzaTransactionParser_BankName_ReturnsAvanza()
+    {
+        var parser = new AvanzaTransactionParser();
+        Assert.AreEqual("Avanza", parser.BankName);
+    }
+
+    [TestMethod]
+    public async Task AvanzaTransactionParser_ParseAsync_ParsesCorrectRowCount()
+    {
+        var parser = new AvanzaTransactionParser();
+        var stream = new MemoryStream(Encoding.UTF8.GetBytes(TransactionCsvContent));
+
+        var transactions = await parser.ParseAsync(stream);
+
+        Assert.AreEqual(4, transactions.Count);
+    }
+
+    [TestMethod]
+    public async Task AvanzaTransactionParser_ParseAsync_ParsesExpenseCorrectly()
+    {
+        var parser = new AvanzaTransactionParser();
+        var stream = new MemoryStream(Encoding.UTF8.GetBytes(TransactionCsvContent));
+
+        var transactions = await parser.ParseAsync(stream);
+
+        var buy = transactions[0]; // Köp – negative amount
+        Assert.AreEqual(new DateTime(2024, 1, 15), buy.Date);
+        Assert.AreEqual(1805.00m, buy.Amount);
+        Assert.IsFalse(buy.IsIncome);
+        Assert.IsTrue(buy.Description.Contains("Köp"));
+        Assert.IsTrue(buy.Description.Contains("Apple Inc"));
+        Assert.AreEqual("SEK", buy.Currency);
+    }
+
+    [TestMethod]
+    public async Task AvanzaTransactionParser_ParseAsync_ParsesIncomeCorrectly()
+    {
+        var parser = new AvanzaTransactionParser();
+        var stream = new MemoryStream(Encoding.UTF8.GetBytes(TransactionCsvContent));
+
+        var transactions = await parser.ParseAsync(stream);
+
+        var deposit = transactions[1]; // Insättning – positive amount
+        Assert.AreEqual(new DateTime(2024, 1, 10), deposit.Date);
+        Assert.AreEqual(5000.00m, deposit.Amount);
+        Assert.IsTrue(deposit.IsIncome);
+        Assert.IsTrue(deposit.Description.Contains("Insättning"));
+    }
+
+    [TestMethod]
+    public async Task AvanzaTransactionParser_ParseAsync_ParsesDividendCorrectly()
+    {
+        var parser = new AvanzaTransactionParser();
+        var stream = new MemoryStream(Encoding.UTF8.GetBytes(TransactionCsvContent));
+
+        var transactions = await parser.ParseAsync(stream);
+
+        var dividend = transactions[2]; // Utdelning
+        Assert.AreEqual(200.00m, dividend.Amount);
+        Assert.IsTrue(dividend.IsIncome);
+        Assert.IsTrue(dividend.Description.Contains("Utdelning"));
+        Assert.IsTrue(dividend.Description.Contains("Company XYZ"));
+    }
+
+    [TestMethod]
+    public async Task AvanzaTransactionParser_ParseAsync_SkipsRowsWithMissingAmount()
+    {
+        var parser = new AvanzaTransactionParser();
+        var csv = "Datum;Konto;Typ av transaktion;Värdepapper/beskrivning;Antal;Kurs;Belopp;Courtage;Valuta;ISIN;Resultat\n" +
+                  "2024-01-15;ISK;Köp;Apple Inc;10;180,50;-1805,00;39,00;SEK;US0378331005;\n" +
+                  "2024-01-14;ISK;Köp;Bad Row;1;10,00;;0;SEK;;\n"; // missing Belopp
+        var stream = new MemoryStream(Encoding.UTF8.GetBytes(csv));
+
+        var transactions = await parser.ParseAsync(stream);
+
+        Assert.AreEqual(1, transactions.Count);
+    }
+
+    [TestMethod]
+    public async Task AvanzaTransactionParser_ParseAsync_HandlesSemicolonSeparator()
+    {
+        var parser = new AvanzaTransactionParser();
+        var csv = "Datum;Konto;Typ av transaktion;Värdepapper/beskrivning;Antal;Kurs;Belopp;Courtage;Valuta;ISIN;Resultat\n" +
+                  "2024-03-01;ISK;Insättning;;;;10000,00;;SEK;;";
+        var stream = new MemoryStream(Encoding.UTF8.GetBytes(csv));
+
+        var transactions = await parser.ParseAsync(stream);
+
+        Assert.AreEqual(1, transactions.Count);
+        Assert.AreEqual(10000.00m, transactions[0].Amount);
+        Assert.IsTrue(transactions[0].IsIncome);
+    }
+
+
     private const string PerAccountCsvContent = @"Kontonummer|Namn|Kortnamn|Volym|Marknadsvärde|GAV (SEK)|GAV|Valuta|Land|ISIN|Marknad|Typ
 1111-2223332|Telia Company|TELIA|5|180,90|54,78|54,78|SEK|SE|SE0000667925|XSTO|STOCK
 2222-3333444|Oneflow|ONEF|100|2730,00|44,71|44,71|SEK|SE|SE0017564461|FNSE|STOCK

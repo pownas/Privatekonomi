@@ -29,7 +29,7 @@
                     <div class="d-flex flex-column align-center text-center">
                         <MudIcon Icon="@Icons.Material.Filled.AccountBalance" Size="Size.Large" Color="Color.Primary" Class="mb-2" />
                         <MudText Typo="Typo.h6" Class="mb-2">Transaktioner</MudText>
-                        <MudText Typo="Typo.body2">Importera transaktioner från bankfiler (ICA-banken, Swedbank)</MudText>
+                        <MudText Typo="Typo.body2">Importera transaktioner från bankfiler (Avanza, ICA-banken, Swedbank)</MudText>
                     </div>
                 </MudPaper>
             </MudItem>
@@ -53,6 +53,9 @@ else if (_currentStep == ImportStep.BankSelection)
         @if (_importType == ImportType.Transactions)
         {
             <MudRadioGroup @bind-Value="_selectedBank">
+                <MudRadio Value="@("Avanza")" Color="Color.Primary">
+                    <MudText>Avanza (CSV)</MudText>
+                </MudRadio>
                 <MudRadio Value="@("ICA-banken")" Color="Color.Primary">
                     <MudText>ICA-banken (CSV)</MudText>
                 </MudRadio>
@@ -63,8 +66,14 @@ else if (_currentStep == ImportStep.BankSelection)
                     <MudText>OFX/QFX (Allmänt bankformat)</MudText>
                 </MudRadio>
             </MudRadioGroup>
-            
-            @if (_selectedBank == "OFX (Allmän)")
+
+            @if (_selectedBank == "Avanza")
+            {
+                <MudAlert Severity="Severity.Info" Class="mt-4">
+                    <MudText>Exportera transaktionshistorik från Avanza under <strong>Min ekonomi → Transaktioner</strong> och välj <strong>Exportera till CSV</strong>.</MudText>
+                </MudAlert>
+            }
+            else if (_selectedBank == "OFX (Allmän)")
             {
                 <MudAlert Severity="Severity.Info" Class="mt-4">
                     <MudText>OFX (Open Financial Exchange) och QFX är standardformat som stöds av de flesta banker.</MudText>

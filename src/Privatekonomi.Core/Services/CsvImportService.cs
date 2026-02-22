@@ -16,6 +16,7 @@ public class CsvImportService : ICsvImportService
         _context = context;
         _parsers = new List<ICsvParser>
         {
+            new AvanzaTransactionParser(),
             new SwedbankParser(),
             new IcaBankenParser(),
             new OfxParser()
