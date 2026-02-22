@@ -71,6 +71,7 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
     public DbSet<SubscriptionPriceHistory> SubscriptionPriceHistory { get; set; }
     public DbSet<Bill> Bills { get; set; }
     public DbSet<BillReminder> BillReminders { get; set; }
+    public DbSet<BillSchedule> BillSchedules { get; set; }
     
     // Investment-related entities
     public DbSet<Pension> Pensions { get; set; }
@@ -1492,6 +1493,26 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
             entity.HasIndex(e => e.BillId);
             entity.HasIndex(e => e.ReminderDate);
             entity.HasIndex(e => e.IsSent);
+        });
+        
+        // BillSchedule configuration
+        modelBuilder.Entity<BillSchedule>(entity =>
+        {
+            entity.HasKey(e => e.BillScheduleId);
+            entity.Property(e => e.Frequency).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.StartDate).IsRequired();
+            entity.Property(e => e.NextOccurrenceDate).IsRequired();
+            entity.Property(e => e.IsActive).IsRequired();
+            entity.Property(e => e.CreatedAt).IsRequired();
+            
+            entity.HasOne(e => e.Bill)
+                .WithMany()
+                .HasForeignKey(e => e.BillId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.HasIndex(e => e.BillId);
+            entity.HasIndex(e => e.NextOccurrenceDate);
+            entity.HasIndex(e => e.IsActive);
         });
         
         // PortfolioAllocation configuration

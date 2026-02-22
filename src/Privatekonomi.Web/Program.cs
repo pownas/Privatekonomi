@@ -176,6 +176,7 @@ builder.Services.AddScoped<ViewDensityService>();
 // Register background services
 builder.Services.AddHostedService<Privatekonomi.Web.Services.BudgetAlertBackgroundService>();
 builder.Services.AddHostedService<Privatekonomi.Web.Services.WeeklyBudgetDigestService>();
+builder.Services.AddHostedService<Privatekonomi.Web.Services.BillReminderBackgroundService>();
 
 // Swedish-specific services
 builder.Services.AddScoped<ISieExporter, SieExporter>();
