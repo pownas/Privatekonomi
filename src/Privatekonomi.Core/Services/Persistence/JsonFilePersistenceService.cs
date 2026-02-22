@@ -52,8 +52,15 @@ public class JsonFilePersistenceService : IDataPersistenceService
             "transactions.json",
             "budgets.json"
         };
-        
-        return files.Any(file => File.Exists(Path.Combine(_dataDirectory, file)));
+
+        if (files.Any(file => File.Exists(Path.Combine(_dataDirectory, file))))
+        {
+            return true;
+        }
+
+        // Also check for monthly transaction files
+        return Directory.Exists(_dataDirectory) &&
+               Directory.GetFiles(_dataDirectory, "transactions-*.json").Length > 0;
     }
 
     public async Task SaveAsync(PrivatekonomyContext context)
@@ -64,7 +71,8 @@ public class JsonFilePersistenceService : IDataPersistenceService
 
             // Save each entity type to a separate JSON file
             await SaveEntityAsync(context.Categories.ToList(), "categories.json");
-            await SaveEntityAsync(context.Transactions.ToList(), "transactions.json");
+            // Transactions are split into monthly files (e.g. transactions-2025-01.json)
+            await SaveEntityMonthlyAsync(context.Transactions.ToList(), "transactions", t => t.Date);
             await SaveEntityAsync(context.TransactionCategories.ToList(), "transactioncategories.json");
             await SaveEntityAsync(context.CategoryRules.ToList(), "categoryrules.json");
             await SaveEntityAsync(context.Budgets.ToList(), "budgets.json");
@@ -80,16 +88,16 @@ public class JsonFilePersistenceService : IDataPersistenceService
             await SaveEntityAsync(context.SharedExpenses.ToList(), "sharedexpenses.json");
             await SaveEntityAsync(context.ExpenseShares.ToList(), "expenseshares.json");
             await SaveEntityAsync(context.ChildAllowances.ToList(), "childallowances.json");
-            await SaveEntityAsync(context.AllowanceTransactions.ToList(), "allowancetransactions.json");
+            await SaveEntityMonthlyAsync(context.AllowanceTransactions.ToList(), "allowancetransactions", t => t.TransactionDate);
             await SaveEntityAsync(context.AllowanceTasks.ToList(), "allowancetasks.json");
             await SaveEntityAsync(context.SalaryHistories.ToList(), "salaryhistories.json");
             await SaveEntityAsync(context.Pockets.ToList(), "pockets.json");
-            await SaveEntityAsync(context.PocketTransactions.ToList(), "pockettransactions.json");
+            await SaveEntityMonthlyAsync(context.PocketTransactions.ToList(), "pockettransactions", t => t.TransactionDate);
             await SaveEntityAsync(context.SharedGoals.ToList(), "sharedgoals.json");
             await SaveEntityAsync(context.SharedGoalParticipants.ToList(), "sharedgoalparticipants.json");
             await SaveEntityAsync(context.SharedGoalProposals.ToList(), "sharedgoalproposals.json");
             await SaveEntityAsync(context.SharedGoalProposalVotes.ToList(), "sharedgoalproposalvotes.json");
-            await SaveEntityAsync(context.SharedGoalTransactions.ToList(), "sharedgoaltransactions.json");
+            await SaveEntityMonthlyAsync(context.SharedGoalTransactions.ToList(), "sharedgoaltransactions", t => t.TransactionDate);
             await SaveEntityAsync(context.SharedGoalNotifications.ToList(), "sharedgoalnotifications.json");
             await SaveEntityAsync(context.TaxDeductions.ToList(), "taxdeductions.json");
             await SaveEntityAsync(context.CapitalGains.ToList(), "capitalgains.json");
@@ -120,7 +128,8 @@ public class JsonFilePersistenceService : IDataPersistenceService
             await LoadEntityAsync<BankConnection>(context, context.BankConnections, "bankconnections.json");
             await LoadEntityAsync<Household>(context, context.Households, "households.json");
             await LoadEntityAsync<HouseholdMember>(context, context.HouseholdMembers, "householdmembers.json");
-            await LoadEntityAsync<Transaction>(context, context.Transactions, "transactions.json");
+            // Transactions are stored in monthly files; also supports loading legacy single file
+            await LoadEntityMonthlyAsync<Transaction>(context, context.Transactions, "transactions");
             await LoadEntityAsync<TransactionCategory>(context, context.TransactionCategories, "transactioncategories.json");
             await LoadEntityAsync<CategoryRule>(context, context.CategoryRules, "categoryrules.json");
             await LoadEntityAsync<Budget>(context, context.Budgets, "budgets.json");
@@ -132,16 +141,16 @@ public class JsonFilePersistenceService : IDataPersistenceService
             await LoadEntityAsync<SharedExpense>(context, context.SharedExpenses, "sharedexpenses.json");
             await LoadEntityAsync<ExpenseShare>(context, context.ExpenseShares, "expenseshares.json");
             await LoadEntityAsync<ChildAllowance>(context, context.ChildAllowances, "childallowances.json");
-            await LoadEntityAsync<AllowanceTransaction>(context, context.AllowanceTransactions, "allowancetransactions.json");
+            await LoadEntityMonthlyAsync<AllowanceTransaction>(context, context.AllowanceTransactions, "allowancetransactions");
             await LoadEntityAsync<AllowanceTask>(context, context.AllowanceTasks, "allowancetasks.json");
             await LoadEntityAsync<SalaryHistory>(context, context.SalaryHistories, "salaryhistories.json");
             await LoadEntityAsync<Pocket>(context, context.Pockets, "pockets.json");
-            await LoadEntityAsync<PocketTransaction>(context, context.PocketTransactions, "pockettransactions.json");
+            await LoadEntityMonthlyAsync<PocketTransaction>(context, context.PocketTransactions, "pockettransactions");
             await LoadEntityAsync<SharedGoal>(context, context.SharedGoals, "sharedgoals.json");
             await LoadEntityAsync<SharedGoalParticipant>(context, context.SharedGoalParticipants, "sharedgoalparticipants.json");
             await LoadEntityAsync<SharedGoalProposal>(context, context.SharedGoalProposals, "sharedgoalproposals.json");
             await LoadEntityAsync<SharedGoalProposalVote>(context, context.SharedGoalProposalVotes, "sharedgoalproposalvotes.json");
-            await LoadEntityAsync<SharedGoalTransaction>(context, context.SharedGoalTransactions, "sharedgoaltransactions.json");
+            await LoadEntityMonthlyAsync<SharedGoalTransaction>(context, context.SharedGoalTransactions, "sharedgoaltransactions");
             await LoadEntityAsync<SharedGoalNotification>(context, context.SharedGoalNotifications, "sharedgoalnotifications.json");
             await LoadEntityAsync<TaxDeduction>(context, context.TaxDeductions, "taxdeductions.json");
             await LoadEntityAsync<CapitalGain>(context, context.CapitalGains, "capitalgains.json");
@@ -178,6 +187,46 @@ public class JsonFilePersistenceService : IDataPersistenceService
         await File.WriteAllTextAsync(path, json);
     }
 
+    /// <summary>
+    /// Saves a list of entities to monthly JSON files named {baseFileName}-YYYY-MM.json.
+    /// Existing monthly files for this entity type are replaced on each save.
+    /// Any legacy single-file (baseFileName.json) is removed after successful save.
+    /// </summary>
+    private async Task SaveEntityMonthlyAsync<T>(List<T> entities, string baseFileName, Func<T, DateTime> dateSelector)
+    {
+        // Remove all existing monthly files for this entity type
+        var existingMonthlyFiles = Directory.GetFiles(_dataDirectory, $"{baseFileName}-*.json");
+        foreach (var file in existingMonthlyFiles)
+        {
+            File.Delete(file);
+        }
+
+        // Remove legacy single-file if it exists
+        var legacyFile = Path.Combine(_dataDirectory, $"{baseFileName}.json");
+        if (File.Exists(legacyFile))
+        {
+            File.Delete(legacyFile);
+        }
+
+        if (entities.Count == 0)
+        {
+            return;
+        }
+
+        // Group entities by year and month, then save each group to its own file
+        var groups = entities.GroupBy(e =>
+        {
+            var date = dateSelector(e);
+            return (date.Year, date.Month);
+        });
+
+        foreach (var group in groups)
+        {
+            var fileName = $"{baseFileName}-{group.Key.Year:D4}-{group.Key.Month:D2}.json";
+            await SaveEntityAsync(group.ToList(), fileName);
+        }
+    }
+
     private async Task LoadEntityAsync<T>(
         PrivatekonomyContext context,
         DbSet<T> dbSet,
@@ -212,6 +261,60 @@ public class JsonFilePersistenceService : IDataPersistenceService
             }
             
             await dbSet.AddRangeAsync(entities);
+            await context.SaveChangesAsync();
+        }
+    }
+
+    /// <summary>
+    /// Loads entities from monthly JSON files named {baseFileName}-YYYY-MM.json.
+    /// Also loads from a legacy single file {baseFileName}.json if present (backward compatibility).
+    /// </summary>
+    private async Task LoadEntityMonthlyAsync<T>(
+        PrivatekonomyContext context,
+        DbSet<T> dbSet,
+        string baseFileName) where T : class
+    {
+        var monthlyFiles = Directory.GetFiles(_dataDirectory, $"{baseFileName}-*.json")
+            .OrderBy(f => f)
+            .ToList();
+
+        // Also include legacy single-file for backward compatibility
+        var legacyFile = Path.Combine(_dataDirectory, $"{baseFileName}.json");
+        if (File.Exists(legacyFile))
+        {
+            monthlyFiles.Add(legacyFile);
+        }
+
+        if (monthlyFiles.Count == 0)
+        {
+            return;
+        }
+
+        var allEntities = new List<T>();
+        foreach (var file in monthlyFiles)
+        {
+            var json = await File.ReadAllTextAsync(file);
+            var entities = JsonSerializer.Deserialize<List<T>>(json, _jsonOptions);
+            if (entities != null)
+            {
+                allEntities.AddRange(entities);
+            }
+        }
+
+        if (allEntities.Count > 0)
+        {
+            context.ChangeTracker.Clear();
+
+            var hasExistingData = await dbSet.AsNoTracking().AnyAsync();
+            if (hasExistingData)
+            {
+                var existingEntities = await dbSet.ToListAsync();
+                dbSet.RemoveRange(existingEntities);
+                await context.SaveChangesAsync();
+                context.ChangeTracker.Clear();
+            }
+
+            await dbSet.AddRangeAsync(allEntities);
             await context.SaveChangesAsync();
         }
     }
