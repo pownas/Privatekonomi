@@ -1,6 +1,7 @@
-@page "/savings/pockets"
+﻿@page "/savings/pockets"
 @page "/pockets"
 @rendermode InteractiveServer
+@using Privatekonomi.Web.Components.Shared
 @inject IPocketService PocketService
 @inject IBankSourceService BankSourceService
 @inject IDialogService DialogService
@@ -222,9 +223,16 @@ else
     }
     else
     {
-        <MudAlert Severity="Severity.Info" Class="mt-4">
-            Inga sparfickor har lagts till än. Klicka på "Ny Sparficka" för att komma igång!
-        </MudAlert>
+        <MudPaper Class="pa-4 mt-4" Elevation="0">
+            <EmptyState IconName="@Icons.Material.Filled.Wallet"
+                        IconColor="Color.Secondary"
+                        Title="Inga sparfickor än"
+                        Description="Skapa sparfickor för att öronmärka pengar på ditt konto för olika mål."
+                        ActionText="Skapa sparficka"
+                        ActionIcon="@Icons.Material.Filled.Add"
+                        OnActionClick="ToggleCreateForm"
+                        HelpText="Tips: Du kan använda sparfickor som en kuvertbudget utan att flytta pengar mellan konton." />
+        </MudPaper>
     }
 }
 

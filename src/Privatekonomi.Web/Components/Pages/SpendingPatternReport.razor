@@ -1,7 +1,8 @@
-@page "/economy/reports/spending-pattern"
+﻿@page "/economy/reports/spending-pattern"
 @page "/reports/spending-pattern"
 @rendermode InteractiveServer
 @using Privatekonomi.Core.Services
+@using Privatekonomi.Web.Components.Shared
 @inject IReportService ReportService
 @inject ITransactionService TransactionService
 @inject NavigationManager NavigationManager
@@ -81,7 +82,7 @@ else
         </MudText>
     </MudPaper>
 
-    @if (_report != null)
+    @if (_report != null && _report.TotalSpending > 0)
     {
         <!-- Summary Cards -->
         <div class="d-flex flex-wrap gap-3 mb-4">
@@ -364,6 +365,20 @@ else
                 </MudSimpleTable>
             </MudPaper>
         }
+    }
+    else if (_report != null)
+    {
+        <MudPaper Class="pa-4" Elevation="0">
+            <EmptyState IconName="@Icons.Material.Filled.Analytics"
+                        IconColor="Color.Secondary"
+                        Title="Ingen utgiftsdata för vald period"
+                        Description="När du har registrerat transaktioner kan vi analysera dina utgiftsmönster och ge rekommendationer."
+                        ActionText="Gå till transaktioner"
+                        ActionIcon="@Icons.Material.Filled.List"
+                        ActionHref="/transactions"
+                        SecondaryText="Importera transaktioner"
+                        SecondaryHref="/import" />
+        </MudPaper>
     }
 }
 

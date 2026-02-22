@@ -1,8 +1,9 @@
-@page "/economy/receipts"
+﻿@page "/economy/receipts"
 @page "/receipts"
 @rendermode InteractiveServer
 @using Privatekonomi.Core.Models
 @using Privatekonomi.Core.Services
+@using Privatekonomi.Web.Components.Shared
 @inject IReceiptService ReceiptService
 @inject ICategoryService CategoryService
 @inject ITransactionService TransactionService
@@ -202,100 +203,118 @@
 }
 else
 {
-    <MudPaper Class="pa-4 mb-4">
-        <MudGrid>
-            <MudItem xs="12" md="4">
-                <MudCard Elevation="2" Class="pa-4">
-                    <MudCardContent>
-                        <MudText Typo="Typo.h6">Totalt antal kvitton</MudText>
-                        <MudText Typo="Typo.h4" Color="Color.Primary">@_receipts.Count</MudText>
-                    </MudCardContent>
-                </MudCard>
-            </MudItem>
-            <MudItem xs="12" md="4">
-                <MudCard Elevation="2" Class="pa-4">
-                    <MudCardContent>
-                        <MudText Typo="Typo.h6">Total summa</MudText>
-                        <MudText Typo="Typo.h4" Color="Color.Secondary">@_totalAmount.ToString("C", new System.Globalization.CultureInfo("sv-SE"))</MudText>
-                    </MudCardContent>
-                </MudCard>
-            </MudItem>
-            <MudItem xs="12" md="4">
-                <MudCard Elevation="2" Class="pa-4">
-                    <MudCardContent>
-                        <MudText Typo="Typo.h6">Denna månad</MudText>
-                        <MudText Typo="Typo.h4" Color="Color.Info">@_thisMonthCount</MudText>
-                    </MudCardContent>
-                </MudCard>
-            </MudItem>
-        </MudGrid>
-    </MudPaper>
+    @if (_receipts.Any())
+    {
+        <MudPaper Class="pa-4 mb-4">
+            <MudGrid>
+                <MudItem xs="12" md="4">
+                    <MudCard Elevation="2" Class="pa-4">
+                        <MudCardContent>
+                            <MudText Typo="Typo.h6">Totalt antal kvitton</MudText>
+                            <MudText Typo="Typo.h4" Color="Color.Primary">@_receipts.Count</MudText>
+                        </MudCardContent>
+                    </MudCard>
+                </MudItem>
+                <MudItem xs="12" md="4">
+                    <MudCard Elevation="2" Class="pa-4">
+                        <MudCardContent>
+                            <MudText Typo="Typo.h6">Total summa</MudText>
+                            <MudText Typo="Typo.h4" Color="Color.Secondary">@_totalAmount.ToString("C", new System.Globalization.CultureInfo("sv-SE"))</MudText>
+                        </MudCardContent>
+                    </MudCard>
+                </MudItem>
+                <MudItem xs="12" md="4">
+                    <MudCard Elevation="2" Class="pa-4">
+                        <MudCardContent>
+                            <MudText Typo="Typo.h6">Denna månad</MudText>
+                            <MudText Typo="Typo.h4" Color="Color.Info">@_thisMonthCount</MudText>
+                        </MudCardContent>
+                    </MudCard>
+                </MudItem>
+            </MudGrid>
+        </MudPaper>
 
-    <MudPaper Class="pa-4">
-        <MudTable Items="_receipts" Hover="true" Striped="true" Filter="new Func<Receipt, bool>(FilterReceipts)">
-            <ToolBarContent>
-                <MudText Typo="Typo.h6">Kvitton</MudText>
-                <MudSpacer />
-                <MudTextField @bind-Value="_searchString" Placeholder="Sök..." Adornment="Adornment.Start" 
-                              AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0" />
-            </ToolBarContent>
-            <HeaderContent>
-                <MudTh>Datum</MudTh>
-                <MudTh>Butik</MudTh>
-                <MudTh>Belopp</MudTh>
-                <MudTh>Typ</MudTh>
-                <MudTh>Transaktion</MudTh>
-                <MudTh>Radposter</MudTh>
-                <MudTh>Åtgärder</MudTh>
-            </HeaderContent>
-            <RowTemplate>
-                <MudTd DataLabel="Datum">@context.ReceiptDate.ToString("yyyy-MM-dd")</MudTd>
-                <MudTd DataLabel="Butik">@context.Merchant</MudTd>
-                <MudTd DataLabel="Belopp">@context.TotalAmount.ToString("C", new System.Globalization.CultureInfo("sv-SE"))</MudTd>
-                <MudTd DataLabel="Typ">
-                    <MudChip T="string" Size="Size.Small" Color="@GetReceiptTypeColor(context.ReceiptType)">
-                        @GetReceiptTypeLabel(context.ReceiptType)
-                    </MudChip>
-                </MudTd>
-                <MudTd DataLabel="Transaktion">
-                    @if (context.Transaction != null)
-                    {
-                        <MudChip T="string" Size="Size.Small" Color="Color.Primary" Icon="@Icons.Material.Filled.Link">
-                            @context.Transaction.Description
+        <MudPaper Class="pa-4">
+            <MudTable Items="_receipts" Hover="true" Striped="true" Filter="new Func<Receipt, bool>(FilterReceipts)">
+                <ToolBarContent>
+                    <MudText Typo="Typo.h6">Kvitton</MudText>
+                    <MudSpacer />
+                    <MudTextField @bind-Value="_searchString" Placeholder="Sök..." Adornment="Adornment.Start" 
+                                  AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0" />
+                </ToolBarContent>
+                <HeaderContent>
+                    <MudTh>Datum</MudTh>
+                    <MudTh>Butik</MudTh>
+                    <MudTh>Belopp</MudTh>
+                    <MudTh>Typ</MudTh>
+                    <MudTh>Transaktion</MudTh>
+                    <MudTh>Radposter</MudTh>
+                    <MudTh>Åtgärder</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Datum">@context.ReceiptDate.ToString("yyyy-MM-dd")</MudTd>
+                    <MudTd DataLabel="Butik">@context.Merchant</MudTd>
+                    <MudTd DataLabel="Belopp">@context.TotalAmount.ToString("C", new System.Globalization.CultureInfo("sv-SE"))</MudTd>
+                    <MudTd DataLabel="Typ">
+                        <MudChip T="string" Size="Size.Small" Color="@GetReceiptTypeColor(context.ReceiptType)">
+                            @GetReceiptTypeLabel(context.ReceiptType)
                         </MudChip>
-                    }
-                    else
-                    {
-                        <MudChip T="string" Size="Size.Small" Color="Color.Default" Variant="Variant.Outlined">
-                            Ej kopplad
-                        </MudChip>
-                    }
-                </MudTd>
-                <MudTd DataLabel="Radposter">@context.ReceiptLineItems.Count st</MudTd>
-                <MudTd>
-                    <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small" Color="Color.Info" 
-                                   OnClick="@(() => ViewReceipt(context))" title="Visa" />
-                    @if (context.Transaction == null)
-                    {
-                        <MudIconButton Icon="@Icons.Material.Filled.Link" Size="Size.Small" Color="Color.Success" 
-                                       OnClick="@(() => LinkReceiptToTransaction(context))" title="Länka till transaktion" />
-                    }
-                    else
-                    {
-                        <MudIconButton Icon="@Icons.Material.Filled.LinkOff" Size="Size.Small" Color="Color.Warning" 
-                                       OnClick="@(() => UnlinkReceiptFromTransaction(context))" title="Avlänka från transaktion" />
-                    }
-                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Primary" 
-                                   OnClick="@(() => EditReceipt(context))" title="Redigera" />
-                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" 
-                                   OnClick="@(() => DeleteReceipt(context))" title="Ta bort" />
-                </MudTd>
-            </RowTemplate>
-            <PagerContent>
-                <MudTablePager PageSizeOptions="new int[] { 10, 25, 50, 100 }" />
-            </PagerContent>
-        </MudTable>
-    </MudPaper>
+                    </MudTd>
+                    <MudTd DataLabel="Transaktion">
+                        @if (context.Transaction != null)
+                        {
+                            <MudChip T="string" Size="Size.Small" Color="Color.Primary" Icon="@Icons.Material.Filled.Link">
+                                @context.Transaction.Description
+                            </MudChip>
+                        }
+                        else
+                        {
+                            <MudChip T="string" Size="Size.Small" Color="Color.Default" Variant="Variant.Outlined">
+                                Ej kopplad
+                            </MudChip>
+                        }
+                    </MudTd>
+                    <MudTd DataLabel="Radposter">@context.ReceiptLineItems.Count st</MudTd>
+                    <MudTd>
+                        <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small" Color="Color.Info" 
+                                       OnClick="@(() => ViewReceipt(context))" title="Visa" />
+                        @if (context.Transaction == null)
+                        {
+                            <MudIconButton Icon="@Icons.Material.Filled.Link" Size="Size.Small" Color="Color.Success" 
+                                           OnClick="@(() => LinkReceiptToTransaction(context))" title="Länka till transaktion" />
+                        }
+                        else
+                        {
+                            <MudIconButton Icon="@Icons.Material.Filled.LinkOff" Size="Size.Small" Color="Color.Warning" 
+                                           OnClick="@(() => UnlinkReceiptFromTransaction(context))" title="Avlänka från transaktion" />
+                        }
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Primary" 
+                                       OnClick="@(() => EditReceipt(context))" title="Redigera" />
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" 
+                                       OnClick="@(() => DeleteReceipt(context))" title="Ta bort" />
+                    </MudTd>
+                </RowTemplate>
+                <PagerContent>
+                    <MudTablePager PageSizeOptions="new int[] { 10, 25, 50, 100 }" />
+                </PagerContent>
+            </MudTable>
+        </MudPaper>
+    }
+    else
+    {
+        <MudPaper Class="pa-4" Elevation="0">
+            <EmptyState IconName="@Icons.Material.Filled.Receipt"
+                        IconColor="Color.Secondary"
+                        Title="Inga kvitton än"
+                        Description="Lägg till kvitton för att spara underlag och enklare kunna hitta köp i efterhand."
+                        ActionText="Lägg till kvitto"
+                        ActionIcon="@Icons.Material.Filled.Add"
+                        OnActionClick="ToggleCreateForm"
+                        SecondaryText="Skanna kvitto (OCR)"
+                        OnSecondaryClick="OpenOcrScanDialog"
+                        HelpText="Tips: Du kan länka kvitton till transaktioner för bättre spårbarhet." />
+        </MudPaper>
+    }
 }
 
 @code {

@@ -1,4 +1,4 @@
-@page "/investments/overview"
+﻿@page "/investments/overview"
 @page "/investments"
 @rendermode InteractiveServer
 @inject IInvestmentService InvestmentService
@@ -299,6 +299,7 @@ else
 @inject IBankSourceService BankSourceService
 @inject IJSRuntime JS
 @using System.Text
+@using Privatekonomi.Web.Components.Shared
 
 @code {
     private bool _loading = true;
