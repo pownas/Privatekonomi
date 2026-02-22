@@ -1,8 +1,7 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
-using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Privatekonomi.Api.Tests.Infrastructure;
 using Privatekonomi.Core.Data;
 using Privatekonomi.Core.Models;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -16,31 +15,6 @@ namespace Privatekonomi.Api.Tests;
 [TestClass]
 public class RulesControllerTests
 {
-    private WebApplicationFactory<Program> CreateFactory(string databaseName)
-    {
-        return new WebApplicationFactory<Program>()
-            .WithWebHostBuilder(builder =>
-            {
-                builder.ConfigureServices(services =>
-                {
-                    // Remove the existing DbContext configuration
-                    var descriptor = services.SingleOrDefault(
-                        d => d.ServiceType == typeof(DbContextOptions<PrivatekonomyContext>));
-
-                    if (descriptor != null)
-                    {
-                        services.Remove(descriptor);
-                    }
-
-                    // Add in-memory database for testing
-                    services.AddDbContext<PrivatekonomyContext>(options =>
-                    {
-                        options.UseInMemoryDatabase(databaseName);
-                    });
-                });
-            });
-    }
-
     private async Task<Category> CreateTestCategoryAsync(IServiceProvider services)
     {
         using var scope = services.CreateScope();
@@ -89,7 +63,7 @@ public class RulesControllerTests
     public async Task GetAllRules_ReturnsEmptyList_WhenNoRulesExist()
     {
         // Arrange
-        await using var factory = CreateFactory($"RulesTest_{Guid.NewGuid()}");
+        await using var factory = new ApiWebApplicationFactory($"RulesTest_{Guid.NewGuid()}");
         var client = factory.CreateClient();
 
         // Act
@@ -106,7 +80,7 @@ public class RulesControllerTests
     public async Task GetAllRules_ReturnsList_WhenRulesExist()
     {
         // Arrange
-        await using var factory = CreateFactory($"RulesTest_{Guid.NewGuid()}");
+        await using var factory = new ApiWebApplicationFactory($"RulesTest_{Guid.NewGuid()}");
         var client = factory.CreateClient();
         
         var category = await CreateTestCategoryAsync(factory.Services);
@@ -126,7 +100,7 @@ public class RulesControllerTests
     public async Task GetActiveRules_ReturnsOnlyActiveRules()
     {
         // Arrange
-        await using var factory = CreateFactory($"RulesTest_{Guid.NewGuid()}");
+        await using var factory = new ApiWebApplicationFactory($"RulesTest_{Guid.NewGuid()}");
         var client = factory.CreateClient();
         
         var category = await CreateTestCategoryAsync(factory.Services);
@@ -169,7 +143,7 @@ public class RulesControllerTests
     public async Task GetRule_ReturnsNotFound_WhenRuleDoesNotExist()
     {
         // Arrange
-        await using var factory = CreateFactory($"RulesTest_{Guid.NewGuid()}");
+        await using var factory = new ApiWebApplicationFactory($"RulesTest_{Guid.NewGuid()}");
         var client = factory.CreateClient();
 
         // Act
@@ -183,7 +157,7 @@ public class RulesControllerTests
     public async Task GetRule_ReturnsRule_WhenRuleExists()
     {
         // Arrange
-        await using var factory = CreateFactory($"RulesTest_{Guid.NewGuid()}");
+        await using var factory = new ApiWebApplicationFactory($"RulesTest_{Guid.NewGuid()}");
         var client = factory.CreateClient();
         
         var category = await CreateTestCategoryAsync(factory.Services);
@@ -203,7 +177,7 @@ public class RulesControllerTests
     public async Task CreateRule_CreatesUserRule()
     {
         // Arrange
-        await using var factory = CreateFactory($"RulesTest_{Guid.NewGuid()}");
+        await using var factory = new ApiWebApplicationFactory($"RulesTest_{Guid.NewGuid()}");
         var client = factory.CreateClient();
         
         var category = await CreateTestCategoryAsync(factory.Services);
@@ -235,7 +209,7 @@ public class RulesControllerTests
     public async Task UpdateRule_IdMismatch_ReturnsBadRequest()
     {
         // Arrange
-        await using var factory = CreateFactory($"RulesTest_{Guid.NewGuid()}");
+        await using var factory = new ApiWebApplicationFactory($"RulesTest_{Guid.NewGuid()}");
         var client = factory.CreateClient();
         
         var category = await CreateTestCategoryAsync(factory.Services);
@@ -267,7 +241,7 @@ public class RulesControllerTests
     public async Task DeleteRule_RemovesRule()
     {
         // Arrange
-        await using var factory = CreateFactory($"RulesTest_{Guid.NewGuid()}");
+        await using var factory = new ApiWebApplicationFactory($"RulesTest_{Guid.NewGuid()}");
         var client = factory.CreateClient();
         
         var category = await CreateTestCategoryAsync(factory.Services);
@@ -286,7 +260,7 @@ public class RulesControllerTests
     public async Task TestRule_ReturnsMatchingRule()
     {
         // Arrange
-        await using var factory = CreateFactory($"RulesTest_{Guid.NewGuid()}");
+        await using var factory = new ApiWebApplicationFactory($"RulesTest_{Guid.NewGuid()}");
         var client = factory.CreateClient();
         
         var category = await CreateTestCategoryAsync(factory.Services);
@@ -308,7 +282,7 @@ public class RulesControllerTests
     public async Task TestRule_ReturnsNotFound_WhenNoMatchingRule()
     {
         // Arrange
-        await using var factory = CreateFactory($"RulesTest_{Guid.NewGuid()}");
+        await using var factory = new ApiWebApplicationFactory($"RulesTest_{Guid.NewGuid()}");
         var client = factory.CreateClient();
 
         var testRequest = new { Description = "Some unmatched description", Payee = "" };

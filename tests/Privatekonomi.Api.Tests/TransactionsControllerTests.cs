@@ -1,9 +1,9 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
-using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Privatekonomi.Api.Models;
+using Privatekonomi.Api.Tests.Infrastructure;
 using Privatekonomi.Core.Data;
 using Privatekonomi.Core.Models;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -13,31 +13,6 @@ namespace Privatekonomi.Api.Tests;
 [TestClass]
 public class TransactionsControllerTests
 {
-    private WebApplicationFactory<Program> CreateFactory(string databaseName)
-    {
-        return new WebApplicationFactory<Program>()
-            .WithWebHostBuilder(builder =>
-            {
-                builder.ConfigureServices(services =>
-                {
-                    // Remove the existing DbContext configuration
-                    var descriptor = services.SingleOrDefault(
-                        d => d.ServiceType == typeof(DbContextOptions<PrivatekonomyContext>));
-
-                    if (descriptor != null)
-                    {
-                        services.Remove(descriptor);
-                    }
-
-                    // Add in-memory database for testing
-                    services.AddDbContext<PrivatekonomyContext>(options =>
-                    {
-                        options.UseInMemoryDatabase(databaseName);
-                    });
-                });
-            });
-    }
-
     private async Task<Transaction> CreateTestTransactionAsync(IServiceProvider services)
     {
         using var scope = services.CreateScope();
@@ -66,7 +41,7 @@ public class TransactionsControllerTests
     public async Task UpdateTransaction_ValidRequest_ReturnsOkAndUpdatesTransaction()
     {
         // Arrange
-        var factory = CreateFactory("Test_" + Guid.NewGuid());
+        await using var factory = new ApiWebApplicationFactory("Test_" + Guid.NewGuid());
         var client = factory.CreateClient();
         var transaction = await CreateTestTransactionAsync(factory.Services);
 
@@ -102,7 +77,7 @@ public class TransactionsControllerTests
     public async Task UpdateTransaction_InvalidAmount_ReturnsBadRequest()
     {
         // Arrange
-        var factory = CreateFactory("Test_" + Guid.NewGuid());
+        await using var factory = new ApiWebApplicationFactory("Test_" + Guid.NewGuid());
         var client = factory.CreateClient();
         var transaction = await CreateTestTransactionAsync(factory.Services);
 
@@ -127,7 +102,7 @@ public class TransactionsControllerTests
     public async Task UpdateTransaction_EmptyDescription_ReturnsBadRequest()
     {
         // Arrange
-        var factory = CreateFactory("Test_" + Guid.NewGuid());
+        await using var factory = new ApiWebApplicationFactory("Test_" + Guid.NewGuid());
         var client = factory.CreateClient();
         var transaction = await CreateTestTransactionAsync(factory.Services);
 
@@ -152,7 +127,7 @@ public class TransactionsControllerTests
     public async Task UpdateTransaction_LockedTransaction_ReturnsForbidden()
     {
         // Arrange
-        var factory = CreateFactory("Test_" + Guid.NewGuid());
+        await using var factory = new ApiWebApplicationFactory("Test_" + Guid.NewGuid());
         var client = factory.CreateClient();
         
         using var scope = factory.Services.CreateScope();
@@ -190,7 +165,7 @@ public class TransactionsControllerTests
     public async Task UpdateTransaction_ConcurrentModification_ReturnsConflict()
     {
         // Arrange
-        var factory = CreateFactory("Test_" + Guid.NewGuid());
+        await using var factory = new ApiWebApplicationFactory("Test_" + Guid.NewGuid());
         var client = factory.CreateClient();
         var transaction = await CreateTestTransactionAsync(factory.Services);
 
@@ -215,7 +190,7 @@ public class TransactionsControllerTests
     public async Task UpdateTransaction_TransactionNotFound_ReturnsNotFound()
     {
         // Arrange
-        var factory = CreateFactory("Test_" + Guid.NewGuid());
+        await using var factory = new ApiWebApplicationFactory("Test_" + Guid.NewGuid());
         var client = factory.CreateClient();
         
         var updateRequest = new UpdateTransactionRequest
@@ -238,7 +213,7 @@ public class TransactionsControllerTests
     public async Task UpdateTransaction_WithCategories_UpdatesCategoriesCorrectly()
     {
         // Arrange
-        var factory = CreateFactory("Test_" + Guid.NewGuid());
+        await using var factory = new ApiWebApplicationFactory("Test_" + Guid.NewGuid());
         var client = factory.CreateClient();
         
         using var scope = factory.Services.CreateScope();
@@ -289,7 +264,7 @@ public class TransactionsControllerTests
     public async Task UpdateTransaction_WithoutOptimisticLocking_AllowsUpdate()
     {
         // Arrange
-        var factory = CreateFactory("Test_" + Guid.NewGuid());
+        await using var factory = new ApiWebApplicationFactory("Test_" + Guid.NewGuid());
         var client = factory.CreateClient();
         var transaction = await CreateTestTransactionAsync(factory.Services);
 
@@ -314,7 +289,7 @@ public class TransactionsControllerTests
     public async Task QuickCategorize_ValidRequest_ReturnsOkAndCategorizes()
     {
         // Arrange
-        var factory = CreateFactory("Test_QuickCategorize_" + Guid.NewGuid());
+        await using var factory = new ApiWebApplicationFactory("Test_QuickCategorize_" + Guid.NewGuid());
         var client = factory.CreateClient();
         
         using var scope = factory.Services.CreateScope();
@@ -352,7 +327,7 @@ public class TransactionsControllerTests
     public async Task QuickCategorize_WithCreateRule_CreatesRuleAndCategorizes()
     {
         // Arrange
-        var factory = CreateFactory("Test_QuickCategorize_Rule_" + Guid.NewGuid());
+        await using var factory = new ApiWebApplicationFactory("Test_QuickCategorize_Rule_" + Guid.NewGuid());
         var client = factory.CreateClient();
         
         using var scope = factory.Services.CreateScope();
@@ -393,7 +368,7 @@ public class TransactionsControllerTests
     public async Task QuickCategorize_TransactionNotFound_ReturnsNotFound()
     {
         // Arrange
-        var factory = CreateFactory("Test_QuickCategorize_NotFound_" + Guid.NewGuid());
+        await using var factory = new ApiWebApplicationFactory("Test_QuickCategorize_NotFound_" + Guid.NewGuid());
         var client = factory.CreateClient();
         
         using var scope = factory.Services.CreateScope();
@@ -423,7 +398,7 @@ public class TransactionsControllerTests
     public async Task QuickCategorize_CategoryNotFound_ReturnsNotFound()
     {
         // Arrange
-        var factory = CreateFactory("Test_QuickCategorize_CategoryNotFound_" + Guid.NewGuid());
+        await using var factory = new ApiWebApplicationFactory("Test_QuickCategorize_CategoryNotFound_" + Guid.NewGuid());
         var client = factory.CreateClient();
         
         // Create transaction
