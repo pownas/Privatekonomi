@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Privatekonomi.Core.Data;
 using Privatekonomi.Core.Models;
 
@@ -390,10 +390,10 @@ public class HouseholdService : IHouseholdService
             .Include(t => t.CompletedByMember)
             .Where(t => t.HouseholdId == householdId);
 
-        var lowerSearchTerm = searchTerm.ToLower();
-        query = query.Where(t => 
-            t.Title.ToLower().Contains(lowerSearchTerm) || 
-            (t.Description != null && t.Description.ToLower().Contains(lowerSearchTerm)));
+        var pattern = $"%{searchTerm}%";
+        query = query.Where(t =>
+            EF.Functions.Like(t.Title, pattern) ||
+            (t.Description != null && EF.Functions.Like(t.Description, pattern)));
 
         return await query
             .OrderBy(t => t.IsCompleted)

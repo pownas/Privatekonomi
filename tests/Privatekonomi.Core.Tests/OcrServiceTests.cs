@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Privatekonomi.Core.Services;
@@ -282,7 +282,7 @@ Kontant
     [DataRow("Total: 150,50", 150.50)]
     [DataRow("Summa: 75,25 kr", 75.25)]
     [DataRow("Att betala: 200,00", 200.00)]
-    public void ParseReceiptText_WithVariousTotalFormats_ExtractsTotalAmount(string totalLine, decimal expectedAmount)
+    public void ParseReceiptText_WithVariousTotalFormats_ExtractsTotalAmount(string totalLine, double expectedAmount)
     {
         // Arrange
         var ocrText = $@"
@@ -295,7 +295,7 @@ Test Store
 
         // Assert
         Assert.IsNotNull(result);
-        Assert.AreEqual(expectedAmount, result.TotalAmount);
+        Assert.AreEqual((decimal)expectedAmount, result.TotalAmount);
     }
 
     [DataTestMethod]

@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Privatekonomi.Core.Models;
 using Privatekonomi.Core.Services;
 
@@ -155,17 +155,22 @@ public class DebtStrategyController : ControllerBase
         [FromQuery] string strategyType,
         [FromQuery] decimal availableMonthlyPayment)
     {
+        if (string.IsNullOrWhiteSpace(strategyType))
+        {
+            return BadRequest("Strategy type is required. Use 'snowball' or 'avalanche'");
+        }
+
         if (availableMonthlyPayment <= 0)
         {
             return BadRequest("Available monthly payment must be greater than 0");
         }
 
         DebtPayoffStrategy strategy;
-        if (strategyType.ToLower() == "snowball")
+        if (string.Equals(strategyType, "snowball", StringComparison.OrdinalIgnoreCase))
         {
             strategy = await _debtStrategyService.CalculateSnowballStrategy(availableMonthlyPayment);
         }
-        else if (strategyType.ToLower() == "avalanche")
+        else if (string.Equals(strategyType, "avalanche", StringComparison.OrdinalIgnoreCase))
         {
             strategy = await _debtStrategyService.CalculateAvalancheStrategy(availableMonthlyPayment);
         }
@@ -191,12 +196,18 @@ public class DebtStrategyController : ControllerBase
         [FromQuery] string strategyType,
         [FromQuery] decimal availableMonthlyPayment)
     {
+        if (string.IsNullOrWhiteSpace(strategyType))
+        {
+            return BadRequest("Strategy type is required. Use 'snowball' or 'avalanche'");
+        }
+
         if (availableMonthlyPayment <= 0)
         {
             return BadRequest("Available monthly payment must be greater than 0");
         }
 
-        if (strategyType.ToLower() != "snowball" && strategyType.ToLower() != "avalanche")
+        if (!string.Equals(strategyType, "snowball", StringComparison.OrdinalIgnoreCase) &&
+            !string.Equals(strategyType, "avalanche", StringComparison.OrdinalIgnoreCase))
         {
             return BadRequest("Invalid strategy type. Use 'snowball' or 'avalanche'");
         }

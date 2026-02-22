@@ -1,58 +1,16 @@
-using System.Net;
-using System.Net.Http.Json;
-using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-using Moq;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Privatekonomi.Api.Tests.Infrastructure;
 using Privatekonomi.Core.Data;
 using Privatekonomi.Core.Models;
-using Privatekonomi.Core.Services;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Net;
+using System.Net.Http.Json;
 
 namespace Privatekonomi.Api.Tests;
 
 [TestClass]
 public class BudgetAlertsControllerTests
 {
-    private WebApplicationFactory<Program> CreateFactory(string databaseName)
-    {
-        return new WebApplicationFactory<Program>()
-            .WithWebHostBuilder(builder =>
-            {
-                builder.ConfigureServices(services =>
-                {
-                    // Remove the existing DbContext configuration
-                    var descriptor = services.SingleOrDefault(
-                        d => d.ServiceType == typeof(DbContextOptions<PrivatekonomyContext>));
-
-                    if (descriptor != null)
-                    {
-                        services.Remove(descriptor);
-                    }
-
-                    // Add in-memory database for testing
-                    services.AddDbContext<PrivatekonomyContext>(options =>
-                    {
-                        options.UseInMemoryDatabase(databaseName);
-                    });
-                    
-                    // Add mock for ICurrentUserService (anonymous user for API tests)
-                    var mockCurrentUserService = new Mock<ICurrentUserService>();
-                    mockCurrentUserService.Setup(x => x.IsAuthenticated).Returns(false);
-                    mockCurrentUserService.Setup(x => x.UserId).Returns((string?)null);
-                    
-                    // Remove existing ICurrentUserService registration and add mock
-                    var currentUserDescriptor = services.SingleOrDefault(
-                        d => d.ServiceType == typeof(ICurrentUserService));
-                    if (currentUserDescriptor != null)
-                    {
-                        services.Remove(currentUserDescriptor);
-                    }
-                    services.AddScoped<ICurrentUserService>(_ => mockCurrentUserService.Object);
-                });
-            });
-    }
-
     private async Task<(Budget budget, BudgetCategory budgetCategory, Category category)> CreateTestBudgetAsync(IServiceProvider services)
     {
         using var scope = services.CreateScope();
@@ -98,7 +56,7 @@ public class BudgetAlertsControllerTests
     {
         // Arrange
         var databaseName = Guid.NewGuid().ToString();
-        await using var factory = CreateFactory(databaseName);
+        await using var factory = new ApiWebApplicationFactory(databaseName);
         var client = factory.CreateClient();
 
         // Act
@@ -113,7 +71,7 @@ public class BudgetAlertsControllerTests
     {
         // Arrange
         var databaseName = Guid.NewGuid().ToString();
-        await using var factory = CreateFactory(databaseName);
+        await using var factory = new ApiWebApplicationFactory(databaseName);
         var client = factory.CreateClient();
         var (budget, _, _) = await CreateTestBudgetAsync(factory.Services);
 
@@ -129,7 +87,7 @@ public class BudgetAlertsControllerTests
     {
         // Arrange
         var databaseName = Guid.NewGuid().ToString();
-        await using var factory = CreateFactory(databaseName);
+        await using var factory = new ApiWebApplicationFactory(databaseName);
         var client = factory.CreateClient();
         var (budget, _, category) = await CreateTestBudgetAsync(factory.Services);
 
@@ -145,7 +103,7 @@ public class BudgetAlertsControllerTests
     {
         // Arrange
         var databaseName = Guid.NewGuid().ToString();
-        await using var factory = CreateFactory(databaseName);
+        await using var factory = new ApiWebApplicationFactory(databaseName);
         var client = factory.CreateClient();
 
         // Act
@@ -160,7 +118,7 @@ public class BudgetAlertsControllerTests
     {
         // Arrange
         var databaseName = Guid.NewGuid().ToString();
-        await using var factory = CreateFactory(databaseName);
+        await using var factory = new ApiWebApplicationFactory(databaseName);
         var client = factory.CreateClient();
         var (budget, _, _) = await CreateTestBudgetAsync(factory.Services);
 
@@ -176,7 +134,7 @@ public class BudgetAlertsControllerTests
     {
         // Arrange
         var databaseName = Guid.NewGuid().ToString();
-        await using var factory = CreateFactory(databaseName);
+        await using var factory = new ApiWebApplicationFactory(databaseName);
         var client = factory.CreateClient();
         var (budget, _, category) = await CreateTestBudgetAsync(factory.Services);
 
@@ -192,7 +150,7 @@ public class BudgetAlertsControllerTests
     {
         // Arrange
         var databaseName = Guid.NewGuid().ToString();
-        await using var factory = CreateFactory(databaseName);
+        await using var factory = new ApiWebApplicationFactory(databaseName);
         var client = factory.CreateClient();
 
         // Act
@@ -207,7 +165,7 @@ public class BudgetAlertsControllerTests
     {
         // Arrange
         var databaseName = Guid.NewGuid().ToString();
-        await using var factory = CreateFactory(databaseName);
+        await using var factory = new ApiWebApplicationFactory(databaseName);
         var client = factory.CreateClient();
 
         // Act
@@ -222,7 +180,7 @@ public class BudgetAlertsControllerTests
     {
         // Arrange
         var databaseName = Guid.NewGuid().ToString();
-        await using var factory = CreateFactory(databaseName);
+        await using var factory = new ApiWebApplicationFactory(databaseName);
         var client = factory.CreateClient();
         var (budget, _, _) = await CreateTestBudgetAsync(factory.Services);
 

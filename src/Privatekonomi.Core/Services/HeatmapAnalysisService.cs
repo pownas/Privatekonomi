@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Privatekonomi.Core.Data;
 using Privatekonomi.Core.Models;
 using System.Globalization;
@@ -83,9 +83,10 @@ public class HeatmapAnalysisService : IHeatmapAnalysisService
         
         foreach (var group in grouped)
         {
-            if (!heatmapData.HeatmapCells.ContainsKey(group.Weekday))
+            if (!heatmapData.HeatmapCells.TryGetValue(group.Weekday, out var weekdayCells))
             {
-                heatmapData.HeatmapCells[group.Weekday] = new Dictionary<int, HeatmapCell>();
+                weekdayCells = new Dictionary<int, HeatmapCell>();
+                heatmapData.HeatmapCells[group.Weekday] = weekdayCells;
             }
 
             var netAmount = group.IncomeAmount - group.ExpenseAmount;
@@ -101,7 +102,7 @@ public class HeatmapAnalysisService : IHeatmapAnalysisService
                 AverageAmount = group.Count > 0 ? (group.ExpenseAmount + group.IncomeAmount) / group.Count : 0
             };
 
-            heatmapData.HeatmapCells[group.Weekday][group.Hour] = cell;
+            weekdayCells[group.Hour] = cell;
             
             if (Math.Abs(netAmount) > maxNetAmount)
             {

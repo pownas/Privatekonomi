@@ -1,0 +1,22 @@
+﻿root = true
+
+# Build output currently includes a very large number of .NET analyzer warnings (CAxxxx).
+# To keep build output actionable, default analyzer severity is reduced to suggestion.
+# Individual rules can be promoted back to warning/error as the codebase is cleaned up.
+
+[*.cs]
+dotnet_analyzer_diagnostic.severity = suggestion
+dotnet_diagnostic.CA1822.severity = suggestion
+dotnet_diagnostic.CA1829.severity = suggestion
+dotnet_diagnostic.CA1860.severity = suggestion
+dotnet_diagnostic.CA1861.severity = suggestion
+dotnet_diagnostic.CA1873.severity = suggestion
+
+# Default severity for analyzer diagnostics with category 'Style'
+dotnet_analyzer_diagnostic.category-Style.severity = none
+
+[*.razor]
+dotnet_analyzer_diagnostic.severity = suggestion
+
+# set blocked scope namespace to avoid conflicts with generated code
+dotnet_code_quality.CA1031.blocked_scope = namespace

@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Privatekonomi.Core.Data;
 using Privatekonomi.Core.Models;
@@ -318,14 +318,14 @@ public class DebtStrategyService : IDebtStrategyService
     public async Task<DetailedDebtPayoffStrategy> GenerateDetailedStrategy(string strategyType, decimal availableMonthlyPayment)
     {
         // Get loans ordered by strategy
-        var loans = strategyType.ToLower() == "snowball" 
+        var loans = string.Equals(strategyType, "snowball", StringComparison.OrdinalIgnoreCase)
             ? await _context.Loans.OrderBy(l => l.Amount).ToListAsync()
             : await _context.Loans.OrderByDescending(l => l.InterestRate).ToListAsync();
 
         var detailedStrategy = new DetailedDebtPayoffStrategy
         {
             StrategyName = strategyType,
-            Description = strategyType.ToLower() == "snowball"
+            Description = string.Equals(strategyType, "snowball", StringComparison.OrdinalIgnoreCase)
                 ? "Betala av minsta skulden först för psykologiska vinster och momentum"
                 : "Betala av skulden med högst ränta först för att minimera totala räntekostnader"
         };

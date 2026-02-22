@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Privatekonomi.Core.Data;
 using Privatekonomi.Core.Models;
 
@@ -201,15 +201,16 @@ public class BudgetService : IBudgetService
         {
             foreach (var tc in transaction.TransactionCategories)
             {
-                if (!transactionsByCategory.ContainsKey(tc.CategoryId))
+                if (!transactionsByCategory.TryGetValue(tc.CategoryId, out var categoryTransactions))
                 {
-                    transactionsByCategory[tc.CategoryId] = new List<Transaction>();
+                    categoryTransactions = new List<Transaction>();
+                    transactionsByCategory[tc.CategoryId] = categoryTransactions;
                 }
-                
+
                 // Only add if not already in the list (avoid duplicates)
-                if (!transactionsByCategory[tc.CategoryId].Contains(transaction))
+                if (!categoryTransactions.Contains(transaction))
                 {
-                    transactionsByCategory[tc.CategoryId].Add(transaction);
+                    categoryTransactions.Add(transaction);
                 }
             }
         }

@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Privatekonomi.Core.Data;
 using Privatekonomi.Core.Models;
 
@@ -26,8 +26,8 @@ public class ReportService : IReportService
         var transactions = await query.OrderBy(t => t.Date).ToListAsync();
 
         var periods = new List<CashFlowPeriod>();
-        
-        if (groupBy.ToLower() == "month")
+
+        if (string.Equals(groupBy, "month", StringComparison.OrdinalIgnoreCase))
         {
             var monthlyGroups = transactions.GroupBy(t => new { t.Date.Year, t.Date.Month });
             
@@ -47,7 +47,7 @@ public class ReportService : IReportService
                 });
             }
         }
-        else if (groupBy.ToLower() == "week")
+        else if (string.Equals(groupBy, "week", StringComparison.OrdinalIgnoreCase))
         {
             // Group by ISO week
             var weeklyGroups = transactions.GroupBy(t => new 
@@ -428,7 +428,7 @@ public class ReportService : IReportService
 
         var periods = new List<NetWorthHistoryPeriod>();
 
-        if (groupBy.ToLower() == "month")
+        if (string.Equals(groupBy, "month", StringComparison.OrdinalIgnoreCase))
         {
             // Group snapshots by month and take the latest snapshot per month
             var monthlyGroups = snapshots
@@ -455,7 +455,7 @@ public class ReportService : IReportService
                 });
             }
         }
-        else if (groupBy.ToLower() == "quarter")
+        else if (string.Equals(groupBy, "quarter", StringComparison.OrdinalIgnoreCase))
         {
             // Group by quarter
             var quarterlyGroups = snapshots
@@ -481,7 +481,7 @@ public class ReportService : IReportService
                 });
             }
         }
-        else if (groupBy.ToLower() == "year")
+        else if (string.Equals(groupBy, "year", StringComparison.OrdinalIgnoreCase))
         {
             // Group by year
             var yearlyGroups = snapshots

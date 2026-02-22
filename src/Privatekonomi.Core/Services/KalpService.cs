@@ -1,4 +1,4 @@
-namespace Privatekonomi.Core.Services;
+﻿namespace Privatekonomi.Core.Services;
 
 using Microsoft.EntityFrameworkCore;
 using Privatekonomi.Core.Data;
@@ -153,7 +153,7 @@ public class KalpService : IKalpService
         {
             var userCosts = new UserHouseholdCosts
             {
-                FoodCosts = input.FixedExpenses.ContainsKey("Mat") ? input.FixedExpenses["Mat"] : 0
+                FoodCosts = input.FixedExpenses.TryGetValue("Mat", out var foodCosts) ? foodCosts : 0
             };
 
             comparison.KonsumentverketComparison = _konsumentverketService.CompareWithReference(

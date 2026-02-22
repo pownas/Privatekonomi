@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Moq;
 using Privatekonomi.Core.Data;
 using Privatekonomi.Core.Models;
@@ -9,7 +9,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace Privatekonomi.Core.Tests;
 
 [TestClass]
-public class ExportServiceTests : IDisposable
+public class ExportServiceTests
 {
     private readonly PrivatekonomyContext _context;
     private readonly Mock<ICurrentUserService> _mockCurrentUserService;
@@ -31,7 +31,7 @@ public class ExportServiceTests : IDisposable
     }
 
     [TestCleanup]
-    public void Dispose()
+    public void Cleanup()
     {
         _context.Database.EnsureDeleted();
         _context.Dispose();
@@ -305,9 +305,9 @@ public class ExportServiceTests : IDisposable
         StringAssert.Contains(csv, "# Antal transaktioner: 2");
         
         // Verify financial summary
-        StringAssert.Contains(csv, "# Totala inkomster: 30000.00 SEK");
-        StringAssert.Contains(csv, "# Totala utgifter: 5000.00 SEK");
-        StringAssert.Contains(csv, "# Nettoresultat: 25000.00 SEK");
+        StringAssert.Contains(csv, "# Totala inkomster: 30000,00 SEK");
+        StringAssert.Contains(csv, "# Totala utgifter: 5000,00 SEK");
+        StringAssert.Contains(csv, "# Nettoresultat: 25000,00 SEK");
     }
 
     [TestMethod]
@@ -423,8 +423,8 @@ public class ExportServiceTests : IDisposable
         // Should have header with 0 transactions
         StringAssert.Contains(csv, "# Privatekonomi Export - År 2025");
         StringAssert.Contains(csv, "# Antal transaktioner: 0");
-        StringAssert.Contains(csv, "# Totala inkomster: 0.00 SEK");
-        StringAssert.Contains(csv, "# Totala utgifter: 0.00 SEK");
-        StringAssert.Contains(csv, "# Nettoresultat: 0.00 SEK");
+        StringAssert.Contains(csv, "# Totala inkomster: 0,00 SEK");
+        StringAssert.Contains(csv, "# Totala utgifter: 0,00 SEK");
+        StringAssert.Contains(csv, "# Nettoresultat: 0,00 SEK");
     }
 }

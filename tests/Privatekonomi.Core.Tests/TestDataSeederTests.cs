@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Moq;
 using Privatekonomi.Core.Data;
@@ -8,13 +8,14 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace Privatekonomi.Core.Tests;
 
 [TestClass]
-public class TestDataSeederTests : IDisposable
+public class TestDataSeederTests
 {
     private const int ExpectedCategorizedTransactions = 300;
     private const int ExpectedUnmappedTransactions = 5;
-    private const int ExpectedTotalTransactions = ExpectedCategorizedTransactions + ExpectedUnmappedTransactions;
-    private const int ExpectedDateRangeDays = 550; // Approximately 18 months
-    private const int MinimumExpectedDateRangeDays = 500; // Allow some margin for randomness
+    private const int ExpectedAdditionalTransactions = 300;
+    private const int ExpectedTotalTransactions = ExpectedCategorizedTransactions + ExpectedUnmappedTransactions + ExpectedAdditionalTransactions;
+    private const int ExpectedDateRangeDays = 730; // Approximately 2 years
+    private const int MinimumExpectedDateRangeDays = 650; // Allow some margin for randomness
     
     private readonly PrivatekonomyContext _context;
     private readonly Mock<UserManager<ApplicationUser>> _mockUserManager;
@@ -63,14 +64,14 @@ public class TestDataSeederTests : IDisposable
     }
 
     [TestCleanup]
-    public void Dispose()
+    public void Cleanup()
     {
         _context.Database.EnsureDeleted();
         _context.Dispose();
     }
 
     [TestMethod]
-    public async Task SeedTestDataAsync_GeneratesTransactionsWithin18MonthsDateRange()
+    public async Task SeedTestDataAsync_GeneratesTransactionsWithin2YearsDateRange()
     {
         // Arrange
         var today = DateTime.UtcNow;
@@ -83,8 +84,7 @@ public class TestDataSeederTests : IDisposable
         var transactions = await _context.Transactions.ToListAsync();
         
         // Should have generated the expected number of transactions
-        Assert.IsTrue(transactions.Count >= ExpectedCategorizedTransactions, 
-            $"Expected at least {ExpectedCategorizedTransactions} transactions, but got {transactions.Count}");
+        Assert.AreEqual(ExpectedTotalTransactions, transactions.Count, "The total number of transactions generated is incorrect.");
         
         // Verify all transaction dates are within the expected range
         foreach (var transaction in transactions)

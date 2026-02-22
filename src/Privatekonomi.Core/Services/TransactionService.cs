@@ -308,11 +308,19 @@ public class TransactionService : ITransactionService
     private async Task<Category?> SuggestCategoryAsync(string description, PrivatekonomyContext? contextOverride = null)
     {
         var context = contextOverride ?? _contextFactory.CreateDbContext();
+        if (string.IsNullOrWhiteSpace(description))
+        {
+            return null;
+        }
+
+        var prefixLength = Math.Min(3, description.Length);
+        var prefix = description[..prefixLength];
+
         // Find similar transactions and suggest the most common category
         var query = context.Transactions
             .Include(t => t.TransactionCategories)
             .ThenInclude(tc => tc.Category)
-            .Where(t => t.Description.ToLower().Contains(description.ToLower().Substring(0, Math.Min(3, description.Length))))
+            .Where(t => t.Description != null && EF.Functions.Like(t.Description, $"%{prefix}%"))
             .AsQueryable();
 
         // Filter by current user if authenticated

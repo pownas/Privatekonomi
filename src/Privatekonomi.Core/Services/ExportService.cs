@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Privatekonomi.Core.Data;
@@ -10,6 +10,19 @@ public class ExportService : IExportService
 {
     private readonly PrivatekonomyContext _context;
     private readonly ICurrentUserService? _currentUserService;
+
+    private static readonly JsonSerializerOptions JsonIndentedCamelCaseOptions = new()
+    {
+        WriteIndented = true,
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+    };
+
+    private static readonly JsonSerializerOptions JsonIndentedCamelCaseIgnoreCyclesOptions = new()
+    {
+        WriteIndented = true,
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles
+    };
 
     public ExportService(PrivatekonomyContext context, ICurrentUserService? currentUserService = null)
     {
@@ -127,13 +140,7 @@ public class ExportService : IExportService
             t.UpdatedAt
         });
 
-        var options = new JsonSerializerOptions
-        {
-            WriteIndented = true,
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-        };
-
-        var json = JsonSerializer.Serialize(exportData, options);
+        var json = JsonSerializer.Serialize(exportData, JsonIndentedCamelCaseOptions);
         
         // Use UTF-8 with BOM for proper character encoding
         var preamble = Encoding.UTF8.GetPreamble();
@@ -212,14 +219,7 @@ public class ExportService : IExportService
             }
         };
 
-        var options = new JsonSerializerOptions
-        {
-            WriteIndented = true,
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles
-        };
-
-        var json = JsonSerializer.Serialize(backup, options);
+        var json = JsonSerializer.Serialize(backup, JsonIndentedCamelCaseIgnoreCyclesOptions);
         
         // Use UTF-8 with BOM for proper character encoding
         var preamble = Encoding.UTF8.GetPreamble();
@@ -305,14 +305,7 @@ public class ExportService : IExportService
             }
         };
 
-        var options = new JsonSerializerOptions
-        {
-            WriteIndented = true,
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles
-        };
-
-        var json = JsonSerializer.Serialize(yearData, options);
+        var json = JsonSerializer.Serialize(yearData, JsonIndentedCamelCaseIgnoreCyclesOptions);
         
         // Use UTF-8 with BOM for proper character encoding
         var preamble = Encoding.UTF8.GetPreamble();
@@ -495,13 +488,7 @@ public class ExportService : IExportService
             })
         };
 
-        var options = new JsonSerializerOptions
-        {
-            WriteIndented = true,
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-        };
-
-        var json = JsonSerializer.Serialize(exportData, options);
+        var json = JsonSerializer.Serialize(exportData, JsonIndentedCamelCaseOptions);
         return Encoding.UTF8.GetBytes(json);
     }
 

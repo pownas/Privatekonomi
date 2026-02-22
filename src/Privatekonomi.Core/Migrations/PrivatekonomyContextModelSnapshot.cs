@@ -7,6186 +7,6185 @@ using Privatekonomi.Core.Data;
 
 #nullable disable
 
-namespace Privatekonomi.Core.Migrations
+namespace Privatekonomi.Core.Migrations;
+
+[DbContext(typeof(PrivatekonomyContext))]
+partial class PrivatekonomyContextModelSnapshot : ModelSnapshot
 {
-    [DbContext(typeof(PrivatekonomyContext))]
-    partial class PrivatekonomyContextModelSnapshot : ModelSnapshot
+    protected override void BuildModel(ModelBuilder modelBuilder)
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
-        {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "9.0.10");
+        modelBuilder.HasAnnotation("ProductVersion", "9.0.10");
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("TEXT");
+        modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
+            {
+                b.Property<string>("Id")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("ConcurrencyStamp")
-                        .IsConcurrencyToken()
-                        .HasColumnType("TEXT");
+                b.Property<string>("ConcurrencyStamp")
+                    .IsConcurrencyToken()
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("Name")
-                        .HasMaxLength(256)
-                        .HasColumnType("TEXT");
+                b.Property<string>("Name")
+                    .HasMaxLength(256)
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("NormalizedName")
-                        .HasMaxLength(256)
-                        .HasColumnType("TEXT");
+                b.Property<string>("NormalizedName")
+                    .HasMaxLength(256)
+                    .HasColumnType("TEXT");
 
-                    b.HasKey("Id");
+                b.HasKey("Id");
 
-                    b.HasIndex("NormalizedName")
-                        .IsUnique()
-                        .HasDatabaseName("RoleNameIndex");
+                b.HasIndex("NormalizedName")
+                    .IsUnique()
+                    .HasDatabaseName("RoleNameIndex");
 
-                    b.ToTable("AspNetRoles", (string)null);
-                });
+                b.ToTable("AspNetRoles", (string)null);
+            });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+        modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
+            {
+                b.Property<int>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("INTEGER");
 
-                    b.Property<string>("ClaimType")
-                        .HasColumnType("TEXT");
+                b.Property<string>("ClaimType")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("ClaimValue")
-                        .HasColumnType("TEXT");
+                b.Property<string>("ClaimValue")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("RoleId")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
+                b.Property<string>("RoleId")
+                    .IsRequired()
+                    .HasColumnType("TEXT");
 
-                    b.HasKey("Id");
+                b.HasKey("Id");
 
-                    b.HasIndex("RoleId");
+                b.HasIndex("RoleId");
 
-                    b.ToTable("AspNetRoleClaims", (string)null);
-                });
+                b.ToTable("AspNetRoleClaims", (string)null);
+            });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+        modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
+            {
+                b.Property<int>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("INTEGER");
 
-                    b.Property<string>("ClaimType")
-                        .HasColumnType("TEXT");
+                b.Property<string>("ClaimType")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("ClaimValue")
-                        .HasColumnType("TEXT");
+                b.Property<string>("ClaimValue")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
+                b.Property<string>("UserId")
+                    .IsRequired()
+                    .HasColumnType("TEXT");
 
-                    b.HasKey("Id");
+                b.HasKey("Id");
 
-                    b.HasIndex("UserId");
+                b.HasIndex("UserId");
 
-                    b.ToTable("AspNetUserClaims", (string)null);
-                });
+                b.ToTable("AspNetUserClaims", (string)null);
+            });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
-                {
-                    b.Property<string>("LoginProvider")
-                        .HasColumnType("TEXT");
+        modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
+            {
+                b.Property<string>("LoginProvider")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("ProviderKey")
-                        .HasColumnType("TEXT");
+                b.Property<string>("ProviderKey")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("ProviderDisplayName")
-                        .HasColumnType("TEXT");
+                b.Property<string>("ProviderDisplayName")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
+                b.Property<string>("UserId")
+                    .IsRequired()
+                    .HasColumnType("TEXT");
 
-                    b.HasKey("LoginProvider", "ProviderKey");
+                b.HasKey("LoginProvider", "ProviderKey");
 
-                    b.HasIndex("UserId");
+                b.HasIndex("UserId");
 
-                    b.ToTable("AspNetUserLogins", (string)null);
-                });
+                b.ToTable("AspNetUserLogins", (string)null);
+            });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
-                {
-                    b.Property<string>("UserId")
-                        .HasColumnType("TEXT");
+        modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
+            {
+                b.Property<string>("UserId")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("RoleId")
-                        .HasColumnType("TEXT");
+                b.Property<string>("RoleId")
+                    .HasColumnType("TEXT");
 
-                    b.HasKey("UserId", "RoleId");
+                b.HasKey("UserId", "RoleId");
 
-                    b.HasIndex("RoleId");
+                b.HasIndex("RoleId");
 
-                    b.ToTable("AspNetUserRoles", (string)null);
-                });
+                b.ToTable("AspNetUserRoles", (string)null);
+            });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
-                {
-                    b.Property<string>("UserId")
-                        .HasColumnType("TEXT");
+        modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
+            {
+                b.Property<string>("UserId")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("LoginProvider")
-                        .HasColumnType("TEXT");
+                b.Property<string>("LoginProvider")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("Name")
-                        .HasColumnType("TEXT");
+                b.Property<string>("Name")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("Value")
-                        .HasColumnType("TEXT");
+                b.Property<string>("Value")
+                    .HasColumnType("TEXT");
 
-                    b.HasKey("UserId", "LoginProvider", "Name");
+                b.HasKey("UserId", "LoginProvider", "Name");
 
-                    b.ToTable("AspNetUserTokens", (string)null);
-                });
+                b.ToTable("AspNetUserTokens", (string)null);
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.AllowanceTask", b =>
-                {
-                    b.Property<int>("AllowanceTaskId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+        modelBuilder.Entity("Privatekonomi.Core.Models.AllowanceTask", b =>
+            {
+                b.Property<int>("AllowanceTaskId")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("INTEGER");
 
-                    b.Property<string>("ApprovedBy")
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
+                b.Property<string>("ApprovedBy")
+                    .HasMaxLength(100)
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime?>("ApprovedDate")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime?>("ApprovedDate")
+                    .HasColumnType("TEXT");
 
-                    b.Property<int>("ChildAllowanceId")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("ChildAllowanceId")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<DateTime?>("CompletedDate")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime?>("CompletedDate")
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("Description")
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT");
+                b.Property<string>("Description")
+                    .HasMaxLength(500)
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime>("DueDate")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime>("DueDate")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("TEXT");
+                b.Property<string>("Name")
+                    .IsRequired()
+                    .HasMaxLength(200)
+                    .HasColumnType("TEXT");
 
-                    b.Property<decimal>("RewardAmount")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("TEXT");
+                b.Property<decimal>("RewardAmount")
+                    .HasPrecision(18, 2)
+                    .HasColumnType("TEXT");
 
-                    b.Property<int>("Status")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("Status")
+                    .HasColumnType("INTEGER");
 
-                    b.HasKey("AllowanceTaskId");
+                b.HasKey("AllowanceTaskId");
 
-                    b.HasIndex("ChildAllowanceId");
+                b.HasIndex("ChildAllowanceId");
 
-                    b.ToTable("AllowanceTasks");
-                });
+                b.ToTable("AllowanceTasks");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.AllowanceTransaction", b =>
-                {
-                    b.Property<int>("AllowanceTransactionId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+        modelBuilder.Entity("Privatekonomi.Core.Models.AllowanceTransaction", b =>
+            {
+                b.Property<int>("AllowanceTransactionId")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("INTEGER");
 
-                    b.Property<int?>("AllowanceTaskId")
-                        .HasColumnType("INTEGER");
+                b.Property<int?>("AllowanceTaskId")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<decimal>("Amount")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("TEXT");
+                b.Property<decimal>("Amount")
+                    .HasPrecision(18, 2)
+                    .HasColumnType("TEXT");
 
-                    b.Property<int>("ChildAllowanceId")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("ChildAllowanceId")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT");
+                b.Property<string>("Description")
+                    .IsRequired()
+                    .HasMaxLength(500)
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime>("TransactionDate")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime>("TransactionDate")
+                    .HasColumnType("TEXT");
 
-                    b.Property<int>("Type")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("Type")
+                    .HasColumnType("INTEGER");
 
-                    b.HasKey("AllowanceTransactionId");
+                b.HasKey("AllowanceTransactionId");
 
-                    b.HasIndex("AllowanceTaskId");
+                b.HasIndex("AllowanceTaskId");
 
-                    b.HasIndex("ChildAllowanceId");
+                b.HasIndex("ChildAllowanceId");
 
-                    b.ToTable("AllowanceTransactions");
-                });
+                b.ToTable("AllowanceTransactions");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.ApplicationUser", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("TEXT");
+        modelBuilder.Entity("Privatekonomi.Core.Models.ApplicationUser", b =>
+            {
+                b.Property<string>("Id")
+                    .HasColumnType("TEXT");
 
-                    b.Property<int>("AccessFailedCount")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("AccessFailedCount")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<string>("ConcurrencyStamp")
-                        .IsConcurrencyToken()
-                        .HasColumnType("TEXT");
+                b.Property<string>("ConcurrencyStamp")
+                    .IsConcurrencyToken()
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("Email")
-                        .HasMaxLength(256)
-                        .HasColumnType("TEXT");
+                b.Property<string>("Email")
+                    .HasMaxLength(256)
+                    .HasColumnType("TEXT");
 
-                    b.Property<bool>("EmailConfirmed")
-                        .HasColumnType("INTEGER");
+                b.Property<bool>("EmailConfirmed")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<string>("FirstName")
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
+                b.Property<string>("FirstName")
+                    .HasMaxLength(100)
+                    .HasColumnType("TEXT");
 
-                    b.Property<int?>("HouseholdMemberId")
-                        .HasColumnType("INTEGER");
+                b.Property<int?>("HouseholdMemberId")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<DateTime?>("LastLoginAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime?>("LastLoginAt")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("LastName")
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
+                b.Property<string>("LastName")
+                    .HasMaxLength(100)
+                    .HasColumnType("TEXT");
 
-                    b.Property<bool>("LockoutEnabled")
-                        .HasColumnType("INTEGER");
+                b.Property<bool>("LockoutEnabled")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<DateTimeOffset?>("LockoutEnd")
-                        .HasColumnType("TEXT");
+                b.Property<DateTimeOffset?>("LockoutEnd")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("NormalizedEmail")
-                        .HasMaxLength(256)
-                        .HasColumnType("TEXT");
+                b.Property<string>("NormalizedEmail")
+                    .HasMaxLength(256)
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("NormalizedUserName")
-                        .HasMaxLength(256)
-                        .HasColumnType("TEXT");
+                b.Property<string>("NormalizedUserName")
+                    .HasMaxLength(256)
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("PasswordHash")
-                        .HasColumnType("TEXT");
+                b.Property<string>("PasswordHash")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("PhoneNumber")
-                        .HasColumnType("TEXT");
+                b.Property<string>("PhoneNumber")
+                    .HasColumnType("TEXT");
 
-                    b.Property<bool>("PhoneNumberConfirmed")
-                        .HasColumnType("INTEGER");
+                b.Property<bool>("PhoneNumberConfirmed")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<string>("SecurityStamp")
-                        .HasColumnType("TEXT");
+                b.Property<string>("SecurityStamp")
+                    .HasColumnType("TEXT");
 
-                    b.Property<bool>("TwoFactorEnabled")
-                        .HasColumnType("INTEGER");
+                b.Property<bool>("TwoFactorEnabled")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<string>("UserName")
-                        .HasMaxLength(256)
-                        .HasColumnType("TEXT");
+                b.Property<string>("UserName")
+                    .HasMaxLength(256)
+                    .HasColumnType("TEXT");
 
-                    b.HasKey("Id");
+                b.HasKey("Id");
 
-                    b.HasIndex("HouseholdMemberId")
-                        .IsUnique();
+                b.HasIndex("HouseholdMemberId")
+                    .IsUnique();
 
-                    b.HasIndex("NormalizedEmail")
-                        .HasDatabaseName("EmailIndex");
+                b.HasIndex("NormalizedEmail")
+                    .HasDatabaseName("EmailIndex");
 
-                    b.HasIndex("NormalizedUserName")
-                        .IsUnique()
-                        .HasDatabaseName("UserNameIndex");
+                b.HasIndex("NormalizedUserName")
+                    .IsUnique()
+                    .HasDatabaseName("UserNameIndex");
 
-                    b.ToTable("AspNetUsers", (string)null);
-                });
+                b.ToTable("AspNetUsers", (string)null);
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.Asset", b =>
-                {
-                    b.Property<int>("AssetId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+        modelBuilder.Entity("Privatekonomi.Core.Models.Asset", b =>
+            {
+                b.Property<int>("AssetId")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("INTEGER");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("Currency")
-                        .IsRequired()
-                        .HasMaxLength(3)
-                        .HasColumnType("TEXT");
+                b.Property<string>("Currency")
+                    .IsRequired()
+                    .HasMaxLength(3)
+                    .HasColumnType("TEXT");
 
-                    b.Property<decimal>("CurrentValue")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("TEXT");
+                b.Property<decimal>("CurrentValue")
+                    .HasPrecision(18, 2)
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("Description")
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT");
+                b.Property<string>("Description")
+                    .HasMaxLength(500)
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("Location")
-                        .HasMaxLength(200)
-                        .HasColumnType("TEXT");
+                b.Property<string>("Location")
+                    .HasMaxLength(200)
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("TEXT");
+                b.Property<string>("Name")
+                    .IsRequired()
+                    .HasMaxLength(200)
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime?>("PurchaseDate")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime?>("PurchaseDate")
+                    .HasColumnType("TEXT");
 
-                    b.Property<decimal>("PurchaseValue")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("TEXT");
+                b.Property<decimal>("PurchaseValue")
+                    .HasPrecision(18, 2)
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("Type")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT");
+                b.Property<string>("Type")
+                    .IsRequired()
+                    .HasMaxLength(50)
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("UserId")
-                        .HasColumnType("TEXT");
+                b.Property<string>("UserId")
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime>("ValidFrom")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime>("ValidFrom")
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime?>("ValidTo")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime?>("ValidTo")
+                    .HasColumnType("TEXT");
 
-                    b.HasKey("AssetId");
+                b.HasKey("AssetId");
 
-                    b.HasIndex("UserId");
+                b.HasIndex("UserId");
 
-                    b.HasIndex("ValidFrom");
+                b.HasIndex("ValidFrom");
 
-                    b.HasIndex("ValidTo");
+                b.HasIndex("ValidTo");
 
-                    b.HasIndex("ValidFrom", "ValidTo");
+                b.HasIndex("ValidFrom", "ValidTo");
 
-                    b.ToTable("Assets");
-                });
+                b.ToTable("Assets");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.AuditLog", b =>
-                {
-                    b.Property<int>("AuditLogId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+        modelBuilder.Entity("Privatekonomi.Core.Models.AuditLog", b =>
+            {
+                b.Property<int>("AuditLogId")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("INTEGER");
 
-                    b.Property<string>("Action")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
+                b.Property<string>("Action")
+                    .IsRequired()
+                    .HasMaxLength(100)
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("Details")
-                        .HasMaxLength(2000)
-                        .HasColumnType("TEXT");
+                b.Property<string>("Details")
+                    .HasMaxLength(2000)
+                    .HasColumnType("TEXT");
 
-                    b.Property<int?>("EntityId")
-                        .HasColumnType("INTEGER");
+                b.Property<int?>("EntityId")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<string>("EntityType")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
+                b.Property<string>("EntityType")
+                    .IsRequired()
+                    .HasMaxLength(100)
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("IpAddress")
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT");
+                b.Property<string>("IpAddress")
+                    .HasMaxLength(50)
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("UserId")
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
+                b.Property<string>("UserId")
+                    .HasMaxLength(100)
+                    .HasColumnType("TEXT");
 
-                    b.HasKey("AuditLogId");
+                b.HasKey("AuditLogId");
 
-                    b.HasIndex("Action");
+                b.HasIndex("Action");
 
-                    b.HasIndex("CreatedAt");
+                b.HasIndex("CreatedAt");
 
-                    b.HasIndex("EntityType");
+                b.HasIndex("EntityType");
 
-                    b.ToTable("AuditLogs");
-                });
+                b.ToTable("AuditLogs");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.AuditLogEntry", b =>
-                {
-                    b.Property<int>("AuditLogEntryId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+        modelBuilder.Entity("Privatekonomi.Core.Models.AuditLogEntry", b =>
+            {
+                b.Property<int>("AuditLogEntryId")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("INTEGER");
 
-                    b.Property<string>("Action")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
+                b.Property<string>("Action")
+                    .IsRequired()
+                    .HasMaxLength(100)
+                    .HasColumnType("TEXT");
 
-                    b.Property<int>("Category")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("Category")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<string>("Details")
-                        .HasMaxLength(2000)
-                        .HasColumnType("TEXT");
+                b.Property<string>("Details")
+                    .HasMaxLength(2000)
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("ErrorMessage")
-                        .HasMaxLength(1000)
-                        .HasColumnType("TEXT");
+                b.Property<string>("ErrorMessage")
+                    .HasMaxLength(1000)
+                    .HasColumnType("TEXT");
 
-                    b.Property<int?>("HouseholdId")
-                        .HasColumnType("INTEGER");
+                b.Property<int?>("HouseholdId")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<string>("IpAddress")
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT");
+                b.Property<string>("IpAddress")
+                    .HasMaxLength(50)
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("NewValue")
-                        .HasMaxLength(1000)
-                        .HasColumnType("TEXT");
+                b.Property<string>("NewValue")
+                    .HasMaxLength(1000)
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("OldValue")
-                        .HasMaxLength(1000)
-                        .HasColumnType("TEXT");
+                b.Property<string>("OldValue")
+                    .HasMaxLength(1000)
+                    .HasColumnType("TEXT");
 
-                    b.Property<int?>("ResourceId")
-                        .HasColumnType("INTEGER");
+                b.Property<int?>("ResourceId")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<string>("ResourceType")
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
+                b.Property<string>("ResourceType")
+                    .HasMaxLength(100)
+                    .HasColumnType("TEXT");
 
-                    b.Property<int>("Severity")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("Severity")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<bool>("Success")
-                        .HasColumnType("INTEGER");
+                b.Property<bool>("Success")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<DateTime>("Timestamp")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime>("Timestamp")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("UserAgent")
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT");
+                b.Property<string>("UserAgent")
+                    .HasMaxLength(500)
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("UserEmail")
-                        .HasMaxLength(256)
-                        .HasColumnType("TEXT");
+                b.Property<string>("UserEmail")
+                    .HasMaxLength(256)
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("UserId")
-                        .HasMaxLength(450)
-                        .HasColumnType("TEXT");
+                b.Property<string>("UserId")
+                    .HasMaxLength(450)
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("UserName")
-                        .HasMaxLength(256)
-                        .HasColumnType("TEXT");
+                b.Property<string>("UserName")
+                    .HasMaxLength(256)
+                    .HasColumnType("TEXT");
 
-                    b.HasKey("AuditLogEntryId");
+                b.HasKey("AuditLogEntryId");
 
-                    b.HasIndex("Action");
+                b.HasIndex("Action");
 
-                    b.HasIndex("Category");
+                b.HasIndex("Category");
 
-                    b.HasIndex("HouseholdId");
+                b.HasIndex("HouseholdId");
 
-                    b.HasIndex("Severity");
+                b.HasIndex("Severity");
 
-                    b.HasIndex("Timestamp");
+                b.HasIndex("Timestamp");
 
-                    b.HasIndex("UserId");
+                b.HasIndex("UserId");
 
-                    b.HasIndex("HouseholdId", "Timestamp");
+                b.HasIndex("HouseholdId", "Timestamp");
 
-                    b.HasIndex("UserId", "Timestamp");
+                b.HasIndex("UserId", "Timestamp");
 
-                    b.ToTable("AuditLogEntries");
-                });
+                b.ToTable("AuditLogEntries");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.BankConnection", b =>
-                {
-                    b.Property<int>("BankConnectionId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+        modelBuilder.Entity("Privatekonomi.Core.Models.BankConnection", b =>
+            {
+                b.Property<int>("BankConnectionId")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("INTEGER");
 
-                    b.Property<string>("AccessToken")
-                        .HasMaxLength(2000)
-                        .HasColumnType("TEXT");
+                b.Property<string>("AccessToken")
+                    .HasMaxLength(2000)
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("ApiType")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT");
+                b.Property<string>("ApiType")
+                    .IsRequired()
+                    .HasMaxLength(50)
+                    .HasColumnType("TEXT");
 
-                    b.Property<bool>("AutoSyncEnabled")
-                        .HasColumnType("INTEGER");
+                b.Property<bool>("AutoSyncEnabled")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<int>("BankSourceId")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("BankSourceId")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("ExternalAccountId")
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
+                b.Property<string>("ExternalAccountId")
+                    .HasMaxLength(100)
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime?>("LastSyncedAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime?>("LastSyncedAt")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("RefreshToken")
-                        .HasMaxLength(2000)
-                        .HasColumnType("TEXT");
+                b.Property<string>("RefreshToken")
+                    .HasMaxLength(2000)
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT");
+                b.Property<string>("Status")
+                    .IsRequired()
+                    .HasMaxLength(50)
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime?>("TokenExpiresAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime?>("TokenExpiresAt")
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT");
 
-                    b.HasKey("BankConnectionId");
+                b.HasKey("BankConnectionId");
 
-                    b.HasIndex("BankSourceId");
+                b.HasIndex("BankSourceId");
 
-                    b.HasIndex("ExternalAccountId");
+                b.HasIndex("ExternalAccountId");
 
-                    b.ToTable("BankConnections");
-                });
+                b.ToTable("BankConnections");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.BankSource", b =>
-                {
-                    b.Property<int>("BankSourceId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+        modelBuilder.Entity("Privatekonomi.Core.Models.BankSource", b =>
+            {
+                b.Property<int>("BankSourceId")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("INTEGER");
 
-                    b.Property<string>("AccountType")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT");
+                b.Property<string>("AccountType")
+                    .IsRequired()
+                    .HasMaxLength(50)
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime?>("ClosedDate")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime?>("ClosedDate")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("Color")
-                        .IsRequired()
-                        .HasMaxLength(7)
-                        .HasColumnType("TEXT");
+                b.Property<string>("Color")
+                    .IsRequired()
+                    .HasMaxLength(7)
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("Currency")
-                        .IsRequired()
-                        .HasMaxLength(3)
-                        .HasColumnType("TEXT");
+                b.Property<string>("Currency")
+                    .IsRequired()
+                    .HasMaxLength(3)
+                    .HasColumnType("TEXT");
 
-                    b.Property<decimal>("InitialBalance")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("TEXT");
+                b.Property<decimal>("InitialBalance")
+                    .HasPrecision(18, 2)
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("Institution")
-                        .HasMaxLength(200)
-                        .HasColumnType("TEXT");
+                b.Property<string>("Institution")
+                    .HasMaxLength(200)
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("Logo")
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT");
+                b.Property<string>("Logo")
+                    .HasMaxLength(500)
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
+                b.Property<string>("Name")
+                    .IsRequired()
+                    .HasMaxLength(100)
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime?>("OpenedDate")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime?>("OpenedDate")
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("UserId")
-                        .HasColumnType("TEXT");
+                b.Property<string>("UserId")
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime>("ValidFrom")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime>("ValidFrom")
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime?>("ValidTo")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime?>("ValidTo")
+                    .HasColumnType("TEXT");
 
-                    b.HasKey("BankSourceId");
+                b.HasKey("BankSourceId");
 
-                    b.HasIndex("UserId");
+                b.HasIndex("UserId");
 
-                    b.HasIndex("ValidFrom");
+                b.HasIndex("ValidFrom");
 
-                    b.HasIndex("ValidTo");
+                b.HasIndex("ValidTo");
 
-                    b.HasIndex("ValidFrom", "ValidTo");
+                b.HasIndex("ValidFrom", "ValidTo");
 
-                    b.ToTable("BankSources");
+                b.ToTable("BankSources");
 
-                    b.HasData(
-                        new
-                        {
-                            BankSourceId = 1,
-                            AccountType = "checking",
-                            Color = "#DC143C",
-                            CreatedAt = new DateTime(2025, 11, 6, 6, 14, 25, 687, DateTimeKind.Utc).AddTicks(7033),
-                            Currency = "SEK",
-                            InitialBalance = 0m,
-                            Name = "ICA-banken",
-                            ValidFrom = new DateTime(2025, 11, 6, 6, 14, 25, 687, DateTimeKind.Utc).AddTicks(7225)
-                        },
-                        new
-                        {
-                            BankSourceId = 2,
-                            AccountType = "checking",
-                            Color = "#FF8C00",
-                            CreatedAt = new DateTime(2025, 11, 6, 6, 14, 25, 687, DateTimeKind.Utc).AddTicks(7635),
-                            Currency = "SEK",
-                            InitialBalance = 0m,
-                            Name = "Swedbank",
-                            ValidFrom = new DateTime(2025, 11, 6, 6, 14, 25, 687, DateTimeKind.Utc).AddTicks(7636)
-                        },
-                        new
-                        {
-                            BankSourceId = 3,
-                            AccountType = "checking",
-                            Color = "#0066CC",
-                            CreatedAt = new DateTime(2025, 11, 6, 6, 14, 25, 687, DateTimeKind.Utc).AddTicks(7638),
-                            Currency = "SEK",
-                            InitialBalance = 0m,
-                            Name = "SEB",
-                            ValidFrom = new DateTime(2025, 11, 6, 6, 14, 25, 687, DateTimeKind.Utc).AddTicks(7639)
-                        },
-                        new
-                        {
-                            BankSourceId = 4,
-                            AccountType = "checking",
-                            Color = "#00A9CE",
-                            CreatedAt = new DateTime(2025, 11, 6, 6, 14, 25, 687, DateTimeKind.Utc).AddTicks(7641),
-                            Currency = "SEK",
-                            InitialBalance = 0m,
-                            Name = "Nordea",
-                            ValidFrom = new DateTime(2025, 11, 6, 6, 14, 25, 687, DateTimeKind.Utc).AddTicks(7641)
-                        },
-                        new
-                        {
-                            BankSourceId = 5,
-                            AccountType = "checking",
-                            Color = "#003366",
-                            CreatedAt = new DateTime(2025, 11, 6, 6, 14, 25, 687, DateTimeKind.Utc).AddTicks(7644),
-                            Currency = "SEK",
-                            InitialBalance = 0m,
-                            Name = "Handelsbanken",
-                            ValidFrom = new DateTime(2025, 11, 6, 6, 14, 25, 687, DateTimeKind.Utc).AddTicks(7644)
-                        },
-                        new
-                        {
-                            BankSourceId = 6,
-                            AccountType = "investment",
-                            Color = "#006400",
-                            CreatedAt = new DateTime(2025, 11, 6, 6, 14, 25, 687, DateTimeKind.Utc).AddTicks(7646),
-                            Currency = "SEK",
-                            InitialBalance = 0m,
-                            Name = "Avanza",
-                            ValidFrom = new DateTime(2025, 11, 6, 6, 14, 25, 687, DateTimeKind.Utc).AddTicks(7647)
-                        });
-                });
+                b.HasData(
+                    new
+                    {
+                        BankSourceId = 1,
+                        AccountType = "checking",
+                        Color = "#DC143C",
+                        CreatedAt = new DateTime(2025, 11, 6, 6, 14, 25, 687, DateTimeKind.Utc).AddTicks(7033),
+                        Currency = "SEK",
+                        InitialBalance = 0m,
+                        Name = "ICA-banken",
+                        ValidFrom = new DateTime(2025, 11, 6, 6, 14, 25, 687, DateTimeKind.Utc).AddTicks(7225)
+                    },
+                    new
+                    {
+                        BankSourceId = 2,
+                        AccountType = "checking",
+                        Color = "#FF8C00",
+                        CreatedAt = new DateTime(2025, 11, 6, 6, 14, 25, 687, DateTimeKind.Utc).AddTicks(7635),
+                        Currency = "SEK",
+                        InitialBalance = 0m,
+                        Name = "Swedbank",
+                        ValidFrom = new DateTime(2025, 11, 6, 6, 14, 25, 687, DateTimeKind.Utc).AddTicks(7636)
+                    },
+                    new
+                    {
+                        BankSourceId = 3,
+                        AccountType = "checking",
+                        Color = "#0066CC",
+                        CreatedAt = new DateTime(2025, 11, 6, 6, 14, 25, 687, DateTimeKind.Utc).AddTicks(7638),
+                        Currency = "SEK",
+                        InitialBalance = 0m,
+                        Name = "SEB",
+                        ValidFrom = new DateTime(2025, 11, 6, 6, 14, 25, 687, DateTimeKind.Utc).AddTicks(7639)
+                    },
+                    new
+                    {
+                        BankSourceId = 4,
+                        AccountType = "checking",
+                        Color = "#00A9CE",
+                        CreatedAt = new DateTime(2025, 11, 6, 6, 14, 25, 687, DateTimeKind.Utc).AddTicks(7641),
+                        Currency = "SEK",
+                        InitialBalance = 0m,
+                        Name = "Nordea",
+                        ValidFrom = new DateTime(2025, 11, 6, 6, 14, 25, 687, DateTimeKind.Utc).AddTicks(7641)
+                    },
+                    new
+                    {
+                        BankSourceId = 5,
+                        AccountType = "checking",
+                        Color = "#003366",
+                        CreatedAt = new DateTime(2025, 11, 6, 6, 14, 25, 687, DateTimeKind.Utc).AddTicks(7644),
+                        Currency = "SEK",
+                        InitialBalance = 0m,
+                        Name = "Handelsbanken",
+                        ValidFrom = new DateTime(2025, 11, 6, 6, 14, 25, 687, DateTimeKind.Utc).AddTicks(7644)
+                    },
+                    new
+                    {
+                        BankSourceId = 6,
+                        AccountType = "investment",
+                        Color = "#006400",
+                        CreatedAt = new DateTime(2025, 11, 6, 6, 14, 25, 687, DateTimeKind.Utc).AddTicks(7646),
+                        Currency = "SEK",
+                        InitialBalance = 0m,
+                        Name = "Avanza",
+                        ValidFrom = new DateTime(2025, 11, 6, 6, 14, 25, 687, DateTimeKind.Utc).AddTicks(7647)
+                    });
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.Bill", b =>
-                {
-                    b.Property<int>("BillId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+        modelBuilder.Entity("Privatekonomi.Core.Models.Bill", b =>
+            {
+                b.Property<int>("BillId")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("INTEGER");
 
-                    b.Property<decimal>("Amount")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("TEXT");
+                b.Property<decimal>("Amount")
+                    .HasPrecision(18, 2)
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("Bankgiro")
-                        .HasMaxLength(20)
-                        .HasColumnType("TEXT");
+                b.Property<string>("Bankgiro")
+                    .HasMaxLength(20)
+                    .HasColumnType("TEXT");
 
-                    b.Property<int?>("CategoryId")
-                        .HasColumnType("INTEGER");
+                b.Property<int?>("CategoryId")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("Currency")
-                        .IsRequired()
-                        .HasMaxLength(3)
-                        .HasColumnType("TEXT");
+                b.Property<string>("Currency")
+                    .IsRequired()
+                    .HasMaxLength(3)
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("Description")
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT");
+                b.Property<string>("Description")
+                    .HasMaxLength(500)
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("DocumentPath")
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT");
+                b.Property<string>("DocumentPath")
+                    .HasMaxLength(500)
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime>("DueDate")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime>("DueDate")
+                    .HasColumnType("TEXT");
 
-                    b.Property<int?>("HouseholdId")
-                        .HasColumnType("INTEGER");
+                b.Property<int?>("HouseholdId")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<string>("InvoiceNumber")
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
+                b.Property<string>("InvoiceNumber")
+                    .HasMaxLength(100)
+                    .HasColumnType("TEXT");
 
-                    b.Property<bool>("IsRecurring")
-                        .HasColumnType("INTEGER");
+                b.Property<bool>("IsRecurring")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<DateTime>("IssueDate")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime>("IssueDate")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("TEXT");
+                b.Property<string>("Name")
+                    .IsRequired()
+                    .HasMaxLength(200)
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("Notes")
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT");
+                b.Property<string>("Notes")
+                    .HasMaxLength(500)
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("OCR")
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT");
+                b.Property<string>("OCR")
+                    .HasMaxLength(50)
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime?>("PaidDate")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime?>("PaidDate")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("Payee")
-                        .HasMaxLength(200)
-                        .HasColumnType("TEXT");
+                b.Property<string>("Payee")
+                    .HasMaxLength(200)
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("PaymentMethod")
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT");
+                b.Property<string>("PaymentMethod")
+                    .HasMaxLength(50)
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("Plusgiro")
-                        .HasMaxLength(20)
-                        .HasColumnType("TEXT");
+                b.Property<string>("Plusgiro")
+                    .HasMaxLength(20)
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("RecurringFrequency")
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT");
+                b.Property<string>("RecurringFrequency")
+                    .HasMaxLength(50)
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT");
+                b.Property<string>("Status")
+                    .IsRequired()
+                    .HasMaxLength(50)
+                    .HasColumnType("TEXT");
 
-                    b.Property<int?>("TransactionId")
-                        .HasColumnType("INTEGER");
+                b.Property<int?>("TransactionId")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
+                b.Property<string>("UserId")
+                    .IsRequired()
+                    .HasColumnType("TEXT");
 
-                    b.HasKey("BillId");
+                b.HasKey("BillId");
 
-                    b.HasIndex("CategoryId");
+                b.HasIndex("CategoryId");
 
-                    b.HasIndex("DueDate");
+                b.HasIndex("DueDate");
 
-                    b.HasIndex("HouseholdId");
+                b.HasIndex("HouseholdId");
 
-                    b.HasIndex("IsRecurring");
+                b.HasIndex("IsRecurring");
 
-                    b.HasIndex("Status");
+                b.HasIndex("Status");
 
-                    b.HasIndex("TransactionId");
+                b.HasIndex("TransactionId");
 
-                    b.HasIndex("UserId");
+                b.HasIndex("UserId");
 
-                    b.ToTable("Bills");
-                });
+                b.ToTable("Bills");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.BillReminder", b =>
-                {
-                    b.Property<int>("BillReminderId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+        modelBuilder.Entity("Privatekonomi.Core.Models.BillReminder", b =>
+            {
+                b.Property<int>("BillReminderId")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("INTEGER");
 
-                    b.Property<int>("BillId")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("BillId")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<DateTime?>("CompletedDate")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime?>("CompletedDate")
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("TEXT");
 
-                    b.Property<int>("EscalationLevel")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("EscalationLevel")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<bool>("IsCompleted")
-                        .HasColumnType("INTEGER");
+                b.Property<bool>("IsCompleted")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<bool>("IsSent")
-                        .HasColumnType("INTEGER");
+                b.Property<bool>("IsSent")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<DateTime?>("LastFollowUpDate")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime?>("LastFollowUpDate")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("Message")
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT");
+                b.Property<string>("Message")
+                    .HasMaxLength(500)
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime>("ReminderDate")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime>("ReminderDate")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("ReminderMethod")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT");
+                b.Property<string>("ReminderMethod")
+                    .IsRequired()
+                    .HasMaxLength(50)
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime?>("SentDate")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime?>("SentDate")
+                    .HasColumnType("TEXT");
 
-                    b.Property<int>("SnoozeCount")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("SnoozeCount")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<DateTime?>("SnoozeUntil")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime?>("SnoozeUntil")
+                    .HasColumnType("TEXT");
 
-                    b.HasKey("BillReminderId");
+                b.HasKey("BillReminderId");
 
-                    b.HasIndex("BillId");
+                b.HasIndex("BillId");
 
-                    b.HasIndex("IsSent");
+                b.HasIndex("IsSent");
 
-                    b.HasIndex("ReminderDate");
+                b.HasIndex("ReminderDate");
 
-                    b.ToTable("BillReminders");
-                });
+                b.ToTable("BillReminders");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.Budget", b =>
-                {
-                    b.Property<int>("BudgetId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+        modelBuilder.Entity("Privatekonomi.Core.Models.Budget", b =>
+            {
+                b.Property<int>("BudgetId")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("INTEGER");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("Description")
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT");
+                b.Property<string>("Description")
+                    .HasMaxLength(500)
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime>("EndDate")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime>("EndDate")
+                    .HasColumnType("TEXT");
 
-                    b.Property<int?>("HouseholdId")
-                        .HasColumnType("INTEGER");
+                b.Property<int?>("HouseholdId")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("TEXT");
+                b.Property<string>("Name")
+                    .IsRequired()
+                    .HasMaxLength(200)
+                    .HasColumnType("TEXT");
 
-                    b.Property<int>("Period")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("Period")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<bool>("RolloverUnspent")
-                        .HasColumnType("INTEGER");
+                b.Property<bool>("RolloverUnspent")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<DateTime>("StartDate")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime>("StartDate")
+                    .HasColumnType("TEXT");
 
-                    b.Property<int?>("TemplateType")
-                        .HasColumnType("INTEGER");
+                b.Property<int?>("TemplateType")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("UserId")
-                        .HasColumnType("TEXT");
+                b.Property<string>("UserId")
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime>("ValidFrom")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime>("ValidFrom")
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime?>("ValidTo")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime?>("ValidTo")
+                    .HasColumnType("TEXT");
 
-                    b.HasKey("BudgetId");
+                b.HasKey("BudgetId");
 
-                    b.HasIndex("HouseholdId");
+                b.HasIndex("HouseholdId");
 
-                    b.HasIndex("UserId");
+                b.HasIndex("UserId");
 
-                    b.HasIndex("ValidFrom");
+                b.HasIndex("ValidFrom");
 
-                    b.HasIndex("ValidTo");
+                b.HasIndex("ValidTo");
 
-                    b.HasIndex("ValidFrom", "ValidTo");
+                b.HasIndex("ValidFrom", "ValidTo");
 
-                    b.ToTable("Budgets");
-                });
+                b.ToTable("Budgets");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.BudgetAlert", b =>
-                {
-                    b.Property<int>("BudgetAlertId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+        modelBuilder.Entity("Privatekonomi.Core.Models.BudgetAlert", b =>
+            {
+                b.Property<int>("BudgetAlertId")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("INTEGER");
 
-                    b.Property<DateTime?>("AcknowledgedAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime?>("AcknowledgedAt")
+                    .HasColumnType("TEXT");
 
-                    b.Property<int>("BudgetCategoryId")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("BudgetCategoryId")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<int>("BudgetId")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("BudgetId")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<decimal>("CurrentPercentage")
-                        .HasColumnType("TEXT");
+                b.Property<decimal>("CurrentPercentage")
+                    .HasColumnType("TEXT");
 
-                    b.Property<decimal>("DailyRate")
-                        .HasColumnType("TEXT");
+                b.Property<decimal>("DailyRate")
+                    .HasColumnType("TEXT");
 
-                    b.Property<int?>("ForecastDaysUntilExceeded")
-                        .HasColumnType("INTEGER");
+                b.Property<int?>("ForecastDaysUntilExceeded")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("INTEGER");
+                b.Property<bool>("IsActive")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<decimal>("PlannedAmount")
-                        .HasColumnType("TEXT");
+                b.Property<decimal>("PlannedAmount")
+                    .HasColumnType("TEXT");
 
-                    b.Property<decimal>("SpentAmount")
-                        .HasColumnType("TEXT");
+                b.Property<decimal>("SpentAmount")
+                    .HasColumnType("TEXT");
 
-                    b.Property<decimal>("ThresholdPercentage")
-                        .HasColumnType("TEXT");
+                b.Property<decimal>("ThresholdPercentage")
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime>("TriggeredAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime>("TriggeredAt")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("UserId")
-                        .HasColumnType("TEXT");
+                b.Property<string>("UserId")
+                    .HasColumnType("TEXT");
 
-                    b.HasKey("BudgetAlertId");
+                b.HasKey("BudgetAlertId");
 
-                    b.HasIndex("BudgetCategoryId");
+                b.HasIndex("BudgetCategoryId");
 
-                    b.HasIndex("BudgetId");
+                b.HasIndex("BudgetId");
 
-                    b.HasIndex("UserId");
+                b.HasIndex("UserId");
 
-                    b.ToTable("BudgetAlerts");
-                });
+                b.ToTable("BudgetAlerts");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.BudgetAlertSettings", b =>
-                {
-                    b.Property<int>("BudgetAlertSettingsId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+        modelBuilder.Entity("Privatekonomi.Core.Models.BudgetAlertSettings", b =>
+            {
+                b.Property<int>("BudgetAlertSettingsId")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("INTEGER");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("CustomThresholds")
-                        .HasColumnType("TEXT");
+                b.Property<string>("CustomThresholds")
+                    .HasColumnType("TEXT");
 
-                    b.Property<bool>("EnableAlert100")
-                        .HasColumnType("INTEGER");
+                b.Property<bool>("EnableAlert100")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<bool>("EnableAlert75")
-                        .HasColumnType("INTEGER");
+                b.Property<bool>("EnableAlert75")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<bool>("EnableAlert90")
-                        .HasColumnType("INTEGER");
+                b.Property<bool>("EnableAlert90")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<bool>("EnableBudgetFreeze")
-                        .HasColumnType("INTEGER");
+                b.Property<bool>("EnableBudgetFreeze")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<bool>("EnableForecastWarnings")
-                        .HasColumnType("INTEGER");
+                b.Property<bool>("EnableForecastWarnings")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<int>("ForecastWarningDays")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("ForecastWarningDays")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
+                b.Property<string>("UserId")
+                    .IsRequired()
+                    .HasColumnType("TEXT");
 
-                    b.HasKey("BudgetAlertSettingsId");
+                b.HasKey("BudgetAlertSettingsId");
 
-                    b.HasIndex("UserId");
+                b.HasIndex("UserId");
 
-                    b.ToTable("BudgetAlertSettings");
-                });
+                b.ToTable("BudgetAlertSettings");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.BudgetCategory", b =>
-                {
-                    b.Property<int>("BudgetCategoryId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+        modelBuilder.Entity("Privatekonomi.Core.Models.BudgetCategory", b =>
+            {
+                b.Property<int>("BudgetCategoryId")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("INTEGER");
 
-                    b.Property<int>("BudgetId")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("BudgetId")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<int>("CategoryId")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("CategoryId")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<decimal>("PlannedAmount")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("TEXT");
+                b.Property<decimal>("PlannedAmount")
+                    .HasPrecision(18, 2)
+                    .HasColumnType("TEXT");
 
-                    b.Property<int>("RecurrencePeriodMonths")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER")
-                        .HasDefaultValue(1);
+                b.Property<int>("RecurrencePeriodMonths")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("INTEGER")
+                    .HasDefaultValue(1);
 
-                    b.HasKey("BudgetCategoryId");
+                b.HasKey("BudgetCategoryId");
 
-                    b.HasIndex("BudgetId");
+                b.HasIndex("BudgetId");
 
-                    b.HasIndex("CategoryId");
+                b.HasIndex("CategoryId");
 
-                    b.ToTable("BudgetCategories");
-                });
+                b.ToTable("BudgetCategories");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.BudgetFreeze", b =>
-                {
-                    b.Property<int>("BudgetFreezeId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+        modelBuilder.Entity("Privatekonomi.Core.Models.BudgetFreeze", b =>
+            {
+                b.Property<int>("BudgetFreezeId")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("INTEGER");
 
-                    b.Property<int?>("BudgetCategoryId")
-                        .HasColumnType("INTEGER");
+                b.Property<int?>("BudgetCategoryId")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<int>("BudgetId")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("BudgetId")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<DateTime>("FrozenAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime>("FrozenAt")
+                    .HasColumnType("TEXT");
 
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("INTEGER");
+                b.Property<bool>("IsActive")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<string>("Reason")
-                        .HasColumnType("TEXT");
+                b.Property<string>("Reason")
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime?>("UnfrozenAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime?>("UnfrozenAt")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("UserId")
-                        .HasColumnType("TEXT");
+                b.Property<string>("UserId")
+                    .HasColumnType("TEXT");
 
-                    b.HasKey("BudgetFreezeId");
+                b.HasKey("BudgetFreezeId");
 
-                    b.HasIndex("BudgetCategoryId");
+                b.HasIndex("BudgetCategoryId");
 
-                    b.HasIndex("BudgetId");
+                b.HasIndex("BudgetId");
 
-                    b.HasIndex("UserId");
+                b.HasIndex("UserId");
 
-                    b.ToTable("BudgetFreezes");
-                });
+                b.ToTable("BudgetFreezes");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.CapitalGain", b =>
-                {
-                    b.Property<int>("CapitalGainId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+        modelBuilder.Entity("Privatekonomi.Core.Models.CapitalGain", b =>
+            {
+                b.Property<int>("CapitalGainId")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("INTEGER");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("Currency")
-                        .IsRequired()
-                        .HasMaxLength(3)
-                        .HasColumnType("TEXT");
+                b.Property<string>("Currency")
+                    .IsRequired()
+                    .HasMaxLength(3)
+                    .HasColumnType("TEXT");
 
-                    b.Property<decimal?>("ExchangeRate")
-                        .HasPrecision(18, 6)
-                        .HasColumnType("TEXT");
+                b.Property<decimal?>("ExchangeRate")
+                    .HasPrecision(18, 6)
+                    .HasColumnType("TEXT");
 
-                    b.Property<decimal>("Gain")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("TEXT");
+                b.Property<decimal>("Gain")
+                    .HasPrecision(18, 2)
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("ISIN")
-                        .HasMaxLength(12)
-                        .HasColumnType("TEXT");
+                b.Property<string>("ISIN")
+                    .HasMaxLength(12)
+                    .HasColumnType("TEXT");
 
-                    b.Property<int>("InvestmentId")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("InvestmentId")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<bool>("IsISK")
-                        .HasColumnType("INTEGER");
+                b.Property<bool>("IsISK")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<decimal>("PurchasePricePerUnit")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("TEXT");
+                b.Property<decimal>("PurchasePricePerUnit")
+                    .HasPrecision(18, 2)
+                    .HasColumnType("TEXT");
 
-                    b.Property<decimal>("Quantity")
-                        .HasPrecision(18, 4)
-                        .HasColumnType("TEXT");
+                b.Property<decimal>("Quantity")
+                    .HasPrecision(18, 4)
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime>("SaleDate")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime>("SaleDate")
+                    .HasColumnType("TEXT");
 
-                    b.Property<decimal>("SalePricePerUnit")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("TEXT");
+                b.Property<decimal>("SalePricePerUnit")
+                    .HasPrecision(18, 2)
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("SecurityName")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("TEXT");
+                b.Property<string>("SecurityName")
+                    .IsRequired()
+                    .HasMaxLength(200)
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("SecurityType")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT");
+                b.Property<string>("SecurityType")
+                    .IsRequired()
+                    .HasMaxLength(50)
+                    .HasColumnType("TEXT");
 
-                    b.Property<int>("TaxYear")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("TaxYear")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<decimal>("TotalPurchasePrice")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("TEXT");
+                b.Property<decimal>("TotalPurchasePrice")
+                    .HasPrecision(18, 2)
+                    .HasColumnType("TEXT");
 
-                    b.Property<decimal>("TotalSalePrice")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("TEXT");
+                b.Property<decimal>("TotalSalePrice")
+                    .HasPrecision(18, 2)
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT");
 
-                    b.HasKey("CapitalGainId");
+                b.HasKey("CapitalGainId");
 
-                    b.HasIndex("InvestmentId");
+                b.HasIndex("InvestmentId");
 
-                    b.HasIndex("IsISK");
+                b.HasIndex("IsISK");
 
-                    b.HasIndex("SaleDate");
+                b.HasIndex("SaleDate");
 
-                    b.HasIndex("TaxYear");
+                b.HasIndex("TaxYear");
 
-                    b.ToTable("CapitalGains");
-                });
+                b.ToTable("CapitalGains");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.Category", b =>
-                {
-                    b.Property<int>("CategoryId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+        modelBuilder.Entity("Privatekonomi.Core.Models.Category", b =>
+            {
+                b.Property<int>("CategoryId")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("INTEGER");
 
-                    b.Property<string>("AccountNumber")
-                        .HasMaxLength(10)
-                        .HasColumnType("TEXT");
+                b.Property<string>("AccountNumber")
+                    .HasMaxLength(10)
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("Color")
-                        .IsRequired()
-                        .HasMaxLength(7)
-                        .HasColumnType("TEXT");
+                b.Property<string>("Color")
+                    .IsRequired()
+                    .HasMaxLength(7)
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("TEXT");
 
-                    b.Property<decimal?>("DefaultBudgetMonthly")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("TEXT");
+                b.Property<decimal?>("DefaultBudgetMonthly")
+                    .HasPrecision(18, 2)
+                    .HasColumnType("TEXT");
 
-                    b.Property<bool>("IsSystemCategory")
-                        .HasColumnType("INTEGER");
+                b.Property<bool>("IsSystemCategory")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
+                b.Property<string>("Name")
+                    .IsRequired()
+                    .HasMaxLength(100)
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("OriginalAccountNumber")
-                        .HasMaxLength(10)
-                        .HasColumnType("TEXT");
+                b.Property<string>("OriginalAccountNumber")
+                    .HasMaxLength(10)
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("OriginalColor")
-                        .HasMaxLength(7)
-                        .HasColumnType("TEXT");
+                b.Property<string>("OriginalColor")
+                    .HasMaxLength(7)
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("OriginalName")
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
+                b.Property<string>("OriginalName")
+                    .HasMaxLength(100)
+                    .HasColumnType("TEXT");
 
-                    b.Property<int?>("ParentId")
-                        .HasColumnType("INTEGER");
+                b.Property<int?>("ParentId")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<bool>("TaxRelated")
-                        .HasColumnType("INTEGER");
+                b.Property<bool>("TaxRelated")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT");
 
-                    b.HasKey("CategoryId");
+                b.HasKey("CategoryId");
 
-                    b.HasIndex("ParentId");
+                b.HasIndex("ParentId");
 
-                    b.ToTable("Categories");
+                b.ToTable("Categories");
 
-                    b.HasData(
-                        new
-                        {
-                            CategoryId = 1,
-                            AccountNumber = "5000",
-                            Color = "#FF6B6B",
-                            CreatedAt = new DateTime(2025, 11, 6, 6, 14, 25, 686, DateTimeKind.Utc).AddTicks(8456),
-                            IsSystemCategory = true,
-                            Name = "Mat & Dryck",
-                            OriginalAccountNumber = "5000",
-                            OriginalColor = "#FF6B6B",
-                            OriginalName = "Mat & Dryck",
-                            TaxRelated = false
-                        },
-                        new
-                        {
-                            CategoryId = 2,
-                            AccountNumber = "6000",
-                            Color = "#4ECDC4",
-                            CreatedAt = new DateTime(2025, 11, 6, 6, 14, 25, 686, DateTimeKind.Utc).AddTicks(8660),
-                            IsSystemCategory = true,
-                            Name = "Transport",
-                            OriginalAccountNumber = "6000",
-                            OriginalColor = "#4ECDC4",
-                            OriginalName = "Transport",
-                            TaxRelated = false
-                        },
-                        new
-                        {
-                            CategoryId = 3,
-                            AccountNumber = "4000",
-                            Color = "#45B7D1",
-                            CreatedAt = new DateTime(2025, 11, 6, 6, 14, 25, 686, DateTimeKind.Utc).AddTicks(8663),
-                            IsSystemCategory = true,
-                            Name = "Boende",
-                            OriginalAccountNumber = "4000",
-                            OriginalColor = "#45B7D1",
-                            OriginalName = "Boende",
-                            TaxRelated = false
-                        },
-                        new
-                        {
-                            CategoryId = 4,
-                            AccountNumber = "7000",
-                            Color = "#FFA07A",
-                            CreatedAt = new DateTime(2025, 11, 6, 6, 14, 25, 686, DateTimeKind.Utc).AddTicks(8666),
-                            IsSystemCategory = true,
-                            Name = "Nöje",
-                            OriginalAccountNumber = "7000",
-                            OriginalColor = "#FFA07A",
-                            OriginalName = "Nöje",
-                            TaxRelated = false
-                        },
-                        new
-                        {
-                            CategoryId = 5,
-                            AccountNumber = "5500",
-                            Color = "#98D8C8",
-                            CreatedAt = new DateTime(2025, 11, 6, 6, 14, 25, 686, DateTimeKind.Utc).AddTicks(8669),
-                            IsSystemCategory = true,
-                            Name = "Shopping",
-                            OriginalAccountNumber = "5500",
-                            OriginalColor = "#98D8C8",
-                            OriginalName = "Shopping",
-                            TaxRelated = false
-                        },
-                        new
-                        {
-                            CategoryId = 6,
-                            AccountNumber = "7500",
-                            Color = "#6BCF7F",
-                            CreatedAt = new DateTime(2025, 11, 6, 6, 14, 25, 686, DateTimeKind.Utc).AddTicks(8672),
-                            IsSystemCategory = true,
-                            Name = "Hälsa",
-                            OriginalAccountNumber = "7500",
-                            OriginalColor = "#6BCF7F",
-                            OriginalName = "Hälsa",
-                            TaxRelated = false
-                        },
-                        new
-                        {
-                            CategoryId = 7,
-                            AccountNumber = "3000",
-                            Color = "#4CAF50",
-                            CreatedAt = new DateTime(2025, 11, 6, 6, 14, 25, 686, DateTimeKind.Utc).AddTicks(8674),
-                            IsSystemCategory = true,
-                            Name = "Lön",
-                            OriginalAccountNumber = "3000",
-                            OriginalColor = "#4CAF50",
-                            OriginalName = "Lön",
-                            TaxRelated = false
-                        },
-                        new
-                        {
-                            CategoryId = 8,
-                            AccountNumber = "8000",
-                            Color = "#2196F3",
-                            CreatedAt = new DateTime(2025, 11, 6, 6, 14, 25, 686, DateTimeKind.Utc).AddTicks(8676),
-                            IsSystemCategory = true,
-                            Name = "Sparande",
-                            OriginalAccountNumber = "8000",
-                            OriginalColor = "#2196F3",
-                            OriginalName = "Sparande",
-                            TaxRelated = false
-                        },
-                        new
-                        {
-                            CategoryId = 9,
-                            AccountNumber = "6900",
-                            Color = "#9E9E9E",
-                            CreatedAt = new DateTime(2025, 11, 6, 6, 14, 25, 686, DateTimeKind.Utc).AddTicks(8678),
-                            IsSystemCategory = true,
-                            Name = "Övrigt",
-                            OriginalAccountNumber = "6900",
-                            OriginalColor = "#9E9E9E",
-                            OriginalName = "Övrigt",
-                            TaxRelated = false
-                        },
-                        new
-                        {
-                            CategoryId = 10,
-                            AccountNumber = "5100",
-                            Color = "#FF6B6B",
-                            CreatedAt = new DateTime(2025, 11, 6, 6, 14, 25, 686, DateTimeKind.Utc).AddTicks(9004),
-                            IsSystemCategory = true,
-                            Name = "Livsmedel",
-                            OriginalAccountNumber = "5100",
-                            OriginalColor = "#FF6B6B",
-                            OriginalName = "Livsmedel",
-                            ParentId = 1,
-                            TaxRelated = false
-                        },
-                        new
-                        {
-                            CategoryId = 11,
-                            AccountNumber = "5200",
-                            Color = "#FF5252",
-                            CreatedAt = new DateTime(2025, 11, 6, 6, 14, 25, 686, DateTimeKind.Utc).AddTicks(9011),
-                            IsSystemCategory = true,
-                            Name = "Restaurang",
-                            OriginalAccountNumber = "5200",
-                            OriginalColor = "#FF5252",
-                            OriginalName = "Restaurang",
-                            ParentId = 1,
-                            TaxRelated = false
-                        },
-                        new
-                        {
-                            CategoryId = 12,
-                            AccountNumber = "5300",
-                            Color = "#FF8A80",
-                            CreatedAt = new DateTime(2025, 11, 6, 6, 14, 25, 686, DateTimeKind.Utc).AddTicks(9014),
-                            IsSystemCategory = true,
-                            Name = "Café",
-                            OriginalAccountNumber = "5300",
-                            OriginalColor = "#FF8A80",
-                            OriginalName = "Café",
-                            ParentId = 1,
-                            TaxRelated = false
-                        },
-                        new
-                        {
-                            CategoryId = 13,
-                            AccountNumber = "6100",
-                            Color = "#4ECDC4",
-                            CreatedAt = new DateTime(2025, 11, 6, 6, 14, 25, 686, DateTimeKind.Utc).AddTicks(9017),
-                            IsSystemCategory = true,
-                            Name = "Kollektivtrafik",
-                            OriginalAccountNumber = "6100",
-                            OriginalColor = "#4ECDC4",
-                            OriginalName = "Kollektivtrafik",
-                            ParentId = 2,
-                            TaxRelated = false
-                        },
-                        new
-                        {
-                            CategoryId = 14,
-                            AccountNumber = "6200",
-                            Color = "#26A69A",
-                            CreatedAt = new DateTime(2025, 11, 6, 6, 14, 25, 686, DateTimeKind.Utc).AddTicks(9020),
-                            IsSystemCategory = true,
-                            Name = "Bensin",
-                            OriginalAccountNumber = "6200",
-                            OriginalColor = "#26A69A",
-                            OriginalName = "Bensin",
-                            ParentId = 2,
-                            TaxRelated = false
-                        },
-                        new
-                        {
-                            CategoryId = 15,
-                            AccountNumber = "6500",
-                            Color = "#80CBC4",
-                            CreatedAt = new DateTime(2025, 11, 6, 6, 14, 25, 686, DateTimeKind.Utc).AddTicks(9022),
-                            IsSystemCategory = true,
-                            Name = "Parkering",
-                            OriginalAccountNumber = "6500",
-                            OriginalColor = "#80CBC4",
-                            OriginalName = "Parkering",
-                            ParentId = 2,
-                            TaxRelated = false
-                        },
-                        new
-                        {
-                            CategoryId = 16,
-                            AccountNumber = "4100",
-                            Color = "#45B7D1",
-                            CreatedAt = new DateTime(2025, 11, 6, 6, 14, 25, 686, DateTimeKind.Utc).AddTicks(9024),
-                            IsSystemCategory = true,
-                            Name = "Hyra/Avgift",
-                            OriginalAccountNumber = "4100",
-                            OriginalColor = "#45B7D1",
-                            OriginalName = "Hyra/Avgift",
-                            ParentId = 3,
-                            TaxRelated = false
-                        },
-                        new
-                        {
-                            CategoryId = 17,
-                            AccountNumber = "4200",
-                            Color = "#29B6F6",
-                            CreatedAt = new DateTime(2025, 11, 6, 6, 14, 25, 686, DateTimeKind.Utc).AddTicks(9027),
-                            IsSystemCategory = true,
-                            Name = "El",
-                            OriginalAccountNumber = "4200",
-                            OriginalColor = "#29B6F6",
-                            OriginalName = "El",
-                            ParentId = 3,
-                            TaxRelated = false
-                        },
-                        new
-                        {
-                            CategoryId = 18,
-                            AccountNumber = "4300",
-                            Color = "#81D4FA",
-                            CreatedAt = new DateTime(2025, 11, 6, 6, 14, 25, 686, DateTimeKind.Utc).AddTicks(9044),
-                            IsSystemCategory = true,
-                            Name = "Bredband",
-                            OriginalAccountNumber = "4300",
-                            OriginalColor = "#81D4FA",
-                            OriginalName = "Bredband",
-                            ParentId = 3,
-                            TaxRelated = false
-                        },
-                        new
-                        {
-                            CategoryId = 19,
-                            AccountNumber = "4400",
-                            Color = "#4FC3F7",
-                            CreatedAt = new DateTime(2025, 11, 6, 6, 14, 25, 686, DateTimeKind.Utc).AddTicks(9047),
-                            IsSystemCategory = true,
-                            Name = "Hemförsäkring",
-                            OriginalAccountNumber = "4400",
-                            OriginalColor = "#4FC3F7",
-                            OriginalName = "Hemförsäkring",
-                            ParentId = 3,
-                            TaxRelated = false
-                        },
-                        new
-                        {
-                            CategoryId = 20,
-                            AccountNumber = "7100",
-                            Color = "#FFA07A",
-                            CreatedAt = new DateTime(2025, 11, 6, 6, 14, 25, 686, DateTimeKind.Utc).AddTicks(9049),
-                            IsSystemCategory = true,
-                            Name = "Streaming",
-                            OriginalAccountNumber = "7100",
-                            OriginalColor = "#FFA07A",
-                            OriginalName = "Streaming",
-                            ParentId = 4,
-                            TaxRelated = false
-                        },
-                        new
-                        {
-                            CategoryId = 21,
-                            AccountNumber = "7300",
-                            Color = "#FF8A65",
-                            CreatedAt = new DateTime(2025, 11, 6, 6, 14, 25, 686, DateTimeKind.Utc).AddTicks(9051),
-                            IsSystemCategory = true,
-                            Name = "Gym",
-                            OriginalAccountNumber = "7300",
-                            OriginalColor = "#FF8A65",
-                            OriginalName = "Gym",
-                            ParentId = 4,
-                            TaxRelated = false
-                        },
-                        new
-                        {
-                            CategoryId = 22,
-                            AccountNumber = "7400",
-                            Color = "#FFAB91",
-                            CreatedAt = new DateTime(2025, 11, 6, 6, 14, 25, 686, DateTimeKind.Utc).AddTicks(9054),
-                            IsSystemCategory = true,
-                            Name = "Resor",
-                            OriginalAccountNumber = "7400",
-                            OriginalColor = "#FFAB91",
-                            OriginalName = "Resor",
-                            ParentId = 4,
-                            TaxRelated = false
-                        },
-                        new
-                        {
-                            CategoryId = 23,
-                            AccountNumber = "5510",
-                            Color = "#98D8C8",
-                            CreatedAt = new DateTime(2025, 11, 6, 6, 14, 25, 686, DateTimeKind.Utc).AddTicks(9056),
-                            IsSystemCategory = true,
-                            Name = "Kläder",
-                            OriginalAccountNumber = "5510",
-                            OriginalColor = "#98D8C8",
-                            OriginalName = "Kläder",
-                            ParentId = 5,
-                            TaxRelated = false
-                        },
-                        new
-                        {
-                            CategoryId = 24,
-                            AccountNumber = "5520",
-                            Color = "#80CBC4",
-                            CreatedAt = new DateTime(2025, 11, 6, 6, 14, 25, 686, DateTimeKind.Utc).AddTicks(9058),
-                            IsSystemCategory = true,
-                            Name = "Hygienartiklar",
-                            OriginalAccountNumber = "5520",
-                            OriginalColor = "#80CBC4",
-                            OriginalName = "Hygienartiklar",
-                            ParentId = 5,
-                            TaxRelated = false
-                        },
-                        new
-                        {
-                            CategoryId = 25,
-                            AccountNumber = "5550",
-                            Color = "#B2DFDB",
-                            CreatedAt = new DateTime(2025, 11, 6, 6, 14, 25, 686, DateTimeKind.Utc).AddTicks(9060),
-                            IsSystemCategory = true,
-                            Name = "Elektronik",
-                            OriginalAccountNumber = "5550",
-                            OriginalColor = "#B2DFDB",
-                            OriginalName = "Elektronik",
-                            ParentId = 5,
-                            TaxRelated = false
-                        },
-                        new
-                        {
-                            CategoryId = 26,
-                            AccountNumber = "7510",
-                            Color = "#6BCF7F",
-                            CreatedAt = new DateTime(2025, 11, 6, 6, 14, 25, 686, DateTimeKind.Utc).AddTicks(9063),
-                            IsSystemCategory = true,
-                            Name = "Tandvård",
-                            OriginalAccountNumber = "7510",
-                            OriginalColor = "#6BCF7F",
-                            OriginalName = "Tandvård",
-                            ParentId = 6,
-                            TaxRelated = false
-                        },
-                        new
-                        {
-                            CategoryId = 27,
-                            AccountNumber = "7520",
-                            Color = "#81C784",
-                            CreatedAt = new DateTime(2025, 11, 6, 6, 14, 25, 686, DateTimeKind.Utc).AddTicks(9065),
-                            IsSystemCategory = true,
-                            Name = "Läkarvård",
-                            OriginalAccountNumber = "7520",
-                            OriginalColor = "#81C784",
-                            OriginalName = "Läkarvård",
-                            ParentId = 6,
-                            TaxRelated = false
-                        },
-                        new
-                        {
-                            CategoryId = 28,
-                            AccountNumber = "7530",
-                            Color = "#A5D6A7",
-                            CreatedAt = new DateTime(2025, 11, 6, 6, 14, 25, 686, DateTimeKind.Utc).AddTicks(9067),
-                            IsSystemCategory = true,
-                            Name = "Medicin",
-                            OriginalAccountNumber = "7530",
-                            OriginalColor = "#A5D6A7",
-                            OriginalName = "Medicin",
-                            ParentId = 6,
-                            TaxRelated = false
-                        },
-                        new
-                        {
-                            CategoryId = 29,
-                            AccountNumber = "3010",
-                            Color = "#66BB6A",
-                            CreatedAt = new DateTime(2025, 11, 6, 6, 14, 25, 686, DateTimeKind.Utc).AddTicks(9070),
-                            IsSystemCategory = true,
-                            Name = "Bonus",
-                            OriginalAccountNumber = "3010",
-                            OriginalColor = "#66BB6A",
-                            OriginalName = "Bonus",
-                            ParentId = 7,
-                            TaxRelated = false
-                        },
-                        new
-                        {
-                            CategoryId = 30,
-                            AccountNumber = "3020",
-                            Color = "#81C784",
-                            CreatedAt = new DateTime(2025, 11, 6, 6, 14, 25, 686, DateTimeKind.Utc).AddTicks(9072),
-                            IsSystemCategory = true,
-                            Name = "Semesterersättning",
-                            OriginalAccountNumber = "3020",
-                            OriginalColor = "#81C784",
-                            OriginalName = "Semesterersättning",
-                            ParentId = 7,
-                            TaxRelated = false
-                        },
-                        new
-                        {
-                            CategoryId = 31,
-                            AccountNumber = "8100",
-                            Color = "#2196F3",
-                            CreatedAt = new DateTime(2025, 11, 6, 6, 14, 25, 686, DateTimeKind.Utc).AddTicks(9074),
-                            IsSystemCategory = true,
-                            Name = "Buffert",
-                            OriginalAccountNumber = "8100",
-                            OriginalColor = "#2196F3",
-                            OriginalName = "Buffert",
-                            ParentId = 8,
-                            TaxRelated = false
-                        },
-                        new
-                        {
-                            CategoryId = 32,
-                            AccountNumber = "8200",
-                            Color = "#42A5F5",
-                            CreatedAt = new DateTime(2025, 11, 6, 6, 14, 25, 686, DateTimeKind.Utc).AddTicks(9076),
-                            IsSystemCategory = true,
-                            Name = "Månadsspar Fonder",
-                            OriginalAccountNumber = "8200",
-                            OriginalColor = "#42A5F5",
-                            OriginalName = "Månadsspar Fonder",
-                            ParentId = 8,
-                            TaxRelated = false
-                        },
-                        new
-                        {
-                            CategoryId = 33,
-                            AccountNumber = "8300",
-                            Color = "#64B5F6",
-                            CreatedAt = new DateTime(2025, 11, 6, 6, 14, 25, 686, DateTimeKind.Utc).AddTicks(9079),
-                            IsSystemCategory = true,
-                            Name = "ISK",
-                            OriginalAccountNumber = "8300",
-                            OriginalColor = "#64B5F6",
-                            OriginalName = "ISK",
-                            ParentId = 8,
-                            TaxRelated = false
-                        },
-                        new
-                        {
-                            CategoryId = 34,
-                            AccountNumber = "8400",
-                            Color = "#90CAF9",
-                            CreatedAt = new DateTime(2025, 11, 6, 6, 14, 25, 686, DateTimeKind.Utc).AddTicks(9081),
-                            IsSystemCategory = true,
-                            Name = "Pensionssparande",
-                            OriginalAccountNumber = "8400",
-                            OriginalColor = "#90CAF9",
-                            OriginalName = "Pensionssparande",
-                            ParentId = 8,
-                            TaxRelated = false
-                        });
-                });
-
-            modelBuilder.Entity("Privatekonomi.Core.Models.CategoryRule", b =>
-                {
-                    b.Property<int>("CategoryRuleId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("CaseSensitive")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("CategoryId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("Field")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("MatchType")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int?>("OverridesSystemRuleId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Pattern")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("Priority")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("RuleType")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("UserId")
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("CategoryRuleId");
-
-                    b.HasIndex("CategoryId");
-
-                    b.HasIndex("IsActive");
-
-                    b.HasIndex("OverridesSystemRuleId");
-
-                    b.HasIndex("Priority");
-
-                    b.HasIndex("RuleType");
-
-                    b.HasIndex("UserId");
-
-                    b.HasIndex("IsActive", "Priority");
-
-                    b.HasIndex("RuleType", "UserId");
-
-                    b.ToTable("CategoryRules");
-                });
-
-            modelBuilder.Entity("Privatekonomi.Core.Models.ChallengeTemplate", b =>
-                {
-                    b.Property<int>("ChallengeTemplateId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("Category")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("Difficulty")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("DurationDays")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<decimal?>("EstimatedSavingsMax")
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal?>("EstimatedSavingsMin")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Icon")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Rules")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("SortOrder")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<decimal?>("SuggestedTargetAmount")
-                        .HasColumnType("TEXT");
-
-                    b.PrimitiveCollection<string>("Tags")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("Type")
-                        .HasColumnType("INTEGER");
-
-                    b.HasKey("ChallengeTemplateId");
-
-                    b.ToTable("ChallengeTemplates");
-                });
-
-            modelBuilder.Entity("Privatekonomi.Core.Models.ChildAllowance", b =>
-                {
-                    b.Property<int>("ChildAllowanceId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<decimal>("Amount")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal>("CurrentBalance")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime?>("EndDate")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("Frequency")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("HouseholdMemberId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime>("StartDate")
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("ChildAllowanceId");
-
-                    b.HasIndex("HouseholdMemberId");
-
-                    b.ToTable("ChildAllowances");
-                });
-
-            modelBuilder.Entity("Privatekonomi.Core.Models.CommentLike", b =>
-                {
-                    b.Property<int>("CommentLikeId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("GroupCommentId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("CommentLikeId");
-
-                    b.HasIndex("GroupCommentId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("CommentLikes");
-                });
-
-            modelBuilder.Entity("Privatekonomi.Core.Models.CommuteDeduction", b =>
-                {
-                    b.Property<int>("CommuteDeductionId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<decimal>("Cost")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime>("Date")
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal>("DeductibleAmount")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal>("DistanceKm")
-                        .HasPrecision(10, 2)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("FromAddress")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("TEXT");
-
-                    b.Property<bool>("IsRegularCommute")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Notes")
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("NumberOfTrips")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("TaxYear")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("ToAddress")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("TransportMethod")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("CommuteDeductionId");
-
-                    b.HasIndex("Date");
-
-                    b.HasIndex("TaxYear");
-
-                    b.ToTable("CommuteDeductions");
-                });
-
-            modelBuilder.Entity("Privatekonomi.Core.Models.CreditRating", b =>
-                {
-                    b.Property<int>("CreditRatingId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime>("CheckedDate")
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal?>("CreditLimit")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal?>("CreditUtilization")
-                        .HasPrecision(5, 2)
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("HouseholdId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Notes")
-                        .HasMaxLength(1000)
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("PaymentRemarks")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Provider")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Rating")
-                        .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("TEXT");
-
-                    b.Property<int?>("Score")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<decimal?>("TotalDebt")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("CreditRatingId");
-
-                    b.HasIndex("CheckedDate");
-
-                    b.HasIndex("HouseholdId");
-
-                    b.ToTable("CreditRatings");
-                });
-
-            modelBuilder.Entity("Privatekonomi.Core.Models.CurrencyAccount", b =>
-                {
-                    b.Property<int>("CurrencyAccountId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("AccountNumber")
-                        .HasMaxLength(20)
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal>("Balance")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Currency")
-                        .IsRequired()
-                        .HasMaxLength(3)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal>("ExchangeRate")
-                        .HasPrecision(18, 6)
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime?>("ExchangeRateUpdated")
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("UserId")
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("CurrencyAccountId");
-
-                    b.HasIndex("Currency");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("CurrencyAccounts");
-                });
-
-            modelBuilder.Entity("Privatekonomi.Core.Models.Dividend", b =>
-                {
-                    b.Property<int>("DividendId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<decimal>("AmountPerShare")
-                        .HasPrecision(18, 4)
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Currency")
-                        .IsRequired()
-                        .HasMaxLength(3)
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime?>("ExDividendDate")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("InvestmentId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("IsReinvested")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Notes")
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime>("PaymentDate")
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal?>("ReinvestedShares")
-                        .HasPrecision(18, 4)
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal?>("ReinvestmentPrice")
-                        .HasPrecision(18, 4)
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal>("SharesHeld")
-                        .HasPrecision(18, 4)
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal?>("TaxWithheld")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal>("TotalAmount")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("UserId")
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("DividendId");
-
-                    b.HasIndex("InvestmentId");
-
-                    b.HasIndex("PaymentDate");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("Dividends");
-                });
-
-            modelBuilder.Entity("Privatekonomi.Core.Models.DoNotDisturbSchedule", b =>
-                {
-                    b.Property<int>("DoNotDisturbScheduleId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("AllowCritical")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("DayOfWeek")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("EndTime")
-                        .IsRequired()
-                        .HasMaxLength(5)
-                        .HasColumnType("TEXT");
-
-                    b.Property<bool>("IsEnabled")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("StartTime")
-                        .IsRequired()
-                        .HasMaxLength(5)
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("DoNotDisturbScheduleId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("DoNotDisturbSchedules");
-                });
-
-            modelBuilder.Entity("Privatekonomi.Core.Models.ExpenseShare", b =>
-                {
-                    b.Property<int>("ExpenseShareId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("HouseholdMemberId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<decimal?>("RoomSize")
-                        .HasPrecision(10, 2)
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal>("ShareAmount")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal?>("SharePercentage")
-                        .HasPrecision(5, 2)
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("SharedExpenseId")
-                        .HasColumnType("INTEGER");
-
-                    b.HasKey("ExpenseShareId");
-
-                    b.HasIndex("HouseholdMemberId");
-
-                    b.HasIndex("SharedExpenseId");
-
-                    b.ToTable("ExpenseShares");
-                });
-
-            modelBuilder.Entity("Privatekonomi.Core.Models.Goal", b =>
-                {
-                    b.Property<int>("GoalId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal>("CurrentAmount")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT");
-
-                    b.Property<int?>("FundedFromBankSourceId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("Priority")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<decimal>("TargetAmount")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime?>("TargetDate")
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("UserId")
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime>("ValidFrom")
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime?>("ValidTo")
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("GoalId");
-
-                    b.HasIndex("FundedFromBankSourceId");
-
-                    b.HasIndex("UserId");
-
-                    b.HasIndex("ValidFrom");
-
-                    b.HasIndex("ValidTo");
-
-                    b.HasIndex("ValidFrom", "ValidTo");
-
-                    b.ToTable("Goals");
-                });
-
-            modelBuilder.Entity("Privatekonomi.Core.Models.GoalMilestone", b =>
-                {
-                    b.Property<int>("GoalMilestoneId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("GoalId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("IsAutomatic")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("IsReached")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("Percentage")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime?>("ReachedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal>("TargetAmount")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("GoalMilestoneId");
-
-                    b.HasIndex("GoalId");
-
-                    b.HasIndex("IsReached");
-
-                    b.HasIndex("GoalId", "Percentage");
-
-                    b.ToTable("GoalMilestones");
-                });
-
-            modelBuilder.Entity("Privatekonomi.Core.Models.GoalShare", b =>
-                {
-                    b.Property<int>("GoalShareId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime?>("ExpiresAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int?>("GoalId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("ShareToken")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<int?>("SharedGoalId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("ShowCurrentAmount")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("ShowOwnerName")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("ShowTargetAmount")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("ShowTargetDate")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("ShowTransactions")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("ViewCount")
-                        .HasColumnType("INTEGER");
-
-                    b.HasKey("GoalShareId");
-
-                    b.HasIndex("GoalId");
-
-                    b.HasIndex("SharedGoalId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("GoalShares");
-                });
-
-            modelBuilder.Entity("Privatekonomi.Core.Models.GroupComment", b =>
-                {
-                    b.Property<int>("GroupCommentId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Content")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int?>("GroupGoalId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("SavingsGroupId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("GroupCommentId");
-
-                    b.HasIndex("GroupGoalId");
-
-                    b.HasIndex("SavingsGroupId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("GroupComments");
-                });
-
-            modelBuilder.Entity("Privatekonomi.Core.Models.GroupGoal", b =>
-                {
-                    b.Property<int>("GroupGoalId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("DisplayName")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("GoalId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("IsAnonymous")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("SavingsGroupId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime>("SharedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("GroupGoalId");
-
-                    b.HasIndex("GoalId");
-
-                    b.HasIndex("SavingsGroupId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("GroupGoals");
-                });
-
-            modelBuilder.Entity("Privatekonomi.Core.Models.Household", b =>
-                {
-                    b.Property<int>("HouseholdId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("HouseholdId");
-
-                    b.ToTable("Households");
-                });
-
-            modelBuilder.Entity("Privatekonomi.Core.Models.HouseholdMember", b =>
-                {
-                    b.Property<int>("HouseholdMemberId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime?>("DateOfBirth")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Email")
-                        .HasMaxLength(200)
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("HouseholdId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime>("JoinedDate")
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime?>("LeftDate")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("UserId")
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("HouseholdMemberId");
-
-                    b.HasIndex("HouseholdId");
-
-                    b.ToTable("HouseholdMembers");
-                });
-
-            modelBuilder.Entity("Privatekonomi.Core.Models.HouseholdRole", b =>
-                {
-                    b.Property<int>("HouseholdRoleId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("AssignedBy")
-                        .HasMaxLength(450)
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime>("AssignedDate")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("DelegatedBy")
-                        .HasMaxLength(450)
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime?>("DelegationEndDate")
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime?>("DelegationStartDate")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("HouseholdMemberId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("IsDelegated")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("RevokedBy")
-                        .HasMaxLength(450)
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime?>("RevokedDate")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("RoleType")
-                        .HasColumnType("INTEGER");
-
-                    b.HasKey("HouseholdRoleId");
-
-                    b.HasIndex("DelegationEndDate");
-
-                    b.HasIndex("HouseholdMemberId");
-
-                    b.HasIndex("IsActive");
-
-                    b.HasIndex("RoleType");
-
-                    b.HasIndex("HouseholdMemberId", "IsActive");
-
-                    b.ToTable("HouseholdRoles");
-                });
-
-            modelBuilder.Entity("Privatekonomi.Core.Models.Investment", b =>
-                {
-                    b.Property<int>("InvestmentId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("AccountNumber")
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("AccountType")
-                        .HasMaxLength(20)
-                        .HasColumnType("TEXT");
-
-                    b.Property<int?>("BankSourceId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Country")
-                        .HasMaxLength(2)
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Currency")
-                        .HasMaxLength(3)
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal>("CurrentPrice")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("ISIN")
-                        .HasMaxLength(12)
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime>("LastUpdated")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Market")
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime>("PurchaseDate")
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal>("PurchasePrice")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal>("Quantity")
-                        .HasPrecision(18, 4)
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal?>("SchablonTax")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("TEXT");
-
-                    b.Property<int?>("SchablonTaxYear")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("ShortName")
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Type")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("UserId")
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime>("ValidFrom")
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime?>("ValidTo")
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("InvestmentId");
-
-                    b.HasIndex("AccountNumber");
-
-                    b.HasIndex("AccountType");
-
-                    b.HasIndex("BankSourceId");
-
-                    b.HasIndex("ISIN");
-
-                    b.HasIndex("SchablonTaxYear");
-
-                    b.HasIndex("UserId");
-
-                    b.HasIndex("ValidFrom");
-
-                    b.HasIndex("ValidTo");
-
-                    b.HasIndex("ValidFrom", "ValidTo");
-
-                    b.ToTable("Investments");
-                });
-
-            modelBuilder.Entity("Privatekonomi.Core.Models.InvestmentTransaction", b =>
-                {
-                    b.Property<int>("InvestmentTransactionId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Currency")
-                        .IsRequired()
-                        .HasMaxLength(3)
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal?>("ExchangeRate")
-                        .HasPrecision(18, 6)
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal?>("Fees")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("InvestmentId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Notes")
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal>("PricePerShare")
-                        .HasPrecision(18, 4)
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal>("Quantity")
-                        .HasPrecision(18, 4)
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal>("TotalAmount")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime>("TransactionDate")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("TransactionType")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("UserId")
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("InvestmentTransactionId");
-
-                    b.HasIndex("InvestmentId");
-
-                    b.HasIndex("TransactionDate");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("InvestmentTransactions");
-                });
-
-            modelBuilder.Entity("Privatekonomi.Core.Models.LifeTimelineMilestone", b =>
-                {
-                    b.Property<int>("LifeTimelineMilestoneId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal>("CurrentSavings")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal>("EstimatedCost")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("TEXT");
-
-                    b.Property<bool>("IsCompleted")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("MilestoneType")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Notes")
-                        .HasMaxLength(1000)
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime>("PlannedDate")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("Priority")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<decimal>("ProgressPercentage")
-                        .HasPrecision(5, 2)
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal?>("RequiredMonthlySavings")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("UserId")
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("LifeTimelineMilestoneId");
-
-                    b.HasIndex("MilestoneType");
-
-                    b.HasIndex("PlannedDate");
-
-                    b.HasIndex("UserId");
-
-                    b.HasIndex("UserId", "PlannedDate");
-
-                    b.ToTable("LifeTimelineMilestones");
-                });
-
-            modelBuilder.Entity("Privatekonomi.Core.Models.LifeTimelineScenario", b =>
-                {
-                    b.Property<int>("LifeTimelineScenarioId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal>("ExpectedMonthlyPension")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal>("ExpectedReturnRate")
-                        .HasPrecision(5, 2)
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal>("InflationRate")
-                        .HasPrecision(5, 2)
-                        .HasColumnType("TEXT");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("IsBaseline")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<decimal>("MonthlySavings")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Notes")
-                        .HasMaxLength(1000)
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal>("ProjectedRetirementWealth")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("RetirementAge")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<decimal>("SalaryIncreaseRate")
-                        .HasPrecision(5, 2)
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("UserId")
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("LifeTimelineScenarioId");
-
-                    b.HasIndex("IsActive");
-
-                    b.HasIndex("UserId");
-
-                    b.HasIndex("UserId", "IsActive");
-
-                    b.ToTable("LifeTimelineScenarios");
-                });
-
-            modelBuilder.Entity("Privatekonomi.Core.Models.Loan", b =>
-                {
-                    b.Property<int>("LoanId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<decimal>("Amortization")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal>("Amount")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("TEXT");
-
-                    b.Property<int?>("BindingPeriodMonths")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime?>("CSN_LastUpdate")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("CSN_LoanType")
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal?>("CSN_MonthlyPayment")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal?>("CSN_RemainingAmount")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("TEXT");
-
-                    b.Property<int?>("CSN_StudyYear")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal?>("CreditLimit")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Currency")
-                        .IsRequired()
-                        .HasMaxLength(3)
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal?>("ExtraMonthlyPayment")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal?>("InstallmentFee")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("TEXT");
-
-                    b.Property<int?>("InstallmentMonths")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<decimal>("InterestRate")
-                        .HasPrecision(5, 2)
-                        .HasColumnType("TEXT");
-
-                    b.Property<bool>("IsFixedRate")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("LoanProvider")
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
+                b.HasData(
+                    new
+                    {
+                        CategoryId = 1,
+                        AccountNumber = "5000",
+                        Color = "#FF6B6B",
+                        CreatedAt = new DateTime(2025, 11, 6, 6, 14, 25, 686, DateTimeKind.Utc).AddTicks(8456),
+                        IsSystemCategory = true,
+                        Name = "Mat & Dryck",
+                        OriginalAccountNumber = "5000",
+                        OriginalColor = "#FF6B6B",
+                        OriginalName = "Mat & Dryck",
+                        TaxRelated = false
+                    },
+                    new
+                    {
+                        CategoryId = 2,
+                        AccountNumber = "6000",
+                        Color = "#4ECDC4",
+                        CreatedAt = new DateTime(2025, 11, 6, 6, 14, 25, 686, DateTimeKind.Utc).AddTicks(8660),
+                        IsSystemCategory = true,
+                        Name = "Transport",
+                        OriginalAccountNumber = "6000",
+                        OriginalColor = "#4ECDC4",
+                        OriginalName = "Transport",
+                        TaxRelated = false
+                    },
+                    new
+                    {
+                        CategoryId = 3,
+                        AccountNumber = "4000",
+                        Color = "#45B7D1",
+                        CreatedAt = new DateTime(2025, 11, 6, 6, 14, 25, 686, DateTimeKind.Utc).AddTicks(8663),
+                        IsSystemCategory = true,
+                        Name = "Boende",
+                        OriginalAccountNumber = "4000",
+                        OriginalColor = "#45B7D1",
+                        OriginalName = "Boende",
+                        TaxRelated = false
+                    },
+                    new
+                    {
+                        CategoryId = 4,
+                        AccountNumber = "7000",
+                        Color = "#FFA07A",
+                        CreatedAt = new DateTime(2025, 11, 6, 6, 14, 25, 686, DateTimeKind.Utc).AddTicks(8666),
+                        IsSystemCategory = true,
+                        Name = "Nöje",
+                        OriginalAccountNumber = "7000",
+                        OriginalColor = "#FFA07A",
+                        OriginalName = "Nöje",
+                        TaxRelated = false
+                    },
+                    new
+                    {
+                        CategoryId = 5,
+                        AccountNumber = "5500",
+                        Color = "#98D8C8",
+                        CreatedAt = new DateTime(2025, 11, 6, 6, 14, 25, 686, DateTimeKind.Utc).AddTicks(8669),
+                        IsSystemCategory = true,
+                        Name = "Shopping",
+                        OriginalAccountNumber = "5500",
+                        OriginalColor = "#98D8C8",
+                        OriginalName = "Shopping",
+                        TaxRelated = false
+                    },
+                    new
+                    {
+                        CategoryId = 6,
+                        AccountNumber = "7500",
+                        Color = "#6BCF7F",
+                        CreatedAt = new DateTime(2025, 11, 6, 6, 14, 25, 686, DateTimeKind.Utc).AddTicks(8672),
+                        IsSystemCategory = true,
+                        Name = "Hälsa",
+                        OriginalAccountNumber = "7500",
+                        OriginalColor = "#6BCF7F",
+                        OriginalName = "Hälsa",
+                        TaxRelated = false
+                    },
+                    new
+                    {
+                        CategoryId = 7,
+                        AccountNumber = "3000",
+                        Color = "#4CAF50",
+                        CreatedAt = new DateTime(2025, 11, 6, 6, 14, 25, 686, DateTimeKind.Utc).AddTicks(8674),
+                        IsSystemCategory = true,
+                        Name = "Lön",
+                        OriginalAccountNumber = "3000",
+                        OriginalColor = "#4CAF50",
+                        OriginalName = "Lön",
+                        TaxRelated = false
+                    },
+                    new
+                    {
+                        CategoryId = 8,
+                        AccountNumber = "8000",
+                        Color = "#2196F3",
+                        CreatedAt = new DateTime(2025, 11, 6, 6, 14, 25, 686, DateTimeKind.Utc).AddTicks(8676),
+                        IsSystemCategory = true,
+                        Name = "Sparande",
+                        OriginalAccountNumber = "8000",
+                        OriginalColor = "#2196F3",
+                        OriginalName = "Sparande",
+                        TaxRelated = false
+                    },
+                    new
+                    {
+                        CategoryId = 9,
+                        AccountNumber = "6900",
+                        Color = "#9E9E9E",
+                        CreatedAt = new DateTime(2025, 11, 6, 6, 14, 25, 686, DateTimeKind.Utc).AddTicks(8678),
+                        IsSystemCategory = true,
+                        Name = "Övrigt",
+                        OriginalAccountNumber = "6900",
+                        OriginalColor = "#9E9E9E",
+                        OriginalName = "Övrigt",
+                        TaxRelated = false
+                    },
+                    new
+                    {
+                        CategoryId = 10,
+                        AccountNumber = "5100",
+                        Color = "#FF6B6B",
+                        CreatedAt = new DateTime(2025, 11, 6, 6, 14, 25, 686, DateTimeKind.Utc).AddTicks(9004),
+                        IsSystemCategory = true,
+                        Name = "Livsmedel",
+                        OriginalAccountNumber = "5100",
+                        OriginalColor = "#FF6B6B",
+                        OriginalName = "Livsmedel",
+                        ParentId = 1,
+                        TaxRelated = false
+                    },
+                    new
+                    {
+                        CategoryId = 11,
+                        AccountNumber = "5200",
+                        Color = "#FF5252",
+                        CreatedAt = new DateTime(2025, 11, 6, 6, 14, 25, 686, DateTimeKind.Utc).AddTicks(9011),
+                        IsSystemCategory = true,
+                        Name = "Restaurang",
+                        OriginalAccountNumber = "5200",
+                        OriginalColor = "#FF5252",
+                        OriginalName = "Restaurang",
+                        ParentId = 1,
+                        TaxRelated = false
+                    },
+                    new
+                    {
+                        CategoryId = 12,
+                        AccountNumber = "5300",
+                        Color = "#FF8A80",
+                        CreatedAt = new DateTime(2025, 11, 6, 6, 14, 25, 686, DateTimeKind.Utc).AddTicks(9014),
+                        IsSystemCategory = true,
+                        Name = "Café",
+                        OriginalAccountNumber = "5300",
+                        OriginalColor = "#FF8A80",
+                        OriginalName = "Café",
+                        ParentId = 1,
+                        TaxRelated = false
+                    },
+                    new
+                    {
+                        CategoryId = 13,
+                        AccountNumber = "6100",
+                        Color = "#4ECDC4",
+                        CreatedAt = new DateTime(2025, 11, 6, 6, 14, 25, 686, DateTimeKind.Utc).AddTicks(9017),
+                        IsSystemCategory = true,
+                        Name = "Kollektivtrafik",
+                        OriginalAccountNumber = "6100",
+                        OriginalColor = "#4ECDC4",
+                        OriginalName = "Kollektivtrafik",
+                        ParentId = 2,
+                        TaxRelated = false
+                    },
+                    new
+                    {
+                        CategoryId = 14,
+                        AccountNumber = "6200",
+                        Color = "#26A69A",
+                        CreatedAt = new DateTime(2025, 11, 6, 6, 14, 25, 686, DateTimeKind.Utc).AddTicks(9020),
+                        IsSystemCategory = true,
+                        Name = "Bensin",
+                        OriginalAccountNumber = "6200",
+                        OriginalColor = "#26A69A",
+                        OriginalName = "Bensin",
+                        ParentId = 2,
+                        TaxRelated = false
+                    },
+                    new
+                    {
+                        CategoryId = 15,
+                        AccountNumber = "6500",
+                        Color = "#80CBC4",
+                        CreatedAt = new DateTime(2025, 11, 6, 6, 14, 25, 686, DateTimeKind.Utc).AddTicks(9022),
+                        IsSystemCategory = true,
+                        Name = "Parkering",
+                        OriginalAccountNumber = "6500",
+                        OriginalColor = "#80CBC4",
+                        OriginalName = "Parkering",
+                        ParentId = 2,
+                        TaxRelated = false
+                    },
+                    new
+                    {
+                        CategoryId = 16,
+                        AccountNumber = "4100",
+                        Color = "#45B7D1",
+                        CreatedAt = new DateTime(2025, 11, 6, 6, 14, 25, 686, DateTimeKind.Utc).AddTicks(9024),
+                        IsSystemCategory = true,
+                        Name = "Hyra/Avgift",
+                        OriginalAccountNumber = "4100",
+                        OriginalColor = "#45B7D1",
+                        OriginalName = "Hyra/Avgift",
+                        ParentId = 3,
+                        TaxRelated = false
+                    },
+                    new
+                    {
+                        CategoryId = 17,
+                        AccountNumber = "4200",
+                        Color = "#29B6F6",
+                        CreatedAt = new DateTime(2025, 11, 6, 6, 14, 25, 686, DateTimeKind.Utc).AddTicks(9027),
+                        IsSystemCategory = true,
+                        Name = "El",
+                        OriginalAccountNumber = "4200",
+                        OriginalColor = "#29B6F6",
+                        OriginalName = "El",
+                        ParentId = 3,
+                        TaxRelated = false
+                    },
+                    new
+                    {
+                        CategoryId = 18,
+                        AccountNumber = "4300",
+                        Color = "#81D4FA",
+                        CreatedAt = new DateTime(2025, 11, 6, 6, 14, 25, 686, DateTimeKind.Utc).AddTicks(9044),
+                        IsSystemCategory = true,
+                        Name = "Bredband",
+                        OriginalAccountNumber = "4300",
+                        OriginalColor = "#81D4FA",
+                        OriginalName = "Bredband",
+                        ParentId = 3,
+                        TaxRelated = false
+                    },
+                    new
+                    {
+                        CategoryId = 19,
+                        AccountNumber = "4400",
+                        Color = "#4FC3F7",
+                        CreatedAt = new DateTime(2025, 11, 6, 6, 14, 25, 686, DateTimeKind.Utc).AddTicks(9047),
+                        IsSystemCategory = true,
+                        Name = "Hemförsäkring",
+                        OriginalAccountNumber = "4400",
+                        OriginalColor = "#4FC3F7",
+                        OriginalName = "Hemförsäkring",
+                        ParentId = 3,
+                        TaxRelated = false
+                    },
+                    new
+                    {
+                        CategoryId = 20,
+                        AccountNumber = "7100",
+                        Color = "#FFA07A",
+                        CreatedAt = new DateTime(2025, 11, 6, 6, 14, 25, 686, DateTimeKind.Utc).AddTicks(9049),
+                        IsSystemCategory = true,
+                        Name = "Streaming",
+                        OriginalAccountNumber = "7100",
+                        OriginalColor = "#FFA07A",
+                        OriginalName = "Streaming",
+                        ParentId = 4,
+                        TaxRelated = false
+                    },
+                    new
+                    {
+                        CategoryId = 21,
+                        AccountNumber = "7300",
+                        Color = "#FF8A65",
+                        CreatedAt = new DateTime(2025, 11, 6, 6, 14, 25, 686, DateTimeKind.Utc).AddTicks(9051),
+                        IsSystemCategory = true,
+                        Name = "Gym",
+                        OriginalAccountNumber = "7300",
+                        OriginalColor = "#FF8A65",
+                        OriginalName = "Gym",
+                        ParentId = 4,
+                        TaxRelated = false
+                    },
+                    new
+                    {
+                        CategoryId = 22,
+                        AccountNumber = "7400",
+                        Color = "#FFAB91",
+                        CreatedAt = new DateTime(2025, 11, 6, 6, 14, 25, 686, DateTimeKind.Utc).AddTicks(9054),
+                        IsSystemCategory = true,
+                        Name = "Resor",
+                        OriginalAccountNumber = "7400",
+                        OriginalColor = "#FFAB91",
+                        OriginalName = "Resor",
+                        ParentId = 4,
+                        TaxRelated = false
+                    },
+                    new
+                    {
+                        CategoryId = 23,
+                        AccountNumber = "5510",
+                        Color = "#98D8C8",
+                        CreatedAt = new DateTime(2025, 11, 6, 6, 14, 25, 686, DateTimeKind.Utc).AddTicks(9056),
+                        IsSystemCategory = true,
+                        Name = "Kläder",
+                        OriginalAccountNumber = "5510",
+                        OriginalColor = "#98D8C8",
+                        OriginalName = "Kläder",
+                        ParentId = 5,
+                        TaxRelated = false
+                    },
+                    new
+                    {
+                        CategoryId = 24,
+                        AccountNumber = "5520",
+                        Color = "#80CBC4",
+                        CreatedAt = new DateTime(2025, 11, 6, 6, 14, 25, 686, DateTimeKind.Utc).AddTicks(9058),
+                        IsSystemCategory = true,
+                        Name = "Hygienartiklar",
+                        OriginalAccountNumber = "5520",
+                        OriginalColor = "#80CBC4",
+                        OriginalName = "Hygienartiklar",
+                        ParentId = 5,
+                        TaxRelated = false
+                    },
+                    new
+                    {
+                        CategoryId = 25,
+                        AccountNumber = "5550",
+                        Color = "#B2DFDB",
+                        CreatedAt = new DateTime(2025, 11, 6, 6, 14, 25, 686, DateTimeKind.Utc).AddTicks(9060),
+                        IsSystemCategory = true,
+                        Name = "Elektronik",
+                        OriginalAccountNumber = "5550",
+                        OriginalColor = "#B2DFDB",
+                        OriginalName = "Elektronik",
+                        ParentId = 5,
+                        TaxRelated = false
+                    },
+                    new
+                    {
+                        CategoryId = 26,
+                        AccountNumber = "7510",
+                        Color = "#6BCF7F",
+                        CreatedAt = new DateTime(2025, 11, 6, 6, 14, 25, 686, DateTimeKind.Utc).AddTicks(9063),
+                        IsSystemCategory = true,
+                        Name = "Tandvård",
+                        OriginalAccountNumber = "7510",
+                        OriginalColor = "#6BCF7F",
+                        OriginalName = "Tandvård",
+                        ParentId = 6,
+                        TaxRelated = false
+                    },
+                    new
+                    {
+                        CategoryId = 27,
+                        AccountNumber = "7520",
+                        Color = "#81C784",
+                        CreatedAt = new DateTime(2025, 11, 6, 6, 14, 25, 686, DateTimeKind.Utc).AddTicks(9065),
+                        IsSystemCategory = true,
+                        Name = "Läkarvård",
+                        OriginalAccountNumber = "7520",
+                        OriginalColor = "#81C784",
+                        OriginalName = "Läkarvård",
+                        ParentId = 6,
+                        TaxRelated = false
+                    },
+                    new
+                    {
+                        CategoryId = 28,
+                        AccountNumber = "7530",
+                        Color = "#A5D6A7",
+                        CreatedAt = new DateTime(2025, 11, 6, 6, 14, 25, 686, DateTimeKind.Utc).AddTicks(9067),
+                        IsSystemCategory = true,
+                        Name = "Medicin",
+                        OriginalAccountNumber = "7530",
+                        OriginalColor = "#A5D6A7",
+                        OriginalName = "Medicin",
+                        ParentId = 6,
+                        TaxRelated = false
+                    },
+                    new
+                    {
+                        CategoryId = 29,
+                        AccountNumber = "3010",
+                        Color = "#66BB6A",
+                        CreatedAt = new DateTime(2025, 11, 6, 6, 14, 25, 686, DateTimeKind.Utc).AddTicks(9070),
+                        IsSystemCategory = true,
+                        Name = "Bonus",
+                        OriginalAccountNumber = "3010",
+                        OriginalColor = "#66BB6A",
+                        OriginalName = "Bonus",
+                        ParentId = 7,
+                        TaxRelated = false
+                    },
+                    new
+                    {
+                        CategoryId = 30,
+                        AccountNumber = "3020",
+                        Color = "#81C784",
+                        CreatedAt = new DateTime(2025, 11, 6, 6, 14, 25, 686, DateTimeKind.Utc).AddTicks(9072),
+                        IsSystemCategory = true,
+                        Name = "Semesterersättning",
+                        OriginalAccountNumber = "3020",
+                        OriginalColor = "#81C784",
+                        OriginalName = "Semesterersättning",
+                        ParentId = 7,
+                        TaxRelated = false
+                    },
+                    new
+                    {
+                        CategoryId = 31,
+                        AccountNumber = "8100",
+                        Color = "#2196F3",
+                        CreatedAt = new DateTime(2025, 11, 6, 6, 14, 25, 686, DateTimeKind.Utc).AddTicks(9074),
+                        IsSystemCategory = true,
+                        Name = "Buffert",
+                        OriginalAccountNumber = "8100",
+                        OriginalColor = "#2196F3",
+                        OriginalName = "Buffert",
+                        ParentId = 8,
+                        TaxRelated = false
+                    },
+                    new
+                    {
+                        CategoryId = 32,
+                        AccountNumber = "8200",
+                        Color = "#42A5F5",
+                        CreatedAt = new DateTime(2025, 11, 6, 6, 14, 25, 686, DateTimeKind.Utc).AddTicks(9076),
+                        IsSystemCategory = true,
+                        Name = "Månadsspar Fonder",
+                        OriginalAccountNumber = "8200",
+                        OriginalColor = "#42A5F5",
+                        OriginalName = "Månadsspar Fonder",
+                        ParentId = 8,
+                        TaxRelated = false
+                    },
+                    new
+                    {
+                        CategoryId = 33,
+                        AccountNumber = "8300",
+                        Color = "#64B5F6",
+                        CreatedAt = new DateTime(2025, 11, 6, 6, 14, 25, 686, DateTimeKind.Utc).AddTicks(9079),
+                        IsSystemCategory = true,
+                        Name = "ISK",
+                        OriginalAccountNumber = "8300",
+                        OriginalColor = "#64B5F6",
+                        OriginalName = "ISK",
+                        ParentId = 8,
+                        TaxRelated = false
+                    },
+                    new
+                    {
+                        CategoryId = 34,
+                        AccountNumber = "8400",
+                        Color = "#90CAF9",
+                        CreatedAt = new DateTime(2025, 11, 6, 6, 14, 25, 686, DateTimeKind.Utc).AddTicks(9081),
+                        IsSystemCategory = true,
+                        Name = "Pensionssparande",
+                        OriginalAccountNumber = "8400",
+                        OriginalColor = "#90CAF9",
+                        OriginalName = "Pensionssparande",
+                        ParentId = 8,
+                        TaxRelated = false
+                    });
+            });
+
+        modelBuilder.Entity("Privatekonomi.Core.Models.CategoryRule", b =>
+            {
+                b.Property<int>("CategoryRuleId")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("INTEGER");
+
+                b.Property<bool>("CaseSensitive")
+                    .HasColumnType("INTEGER");
+
+                b.Property<int>("CategoryId")
+                    .HasColumnType("INTEGER");
+
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("TEXT");
+
+                b.Property<string>("Description")
+                    .HasMaxLength(500)
+                    .HasColumnType("TEXT");
+
+                b.Property<int>("Field")
+                    .HasColumnType("INTEGER");
+
+                b.Property<bool>("IsActive")
+                    .HasColumnType("INTEGER");
+
+                b.Property<int>("MatchType")
+                    .HasColumnType("INTEGER");
+
+                b.Property<int?>("OverridesSystemRuleId")
+                    .HasColumnType("INTEGER");
+
+                b.Property<string>("Pattern")
+                    .IsRequired()
+                    .HasMaxLength(500)
+                    .HasColumnType("TEXT");
+
+                b.Property<int>("Priority")
+                    .HasColumnType("INTEGER");
+
+                b.Property<int>("RuleType")
+                    .HasColumnType("INTEGER");
+
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT");
+
+                b.Property<string>("UserId")
+                    .HasMaxLength(100)
+                    .HasColumnType("TEXT");
+
+                b.HasKey("CategoryRuleId");
+
+                b.HasIndex("CategoryId");
+
+                b.HasIndex("IsActive");
+
+                b.HasIndex("OverridesSystemRuleId");
+
+                b.HasIndex("Priority");
+
+                b.HasIndex("RuleType");
+
+                b.HasIndex("UserId");
+
+                b.HasIndex("IsActive", "Priority");
+
+                b.HasIndex("RuleType", "UserId");
+
+                b.ToTable("CategoryRules");
+            });
+
+        modelBuilder.Entity("Privatekonomi.Core.Models.ChallengeTemplate", b =>
+            {
+                b.Property<int>("ChallengeTemplateId")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("INTEGER");
+
+                b.Property<int>("Category")
+                    .HasColumnType("INTEGER");
+
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("TEXT");
+
+                b.Property<string>("Description")
+                    .IsRequired()
+                    .HasColumnType("TEXT");
+
+                b.Property<int>("Difficulty")
+                    .HasColumnType("INTEGER");
+
+                b.Property<int>("DurationDays")
+                    .HasColumnType("INTEGER");
+
+                b.Property<decimal?>("EstimatedSavingsMax")
+                    .HasColumnType("TEXT");
+
+                b.Property<decimal?>("EstimatedSavingsMin")
+                    .HasColumnType("TEXT");
+
+                b.Property<string>("Icon")
+                    .IsRequired()
+                    .HasColumnType("TEXT");
+
+                b.Property<bool>("IsActive")
+                    .HasColumnType("INTEGER");
+
+                b.Property<string>("Name")
+                    .IsRequired()
+                    .HasColumnType("TEXT");
+
+                b.Property<string>("Rules")
+                    .HasColumnType("TEXT");
+
+                b.Property<int>("SortOrder")
+                    .HasColumnType("INTEGER");
+
+                b.Property<decimal?>("SuggestedTargetAmount")
+                    .HasColumnType("TEXT");
+
+                b.PrimitiveCollection<string>("Tags")
+                    .IsRequired()
+                    .HasColumnType("TEXT");
+
+                b.Property<int>("Type")
+                    .HasColumnType("INTEGER");
+
+                b.HasKey("ChallengeTemplateId");
+
+                b.ToTable("ChallengeTemplates");
+            });
+
+        modelBuilder.Entity("Privatekonomi.Core.Models.ChildAllowance", b =>
+            {
+                b.Property<int>("ChildAllowanceId")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("INTEGER");
+
+                b.Property<decimal>("Amount")
+                    .HasPrecision(18, 2)
+                    .HasColumnType("TEXT");
+
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("TEXT");
+
+                b.Property<decimal>("CurrentBalance")
+                    .HasPrecision(18, 2)
+                    .HasColumnType("TEXT");
+
+                b.Property<DateTime?>("EndDate")
+                    .HasColumnType("TEXT");
+
+                b.Property<int>("Frequency")
+                    .HasColumnType("INTEGER");
+
+                b.Property<int>("HouseholdMemberId")
+                    .HasColumnType("INTEGER");
+
+                b.Property<bool>("IsActive")
+                    .HasColumnType("INTEGER");
+
+                b.Property<string>("Name")
+                    .IsRequired()
+                    .HasMaxLength(200)
+                    .HasColumnType("TEXT");
+
+                b.Property<DateTime>("StartDate")
+                    .HasColumnType("TEXT");
+
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT");
+
+                b.HasKey("ChildAllowanceId");
+
+                b.HasIndex("HouseholdMemberId");
+
+                b.ToTable("ChildAllowances");
+            });
+
+        modelBuilder.Entity("Privatekonomi.Core.Models.CommentLike", b =>
+            {
+                b.Property<int>("CommentLikeId")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("INTEGER");
+
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("TEXT");
+
+                b.Property<int>("GroupCommentId")
+                    .HasColumnType("INTEGER");
+
+                b.Property<string>("UserId")
+                    .IsRequired()
+                    .HasColumnType("TEXT");
+
+                b.HasKey("CommentLikeId");
+
+                b.HasIndex("GroupCommentId");
+
+                b.HasIndex("UserId");
+
+                b.ToTable("CommentLikes");
+            });
+
+        modelBuilder.Entity("Privatekonomi.Core.Models.CommuteDeduction", b =>
+            {
+                b.Property<int>("CommuteDeductionId")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("INTEGER");
+
+                b.Property<decimal>("Cost")
+                    .HasPrecision(18, 2)
+                    .HasColumnType("TEXT");
+
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("TEXT");
+
+                b.Property<DateTime>("Date")
+                    .HasColumnType("TEXT");
+
+                b.Property<decimal>("DeductibleAmount")
+                    .HasPrecision(18, 2)
+                    .HasColumnType("TEXT");
+
+                b.Property<decimal>("DistanceKm")
+                    .HasPrecision(10, 2)
+                    .HasColumnType("TEXT");
+
+                b.Property<string>("FromAddress")
+                    .IsRequired()
+                    .HasMaxLength(200)
+                    .HasColumnType("TEXT");
+
+                b.Property<bool>("IsRegularCommute")
+                    .HasColumnType("INTEGER");
+
+                b.Property<string>("Notes")
+                    .HasMaxLength(500)
+                    .HasColumnType("TEXT");
+
+                b.Property<int>("NumberOfTrips")
+                    .HasColumnType("INTEGER");
+
+                b.Property<int>("TaxYear")
+                    .HasColumnType("INTEGER");
+
+                b.Property<string>("ToAddress")
+                    .IsRequired()
+                    .HasMaxLength(200)
+                    .HasColumnType("TEXT");
+
+                b.Property<string>("TransportMethod")
+                    .IsRequired()
+                    .HasMaxLength(50)
+                    .HasColumnType("TEXT");
+
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT");
+
+                b.HasKey("CommuteDeductionId");
+
+                b.HasIndex("Date");
+
+                b.HasIndex("TaxYear");
+
+                b.ToTable("CommuteDeductions");
+            });
+
+        modelBuilder.Entity("Privatekonomi.Core.Models.CreditRating", b =>
+            {
+                b.Property<int>("CreditRatingId")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("INTEGER");
+
+                b.Property<DateTime>("CheckedDate")
+                    .HasColumnType("TEXT");
+
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("TEXT");
+
+                b.Property<decimal?>("CreditLimit")
+                    .HasPrecision(18, 2)
+                    .HasColumnType("TEXT");
+
+                b.Property<decimal?>("CreditUtilization")
+                    .HasPrecision(5, 2)
+                    .HasColumnType("TEXT");
+
+                b.Property<int>("HouseholdId")
+                    .HasColumnType("INTEGER");
+
+                b.Property<string>("Notes")
+                    .HasMaxLength(1000)
+                    .HasColumnType("TEXT");
+
+                b.Property<int>("PaymentRemarks")
+                    .HasColumnType("INTEGER");
+
+                b.Property<string>("Provider")
+                    .IsRequired()
+                    .HasMaxLength(50)
+                    .HasColumnType("TEXT");
+
+                b.Property<string>("Rating")
+                    .IsRequired()
+                    .HasMaxLength(10)
+                    .HasColumnType("TEXT");
+
+                b.Property<int?>("Score")
+                    .HasColumnType("INTEGER");
+
+                b.Property<decimal?>("TotalDebt")
+                    .HasPrecision(18, 2)
+                    .HasColumnType("TEXT");
+
+                b.HasKey("CreditRatingId");
+
+                b.HasIndex("CheckedDate");
+
+                b.HasIndex("HouseholdId");
+
+                b.ToTable("CreditRatings");
+            });
+
+        modelBuilder.Entity("Privatekonomi.Core.Models.CurrencyAccount", b =>
+            {
+                b.Property<int>("CurrencyAccountId")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("INTEGER");
+
+                b.Property<string>("AccountNumber")
+                    .HasMaxLength(20)
+                    .HasColumnType("TEXT");
+
+                b.Property<decimal>("Balance")
+                    .HasPrecision(18, 2)
+                    .HasColumnType("TEXT");
+
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("TEXT");
+
+                b.Property<string>("Currency")
+                    .IsRequired()
+                    .HasMaxLength(3)
+                    .HasColumnType("TEXT");
+
+                b.Property<string>("Description")
+                    .HasMaxLength(500)
+                    .HasColumnType("TEXT");
+
+                b.Property<decimal>("ExchangeRate")
+                    .HasPrecision(18, 6)
+                    .HasColumnType("TEXT");
+
+                b.Property<DateTime?>("ExchangeRateUpdated")
+                    .HasColumnType("TEXT");
+
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT");
+
+                b.Property<string>("UserId")
+                    .HasColumnType("TEXT");
+
+                b.HasKey("CurrencyAccountId");
+
+                b.HasIndex("Currency");
+
+                b.HasIndex("UserId");
+
+                b.ToTable("CurrencyAccounts");
+            });
+
+        modelBuilder.Entity("Privatekonomi.Core.Models.Dividend", b =>
+            {
+                b.Property<int>("DividendId")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("INTEGER");
+
+                b.Property<decimal>("AmountPerShare")
+                    .HasPrecision(18, 4)
+                    .HasColumnType("TEXT");
+
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("TEXT");
+
+                b.Property<string>("Currency")
+                    .IsRequired()
+                    .HasMaxLength(3)
+                    .HasColumnType("TEXT");
+
+                b.Property<DateTime?>("ExDividendDate")
+                    .HasColumnType("TEXT");
+
+                b.Property<int>("InvestmentId")
+                    .HasColumnType("INTEGER");
+
+                b.Property<bool>("IsReinvested")
+                    .HasColumnType("INTEGER");
+
+                b.Property<string>("Notes")
+                    .HasMaxLength(500)
+                    .HasColumnType("TEXT");
+
+                b.Property<DateTime>("PaymentDate")
+                    .HasColumnType("TEXT");
+
+                b.Property<decimal?>("ReinvestedShares")
+                    .HasPrecision(18, 4)
+                    .HasColumnType("TEXT");
+
+                b.Property<decimal?>("ReinvestmentPrice")
+                    .HasPrecision(18, 4)
+                    .HasColumnType("TEXT");
+
+                b.Property<decimal>("SharesHeld")
+                    .HasPrecision(18, 4)
+                    .HasColumnType("TEXT");
+
+                b.Property<decimal?>("TaxWithheld")
+                    .HasPrecision(18, 2)
+                    .HasColumnType("TEXT");
+
+                b.Property<decimal>("TotalAmount")
+                    .HasPrecision(18, 2)
+                    .HasColumnType("TEXT");
+
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT");
+
+                b.Property<string>("UserId")
+                    .HasColumnType("TEXT");
+
+                b.HasKey("DividendId");
+
+                b.HasIndex("InvestmentId");
+
+                b.HasIndex("PaymentDate");
+
+                b.HasIndex("UserId");
+
+                b.ToTable("Dividends");
+            });
+
+        modelBuilder.Entity("Privatekonomi.Core.Models.DoNotDisturbSchedule", b =>
+            {
+                b.Property<int>("DoNotDisturbScheduleId")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("INTEGER");
+
+                b.Property<bool>("AllowCritical")
+                    .HasColumnType("INTEGER");
+
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("TEXT");
+
+                b.Property<int>("DayOfWeek")
+                    .HasColumnType("INTEGER");
+
+                b.Property<string>("EndTime")
+                    .IsRequired()
+                    .HasMaxLength(5)
+                    .HasColumnType("TEXT");
+
+                b.Property<bool>("IsEnabled")
+                    .HasColumnType("INTEGER");
+
+                b.Property<string>("StartTime")
+                    .IsRequired()
+                    .HasMaxLength(5)
+                    .HasColumnType("TEXT");
+
+                b.Property<DateTime>("UpdatedAt")
+                    .HasColumnType("TEXT");
+
+                b.Property<string>("UserId")
+                    .IsRequired()
+                    .HasColumnType("TEXT");
+
+                b.HasKey("DoNotDisturbScheduleId");
+
+                b.HasIndex("UserId");
+
+                b.ToTable("DoNotDisturbSchedules");
+            });
+
+        modelBuilder.Entity("Privatekonomi.Core.Models.ExpenseShare", b =>
+            {
+                b.Property<int>("ExpenseShareId")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("INTEGER");
+
+                b.Property<int>("HouseholdMemberId")
+                    .HasColumnType("INTEGER");
+
+                b.Property<decimal?>("RoomSize")
+                    .HasPrecision(10, 2)
+                    .HasColumnType("TEXT");
+
+                b.Property<decimal>("ShareAmount")
+                    .HasPrecision(18, 2)
+                    .HasColumnType("TEXT");
+
+                b.Property<decimal?>("SharePercentage")
+                    .HasPrecision(5, 2)
+                    .HasColumnType("TEXT");
+
+                b.Property<int>("SharedExpenseId")
+                    .HasColumnType("INTEGER");
+
+                b.HasKey("ExpenseShareId");
+
+                b.HasIndex("HouseholdMemberId");
+
+                b.HasIndex("SharedExpenseId");
+
+                b.ToTable("ExpenseShares");
+            });
+
+        modelBuilder.Entity("Privatekonomi.Core.Models.Goal", b =>
+            {
+                b.Property<int>("GoalId")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("INTEGER");
+
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("TEXT");
+
+                b.Property<decimal>("CurrentAmount")
+                    .HasPrecision(18, 2)
+                    .HasColumnType("TEXT");
+
+                b.Property<string>("Description")
+                    .HasMaxLength(500)
+                    .HasColumnType("TEXT");
+
+                b.Property<int?>("FundedFromBankSourceId")
+                    .HasColumnType("INTEGER");
+
+                b.Property<string>("Name")
+                    .IsRequired()
+                    .HasMaxLength(200)
+                    .HasColumnType("TEXT");
+
+                b.Property<int>("Priority")
+                    .HasColumnType("INTEGER");
+
+                b.Property<decimal>("TargetAmount")
+                    .HasPrecision(18, 2)
+                    .HasColumnType("TEXT");
+
+                b.Property<DateTime?>("TargetDate")
+                    .HasColumnType("TEXT");
+
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT");
+
+                b.Property<string>("UserId")
+                    .HasColumnType("TEXT");
+
+                b.Property<DateTime>("ValidFrom")
+                    .HasColumnType("TEXT");
+
+                b.Property<DateTime?>("ValidTo")
+                    .HasColumnType("TEXT");
+
+                b.HasKey("GoalId");
+
+                b.HasIndex("FundedFromBankSourceId");
+
+                b.HasIndex("UserId");
+
+                b.HasIndex("ValidFrom");
+
+                b.HasIndex("ValidTo");
+
+                b.HasIndex("ValidFrom", "ValidTo");
+
+                b.ToTable("Goals");
+            });
+
+        modelBuilder.Entity("Privatekonomi.Core.Models.GoalMilestone", b =>
+            {
+                b.Property<int>("GoalMilestoneId")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("INTEGER");
+
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("TEXT");
+
+                b.Property<string>("Description")
+                    .HasMaxLength(500)
+                    .HasColumnType("TEXT");
+
+                b.Property<int>("GoalId")
+                    .HasColumnType("INTEGER");
+
+                b.Property<bool>("IsAutomatic")
+                    .HasColumnType("INTEGER");
+
+                b.Property<bool>("IsReached")
+                    .HasColumnType("INTEGER");
+
+                b.Property<int>("Percentage")
+                    .HasColumnType("INTEGER");
+
+                b.Property<DateTime?>("ReachedAt")
+                    .HasColumnType("TEXT");
+
+                b.Property<decimal>("TargetAmount")
+                    .HasPrecision(18, 2)
+                    .HasColumnType("TEXT");
+
+                b.HasKey("GoalMilestoneId");
+
+                b.HasIndex("GoalId");
+
+                b.HasIndex("IsReached");
+
+                b.HasIndex("GoalId", "Percentage");
+
+                b.ToTable("GoalMilestones");
+            });
+
+        modelBuilder.Entity("Privatekonomi.Core.Models.GoalShare", b =>
+            {
+                b.Property<int>("GoalShareId")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("INTEGER");
+
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("TEXT");
+
+                b.Property<DateTime?>("ExpiresAt")
+                    .HasColumnType("TEXT");
+
+                b.Property<int?>("GoalId")
+                    .HasColumnType("INTEGER");
+
+                b.Property<bool>("IsActive")
+                    .HasColumnType("INTEGER");
+
+                b.Property<string>("ShareToken")
+                    .IsRequired()
+                    .HasColumnType("TEXT");
+
+                b.Property<int?>("SharedGoalId")
+                    .HasColumnType("INTEGER");
+
+                b.Property<bool>("ShowCurrentAmount")
+                    .HasColumnType("INTEGER");
+
+                b.Property<bool>("ShowOwnerName")
+                    .HasColumnType("INTEGER");
+
+                b.Property<bool>("ShowTargetAmount")
+                    .HasColumnType("INTEGER");
+
+                b.Property<bool>("ShowTargetDate")
+                    .HasColumnType("INTEGER");
+
+                b.Property<bool>("ShowTransactions")
+                    .HasColumnType("INTEGER");
+
+                b.Property<string>("UserId")
+                    .IsRequired()
+                    .HasColumnType("TEXT");
+
+                b.Property<int>("ViewCount")
+                    .HasColumnType("INTEGER");
+
+                b.HasKey("GoalShareId");
+
+                b.HasIndex("GoalId");
+
+                b.HasIndex("SharedGoalId");
+
+                b.HasIndex("UserId");
+
+                b.ToTable("GoalShares");
+            });
+
+        modelBuilder.Entity("Privatekonomi.Core.Models.GroupComment", b =>
+            {
+                b.Property<int>("GroupCommentId")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("INTEGER");
+
+                b.Property<string>("Content")
+                    .IsRequired()
+                    .HasColumnType("TEXT");
+
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("TEXT");
+
+                b.Property<DateTime?>("DeletedAt")
+                    .HasColumnType("TEXT");
+
+                b.Property<int?>("GroupGoalId")
+                    .HasColumnType("INTEGER");
+
+                b.Property<int>("SavingsGroupId")
+                    .HasColumnType("INTEGER");
+
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT");
+
+                b.Property<string>("UserId")
+                    .IsRequired()
+                    .HasColumnType("TEXT");
+
+                b.HasKey("GroupCommentId");
+
+                b.HasIndex("GroupGoalId");
+
+                b.HasIndex("SavingsGroupId");
+
+                b.HasIndex("UserId");
+
+                b.ToTable("GroupComments");
+            });
+
+        modelBuilder.Entity("Privatekonomi.Core.Models.GroupGoal", b =>
+            {
+                b.Property<int>("GroupGoalId")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("INTEGER");
+
+                b.Property<string>("DisplayName")
+                    .HasColumnType("TEXT");
+
+                b.Property<int>("GoalId")
+                    .HasColumnType("INTEGER");
+
+                b.Property<bool>("IsActive")
+                    .HasColumnType("INTEGER");
+
+                b.Property<bool>("IsAnonymous")
+                    .HasColumnType("INTEGER");
+
+                b.Property<int>("SavingsGroupId")
+                    .HasColumnType("INTEGER");
+
+                b.Property<DateTime>("SharedAt")
+                    .HasColumnType("TEXT");
+
+                b.Property<string>("UserId")
+                    .IsRequired()
+                    .HasColumnType("TEXT");
+
+                b.HasKey("GroupGoalId");
+
+                b.HasIndex("GoalId");
+
+                b.HasIndex("SavingsGroupId");
+
+                b.HasIndex("UserId");
+
+                b.ToTable("GroupGoals");
+            });
+
+        modelBuilder.Entity("Privatekonomi.Core.Models.Household", b =>
+            {
+                b.Property<int>("HouseholdId")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("INTEGER");
+
+                b.Property<DateTime>("CreatedDate")
+                    .HasColumnType("TEXT");
+
+                b.Property<string>("Description")
+                    .HasMaxLength(500)
+                    .HasColumnType("TEXT");
+
+                b.Property<string>("Name")
+                    .IsRequired()
+                    .HasMaxLength(200)
+                    .HasColumnType("TEXT");
+
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT");
+
+                b.HasKey("HouseholdId");
+
+                b.ToTable("Households");
+            });
+
+        modelBuilder.Entity("Privatekonomi.Core.Models.HouseholdMember", b =>
+            {
+                b.Property<int>("HouseholdMemberId")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("INTEGER");
+
+                b.Property<DateTime?>("DateOfBirth")
+                    .HasColumnType("TEXT");
+
+                b.Property<string>("Email")
+                    .HasMaxLength(200)
+                    .HasColumnType("TEXT");
+
+                b.Property<int>("HouseholdId")
+                    .HasColumnType("INTEGER");
+
+                b.Property<bool>("IsActive")
+                    .HasColumnType("INTEGER");
+
+                b.Property<DateTime>("JoinedDate")
+                    .HasColumnType("TEXT");
+
+                b.Property<DateTime?>("LeftDate")
+                    .HasColumnType("TEXT");
+
+                b.Property<string>("Name")
+                    .IsRequired()
+                    .HasMaxLength(100)
+                    .HasColumnType("TEXT");
+
+                b.Property<string>("UserId")
+                    .HasColumnType("TEXT");
+
+                b.HasKey("HouseholdMemberId");
+
+                b.HasIndex("HouseholdId");
+
+                b.ToTable("HouseholdMembers");
+            });
+
+        modelBuilder.Entity("Privatekonomi.Core.Models.HouseholdRole", b =>
+            {
+                b.Property<int>("HouseholdRoleId")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("INTEGER");
+
+                b.Property<string>("AssignedBy")
+                    .HasMaxLength(450)
+                    .HasColumnType("TEXT");
+
+                b.Property<DateTime>("AssignedDate")
+                    .HasColumnType("TEXT");
+
+                b.Property<string>("DelegatedBy")
+                    .HasMaxLength(450)
+                    .HasColumnType("TEXT");
+
+                b.Property<DateTime?>("DelegationEndDate")
+                    .HasColumnType("TEXT");
+
+                b.Property<DateTime?>("DelegationStartDate")
+                    .HasColumnType("TEXT");
+
+                b.Property<int>("HouseholdMemberId")
+                    .HasColumnType("INTEGER");
+
+                b.Property<bool>("IsActive")
+                    .HasColumnType("INTEGER");
+
+                b.Property<bool>("IsDelegated")
+                    .HasColumnType("INTEGER");
+
+                b.Property<string>("RevokedBy")
+                    .HasMaxLength(450)
+                    .HasColumnType("TEXT");
+
+                b.Property<DateTime?>("RevokedDate")
+                    .HasColumnType("TEXT");
+
+                b.Property<int>("RoleType")
+                    .HasColumnType("INTEGER");
+
+                b.HasKey("HouseholdRoleId");
+
+                b.HasIndex("DelegationEndDate");
+
+                b.HasIndex("HouseholdMemberId");
+
+                b.HasIndex("IsActive");
+
+                b.HasIndex("RoleType");
+
+                b.HasIndex("HouseholdMemberId", "IsActive");
+
+                b.ToTable("HouseholdRoles");
+            });
+
+        modelBuilder.Entity("Privatekonomi.Core.Models.Investment", b =>
+            {
+                b.Property<int>("InvestmentId")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("INTEGER");
+
+                b.Property<string>("AccountNumber")
+                    .HasMaxLength(50)
+                    .HasColumnType("TEXT");
+
+                b.Property<string>("AccountType")
+                    .HasMaxLength(20)
+                    .HasColumnType("TEXT");
+
+                b.Property<int?>("BankSourceId")
+                    .HasColumnType("INTEGER");
+
+                b.Property<string>("Country")
+                    .HasMaxLength(2)
+                    .HasColumnType("TEXT");
+
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("TEXT");
+
+                b.Property<string>("Currency")
+                    .HasMaxLength(3)
+                    .HasColumnType("TEXT");
+
+                b.Property<decimal>("CurrentPrice")
+                    .HasPrecision(18, 2)
+                    .HasColumnType("TEXT");
+
+                b.Property<string>("ISIN")
+                    .HasMaxLength(12)
+                    .HasColumnType("TEXT");
+
+                b.Property<DateTime>("LastUpdated")
+                    .HasColumnType("TEXT");
+
+                b.Property<string>("Market")
+                    .HasMaxLength(50)
+                    .HasColumnType("TEXT");
+
+                b.Property<string>("Name")
+                    .IsRequired()
+                    .HasMaxLength(200)
+                    .HasColumnType("TEXT");
+
+                b.Property<DateTime>("PurchaseDate")
+                    .HasColumnType("TEXT");
+
+                b.Property<decimal>("PurchasePrice")
+                    .HasPrecision(18, 2)
+                    .HasColumnType("TEXT");
+
+                b.Property<decimal>("Quantity")
+                    .HasPrecision(18, 4)
+                    .HasColumnType("TEXT");
+
+                b.Property<decimal?>("SchablonTax")
+                    .HasPrecision(18, 2)
+                    .HasColumnType("TEXT");
+
+                b.Property<int?>("SchablonTaxYear")
+                    .HasColumnType("INTEGER");
+
+                b.Property<string>("ShortName")
+                    .HasMaxLength(50)
+                    .HasColumnType("TEXT");
+
+                b.Property<string>("Type")
+                    .IsRequired()
+                    .HasMaxLength(50)
+                    .HasColumnType("TEXT");
+
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT");
+
+                b.Property<string>("UserId")
+                    .HasColumnType("TEXT");
+
+                b.Property<DateTime>("ValidFrom")
+                    .HasColumnType("TEXT");
+
+                b.Property<DateTime?>("ValidTo")
+                    .HasColumnType("TEXT");
+
+                b.HasKey("InvestmentId");
+
+                b.HasIndex("AccountNumber");
+
+                b.HasIndex("AccountType");
+
+                b.HasIndex("BankSourceId");
+
+                b.HasIndex("ISIN");
+
+                b.HasIndex("SchablonTaxYear");
+
+                b.HasIndex("UserId");
+
+                b.HasIndex("ValidFrom");
+
+                b.HasIndex("ValidTo");
+
+                b.HasIndex("ValidFrom", "ValidTo");
+
+                b.ToTable("Investments");
+            });
+
+        modelBuilder.Entity("Privatekonomi.Core.Models.InvestmentTransaction", b =>
+            {
+                b.Property<int>("InvestmentTransactionId")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("INTEGER");
+
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("TEXT");
+
+                b.Property<string>("Currency")
+                    .IsRequired()
+                    .HasMaxLength(3)
+                    .HasColumnType("TEXT");
+
+                b.Property<decimal?>("ExchangeRate")
+                    .HasPrecision(18, 6)
+                    .HasColumnType("TEXT");
+
+                b.Property<decimal?>("Fees")
+                    .HasPrecision(18, 2)
+                    .HasColumnType("TEXT");
+
+                b.Property<int>("InvestmentId")
+                    .HasColumnType("INTEGER");
+
+                b.Property<string>("Notes")
+                    .HasMaxLength(500)
+                    .HasColumnType("TEXT");
+
+                b.Property<decimal>("PricePerShare")
+                    .HasPrecision(18, 4)
+                    .HasColumnType("TEXT");
+
+                b.Property<decimal>("Quantity")
+                    .HasPrecision(18, 4)
+                    .HasColumnType("TEXT");
+
+                b.Property<decimal>("TotalAmount")
+                    .HasPrecision(18, 2)
+                    .HasColumnType("TEXT");
+
+                b.Property<DateTime>("TransactionDate")
+                    .HasColumnType("TEXT");
+
+                b.Property<string>("TransactionType")
+                    .IsRequired()
+                    .HasMaxLength(20)
+                    .HasColumnType("TEXT");
+
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT");
+
+                b.Property<string>("UserId")
+                    .HasColumnType("TEXT");
+
+                b.HasKey("InvestmentTransactionId");
+
+                b.HasIndex("InvestmentId");
+
+                b.HasIndex("TransactionDate");
+
+                b.HasIndex("UserId");
+
+                b.ToTable("InvestmentTransactions");
+            });
+
+        modelBuilder.Entity("Privatekonomi.Core.Models.LifeTimelineMilestone", b =>
+            {
+                b.Property<int>("LifeTimelineMilestoneId")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("INTEGER");
+
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("TEXT");
+
+                b.Property<decimal>("CurrentSavings")
+                    .HasPrecision(18, 2)
+                    .HasColumnType("TEXT");
+
+                b.Property<string>("Description")
+                    .HasMaxLength(500)
+                    .HasColumnType("TEXT");
+
+                b.Property<decimal>("EstimatedCost")
+                    .HasPrecision(18, 2)
+                    .HasColumnType("TEXT");
+
+                b.Property<bool>("IsCompleted")
+                    .HasColumnType("INTEGER");
+
+                b.Property<string>("MilestoneType")
+                    .IsRequired()
+                    .HasMaxLength(100)
+                    .HasColumnType("TEXT");
+
+                b.Property<string>("Name")
+                    .IsRequired()
+                    .HasMaxLength(200)
+                    .HasColumnType("TEXT");
+
+                b.Property<string>("Notes")
+                    .HasMaxLength(1000)
+                    .HasColumnType("TEXT");
+
+                b.Property<DateTime>("PlannedDate")
+                    .HasColumnType("TEXT");
+
+                b.Property<int>("Priority")
+                    .HasColumnType("INTEGER");
+
+                b.Property<decimal>("ProgressPercentage")
+                    .HasPrecision(5, 2)
+                    .HasColumnType("TEXT");
+
+                b.Property<decimal?>("RequiredMonthlySavings")
+                    .HasPrecision(18, 2)
+                    .HasColumnType("TEXT");
+
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT");
+
+                b.Property<string>("UserId")
+                    .HasColumnType("TEXT");
+
+                b.HasKey("LifeTimelineMilestoneId");
+
+                b.HasIndex("MilestoneType");
+
+                b.HasIndex("PlannedDate");
+
+                b.HasIndex("UserId");
+
+                b.HasIndex("UserId", "PlannedDate");
+
+                b.ToTable("LifeTimelineMilestones");
+            });
+
+        modelBuilder.Entity("Privatekonomi.Core.Models.LifeTimelineScenario", b =>
+            {
+                b.Property<int>("LifeTimelineScenarioId")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("INTEGER");
+
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("TEXT");
+
+                b.Property<string>("Description")
+                    .HasMaxLength(500)
+                    .HasColumnType("TEXT");
+
+                b.Property<decimal>("ExpectedMonthlyPension")
+                    .HasPrecision(18, 2)
+                    .HasColumnType("TEXT");
+
+                b.Property<decimal>("ExpectedReturnRate")
+                    .HasPrecision(5, 2)
+                    .HasColumnType("TEXT");
+
+                b.Property<decimal>("InflationRate")
+                    .HasPrecision(5, 2)
+                    .HasColumnType("TEXT");
+
+                b.Property<bool>("IsActive")
+                    .HasColumnType("INTEGER");
+
+                b.Property<bool>("IsBaseline")
+                    .HasColumnType("INTEGER");
+
+                b.Property<decimal>("MonthlySavings")
+                    .HasPrecision(18, 2)
+                    .HasColumnType("TEXT");
+
+                b.Property<string>("Name")
+                    .IsRequired()
+                    .HasMaxLength(200)
+                    .HasColumnType("TEXT");
+
+                b.Property<string>("Notes")
+                    .HasMaxLength(1000)
+                    .HasColumnType("TEXT");
+
+                b.Property<decimal>("ProjectedRetirementWealth")
+                    .HasPrecision(18, 2)
+                    .HasColumnType("TEXT");
+
+                b.Property<int>("RetirementAge")
+                    .HasColumnType("INTEGER");
+
+                b.Property<decimal>("SalaryIncreaseRate")
+                    .HasPrecision(5, 2)
+                    .HasColumnType("TEXT");
+
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT");
+
+                b.Property<string>("UserId")
+                    .HasColumnType("TEXT");
+
+                b.HasKey("LifeTimelineScenarioId");
+
+                b.HasIndex("IsActive");
+
+                b.HasIndex("UserId");
+
+                b.HasIndex("UserId", "IsActive");
+
+                b.ToTable("LifeTimelineScenarios");
+            });
+
+        modelBuilder.Entity("Privatekonomi.Core.Models.Loan", b =>
+            {
+                b.Property<int>("LoanId")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("INTEGER");
+
+                b.Property<decimal>("Amortization")
+                    .HasPrecision(18, 2)
+                    .HasColumnType("TEXT");
+
+                b.Property<decimal>("Amount")
+                    .HasPrecision(18, 2)
+                    .HasColumnType("TEXT");
+
+                b.Property<int?>("BindingPeriodMonths")
+                    .HasColumnType("INTEGER");
+
+                b.Property<DateTime?>("CSN_LastUpdate")
+                    .HasColumnType("TEXT");
+
+                b.Property<string>("CSN_LoanType")
+                    .HasMaxLength(50)
+                    .HasColumnType("TEXT");
+
+                b.Property<decimal?>("CSN_MonthlyPayment")
+                    .HasPrecision(18, 2)
+                    .HasColumnType("TEXT");
+
+                b.Property<decimal?>("CSN_RemainingAmount")
+                    .HasPrecision(18, 2)
+                    .HasColumnType("TEXT");
+
+                b.Property<int?>("CSN_StudyYear")
+                    .HasColumnType("INTEGER");
+
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("TEXT");
+
+                b.Property<decimal?>("CreditLimit")
+                    .HasPrecision(18, 2)
+                    .HasColumnType("TEXT");
+
+                b.Property<string>("Currency")
+                    .IsRequired()
+                    .HasMaxLength(3)
+                    .HasColumnType("TEXT");
+
+                b.Property<decimal?>("ExtraMonthlyPayment")
+                    .HasPrecision(18, 2)
+                    .HasColumnType("TEXT");
+
+                b.Property<decimal?>("InstallmentFee")
+                    .HasPrecision(18, 2)
+                    .HasColumnType("TEXT");
+
+                b.Property<int?>("InstallmentMonths")
+                    .HasColumnType("INTEGER");
+
+                b.Property<decimal>("InterestRate")
+                    .HasPrecision(5, 2)
+                    .HasColumnType("TEXT");
+
+                b.Property<bool>("IsFixedRate")
+                    .HasColumnType("INTEGER");
+
+                b.Property<string>("LoanProvider")
+                    .HasMaxLength(100)
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime?>("MaturityDate")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime?>("MaturityDate")
+                    .HasColumnType("TEXT");
 
-                    b.Property<decimal?>("MinimumPayment")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("TEXT");
+                b.Property<decimal?>("MinimumPayment")
+                    .HasPrecision(18, 2)
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("TEXT");
+                b.Property<string>("Name")
+                    .IsRequired()
+                    .HasMaxLength(200)
+                    .HasColumnType("TEXT");
 
-                    b.Property<int>("Priority")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("Priority")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<string>("PropertyAddress")
-                        .HasMaxLength(200)
-                        .HasColumnType("TEXT");
+                b.Property<string>("PropertyAddress")
+                    .HasMaxLength(200)
+                    .HasColumnType("TEXT");
 
-                    b.Property<decimal?>("PropertyValue")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("TEXT");
+                b.Property<decimal?>("PropertyValue")
+                    .HasPrecision(18, 2)
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime?>("RateResetDate")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime?>("RateResetDate")
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime?>("StartDate")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime?>("StartDate")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("Type")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT");
+                b.Property<string>("Type")
+                    .IsRequired()
+                    .HasMaxLength(50)
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("UserId")
-                        .HasColumnType("TEXT");
+                b.Property<string>("UserId")
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime>("ValidFrom")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime>("ValidFrom")
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime?>("ValidTo")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime?>("ValidTo")
+                    .HasColumnType("TEXT");
 
-                    b.HasKey("LoanId");
+                b.HasKey("LoanId");
 
-                    b.HasIndex("Type");
+                b.HasIndex("Type");
 
-                    b.HasIndex("UserId");
+                b.HasIndex("UserId");
 
-                    b.HasIndex("ValidFrom");
+                b.HasIndex("ValidFrom");
 
-                    b.HasIndex("ValidTo");
+                b.HasIndex("ValidTo");
 
-                    b.HasIndex("ValidFrom", "ValidTo");
+                b.HasIndex("ValidFrom", "ValidTo");
 
-                    b.ToTable("Loans");
-                });
+                b.ToTable("Loans");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.MLModel", b =>
-                {
-                    b.Property<int>("ModelId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+        modelBuilder.Entity("Privatekonomi.Core.Models.MLModel", b =>
+            {
+                b.Property<int>("ModelId")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("INTEGER");
 
-                    b.Property<float>("Accuracy")
-                        .HasColumnType("REAL");
+                b.Property<float>("Accuracy")
+                    .HasColumnType("REAL");
 
-                    b.Property<string>("Metrics")
-                        .HasMaxLength(2000)
-                        .HasColumnType("TEXT");
+                b.Property<string>("Metrics")
+                    .HasMaxLength(2000)
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("ModelPath")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT");
+                b.Property<string>("ModelPath")
+                    .IsRequired()
+                    .HasMaxLength(500)
+                    .HasColumnType("TEXT");
 
-                    b.Property<float>("Precision")
-                        .HasColumnType("REAL");
+                b.Property<float>("Precision")
+                    .HasColumnType("REAL");
 
-                    b.Property<float>("Recall")
-                        .HasColumnType("REAL");
+                b.Property<float>("Recall")
+                    .HasColumnType("REAL");
 
-                    b.Property<DateTime>("TrainedAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime>("TrainedAt")
+                    .HasColumnType("TEXT");
 
-                    b.Property<int>("TrainingRecordsCount")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("TrainingRecordsCount")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasMaxLength(450)
-                        .HasColumnType("TEXT");
+                b.Property<string>("UserId")
+                    .IsRequired()
+                    .HasMaxLength(450)
+                    .HasColumnType("TEXT");
 
-                    b.HasKey("ModelId");
+                b.HasKey("ModelId");
 
-                    b.HasIndex("UserId");
+                b.HasIndex("UserId");
 
-                    b.ToTable("MLModels");
-                });
+                b.ToTable("MLModels");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.NetWorthSnapshot", b =>
-                {
-                    b.Property<int>("NetWorthSnapshotId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+        modelBuilder.Entity("Privatekonomi.Core.Models.NetWorthSnapshot", b =>
+            {
+                b.Property<int>("NetWorthSnapshotId")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("INTEGER");
 
-                    b.Property<decimal?>("BankBalance")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("TEXT");
+                b.Property<decimal?>("BankBalance")
+                    .HasPrecision(18, 2)
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime>("Date")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime>("Date")
+                    .HasColumnType("TEXT");
 
-                    b.Property<decimal?>("InvestmentValue")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("TEXT");
+                b.Property<decimal?>("InvestmentValue")
+                    .HasPrecision(18, 2)
+                    .HasColumnType("TEXT");
 
-                    b.Property<bool>("IsManual")
-                        .HasColumnType("INTEGER");
+                b.Property<bool>("IsManual")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<decimal?>("LoanBalance")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("TEXT");
+                b.Property<decimal?>("LoanBalance")
+                    .HasPrecision(18, 2)
+                    .HasColumnType("TEXT");
 
-                    b.Property<decimal>("NetWorth")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("TEXT");
+                b.Property<decimal>("NetWorth")
+                    .HasPrecision(18, 2)
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("Notes")
-                        .HasMaxLength(1000)
-                        .HasColumnType("TEXT");
+                b.Property<string>("Notes")
+                    .HasMaxLength(1000)
+                    .HasColumnType("TEXT");
 
-                    b.Property<decimal?>("PhysicalAssetValue")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("TEXT");
+                b.Property<decimal?>("PhysicalAssetValue")
+                    .HasPrecision(18, 2)
+                    .HasColumnType("TEXT");
 
-                    b.Property<decimal>("TotalAssets")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("TEXT");
+                b.Property<decimal>("TotalAssets")
+                    .HasPrecision(18, 2)
+                    .HasColumnType("TEXT");
 
-                    b.Property<decimal>("TotalLiabilities")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("TEXT");
+                b.Property<decimal>("TotalLiabilities")
+                    .HasPrecision(18, 2)
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("UserId")
-                        .HasColumnType("TEXT");
+                b.Property<string>("UserId")
+                    .HasColumnType("TEXT");
 
-                    b.HasKey("NetWorthSnapshotId");
+                b.HasKey("NetWorthSnapshotId");
 
-                    b.HasIndex("Date");
+                b.HasIndex("Date");
 
-                    b.HasIndex("UserId");
+                b.HasIndex("UserId");
 
-                    b.HasIndex("UserId", "Date");
+                b.HasIndex("UserId", "Date");
 
-                    b.ToTable("NetWorthSnapshots");
-                });
+                b.ToTable("NetWorthSnapshots");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.Notification", b =>
-                {
-                    b.Property<int>("NotificationId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+        modelBuilder.Entity("Privatekonomi.Core.Models.Notification", b =>
+            {
+                b.Property<int>("NotificationId")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("INTEGER");
 
-                    b.Property<string>("ActionUrl")
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT");
+                b.Property<string>("ActionUrl")
+                    .HasMaxLength(500)
+                    .HasColumnType("TEXT");
 
-                    b.Property<int?>("BillReminderId")
-                        .HasColumnType("INTEGER");
+                b.Property<int?>("BillReminderId")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<int>("Channel")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("Channel")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("Data")
-                        .HasColumnType("TEXT");
+                b.Property<string>("Data")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("ErrorMessage")
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT");
+                b.Property<string>("ErrorMessage")
+                    .HasMaxLength(500)
+                    .HasColumnType("TEXT");
 
-                    b.Property<bool>("IsRead")
-                        .HasColumnType("INTEGER");
+                b.Property<bool>("IsRead")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<string>("Message")
-                        .IsRequired()
-                        .HasMaxLength(1000)
-                        .HasColumnType("TEXT");
+                b.Property<string>("Message")
+                    .IsRequired()
+                    .HasMaxLength(1000)
+                    .HasColumnType("TEXT");
 
-                    b.Property<int>("Priority")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("Priority")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<DateTime?>("ReadAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime?>("ReadAt")
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime?>("SentAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime?>("SentAt")
+                    .HasColumnType("TEXT");
 
-                    b.Property<int>("SnoozeCount")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("SnoozeCount")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<DateTime?>("SnoozeUntil")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime?>("SnoozeUntil")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("TEXT");
+                b.Property<string>("Title")
+                    .IsRequired()
+                    .HasMaxLength(200)
+                    .HasColumnType("TEXT");
 
-                    b.Property<int>("Type")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("Type")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
+                b.Property<string>("UserId")
+                    .IsRequired()
+                    .HasColumnType("TEXT");
 
-                    b.HasKey("NotificationId");
+                b.HasKey("NotificationId");
 
-                    b.HasIndex("UserId");
+                b.HasIndex("UserId");
 
-                    b.ToTable("Notifications");
-                });
+                b.ToTable("Notifications");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.NotificationIntegration", b =>
-                {
-                    b.Property<int>("NotificationIntegrationId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+        modelBuilder.Entity("Privatekonomi.Core.Models.NotificationIntegration", b =>
+            {
+                b.Property<int>("NotificationIntegrationId")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("INTEGER");
 
-                    b.Property<int>("Channel")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("Channel")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<string>("Configuration")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
+                b.Property<string>("Configuration")
+                    .IsRequired()
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("TEXT");
 
-                    b.Property<bool>("IsEnabled")
-                        .HasColumnType("INTEGER");
+                b.Property<bool>("IsEnabled")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<string>("LastErrorMessage")
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT");
+                b.Property<string>("LastErrorMessage")
+                    .HasMaxLength(500)
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime?>("LastUsedAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime?>("LastUsedAt")
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime>("UpdatedAt")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
+                b.Property<string>("UserId")
+                    .IsRequired()
+                    .HasColumnType("TEXT");
 
-                    b.HasKey("NotificationIntegrationId");
+                b.HasKey("NotificationIntegrationId");
 
-                    b.HasIndex("UserId");
+                b.HasIndex("UserId");
 
-                    b.ToTable("NotificationIntegrations");
-                });
+                b.ToTable("NotificationIntegrations");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.NotificationPreference", b =>
-                {
-                    b.Property<int>("NotificationPreferenceId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+        modelBuilder.Entity("Privatekonomi.Core.Models.NotificationPreference", b =>
+            {
+                b.Property<int>("NotificationPreferenceId")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("INTEGER");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("TEXT");
 
-                    b.Property<int>("DigestIntervalHours")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("DigestIntervalHours")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<bool>("DigestMode")
-                        .HasColumnType("INTEGER");
+                b.Property<bool>("DigestMode")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<int>("EnabledChannels")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("EnabledChannels")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<bool>("IsEnabled")
-                        .HasColumnType("INTEGER");
+                b.Property<bool>("IsEnabled")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<int>("MinimumPriority")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("MinimumPriority")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<int>("NotificationType")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("NotificationType")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime>("UpdatedAt")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
+                b.Property<string>("UserId")
+                    .IsRequired()
+                    .HasColumnType("TEXT");
 
-                    b.HasKey("NotificationPreferenceId");
+                b.HasKey("NotificationPreferenceId");
 
-                    b.HasIndex("UserId");
+                b.HasIndex("UserId");
 
-                    b.ToTable("NotificationPreferences");
-                });
+                b.ToTable("NotificationPreferences");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.Pension", b =>
-                {
-                    b.Property<int>("PensionId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+        modelBuilder.Entity("Privatekonomi.Core.Models.Pension", b =>
+            {
+                b.Property<int>("PensionId")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("INTEGER");
 
-                    b.Property<string>("AccountNumber")
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT");
+                b.Property<string>("AccountNumber")
+                    .HasMaxLength(50)
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("TEXT");
 
-                    b.Property<decimal>("CurrentValue")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("TEXT");
+                b.Property<decimal>("CurrentValue")
+                    .HasPrecision(18, 2)
+                    .HasColumnType("TEXT");
 
-                    b.Property<decimal?>("ExpectedMonthlyPension")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("TEXT");
+                b.Property<decimal?>("ExpectedMonthlyPension")
+                    .HasPrecision(18, 2)
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime>("LastUpdated")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime>("LastUpdated")
+                    .HasColumnType("TEXT");
 
-                    b.Property<decimal?>("MonthlyContribution")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("TEXT");
+                b.Property<decimal?>("MonthlyContribution")
+                    .HasPrecision(18, 2)
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("TEXT");
+                b.Property<string>("Name")
+                    .IsRequired()
+                    .HasMaxLength(200)
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("Notes")
-                        .HasMaxLength(1000)
-                        .HasColumnType("TEXT");
+                b.Property<string>("Notes")
+                    .HasMaxLength(1000)
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("PensionType")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
+                b.Property<string>("PensionType")
+                    .IsRequired()
+                    .HasMaxLength(100)
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("Provider")
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
+                b.Property<string>("Provider")
+                    .HasMaxLength(100)
+                    .HasColumnType("TEXT");
 
-                    b.Property<int?>("RetirementAge")
-                        .HasColumnType("INTEGER");
+                b.Property<int?>("RetirementAge")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<DateTime?>("StartDate")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime?>("StartDate")
+                    .HasColumnType("TEXT");
 
-                    b.Property<decimal>("TotalContributions")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("TEXT");
+                b.Property<decimal>("TotalContributions")
+                    .HasPrecision(18, 2)
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("UserId")
-                        .HasColumnType("TEXT");
+                b.Property<string>("UserId")
+                    .HasColumnType("TEXT");
 
-                    b.HasKey("PensionId");
+                b.HasKey("PensionId");
 
-                    b.HasIndex("PensionType");
+                b.HasIndex("PensionType");
 
-                    b.HasIndex("UserId");
+                b.HasIndex("UserId");
 
-                    b.ToTable("Pensions");
-                });
+                b.ToTable("Pensions");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.Pocket", b =>
-                {
-                    b.Property<int>("PocketId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+        modelBuilder.Entity("Privatekonomi.Core.Models.Pocket", b =>
+            {
+                b.Property<int>("PocketId")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("INTEGER");
 
-                    b.Property<int>("BankSourceId")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("BankSourceId")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("TEXT");
 
-                    b.Property<decimal>("CurrentAmount")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("TEXT");
+                b.Property<decimal>("CurrentAmount")
+                    .HasPrecision(18, 2)
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("Description")
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT");
+                b.Property<string>("Description")
+                    .HasMaxLength(500)
+                    .HasColumnType("TEXT");
 
-                    b.Property<decimal>("MonthlyAllocation")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("TEXT");
+                b.Property<decimal>("MonthlyAllocation")
+                    .HasPrecision(18, 2)
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("TEXT");
+                b.Property<string>("Name")
+                    .IsRequired()
+                    .HasMaxLength(200)
+                    .HasColumnType("TEXT");
 
-                    b.Property<int>("Priority")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("Priority")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<decimal>("TargetAmount")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("TEXT");
+                b.Property<decimal>("TargetAmount")
+                    .HasPrecision(18, 2)
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("UserId")
-                        .HasColumnType("TEXT");
+                b.Property<string>("UserId")
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime>("ValidFrom")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime>("ValidFrom")
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime?>("ValidTo")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime?>("ValidTo")
+                    .HasColumnType("TEXT");
 
-                    b.HasKey("PocketId");
+                b.HasKey("PocketId");
 
-                    b.HasIndex("BankSourceId");
+                b.HasIndex("BankSourceId");
 
-                    b.HasIndex("UserId");
+                b.HasIndex("UserId");
 
-                    b.HasIndex("ValidFrom");
+                b.HasIndex("ValidFrom");
 
-                    b.HasIndex("ValidTo");
+                b.HasIndex("ValidTo");
 
-                    b.HasIndex("ValidFrom", "ValidTo");
+                b.HasIndex("ValidFrom", "ValidTo");
 
-                    b.ToTable("Pockets");
-                });
+                b.ToTable("Pockets");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.PocketTransaction", b =>
-                {
-                    b.Property<int>("PocketTransactionId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+        modelBuilder.Entity("Privatekonomi.Core.Models.PocketTransaction", b =>
+            {
+                b.Property<int>("PocketTransactionId")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("INTEGER");
 
-                    b.Property<decimal>("Amount")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("TEXT");
+                b.Property<decimal>("Amount")
+                    .HasPrecision(18, 2)
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("Description")
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT");
+                b.Property<string>("Description")
+                    .HasMaxLength(500)
+                    .HasColumnType("TEXT");
 
-                    b.Property<int>("PocketId")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("PocketId")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<int?>("RelatedPocketId")
-                        .HasColumnType("INTEGER");
+                b.Property<int?>("RelatedPocketId")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<DateTime>("TransactionDate")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime>("TransactionDate")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("Type")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT");
+                b.Property<string>("Type")
+                    .IsRequired()
+                    .HasMaxLength(50)
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("UserId")
-                        .HasColumnType("TEXT");
+                b.Property<string>("UserId")
+                    .HasColumnType("TEXT");
 
-                    b.HasKey("PocketTransactionId");
+                b.HasKey("PocketTransactionId");
 
-                    b.HasIndex("PocketId");
+                b.HasIndex("PocketId");
 
-                    b.HasIndex("RelatedPocketId");
+                b.HasIndex("RelatedPocketId");
 
-                    b.HasIndex("TransactionDate");
+                b.HasIndex("TransactionDate");
 
-                    b.HasIndex("UserId");
+                b.HasIndex("UserId");
 
-                    b.ToTable("PocketTransactions");
-                });
+                b.ToTable("PocketTransactions");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.PortfolioAllocation", b =>
-                {
-                    b.Property<int>("PortfolioAllocationId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+        modelBuilder.Entity("Privatekonomi.Core.Models.PortfolioAllocation", b =>
+            {
+                b.Property<int>("PortfolioAllocationId")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("INTEGER");
 
-                    b.Property<string>("AssetClass")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
+                b.Property<string>("AssetClass")
+                    .IsRequired()
+                    .HasMaxLength(100)
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("TEXT");
 
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("INTEGER");
+                b.Property<bool>("IsActive")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<decimal?>("MaxPercentage")
-                        .HasPrecision(5, 2)
-                        .HasColumnType("TEXT");
+                b.Property<decimal?>("MaxPercentage")
+                    .HasPrecision(5, 2)
+                    .HasColumnType("TEXT");
 
-                    b.Property<decimal?>("MinPercentage")
-                        .HasPrecision(5, 2)
-                        .HasColumnType("TEXT");
+                b.Property<decimal?>("MinPercentage")
+                    .HasPrecision(5, 2)
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("TEXT");
+                b.Property<string>("Name")
+                    .IsRequired()
+                    .HasMaxLength(200)
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("Notes")
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT");
+                b.Property<string>("Notes")
+                    .HasMaxLength(500)
+                    .HasColumnType("TEXT");
 
-                    b.Property<decimal>("TargetPercentage")
-                        .HasPrecision(5, 2)
-                        .HasColumnType("TEXT");
+                b.Property<decimal>("TargetPercentage")
+                    .HasPrecision(5, 2)
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("UserId")
-                        .HasColumnType("TEXT");
+                b.Property<string>("UserId")
+                    .HasColumnType("TEXT");
 
-                    b.HasKey("PortfolioAllocationId");
+                b.HasKey("PortfolioAllocationId");
 
-                    b.HasIndex("IsActive");
+                b.HasIndex("IsActive");
 
-                    b.HasIndex("UserId");
+                b.HasIndex("UserId");
 
-                    b.ToTable("PortfolioAllocations");
-                });
+                b.ToTable("PortfolioAllocations");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.Receipt", b =>
-                {
-                    b.Property<int>("ReceiptId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+        modelBuilder.Entity("Privatekonomi.Core.Models.Receipt", b =>
+            {
+                b.Property<int>("ReceiptId")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("INTEGER");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("Currency")
-                        .IsRequired()
-                        .HasMaxLength(3)
-                        .HasColumnType("TEXT");
+                b.Property<string>("Currency")
+                    .IsRequired()
+                    .HasMaxLength(3)
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("ImagePath")
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT");
+                b.Property<string>("ImagePath")
+                    .HasMaxLength(500)
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("Merchant")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("TEXT");
+                b.Property<string>("Merchant")
+                    .IsRequired()
+                    .HasMaxLength(200)
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("Notes")
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT");
+                b.Property<string>("Notes")
+                    .HasMaxLength(500)
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("OcrText")
-                        .HasColumnType("TEXT");
+                b.Property<string>("OcrText")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("PaymentMethod")
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT");
+                b.Property<string>("PaymentMethod")
+                    .HasMaxLength(50)
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime>("ReceiptDate")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime>("ReceiptDate")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("ReceiptNumber")
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
+                b.Property<string>("ReceiptNumber")
+                    .HasMaxLength(100)
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("ReceiptType")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT");
+                b.Property<string>("ReceiptType")
+                    .IsRequired()
+                    .HasMaxLength(50)
+                    .HasColumnType("TEXT");
 
-                    b.Property<decimal>("TotalAmount")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("TEXT");
+                b.Property<decimal>("TotalAmount")
+                    .HasPrecision(18, 2)
+                    .HasColumnType("TEXT");
 
-                    b.Property<int?>("TransactionId")
-                        .HasColumnType("INTEGER");
+                b.Property<int?>("TransactionId")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
+                b.Property<string>("UserId")
+                    .IsRequired()
+                    .HasColumnType("TEXT");
 
-                    b.HasKey("ReceiptId");
+                b.HasKey("ReceiptId");
 
-                    b.HasIndex("Merchant");
+                b.HasIndex("Merchant");
 
-                    b.HasIndex("ReceiptDate");
+                b.HasIndex("ReceiptDate");
 
-                    b.HasIndex("TransactionId");
+                b.HasIndex("TransactionId");
 
-                    b.HasIndex("UserId");
+                b.HasIndex("UserId");
 
-                    b.ToTable("Receipts");
-                });
+                b.ToTable("Receipts");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.ReceiptLineItem", b =>
-                {
-                    b.Property<int>("ReceiptLineItemId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+        modelBuilder.Entity("Privatekonomi.Core.Models.ReceiptLineItem", b =>
+            {
+                b.Property<int>("ReceiptLineItemId")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("INTEGER");
 
-                    b.Property<int?>("CategoryId")
-                        .HasColumnType("INTEGER");
+                b.Property<int?>("CategoryId")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("TEXT");
+                b.Property<string>("Description")
+                    .IsRequired()
+                    .HasMaxLength(200)
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("Notes")
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT");
+                b.Property<string>("Notes")
+                    .HasMaxLength(500)
+                    .HasColumnType("TEXT");
 
-                    b.Property<decimal>("Quantity")
-                        .HasPrecision(18, 4)
-                        .HasColumnType("TEXT");
+                b.Property<decimal>("Quantity")
+                    .HasPrecision(18, 4)
+                    .HasColumnType("TEXT");
 
-                    b.Property<int>("ReceiptId")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("ReceiptId")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<decimal?>("TaxRate")
-                        .HasPrecision(5, 2)
-                        .HasColumnType("TEXT");
+                b.Property<decimal?>("TaxRate")
+                    .HasPrecision(5, 2)
+                    .HasColumnType("TEXT");
 
-                    b.Property<decimal>("TotalPrice")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("TEXT");
+                b.Property<decimal>("TotalPrice")
+                    .HasPrecision(18, 2)
+                    .HasColumnType("TEXT");
 
-                    b.Property<decimal>("UnitPrice")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("TEXT");
+                b.Property<decimal>("UnitPrice")
+                    .HasPrecision(18, 2)
+                    .HasColumnType("TEXT");
 
-                    b.HasKey("ReceiptLineItemId");
+                b.HasKey("ReceiptLineItemId");
 
-                    b.HasIndex("CategoryId");
+                b.HasIndex("CategoryId");
 
-                    b.HasIndex("ReceiptId");
+                b.HasIndex("ReceiptId");
 
-                    b.ToTable("ReceiptLineItems");
-                });
+                b.ToTable("ReceiptLineItems");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.Reminder", b =>
-                {
-                    b.Property<int>("ReminderId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+        modelBuilder.Entity("Privatekonomi.Core.Models.Reminder", b =>
+            {
+                b.Property<int>("ReminderId")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("INTEGER");
 
-                    b.Property<string>("ActionUrl")
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT");
+                b.Property<string>("ActionUrl")
+                    .HasMaxLength(500)
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime?>("CompletedDate")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime?>("CompletedDate")
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("Description")
-                        .HasMaxLength(1000)
-                        .HasColumnType("TEXT");
+                b.Property<string>("Description")
+                    .HasMaxLength(1000)
+                    .HasColumnType("TEXT");
 
-                    b.Property<bool>("EnableFollowUp")
-                        .HasColumnType("INTEGER");
+                b.Property<bool>("EnableFollowUp")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<int>("EscalationLevel")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("EscalationLevel")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<int>("FollowUpIntervalHours")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("FollowUpIntervalHours")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<DateTime?>("LastFollowUpDate")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime?>("LastFollowUpDate")
+                    .HasColumnType("TEXT");
 
-                    b.Property<int>("MaxFollowUps")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("MaxFollowUps")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<string>("Metadata")
-                        .HasColumnType("TEXT");
+                b.Property<string>("Metadata")
+                    .HasColumnType("TEXT");
 
-                    b.Property<int>("Priority")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("Priority")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<int?>("RelatedEntityId")
-                        .HasColumnType("INTEGER");
+                b.Property<int?>("RelatedEntityId")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<string>("RelatedEntityType")
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT");
+                b.Property<string>("RelatedEntityType")
+                    .HasMaxLength(50)
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime>("ReminderDate")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime>("ReminderDate")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("ReminderType")
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT");
+                b.Property<string>("ReminderType")
+                    .HasMaxLength(50)
+                    .HasColumnType("TEXT");
 
-                    b.Property<int>("SnoozeCount")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("SnoozeCount")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<DateTime?>("SnoozeUntil")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime?>("SnoozeUntil")
+                    .HasColumnType("TEXT");
 
-                    b.Property<int>("Status")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("Status")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<string>("Tags")
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT");
+                b.Property<string>("Tags")
+                    .HasMaxLength(500)
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("TEXT");
+                b.Property<string>("Title")
+                    .IsRequired()
+                    .HasMaxLength(200)
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
+                b.Property<string>("UserId")
+                    .IsRequired()
+                    .HasColumnType("TEXT");
 
-                    b.HasKey("ReminderId");
+                b.HasKey("ReminderId");
 
-                    b.HasIndex("UserId");
+                b.HasIndex("UserId");
 
-                    b.ToTable("Reminders");
-                });
+                b.ToTable("Reminders");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.ReminderSettings", b =>
-                {
-                    b.Property<int>("ReminderSettingsId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+        modelBuilder.Entity("Privatekonomi.Core.Models.ReminderSettings", b =>
+            {
+                b.Property<int>("ReminderSettingsId")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("INTEGER");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("TEXT");
 
-                    b.Property<int>("DefaultSnoozeDurationMinutes")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("DefaultSnoozeDurationMinutes")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<bool>("EnableEscalation")
-                        .HasColumnType("INTEGER");
+                b.Property<bool>("EnableEscalation")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<bool>("EnableFollowUp")
-                        .HasColumnType("INTEGER");
+                b.Property<bool>("EnableFollowUp")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<bool>("EscalateToEmail")
-                        .HasColumnType("INTEGER");
+                b.Property<bool>("EscalateToEmail")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<bool>("EscalateToPush")
-                        .HasColumnType("INTEGER");
+                b.Property<bool>("EscalateToPush")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<bool>("EscalateToSMS")
-                        .HasColumnType("INTEGER");
+                b.Property<bool>("EscalateToSMS")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<int>("FollowUpIntervalHours")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("FollowUpIntervalHours")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<int>("MaxFollowUps")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("MaxFollowUps")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<int>("QuietHoursEnd")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("QuietHoursEnd")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<int>("QuietHoursStart")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("QuietHoursStart")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<bool>("RespectQuietHours")
-                        .HasColumnType("INTEGER");
+                b.Property<bool>("RespectQuietHours")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<int>("SnoozeThresholdForEscalation")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("SnoozeThresholdForEscalation")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
+                b.Property<string>("UserId")
+                    .IsRequired()
+                    .HasColumnType("TEXT");
 
-                    b.HasKey("ReminderSettingsId");
+                b.HasKey("ReminderSettingsId");
 
-                    b.HasIndex("UserId");
+                b.HasIndex("UserId");
 
-                    b.ToTable("ReminderSettings");
-                });
+                b.ToTable("ReminderSettings");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.RolePermission", b =>
-                {
-                    b.Property<int>("RolePermissionId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+        modelBuilder.Entity("Privatekonomi.Core.Models.RolePermission", b =>
+            {
+                b.Property<int>("RolePermissionId")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("INTEGER");
 
-                    b.Property<decimal?>("AmountLimit")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("TEXT");
+                b.Property<decimal?>("AmountLimit")
+                    .HasPrecision(18, 2)
+                    .HasColumnType("TEXT");
 
-                    b.Property<bool>("IsAllowed")
-                        .HasColumnType("INTEGER");
+                b.Property<bool>("IsAllowed")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<string>("PermissionKey")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
+                b.Property<string>("PermissionKey")
+                    .IsRequired()
+                    .HasMaxLength(100)
+                    .HasColumnType("TEXT");
 
-                    b.Property<int>("RoleType")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("RoleType")
+                    .HasColumnType("INTEGER");
 
-                    b.HasKey("RolePermissionId");
+                b.HasKey("RolePermissionId");
 
-                    b.HasIndex("PermissionKey");
+                b.HasIndex("PermissionKey");
 
-                    b.HasIndex("RoleType");
+                b.HasIndex("RoleType");
 
-                    b.HasIndex("RoleType", "PermissionKey");
+                b.HasIndex("RoleType", "PermissionKey");
 
-                    b.ToTable("RolePermissions");
-                });
+                b.ToTable("RolePermissions");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.RoundUpSettings", b =>
-                {
-                    b.Property<int>("RoundUpSettingsId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+        modelBuilder.Entity("Privatekonomi.Core.Models.RoundUpSettings", b =>
+            {
+                b.Property<int>("RoundUpSettingsId")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("INTEGER");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("TEXT");
 
-                    b.Property<decimal?>("EmployerMatchingMonthlyLimit")
-                        .HasColumnType("TEXT");
+                b.Property<decimal?>("EmployerMatchingMonthlyLimit")
+                    .HasColumnType("TEXT");
 
-                    b.Property<decimal>("EmployerMatchingPercentage")
-                        .HasColumnType("TEXT");
+                b.Property<decimal>("EmployerMatchingPercentage")
+                    .HasColumnType("TEXT");
 
-                    b.Property<bool>("EnableEmployerMatching")
-                        .HasColumnType("INTEGER");
+                b.Property<bool>("EnableEmployerMatching")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<bool>("EnableSalaryAutoSave")
-                        .HasColumnType("INTEGER");
+                b.Property<bool>("EnableSalaryAutoSave")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<bool>("IsEnabled")
-                        .HasColumnType("INTEGER");
+                b.Property<bool>("IsEnabled")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<decimal?>("MaximumTransactionAmount")
-                        .HasColumnType("TEXT");
+                b.Property<decimal?>("MaximumTransactionAmount")
+                    .HasColumnType("TEXT");
 
-                    b.Property<decimal?>("MinimumTransactionAmount")
-                        .HasColumnType("TEXT");
+                b.Property<decimal?>("MinimumTransactionAmount")
+                    .HasColumnType("TEXT");
 
-                    b.Property<bool>("OnlyExpenses")
-                        .HasColumnType("INTEGER");
+                b.Property<bool>("OnlyExpenses")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<decimal>("RoundUpAmount")
-                        .HasColumnType("TEXT");
+                b.Property<decimal>("RoundUpAmount")
+                    .HasColumnType("TEXT");
 
-                    b.Property<decimal>("SalaryAutoSavePercentage")
-                        .HasColumnType("TEXT");
+                b.Property<decimal>("SalaryAutoSavePercentage")
+                    .HasColumnType("TEXT");
 
-                    b.Property<int?>("TargetGoalId")
-                        .HasColumnType("INTEGER");
+                b.Property<int?>("TargetGoalId")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("UserId")
-                        .HasColumnType("TEXT");
+                b.Property<string>("UserId")
+                    .HasColumnType("TEXT");
 
-                    b.HasKey("RoundUpSettingsId");
+                b.HasKey("RoundUpSettingsId");
 
-                    b.HasIndex("TargetGoalId");
+                b.HasIndex("TargetGoalId");
 
-                    b.HasIndex("UserId");
+                b.HasIndex("UserId");
 
-                    b.ToTable("RoundUpSettings");
-                });
+                b.ToTable("RoundUpSettings");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.RoundUpTransaction", b =>
-                {
-                    b.Property<int>("RoundUpTransactionId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+        modelBuilder.Entity("Privatekonomi.Core.Models.RoundUpTransaction", b =>
+            {
+                b.Property<int>("RoundUpTransactionId")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("INTEGER");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("TEXT");
 
-                    b.Property<decimal>("EmployerMatchingAmount")
-                        .HasColumnType("TEXT");
+                b.Property<decimal>("EmployerMatchingAmount")
+                    .HasColumnType("TEXT");
 
-                    b.Property<int?>("GoalId")
-                        .HasColumnType("INTEGER");
+                b.Property<int?>("GoalId")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<bool>("IsAutomatic")
-                        .HasColumnType("INTEGER");
+                b.Property<bool>("IsAutomatic")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<decimal>("OriginalAmount")
-                        .HasColumnType("TEXT");
+                b.Property<decimal>("OriginalAmount")
+                    .HasColumnType("TEXT");
 
-                    b.Property<decimal>("RoundUpAmount")
-                        .HasColumnType("TEXT");
+                b.Property<decimal>("RoundUpAmount")
+                    .HasColumnType("TEXT");
 
-                    b.Property<decimal>("RoundedAmount")
-                        .HasColumnType("TEXT");
+                b.Property<decimal>("RoundedAmount")
+                    .HasColumnType("TEXT");
 
-                    b.Property<decimal>("TotalSaved")
-                        .HasColumnType("TEXT");
+                b.Property<decimal>("TotalSaved")
+                    .HasColumnType("TEXT");
 
-                    b.Property<int>("TransactionId")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("TransactionId")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<int>("Type")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("Type")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<string>("UserId")
-                        .HasColumnType("TEXT");
+                b.Property<string>("UserId")
+                    .HasColumnType("TEXT");
 
-                    b.HasKey("RoundUpTransactionId");
+                b.HasKey("RoundUpTransactionId");
 
-                    b.HasIndex("GoalId");
+                b.HasIndex("GoalId");
 
-                    b.HasIndex("TransactionId");
+                b.HasIndex("TransactionId");
 
-                    b.HasIndex("UserId");
+                b.HasIndex("UserId");
 
-                    b.ToTable("RoundUpTransactions");
-                });
+                b.ToTable("RoundUpTransactions");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.SalaryHistory", b =>
-                {
-                    b.Property<int>("SalaryHistoryId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+        modelBuilder.Entity("Privatekonomi.Core.Models.SalaryHistory", b =>
+            {
+                b.Property<int>("SalaryHistoryId")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("INTEGER");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("Currency")
-                        .IsRequired()
-                        .HasMaxLength(3)
-                        .HasColumnType("TEXT");
+                b.Property<string>("Currency")
+                    .IsRequired()
+                    .HasMaxLength(3)
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("Employer")
-                        .HasMaxLength(200)
-                        .HasColumnType("TEXT");
+                b.Property<string>("Employer")
+                    .HasMaxLength(200)
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("EmploymentType")
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT");
+                b.Property<string>("EmploymentType")
+                    .HasMaxLength(50)
+                    .HasColumnType("TEXT");
 
-                    b.Property<bool>("IsCurrent")
-                        .HasColumnType("INTEGER");
+                b.Property<bool>("IsCurrent")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<string>("JobTitle")
-                        .HasMaxLength(200)
-                        .HasColumnType("TEXT");
+                b.Property<string>("JobTitle")
+                    .HasMaxLength(200)
+                    .HasColumnType("TEXT");
 
-                    b.Property<decimal>("MonthlySalary")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("TEXT");
+                b.Property<decimal>("MonthlySalary")
+                    .HasPrecision(18, 2)
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("Notes")
-                        .HasMaxLength(1000)
-                        .HasColumnType("TEXT");
+                b.Property<string>("Notes")
+                    .HasMaxLength(1000)
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime>("Period")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime>("Period")
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("UserId")
-                        .HasColumnType("TEXT");
+                b.Property<string>("UserId")
+                    .HasColumnType("TEXT");
 
-                    b.Property<decimal?>("WorkPercentage")
-                        .HasPrecision(5, 2)
-                        .HasColumnType("TEXT");
+                b.Property<decimal?>("WorkPercentage")
+                    .HasPrecision(5, 2)
+                    .HasColumnType("TEXT");
 
-                    b.HasKey("SalaryHistoryId");
+                b.HasKey("SalaryHistoryId");
 
-                    b.HasIndex("IsCurrent");
+                b.HasIndex("IsCurrent");
 
-                    b.HasIndex("Period");
+                b.HasIndex("Period");
 
-                    b.HasIndex("UserId");
+                b.HasIndex("UserId");
 
-                    b.HasIndex("UserId", "Period");
+                b.HasIndex("UserId", "Period");
 
-                    b.ToTable("SalaryHistories");
-                });
+                b.ToTable("SalaryHistories");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.SavingsChallenge", b =>
-                {
-                    b.Property<int>("SavingsChallengeId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+        modelBuilder.Entity("Privatekonomi.Core.Models.SavingsChallenge", b =>
+            {
+                b.Property<int>("SavingsChallengeId")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("INTEGER");
 
-                    b.Property<int>("BestStreak")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("BestStreak")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<int>("Category")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("Category")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("TEXT");
 
-                    b.Property<decimal>("CurrentAmount")
-                        .HasColumnType("TEXT");
+                b.Property<decimal>("CurrentAmount")
+                    .HasColumnType("TEXT");
 
-                    b.Property<int>("CurrentStreak")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("CurrentStreak")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
+                b.Property<string>("Description")
+                    .IsRequired()
+                    .HasColumnType("TEXT");
 
-                    b.Property<int>("Difficulty")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("Difficulty")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<int>("DurationDays")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("DurationDays")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<DateTime?>("EndDate")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime?>("EndDate")
+                    .HasColumnType("TEXT");
 
-                    b.Property<decimal?>("EstimatedSavingsMax")
-                        .HasColumnType("TEXT");
+                b.Property<decimal?>("EstimatedSavingsMax")
+                    .HasColumnType("TEXT");
 
-                    b.Property<decimal?>("EstimatedSavingsMin")
-                        .HasColumnType("TEXT");
+                b.Property<decimal?>("EstimatedSavingsMin")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("Icon")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
+                b.Property<string>("Icon")
+                    .IsRequired()
+                    .HasColumnType("TEXT");
 
-                    b.Property<bool>("IsTemplate")
-                        .HasColumnType("INTEGER");
+                b.Property<bool>("IsTemplate")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
+                b.Property<string>("Name")
+                    .IsRequired()
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime>("StartDate")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime>("StartDate")
+                    .HasColumnType("TEXT");
 
-                    b.Property<int>("Status")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("Status")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<decimal>("TargetAmount")
-                        .HasColumnType("TEXT");
+                b.Property<decimal>("TargetAmount")
+                    .HasColumnType("TEXT");
 
-                    b.Property<int>("Type")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("Type")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("UserId")
-                        .HasColumnType("TEXT");
+                b.Property<string>("UserId")
+                    .HasColumnType("TEXT");
 
-                    b.HasKey("SavingsChallengeId");
+                b.HasKey("SavingsChallengeId");
 
-                    b.HasIndex("UserId");
+                b.HasIndex("UserId");
 
-                    b.ToTable("SavingsChallenges");
-                });
+                b.ToTable("SavingsChallenges");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.SavingsChallengeProgress", b =>
-                {
-                    b.Property<int>("SavingsChallengeProgressId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+        modelBuilder.Entity("Privatekonomi.Core.Models.SavingsChallengeProgress", b =>
+            {
+                b.Property<int>("SavingsChallengeProgressId")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("INTEGER");
 
-                    b.Property<decimal>("AmountSaved")
-                        .HasColumnType("TEXT");
+                b.Property<decimal>("AmountSaved")
+                    .HasColumnType("TEXT");
 
-                    b.Property<bool>("Completed")
-                        .HasColumnType("INTEGER");
+                b.Property<bool>("Completed")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime>("Date")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime>("Date")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("Notes")
-                        .HasColumnType("TEXT");
+                b.Property<string>("Notes")
+                    .HasColumnType("TEXT");
 
-                    b.Property<int>("SavingsChallengeId")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("SavingsChallengeId")
+                    .HasColumnType("INTEGER");
 
-                    b.HasKey("SavingsChallengeProgressId");
+                b.HasKey("SavingsChallengeProgressId");
 
-                    b.HasIndex("SavingsChallengeId");
+                b.HasIndex("SavingsChallengeId");
 
-                    b.ToTable("SavingsChallengeProgress");
-                });
+                b.ToTable("SavingsChallengeProgress");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.SavingsGroup", b =>
-                {
-                    b.Property<int>("SavingsGroupId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+        modelBuilder.Entity("Privatekonomi.Core.Models.SavingsGroup", b =>
+            {
+                b.Property<int>("SavingsGroupId")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("INTEGER");
 
-                    b.Property<bool>("AnonymousMembers")
-                        .HasColumnType("INTEGER");
+                b.Property<bool>("AnonymousMembers")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("CreatedByUserId")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
+                b.Property<string>("CreatedByUserId")
+                    .IsRequired()
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("Description")
-                        .HasColumnType("TEXT");
+                b.Property<string>("Description")
+                    .HasColumnType("TEXT");
 
-                    b.Property<int>("GroupType")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("GroupType")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("INTEGER");
+                b.Property<bool>("IsActive")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
+                b.Property<string>("Name")
+                    .IsRequired()
+                    .HasColumnType("TEXT");
 
-                    b.Property<int>("PrivacyLevel")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("PrivacyLevel")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT");
 
-                    b.HasKey("SavingsGroupId");
+                b.HasKey("SavingsGroupId");
 
-                    b.HasIndex("CreatedByUserId");
+                b.HasIndex("CreatedByUserId");
 
-                    b.ToTable("SavingsGroups");
-                });
+                b.ToTable("SavingsGroups");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.SavingsGroupMember", b =>
-                {
-                    b.Property<int>("SavingsGroupMemberId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+        modelBuilder.Entity("Privatekonomi.Core.Models.SavingsGroupMember", b =>
+            {
+                b.Property<int>("SavingsGroupMemberId")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("INTEGER");
 
-                    b.Property<string>("DisplayName")
-                        .HasColumnType("TEXT");
+                b.Property<string>("DisplayName")
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime>("JoinedAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime>("JoinedAt")
+                    .HasColumnType("TEXT");
 
-                    b.Property<int>("Role")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("Role")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<int>("SavingsGroupId")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("SavingsGroupId")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<bool>("ShareGoalCount")
-                        .HasColumnType("INTEGER");
+                b.Property<bool>("ShareGoalCount")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<bool>("ShareProgress")
-                        .HasColumnType("INTEGER");
+                b.Property<bool>("ShareProgress")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<bool>("ShareTotalSavings")
-                        .HasColumnType("INTEGER");
+                b.Property<bool>("ShareTotalSavings")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<bool>("ShowRealName")
-                        .HasColumnType("INTEGER");
+                b.Property<bool>("ShowRealName")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<int>("Status")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("Status")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
+                b.Property<string>("UserId")
+                    .IsRequired()
+                    .HasColumnType("TEXT");
 
-                    b.HasKey("SavingsGroupMemberId");
+                b.HasKey("SavingsGroupMemberId");
 
-                    b.HasIndex("SavingsGroupId");
+                b.HasIndex("SavingsGroupId");
 
-                    b.HasIndex("UserId");
+                b.HasIndex("UserId");
 
-                    b.ToTable("SavingsGroupMembers");
-                });
+                b.ToTable("SavingsGroupMembers");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.SharedExpense", b =>
-                {
-                    b.Property<int>("SharedExpenseId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+        modelBuilder.Entity("Privatekonomi.Core.Models.SharedExpense", b =>
+            {
+                b.Property<int>("SharedExpenseId")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("INTEGER");
 
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime>("CreatedDate")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("Description")
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT");
+                b.Property<string>("Description")
+                    .HasMaxLength(500)
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime>("ExpenseDate")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime>("ExpenseDate")
+                    .HasColumnType("TEXT");
 
-                    b.Property<int>("HouseholdId")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("HouseholdId")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("TEXT");
+                b.Property<string>("Name")
+                    .IsRequired()
+                    .HasMaxLength(200)
+                    .HasColumnType("TEXT");
 
-                    b.Property<int>("SplitMethod")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("SplitMethod")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<decimal>("TotalAmount")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("TEXT");
+                b.Property<decimal>("TotalAmount")
+                    .HasPrecision(18, 2)
+                    .HasColumnType("TEXT");
 
-                    b.Property<int>("Type")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("Type")
+                    .HasColumnType("INTEGER");
 
-                    b.HasKey("SharedExpenseId");
+                b.HasKey("SharedExpenseId");
 
-                    b.HasIndex("HouseholdId");
+                b.HasIndex("HouseholdId");
 
-                    b.ToTable("SharedExpenses");
-                });
+                b.ToTable("SharedExpenses");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.SharedGoal", b =>
-                {
-                    b.Property<int>("SharedGoalId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+        modelBuilder.Entity("Privatekonomi.Core.Models.SharedGoal", b =>
+            {
+                b.Property<int>("SharedGoalId")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("INTEGER");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("CreatedByUserId")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
+                b.Property<string>("CreatedByUserId")
+                    .IsRequired()
+                    .HasColumnType("TEXT");
 
-                    b.Property<decimal>("CurrentAmount")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("TEXT");
+                b.Property<decimal>("CurrentAmount")
+                    .HasPrecision(18, 2)
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("Description")
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT");
+                b.Property<string>("Description")
+                    .HasMaxLength(500)
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("TEXT");
+                b.Property<string>("Name")
+                    .IsRequired()
+                    .HasMaxLength(200)
+                    .HasColumnType("TEXT");
 
-                    b.Property<int>("Priority")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("Priority")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<int>("Status")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("Status")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<decimal>("TargetAmount")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("TEXT");
+                b.Property<decimal>("TargetAmount")
+                    .HasPrecision(18, 2)
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime?>("TargetDate")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime?>("TargetDate")
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT");
 
-                    b.HasKey("SharedGoalId");
+                b.HasKey("SharedGoalId");
 
-                    b.HasIndex("CreatedByUserId");
+                b.HasIndex("CreatedByUserId");
 
-                    b.HasIndex("Status");
+                b.HasIndex("Status");
 
-                    b.ToTable("SharedGoals");
-                });
+                b.ToTable("SharedGoals");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.SharedGoalNotification", b =>
-                {
-                    b.Property<int>("SharedGoalNotificationId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+        modelBuilder.Entity("Privatekonomi.Core.Models.SharedGoalNotification", b =>
+            {
+                b.Property<int>("SharedGoalNotificationId")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("INTEGER");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("TEXT");
 
-                    b.Property<bool>("IsRead")
-                        .HasColumnType("INTEGER");
+                b.Property<bool>("IsRead")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<string>("Message")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT");
+                b.Property<string>("Message")
+                    .IsRequired()
+                    .HasMaxLength(500)
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime?>("ReadAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime?>("ReadAt")
+                    .HasColumnType("TEXT");
 
-                    b.Property<int>("SharedGoalId")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("SharedGoalId")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<int>("Type")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("Type")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
+                b.Property<string>("UserId")
+                    .IsRequired()
+                    .HasColumnType("TEXT");
 
-                    b.HasKey("SharedGoalNotificationId");
+                b.HasKey("SharedGoalNotificationId");
 
-                    b.HasIndex("IsRead");
+                b.HasIndex("IsRead");
 
-                    b.HasIndex("SharedGoalId");
+                b.HasIndex("SharedGoalId");
 
-                    b.HasIndex("UserId");
+                b.HasIndex("UserId");
 
-                    b.HasIndex("UserId", "IsRead");
+                b.HasIndex("UserId", "IsRead");
 
-                    b.ToTable("SharedGoalNotifications");
-                });
+                b.ToTable("SharedGoalNotifications");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.SharedGoalParticipant", b =>
-                {
-                    b.Property<int>("SharedGoalParticipantId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+        modelBuilder.Entity("Privatekonomi.Core.Models.SharedGoalParticipant", b =>
+            {
+                b.Property<int>("SharedGoalParticipantId")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("INTEGER");
 
-                    b.Property<int>("InvitationStatus")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("InvitationStatus")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<DateTime?>("InvitedAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime?>("InvitedAt")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("InvitedByUserId")
-                        .HasColumnType("TEXT");
+                b.Property<string>("InvitedByUserId")
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime>("JoinedAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime>("JoinedAt")
+                    .HasColumnType("TEXT");
 
-                    b.Property<int>("Role")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("Role")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<int>("SharedGoalId")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("SharedGoalId")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
+                b.Property<string>("UserId")
+                    .IsRequired()
+                    .HasColumnType("TEXT");
 
-                    b.HasKey("SharedGoalParticipantId");
+                b.HasKey("SharedGoalParticipantId");
 
-                    b.HasIndex("InvitationStatus");
+                b.HasIndex("InvitationStatus");
 
-                    b.HasIndex("InvitedByUserId");
+                b.HasIndex("InvitedByUserId");
 
-                    b.HasIndex("SharedGoalId");
+                b.HasIndex("SharedGoalId");
 
-                    b.HasIndex("UserId");
+                b.HasIndex("UserId");
 
-                    b.HasIndex("SharedGoalId", "UserId")
-                        .IsUnique();
+                b.HasIndex("SharedGoalId", "UserId")
+                    .IsUnique();
 
-                    b.ToTable("SharedGoalParticipants");
-                });
+                b.ToTable("SharedGoalParticipants");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.SharedGoalProposal", b =>
-                {
-                    b.Property<int>("SharedGoalProposalId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+        modelBuilder.Entity("Privatekonomi.Core.Models.SharedGoalProposal", b =>
+            {
+                b.Property<int>("SharedGoalProposalId")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("INTEGER");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("CurrentValue")
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT");
+                b.Property<string>("CurrentValue")
+                    .HasMaxLength(500)
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("Description")
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT");
+                b.Property<string>("Description")
+                    .HasMaxLength(500)
+                    .HasColumnType("TEXT");
 
-                    b.Property<int>("ProposalType")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("ProposalType")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<string>("ProposedByUserId")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
+                b.Property<string>("ProposedByUserId")
+                    .IsRequired()
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("ProposedValue")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT");
+                b.Property<string>("ProposedValue")
+                    .IsRequired()
+                    .HasMaxLength(500)
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime?>("ResolvedAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime?>("ResolvedAt")
+                    .HasColumnType("TEXT");
 
-                    b.Property<int>("SharedGoalId")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("SharedGoalId")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<int>("Status")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("Status")
+                    .HasColumnType("INTEGER");
 
-                    b.HasKey("SharedGoalProposalId");
+                b.HasKey("SharedGoalProposalId");
 
-                    b.HasIndex("ProposedByUserId");
+                b.HasIndex("ProposedByUserId");
 
-                    b.HasIndex("SharedGoalId");
+                b.HasIndex("SharedGoalId");
 
-                    b.HasIndex("Status");
+                b.HasIndex("Status");
 
-                    b.ToTable("SharedGoalProposals");
-                });
+                b.ToTable("SharedGoalProposals");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.SharedGoalProposalVote", b =>
-                {
-                    b.Property<int>("SharedGoalProposalVoteId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+        modelBuilder.Entity("Privatekonomi.Core.Models.SharedGoalProposalVote", b =>
+            {
+                b.Property<int>("SharedGoalProposalVoteId")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("INTEGER");
 
-                    b.Property<string>("Comment")
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT");
+                b.Property<string>("Comment")
+                    .HasMaxLength(500)
+                    .HasColumnType("TEXT");
 
-                    b.Property<int>("SharedGoalProposalId")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("SharedGoalProposalId")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
+                b.Property<string>("UserId")
+                    .IsRequired()
+                    .HasColumnType("TEXT");
 
-                    b.Property<int>("Vote")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("Vote")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<DateTime>("VotedAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime>("VotedAt")
+                    .HasColumnType("TEXT");
 
-                    b.HasKey("SharedGoalProposalVoteId");
+                b.HasKey("SharedGoalProposalVoteId");
 
-                    b.HasIndex("SharedGoalProposalId");
+                b.HasIndex("SharedGoalProposalId");
 
-                    b.HasIndex("UserId");
+                b.HasIndex("UserId");
 
-                    b.HasIndex("SharedGoalProposalId", "UserId")
-                        .IsUnique();
+                b.HasIndex("SharedGoalProposalId", "UserId")
+                    .IsUnique();
 
-                    b.ToTable("SharedGoalProposalVotes");
-                });
+                b.ToTable("SharedGoalProposalVotes");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.SharedGoalTransaction", b =>
-                {
-                    b.Property<int>("SharedGoalTransactionId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+        modelBuilder.Entity("Privatekonomi.Core.Models.SharedGoalTransaction", b =>
+            {
+                b.Property<int>("SharedGoalTransactionId")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("INTEGER");
 
-                    b.Property<decimal>("Amount")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("TEXT");
+                b.Property<decimal>("Amount")
+                    .HasPrecision(18, 2)
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("Description")
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT");
+                b.Property<string>("Description")
+                    .HasMaxLength(500)
+                    .HasColumnType("TEXT");
 
-                    b.Property<int>("SharedGoalId")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("SharedGoalId")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<DateTime>("TransactionDate")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime>("TransactionDate")
+                    .HasColumnType("TEXT");
 
-                    b.Property<int>("Type")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("Type")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
+                b.Property<string>("UserId")
+                    .IsRequired()
+                    .HasColumnType("TEXT");
 
-                    b.HasKey("SharedGoalTransactionId");
+                b.HasKey("SharedGoalTransactionId");
 
-                    b.HasIndex("SharedGoalId");
+                b.HasIndex("SharedGoalId");
 
-                    b.HasIndex("TransactionDate");
+                b.HasIndex("TransactionDate");
 
-                    b.HasIndex("UserId");
+                b.HasIndex("UserId");
 
-                    b.ToTable("SharedGoalTransactions");
-                });
+                b.ToTable("SharedGoalTransactions");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.Subscription", b =>
-                {
-                    b.Property<int>("SubscriptionId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+        modelBuilder.Entity("Privatekonomi.Core.Models.Subscription", b =>
+            {
+                b.Property<int>("SubscriptionId")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("INTEGER");
 
-                    b.Property<string>("AccountEmail")
-                        .HasMaxLength(200)
-                        .HasColumnType("TEXT");
+                b.Property<string>("AccountEmail")
+                    .HasMaxLength(200)
+                    .HasColumnType("TEXT");
 
-                    b.Property<bool>("AutoDetected")
-                        .HasColumnType("INTEGER");
+                b.Property<bool>("AutoDetected")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<string>("BillingFrequency")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT");
+                b.Property<string>("BillingFrequency")
+                    .IsRequired()
+                    .HasMaxLength(50)
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime?>("CancellationDeadline")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime?>("CancellationDeadline")
+                    .HasColumnType("TEXT");
 
-                    b.Property<int?>("CancellationNoticeDays")
-                        .HasColumnType("INTEGER");
+                b.Property<int?>("CancellationNoticeDays")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<string>("CancellationUrl")
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT");
+                b.Property<string>("CancellationUrl")
+                    .HasMaxLength(500)
+                    .HasColumnType("TEXT");
 
-                    b.Property<int?>("CategoryId")
-                        .HasColumnType("INTEGER");
+                b.Property<int?>("CategoryId")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("Currency")
-                        .IsRequired()
-                        .HasMaxLength(3)
-                        .HasColumnType("TEXT");
+                b.Property<string>("Currency")
+                    .IsRequired()
+                    .HasMaxLength(3)
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("Description")
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT");
+                b.Property<string>("Description")
+                    .HasMaxLength(500)
+                    .HasColumnType("TEXT");
 
-                    b.Property<int?>("DetectedFromTransactionId")
-                        .HasColumnType("INTEGER");
+                b.Property<int?>("DetectedFromTransactionId")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<DateTime?>("EndDate")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime?>("EndDate")
+                    .HasColumnType("TEXT");
 
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("INTEGER");
+                b.Property<bool>("IsActive")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<DateTime?>("LastUsedDate")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime?>("LastUsedDate")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("ManagementUrl")
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT");
+                b.Property<string>("ManagementUrl")
+                    .HasMaxLength(500)
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("TEXT");
+                b.Property<string>("Name")
+                    .IsRequired()
+                    .HasMaxLength(200)
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime?>("NextBillingDate")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime?>("NextBillingDate")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("Notes")
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT");
+                b.Property<string>("Notes")
+                    .HasMaxLength(500)
+                    .HasColumnType("TEXT");
 
-                    b.Property<decimal>("Price")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("TEXT");
+                b.Property<decimal>("Price")
+                    .HasPrecision(18, 2)
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("SharedWith")
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT");
+                b.Property<string>("SharedWith")
+                    .HasMaxLength(500)
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime>("StartDate")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime>("StartDate")
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
+                b.Property<string>("UserId")
+                    .IsRequired()
+                    .HasColumnType("TEXT");
 
-                    b.HasKey("SubscriptionId");
+                b.HasKey("SubscriptionId");
 
-                    b.HasIndex("CategoryId");
+                b.HasIndex("CategoryId");
 
-                    b.HasIndex("IsActive");
+                b.HasIndex("IsActive");
 
-                    b.HasIndex("NextBillingDate");
+                b.HasIndex("NextBillingDate");
 
-                    b.HasIndex("UserId");
+                b.HasIndex("UserId");
 
-                    b.ToTable("Subscriptions");
-                });
+                b.ToTable("Subscriptions");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.SubscriptionPriceHistory", b =>
-                {
-                    b.Property<int>("SubscriptionPriceHistoryId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+        modelBuilder.Entity("Privatekonomi.Core.Models.SubscriptionPriceHistory", b =>
+            {
+                b.Property<int>("SubscriptionPriceHistoryId")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("INTEGER");
 
-                    b.Property<DateTime>("ChangeDate")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime>("ChangeDate")
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("TEXT");
 
-                    b.Property<decimal>("NewPrice")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("TEXT");
+                b.Property<decimal>("NewPrice")
+                    .HasPrecision(18, 2)
+                    .HasColumnType("TEXT");
 
-                    b.Property<bool>("NotificationSent")
-                        .HasColumnType("INTEGER");
+                b.Property<bool>("NotificationSent")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<decimal>("OldPrice")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("TEXT");
+                b.Property<decimal>("OldPrice")
+                    .HasPrecision(18, 2)
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("Reason")
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT");
+                b.Property<string>("Reason")
+                    .HasMaxLength(500)
+                    .HasColumnType("TEXT");
 
-                    b.Property<int>("SubscriptionId")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("SubscriptionId")
+                    .HasColumnType("INTEGER");
 
-                    b.HasKey("SubscriptionPriceHistoryId");
+                b.HasKey("SubscriptionPriceHistoryId");
 
-                    b.HasIndex("ChangeDate");
+                b.HasIndex("ChangeDate");
 
-                    b.HasIndex("SubscriptionId");
+                b.HasIndex("SubscriptionId");
 
-                    b.ToTable("SubscriptionPriceHistory");
-                });
+                b.ToTable("SubscriptionPriceHistory");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.TaxDeduction", b =>
-                {
-                    b.Property<int>("TaxDeductionId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+        modelBuilder.Entity("Privatekonomi.Core.Models.TaxDeduction", b =>
+            {
+                b.Property<int>("TaxDeductionId")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("INTEGER");
 
-                    b.Property<decimal>("Amount")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("TEXT");
+                b.Property<decimal>("Amount")
+                    .HasPrecision(18, 2)
+                    .HasColumnType("TEXT");
 
-                    b.Property<bool>("Approved")
-                        .HasColumnType("INTEGER");
+                b.Property<bool>("Approved")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("TEXT");
 
-                    b.Property<decimal>("DeductibleAmount")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("TEXT");
+                b.Property<decimal>("DeductibleAmount")
+                    .HasPrecision(18, 2)
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("OrganizationNumber")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("TEXT");
+                b.Property<string>("OrganizationNumber")
+                    .IsRequired()
+                    .HasMaxLength(20)
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("ServiceProvider")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("TEXT");
+                b.Property<string>("ServiceProvider")
+                    .IsRequired()
+                    .HasMaxLength(200)
+                    .HasColumnType("TEXT");
 
-                    b.Property<int>("TaxYear")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("TaxYear")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<int>("TransactionId")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("TransactionId")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<string>("Type")
-                        .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("TEXT");
+                b.Property<string>("Type")
+                    .IsRequired()
+                    .HasMaxLength(10)
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime>("WorkDate")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime>("WorkDate")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("WorkDescription")
-                        .HasMaxLength(1000)
-                        .HasColumnType("TEXT");
+                b.Property<string>("WorkDescription")
+                    .HasMaxLength(1000)
+                    .HasColumnType("TEXT");
 
-                    b.HasKey("TaxDeductionId");
+                b.HasKey("TaxDeductionId");
 
-                    b.HasIndex("TaxYear");
+                b.HasIndex("TaxYear");
 
-                    b.HasIndex("TransactionId");
+                b.HasIndex("TransactionId");
 
-                    b.HasIndex("Type");
+                b.HasIndex("Type");
 
-                    b.ToTable("TaxDeductions");
-                });
+                b.ToTable("TaxDeductions");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.Transaction", b =>
-                {
-                    b.Property<int>("TransactionId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+        modelBuilder.Entity("Privatekonomi.Core.Models.Transaction", b =>
+            {
+                b.Property<int>("TransactionId")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("INTEGER");
 
-                    b.Property<decimal>("Amount")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("TEXT");
+                b.Property<decimal>("Amount")
+                    .HasPrecision(18, 2)
+                    .HasColumnType("TEXT");
 
-                    b.Property<int?>("BankSourceId")
-                        .HasColumnType("INTEGER");
+                b.Property<int?>("BankSourceId")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<bool>("Cleared")
-                        .HasColumnType("INTEGER");
+                b.Property<bool>("Cleared")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("Currency")
-                        .IsRequired()
-                        .HasMaxLength(3)
-                        .HasColumnType("TEXT");
+                b.Property<string>("Currency")
+                    .IsRequired()
+                    .HasMaxLength(3)
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime>("Date")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime>("Date")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT");
+                b.Property<string>("Description")
+                    .IsRequired()
+                    .HasMaxLength(500)
+                    .HasColumnType("TEXT");
 
-                    b.Property<int?>("HouseholdId")
-                        .HasColumnType("INTEGER");
+                b.Property<int?>("HouseholdId")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<string>("ImportSource")
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
+                b.Property<string>("ImportSource")
+                    .HasMaxLength(100)
+                    .HasColumnType("TEXT");
 
-                    b.Property<bool>("Imported")
-                        .HasColumnType("INTEGER");
+                b.Property<bool>("Imported")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<string>("InvoiceNumber")
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT");
+                b.Property<string>("InvoiceNumber")
+                    .HasMaxLength(50)
+                    .HasColumnType("TEXT");
 
-                    b.Property<bool>("IsIncome")
-                        .HasColumnType("INTEGER");
+                b.Property<bool>("IsIncome")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<bool>("IsLocked")
-                        .HasColumnType("INTEGER");
+                b.Property<bool>("IsLocked")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<bool>("IsRecurring")
-                        .HasColumnType("INTEGER");
+                b.Property<bool>("IsRecurring")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<string>("Notes")
-                        .HasColumnType("TEXT");
+                b.Property<string>("Notes")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("OCR")
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT");
+                b.Property<string>("OCR")
+                    .HasMaxLength(50)
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("Payee")
-                        .HasMaxLength(200)
-                        .HasColumnType("TEXT");
+                b.Property<string>("Payee")
+                    .HasMaxLength(200)
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("PaymentMethod")
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT");
+                b.Property<string>("PaymentMethod")
+                    .HasMaxLength(50)
+                    .HasColumnType("TEXT");
 
-                    b.Property<int?>("PocketId")
-                        .HasColumnType("INTEGER");
+                b.Property<int?>("PocketId")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<string>("RecipientBankgiro")
-                        .HasMaxLength(20)
-                        .HasColumnType("TEXT");
+                b.Property<string>("RecipientBankgiro")
+                    .HasMaxLength(20)
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("RecipientPlusgiro")
-                        .HasMaxLength(20)
-                        .HasColumnType("TEXT");
+                b.Property<string>("RecipientPlusgiro")
+                    .HasMaxLength(20)
+                    .HasColumnType("TEXT");
 
-                    b.Property<int?>("RecurringId")
-                        .HasColumnType("INTEGER");
+                b.Property<int?>("RecurringId")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<string>("Tags")
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT");
+                b.Property<string>("Tags")
+                    .HasMaxLength(500)
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("UserId")
-                        .HasColumnType("TEXT");
+                b.Property<string>("UserId")
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime>("ValidFrom")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime>("ValidFrom")
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime?>("ValidTo")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime?>("ValidTo")
+                    .HasColumnType("TEXT");
 
-                    b.HasKey("TransactionId");
+                b.HasKey("TransactionId");
 
-                    b.HasIndex("Date");
+                b.HasIndex("Date");
 
-                    b.HasIndex("HouseholdId");
+                b.HasIndex("HouseholdId");
 
-                    b.HasIndex("IsRecurring");
+                b.HasIndex("IsRecurring");
 
-                    b.HasIndex("Payee");
+                b.HasIndex("Payee");
 
-                    b.HasIndex("PaymentMethod");
+                b.HasIndex("PaymentMethod");
 
-                    b.HasIndex("PocketId");
+                b.HasIndex("PocketId");
 
-                    b.HasIndex("UserId");
+                b.HasIndex("UserId");
 
-                    b.HasIndex("ValidFrom");
+                b.HasIndex("ValidFrom");
 
-                    b.HasIndex("ValidTo");
+                b.HasIndex("ValidTo");
 
-                    b.HasIndex("BankSourceId", "Date");
+                b.HasIndex("BankSourceId", "Date");
 
-                    b.HasIndex("HouseholdId", "Date");
+                b.HasIndex("HouseholdId", "Date");
 
-                    b.HasIndex("ValidFrom", "ValidTo");
+                b.HasIndex("ValidFrom", "ValidTo");
 
-                    b.ToTable("Transactions");
-                });
+                b.ToTable("Transactions");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.TransactionCategory", b =>
-                {
-                    b.Property<int>("TransactionCategoryId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+        modelBuilder.Entity("Privatekonomi.Core.Models.TransactionCategory", b =>
+            {
+                b.Property<int>("TransactionCategoryId")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("INTEGER");
 
-                    b.Property<decimal>("Amount")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("TEXT");
+                b.Property<decimal>("Amount")
+                    .HasPrecision(18, 2)
+                    .HasColumnType("TEXT");
 
-                    b.Property<int>("CategoryId")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("CategoryId")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<decimal>("Percentage")
-                        .HasPrecision(5, 2)
-                        .HasColumnType("TEXT");
+                b.Property<decimal>("Percentage")
+                    .HasPrecision(5, 2)
+                    .HasColumnType("TEXT");
 
-                    b.Property<int>("TransactionId")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("TransactionId")
+                    .HasColumnType("INTEGER");
 
-                    b.HasKey("TransactionCategoryId");
+                b.HasKey("TransactionCategoryId");
 
-                    b.HasIndex("CategoryId");
+                b.HasIndex("CategoryId");
 
-                    b.HasIndex("TransactionId");
+                b.HasIndex("TransactionId");
 
-                    b.ToTable("TransactionCategories");
-                });
+                b.ToTable("TransactionCategories");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.UserFeedback", b =>
-                {
-                    b.Property<int>("FeedbackId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+        modelBuilder.Entity("Privatekonomi.Core.Models.UserFeedback", b =>
+            {
+                b.Property<int>("FeedbackId")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("INTEGER");
 
-                    b.Property<string>("ActualCategory")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
+                b.Property<string>("ActualCategory")
+                    .IsRequired()
+                    .HasMaxLength(100)
+                    .HasColumnType("TEXT");
 
-                    b.Property<DateTime>("FeedbackDate")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime>("FeedbackDate")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("PredictedCategory")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
+                b.Property<string>("PredictedCategory")
+                    .IsRequired()
+                    .HasMaxLength(100)
+                    .HasColumnType("TEXT");
 
-                    b.Property<float>("PredictedConfidence")
-                        .HasColumnType("REAL");
+                b.Property<float>("PredictedConfidence")
+                    .HasColumnType("REAL");
 
-                    b.Property<int>("TransactionId")
-                        .HasColumnType("INTEGER");
+                b.Property<int>("TransactionId")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasMaxLength(450)
-                        .HasColumnType("TEXT");
+                b.Property<string>("UserId")
+                    .IsRequired()
+                    .HasMaxLength(450)
+                    .HasColumnType("TEXT");
 
-                    b.Property<bool>("WasCorrectionNeeded")
-                        .HasColumnType("INTEGER");
+                b.Property<bool>("WasCorrectionNeeded")
+                    .HasColumnType("INTEGER");
 
-                    b.HasKey("FeedbackId");
+                b.HasKey("FeedbackId");
 
-                    b.HasIndex("FeedbackDate");
+                b.HasIndex("FeedbackDate");
 
-                    b.HasIndex("TransactionId");
+                b.HasIndex("TransactionId");
 
-                    b.HasIndex("UserId");
+                b.HasIndex("UserId");
 
-                    b.ToTable("UserFeedbacks");
-                });
+                b.ToTable("UserFeedbacks");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.UserPrivacySettings", b =>
-                {
-                    b.Property<int>("UserPrivacySettingsId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+        modelBuilder.Entity("Privatekonomi.Core.Models.UserPrivacySettings", b =>
+            {
+                b.Property<int>("UserPrivacySettingsId")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("INTEGER");
 
-                    b.Property<bool>("AllowCommunityComparison")
-                        .HasColumnType("INTEGER");
+                b.Property<bool>("AllowCommunityComparison")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<bool>("AllowGoalSharing")
-                        .HasColumnType("INTEGER");
+                b.Property<bool>("AllowGoalSharing")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<bool>("AllowLeaderboards")
-                        .HasColumnType("INTEGER");
+                b.Property<bool>("AllowLeaderboards")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<bool>("AllowSavingsGroups")
-                        .HasColumnType("INTEGER");
+                b.Property<bool>("AllowSavingsGroups")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<bool>("AnonymousByDefault")
-                        .HasColumnType("INTEGER");
+                b.Property<bool>("AnonymousByDefault")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("TEXT");
 
-                    b.Property<bool>("EnableSocialFeatures")
-                        .HasColumnType("INTEGER");
+                b.Property<bool>("EnableSocialFeatures")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<DateTime?>("PrivacyTermsAcceptedAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime?>("PrivacyTermsAcceptedAt")
+                    .HasColumnType("TEXT");
 
-                    b.Property<bool>("ShowRealNameInGroups")
-                        .HasColumnType("INTEGER");
+                b.Property<bool>("ShowRealNameInGroups")
+                    .HasColumnType("INTEGER");
 
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT");
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("TEXT");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
+                b.Property<string>("UserId")
+                    .IsRequired()
+                    .HasColumnType("TEXT");
 
-                    b.HasKey("UserPrivacySettingsId");
+                b.HasKey("UserPrivacySettingsId");
 
-                    b.HasIndex("UserId");
+                b.HasIndex("UserId");
 
-                    b.ToTable("UserPrivacySettings");
-                });
+                b.ToTable("UserPrivacySettings");
+            });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
-                {
-                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
-                        .WithMany()
-                        .HasForeignKey("RoleId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
+        modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
+            {
+                b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
+                    .WithMany()
+                    .HasForeignKey("RoleId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
+            });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
-                {
-                    b.HasOne("Privatekonomi.Core.Models.ApplicationUser", null)
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
+        modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
+            {
+                b.HasOne("Privatekonomi.Core.Models.ApplicationUser", null)
+                    .WithMany()
+                    .HasForeignKey("UserId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
+            });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
-                {
-                    b.HasOne("Privatekonomi.Core.Models.ApplicationUser", null)
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
+        modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
+            {
+                b.HasOne("Privatekonomi.Core.Models.ApplicationUser", null)
+                    .WithMany()
+                    .HasForeignKey("UserId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
+            });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
-                {
-                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
-                        .WithMany()
-                        .HasForeignKey("RoleId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+        modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
+            {
+                b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
+                    .WithMany()
+                    .HasForeignKey("RoleId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.HasOne("Privatekonomi.Core.Models.ApplicationUser", null)
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
+                b.HasOne("Privatekonomi.Core.Models.ApplicationUser", null)
+                    .WithMany()
+                    .HasForeignKey("UserId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
+            });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
-                {
-                    b.HasOne("Privatekonomi.Core.Models.ApplicationUser", null)
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
+        modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
+            {
+                b.HasOne("Privatekonomi.Core.Models.ApplicationUser", null)
+                    .WithMany()
+                    .HasForeignKey("UserId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.AllowanceTask", b =>
-                {
-                    b.HasOne("Privatekonomi.Core.Models.ChildAllowance", "ChildAllowance")
-                        .WithMany("AllowanceTasks")
-                        .HasForeignKey("ChildAllowanceId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+        modelBuilder.Entity("Privatekonomi.Core.Models.AllowanceTask", b =>
+            {
+                b.HasOne("Privatekonomi.Core.Models.ChildAllowance", "ChildAllowance")
+                    .WithMany("AllowanceTasks")
+                    .HasForeignKey("ChildAllowanceId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.Navigation("ChildAllowance");
-                });
+                b.Navigation("ChildAllowance");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.AllowanceTransaction", b =>
-                {
-                    b.HasOne("Privatekonomi.Core.Models.AllowanceTask", "AllowanceTask")
-                        .WithMany("AllowanceTransactions")
-                        .HasForeignKey("AllowanceTaskId")
-                        .OnDelete(DeleteBehavior.SetNull);
+        modelBuilder.Entity("Privatekonomi.Core.Models.AllowanceTransaction", b =>
+            {
+                b.HasOne("Privatekonomi.Core.Models.AllowanceTask", "AllowanceTask")
+                    .WithMany("AllowanceTransactions")
+                    .HasForeignKey("AllowanceTaskId")
+                    .OnDelete(DeleteBehavior.SetNull);
 
-                    b.HasOne("Privatekonomi.Core.Models.ChildAllowance", "ChildAllowance")
-                        .WithMany("AllowanceTransactions")
-                        .HasForeignKey("ChildAllowanceId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                b.HasOne("Privatekonomi.Core.Models.ChildAllowance", "ChildAllowance")
+                    .WithMany("AllowanceTransactions")
+                    .HasForeignKey("ChildAllowanceId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.Navigation("AllowanceTask");
+                b.Navigation("AllowanceTask");
 
-                    b.Navigation("ChildAllowance");
-                });
+                b.Navigation("ChildAllowance");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.ApplicationUser", b =>
-                {
-                    b.HasOne("Privatekonomi.Core.Models.HouseholdMember", "HouseholdMember")
-                        .WithOne("User")
-                        .HasForeignKey("Privatekonomi.Core.Models.ApplicationUser", "HouseholdMemberId")
-                        .OnDelete(DeleteBehavior.SetNull);
+        modelBuilder.Entity("Privatekonomi.Core.Models.ApplicationUser", b =>
+            {
+                b.HasOne("Privatekonomi.Core.Models.HouseholdMember", "HouseholdMember")
+                    .WithOne("User")
+                    .HasForeignKey("Privatekonomi.Core.Models.ApplicationUser", "HouseholdMemberId")
+                    .OnDelete(DeleteBehavior.SetNull);
 
-                    b.Navigation("HouseholdMember");
-                });
+                b.Navigation("HouseholdMember");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.Asset", b =>
-                {
-                    b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity("Privatekonomi.Core.Models.Asset", b =>
+            {
+                b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
+                    .WithMany()
+                    .HasForeignKey("UserId")
+                    .OnDelete(DeleteBehavior.Cascade);
 
-                    b.Navigation("User");
-                });
+                b.Navigation("User");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.BankConnection", b =>
-                {
-                    b.HasOne("Privatekonomi.Core.Models.BankSource", "BankSource")
-                        .WithMany()
-                        .HasForeignKey("BankSourceId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+        modelBuilder.Entity("Privatekonomi.Core.Models.BankConnection", b =>
+            {
+                b.HasOne("Privatekonomi.Core.Models.BankSource", "BankSource")
+                    .WithMany()
+                    .HasForeignKey("BankSourceId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.Navigation("BankSource");
-                });
+                b.Navigation("BankSource");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.BankSource", b =>
-                {
-                    b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity("Privatekonomi.Core.Models.BankSource", b =>
+            {
+                b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
+                    .WithMany()
+                    .HasForeignKey("UserId")
+                    .OnDelete(DeleteBehavior.Cascade);
 
-                    b.Navigation("User");
-                });
+                b.Navigation("User");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.Bill", b =>
-                {
-                    b.HasOne("Privatekonomi.Core.Models.Category", "Category")
-                        .WithMany()
-                        .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.SetNull);
+        modelBuilder.Entity("Privatekonomi.Core.Models.Bill", b =>
+            {
+                b.HasOne("Privatekonomi.Core.Models.Category", "Category")
+                    .WithMany()
+                    .HasForeignKey("CategoryId")
+                    .OnDelete(DeleteBehavior.SetNull);
 
-                    b.HasOne("Privatekonomi.Core.Models.Household", "Household")
-                        .WithMany()
-                        .HasForeignKey("HouseholdId")
-                        .OnDelete(DeleteBehavior.SetNull);
+                b.HasOne("Privatekonomi.Core.Models.Household", "Household")
+                    .WithMany()
+                    .HasForeignKey("HouseholdId")
+                    .OnDelete(DeleteBehavior.SetNull);
 
-                    b.HasOne("Privatekonomi.Core.Models.Transaction", "Transaction")
-                        .WithMany()
-                        .HasForeignKey("TransactionId")
-                        .OnDelete(DeleteBehavior.SetNull);
+                b.HasOne("Privatekonomi.Core.Models.Transaction", "Transaction")
+                    .WithMany()
+                    .HasForeignKey("TransactionId")
+                    .OnDelete(DeleteBehavior.SetNull);
 
-                    b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
+                    .WithMany()
+                    .HasForeignKey("UserId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.Navigation("Category");
+                b.Navigation("Category");
 
-                    b.Navigation("Household");
+                b.Navigation("Household");
 
-                    b.Navigation("Transaction");
+                b.Navigation("Transaction");
 
-                    b.Navigation("User");
-                });
+                b.Navigation("User");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.BillReminder", b =>
-                {
-                    b.HasOne("Privatekonomi.Core.Models.Bill", "Bill")
-                        .WithMany("Reminders")
-                        .HasForeignKey("BillId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+        modelBuilder.Entity("Privatekonomi.Core.Models.BillReminder", b =>
+            {
+                b.HasOne("Privatekonomi.Core.Models.Bill", "Bill")
+                    .WithMany("Reminders")
+                    .HasForeignKey("BillId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.Navigation("Bill");
-                });
+                b.Navigation("Bill");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.Budget", b =>
-                {
-                    b.HasOne("Privatekonomi.Core.Models.Household", "Household")
-                        .WithMany()
-                        .HasForeignKey("HouseholdId")
-                        .OnDelete(DeleteBehavior.SetNull);
+        modelBuilder.Entity("Privatekonomi.Core.Models.Budget", b =>
+            {
+                b.HasOne("Privatekonomi.Core.Models.Household", "Household")
+                    .WithMany()
+                    .HasForeignKey("HouseholdId")
+                    .OnDelete(DeleteBehavior.SetNull);
 
-                    b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
+                    .WithMany()
+                    .HasForeignKey("UserId")
+                    .OnDelete(DeleteBehavior.Cascade);
 
-                    b.Navigation("Household");
+                b.Navigation("Household");
 
-                    b.Navigation("User");
-                });
+                b.Navigation("User");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.BudgetAlert", b =>
-                {
-                    b.HasOne("Privatekonomi.Core.Models.BudgetCategory", "BudgetCategory")
-                        .WithMany()
-                        .HasForeignKey("BudgetCategoryId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+        modelBuilder.Entity("Privatekonomi.Core.Models.BudgetAlert", b =>
+            {
+                b.HasOne("Privatekonomi.Core.Models.BudgetCategory", "BudgetCategory")
+                    .WithMany()
+                    .HasForeignKey("BudgetCategoryId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.HasOne("Privatekonomi.Core.Models.Budget", "Budget")
-                        .WithMany()
-                        .HasForeignKey("BudgetId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                b.HasOne("Privatekonomi.Core.Models.Budget", "Budget")
+                    .WithMany()
+                    .HasForeignKey("BudgetId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId");
+                b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
+                    .WithMany()
+                    .HasForeignKey("UserId");
 
-                    b.Navigation("Budget");
+                b.Navigation("Budget");
 
-                    b.Navigation("BudgetCategory");
+                b.Navigation("BudgetCategory");
 
-                    b.Navigation("User");
-                });
+                b.Navigation("User");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.BudgetAlertSettings", b =>
-                {
-                    b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+        modelBuilder.Entity("Privatekonomi.Core.Models.BudgetAlertSettings", b =>
+            {
+                b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
+                    .WithMany()
+                    .HasForeignKey("UserId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.Navigation("User");
-                });
+                b.Navigation("User");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.BudgetCategory", b =>
-                {
-                    b.HasOne("Privatekonomi.Core.Models.Budget", "Budget")
-                        .WithMany("BudgetCategories")
-                        .HasForeignKey("BudgetId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+        modelBuilder.Entity("Privatekonomi.Core.Models.BudgetCategory", b =>
+            {
+                b.HasOne("Privatekonomi.Core.Models.Budget", "Budget")
+                    .WithMany("BudgetCategories")
+                    .HasForeignKey("BudgetId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.HasOne("Privatekonomi.Core.Models.Category", "Category")
-                        .WithMany()
-                        .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                b.HasOne("Privatekonomi.Core.Models.Category", "Category")
+                    .WithMany()
+                    .HasForeignKey("CategoryId")
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .IsRequired();
 
-                    b.Navigation("Budget");
+                b.Navigation("Budget");
 
-                    b.Navigation("Category");
-                });
+                b.Navigation("Category");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.BudgetFreeze", b =>
-                {
-                    b.HasOne("Privatekonomi.Core.Models.BudgetCategory", "BudgetCategory")
-                        .WithMany()
-                        .HasForeignKey("BudgetCategoryId");
+        modelBuilder.Entity("Privatekonomi.Core.Models.BudgetFreeze", b =>
+            {
+                b.HasOne("Privatekonomi.Core.Models.BudgetCategory", "BudgetCategory")
+                    .WithMany()
+                    .HasForeignKey("BudgetCategoryId");
 
-                    b.HasOne("Privatekonomi.Core.Models.Budget", "Budget")
-                        .WithMany()
-                        .HasForeignKey("BudgetId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                b.HasOne("Privatekonomi.Core.Models.Budget", "Budget")
+                    .WithMany()
+                    .HasForeignKey("BudgetId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId");
+                b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
+                    .WithMany()
+                    .HasForeignKey("UserId");
 
-                    b.Navigation("Budget");
+                b.Navigation("Budget");
 
-                    b.Navigation("BudgetCategory");
+                b.Navigation("BudgetCategory");
 
-                    b.Navigation("User");
-                });
+                b.Navigation("User");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.CapitalGain", b =>
-                {
-                    b.HasOne("Privatekonomi.Core.Models.Investment", "Investment")
-                        .WithMany()
-                        .HasForeignKey("InvestmentId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+        modelBuilder.Entity("Privatekonomi.Core.Models.CapitalGain", b =>
+            {
+                b.HasOne("Privatekonomi.Core.Models.Investment", "Investment")
+                    .WithMany()
+                    .HasForeignKey("InvestmentId")
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .IsRequired();
 
-                    b.Navigation("Investment");
-                });
+                b.Navigation("Investment");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.Category", b =>
-                {
-                    b.HasOne("Privatekonomi.Core.Models.Category", "Parent")
-                        .WithMany("SubCategories")
-                        .HasForeignKey("ParentId")
-                        .OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity("Privatekonomi.Core.Models.Category", b =>
+            {
+                b.HasOne("Privatekonomi.Core.Models.Category", "Parent")
+                    .WithMany("SubCategories")
+                    .HasForeignKey("ParentId")
+                    .OnDelete(DeleteBehavior.Restrict);
 
-                    b.Navigation("Parent");
-                });
+                b.Navigation("Parent");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.CategoryRule", b =>
-                {
-                    b.HasOne("Privatekonomi.Core.Models.Category", "Category")
-                        .WithMany()
-                        .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+        modelBuilder.Entity("Privatekonomi.Core.Models.CategoryRule", b =>
+            {
+                b.HasOne("Privatekonomi.Core.Models.Category", "Category")
+                    .WithMany()
+                    .HasForeignKey("CategoryId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.HasOne("Privatekonomi.Core.Models.CategoryRule", "OverridesSystemRule")
-                        .WithMany()
-                        .HasForeignKey("OverridesSystemRuleId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                b.HasOne("Privatekonomi.Core.Models.CategoryRule", "OverridesSystemRule")
+                    .WithMany()
+                    .HasForeignKey("OverridesSystemRuleId")
+                    .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
+                    .WithMany()
+                    .HasForeignKey("UserId")
+                    .OnDelete(DeleteBehavior.Cascade);
 
-                    b.Navigation("Category");
+                b.Navigation("Category");
 
-                    b.Navigation("OverridesSystemRule");
+                b.Navigation("OverridesSystemRule");
 
-                    b.Navigation("User");
-                });
+                b.Navigation("User");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.ChildAllowance", b =>
-                {
-                    b.HasOne("Privatekonomi.Core.Models.HouseholdMember", "HouseholdMember")
-                        .WithMany()
-                        .HasForeignKey("HouseholdMemberId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+        modelBuilder.Entity("Privatekonomi.Core.Models.ChildAllowance", b =>
+            {
+                b.HasOne("Privatekonomi.Core.Models.HouseholdMember", "HouseholdMember")
+                    .WithMany()
+                    .HasForeignKey("HouseholdMemberId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.Navigation("HouseholdMember");
-                });
+                b.Navigation("HouseholdMember");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.CommentLike", b =>
-                {
-                    b.HasOne("Privatekonomi.Core.Models.GroupComment", "GroupComment")
-                        .WithMany("Likes")
-                        .HasForeignKey("GroupCommentId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+        modelBuilder.Entity("Privatekonomi.Core.Models.CommentLike", b =>
+            {
+                b.HasOne("Privatekonomi.Core.Models.GroupComment", "GroupComment")
+                    .WithMany("Likes")
+                    .HasForeignKey("GroupCommentId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
+                    .WithMany()
+                    .HasForeignKey("UserId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.Navigation("GroupComment");
+                b.Navigation("GroupComment");
 
-                    b.Navigation("User");
-                });
+                b.Navigation("User");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.CreditRating", b =>
-                {
-                    b.HasOne("Privatekonomi.Core.Models.Household", "Household")
-                        .WithMany()
-                        .HasForeignKey("HouseholdId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+        modelBuilder.Entity("Privatekonomi.Core.Models.CreditRating", b =>
+            {
+                b.HasOne("Privatekonomi.Core.Models.Household", "Household")
+                    .WithMany()
+                    .HasForeignKey("HouseholdId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.Navigation("Household");
-                });
+                b.Navigation("Household");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.CurrencyAccount", b =>
-                {
-                    b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity("Privatekonomi.Core.Models.CurrencyAccount", b =>
+            {
+                b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
+                    .WithMany()
+                    .HasForeignKey("UserId")
+                    .OnDelete(DeleteBehavior.Cascade);
 
-                    b.Navigation("User");
-                });
+                b.Navigation("User");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.Dividend", b =>
-                {
-                    b.HasOne("Privatekonomi.Core.Models.Investment", "Investment")
-                        .WithMany()
-                        .HasForeignKey("InvestmentId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+        modelBuilder.Entity("Privatekonomi.Core.Models.Dividend", b =>
+            {
+                b.HasOne("Privatekonomi.Core.Models.Investment", "Investment")
+                    .WithMany()
+                    .HasForeignKey("InvestmentId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
+                    .WithMany()
+                    .HasForeignKey("UserId")
+                    .OnDelete(DeleteBehavior.Cascade);
 
-                    b.Navigation("Investment");
+                b.Navigation("Investment");
 
-                    b.Navigation("User");
-                });
+                b.Navigation("User");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.DoNotDisturbSchedule", b =>
-                {
-                    b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+        modelBuilder.Entity("Privatekonomi.Core.Models.DoNotDisturbSchedule", b =>
+            {
+                b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
+                    .WithMany()
+                    .HasForeignKey("UserId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.Navigation("User");
-                });
+                b.Navigation("User");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.ExpenseShare", b =>
-                {
-                    b.HasOne("Privatekonomi.Core.Models.HouseholdMember", "HouseholdMember")
-                        .WithMany("ExpenseShares")
-                        .HasForeignKey("HouseholdMemberId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+        modelBuilder.Entity("Privatekonomi.Core.Models.ExpenseShare", b =>
+            {
+                b.HasOne("Privatekonomi.Core.Models.HouseholdMember", "HouseholdMember")
+                    .WithMany("ExpenseShares")
+                    .HasForeignKey("HouseholdMemberId")
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .IsRequired();
 
-                    b.HasOne("Privatekonomi.Core.Models.SharedExpense", "SharedExpense")
-                        .WithMany("ExpenseShares")
-                        .HasForeignKey("SharedExpenseId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                b.HasOne("Privatekonomi.Core.Models.SharedExpense", "SharedExpense")
+                    .WithMany("ExpenseShares")
+                    .HasForeignKey("SharedExpenseId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.Navigation("HouseholdMember");
+                b.Navigation("HouseholdMember");
 
-                    b.Navigation("SharedExpense");
-                });
+                b.Navigation("SharedExpense");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.Goal", b =>
-                {
-                    b.HasOne("Privatekonomi.Core.Models.BankSource", "FundedFromBankSource")
-                        .WithMany()
-                        .HasForeignKey("FundedFromBankSourceId")
-                        .OnDelete(DeleteBehavior.SetNull);
+        modelBuilder.Entity("Privatekonomi.Core.Models.Goal", b =>
+            {
+                b.HasOne("Privatekonomi.Core.Models.BankSource", "FundedFromBankSource")
+                    .WithMany()
+                    .HasForeignKey("FundedFromBankSourceId")
+                    .OnDelete(DeleteBehavior.SetNull);
 
-                    b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
+                    .WithMany()
+                    .HasForeignKey("UserId")
+                    .OnDelete(DeleteBehavior.Cascade);
 
-                    b.Navigation("FundedFromBankSource");
+                b.Navigation("FundedFromBankSource");
 
-                    b.Navigation("User");
-                });
+                b.Navigation("User");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.GoalMilestone", b =>
-                {
-                    b.HasOne("Privatekonomi.Core.Models.Goal", "Goal")
-                        .WithMany()
-                        .HasForeignKey("GoalId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+        modelBuilder.Entity("Privatekonomi.Core.Models.GoalMilestone", b =>
+            {
+                b.HasOne("Privatekonomi.Core.Models.Goal", "Goal")
+                    .WithMany()
+                    .HasForeignKey("GoalId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.Navigation("Goal");
-                });
+                b.Navigation("Goal");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.GoalShare", b =>
-                {
-                    b.HasOne("Privatekonomi.Core.Models.Goal", "Goal")
-                        .WithMany()
-                        .HasForeignKey("GoalId");
+        modelBuilder.Entity("Privatekonomi.Core.Models.GoalShare", b =>
+            {
+                b.HasOne("Privatekonomi.Core.Models.Goal", "Goal")
+                    .WithMany()
+                    .HasForeignKey("GoalId");
 
-                    b.HasOne("Privatekonomi.Core.Models.SharedGoal", "SharedGoal")
-                        .WithMany()
-                        .HasForeignKey("SharedGoalId");
+                b.HasOne("Privatekonomi.Core.Models.SharedGoal", "SharedGoal")
+                    .WithMany()
+                    .HasForeignKey("SharedGoalId");
 
-                    b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
+                    .WithMany()
+                    .HasForeignKey("UserId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.Navigation("Goal");
+                b.Navigation("Goal");
 
-                    b.Navigation("SharedGoal");
+                b.Navigation("SharedGoal");
 
-                    b.Navigation("User");
-                });
+                b.Navigation("User");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.GroupComment", b =>
-                {
-                    b.HasOne("Privatekonomi.Core.Models.GroupGoal", "GroupGoal")
-                        .WithMany()
-                        .HasForeignKey("GroupGoalId");
+        modelBuilder.Entity("Privatekonomi.Core.Models.GroupComment", b =>
+            {
+                b.HasOne("Privatekonomi.Core.Models.GroupGoal", "GroupGoal")
+                    .WithMany()
+                    .HasForeignKey("GroupGoalId");
 
-                    b.HasOne("Privatekonomi.Core.Models.SavingsGroup", "SavingsGroup")
-                        .WithMany("Comments")
-                        .HasForeignKey("SavingsGroupId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                b.HasOne("Privatekonomi.Core.Models.SavingsGroup", "SavingsGroup")
+                    .WithMany("Comments")
+                    .HasForeignKey("SavingsGroupId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
+                    .WithMany()
+                    .HasForeignKey("UserId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.Navigation("GroupGoal");
+                b.Navigation("GroupGoal");
 
-                    b.Navigation("SavingsGroup");
+                b.Navigation("SavingsGroup");
 
-                    b.Navigation("User");
-                });
+                b.Navigation("User");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.GroupGoal", b =>
-                {
-                    b.HasOne("Privatekonomi.Core.Models.Goal", "Goal")
-                        .WithMany()
-                        .HasForeignKey("GoalId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+        modelBuilder.Entity("Privatekonomi.Core.Models.GroupGoal", b =>
+            {
+                b.HasOne("Privatekonomi.Core.Models.Goal", "Goal")
+                    .WithMany()
+                    .HasForeignKey("GoalId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.HasOne("Privatekonomi.Core.Models.SavingsGroup", "SavingsGroup")
-                        .WithMany("GroupGoals")
-                        .HasForeignKey("SavingsGroupId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                b.HasOne("Privatekonomi.Core.Models.SavingsGroup", "SavingsGroup")
+                    .WithMany("GroupGoals")
+                    .HasForeignKey("SavingsGroupId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
+                    .WithMany()
+                    .HasForeignKey("UserId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.Navigation("Goal");
+                b.Navigation("Goal");
 
-                    b.Navigation("SavingsGroup");
+                b.Navigation("SavingsGroup");
 
-                    b.Navigation("User");
-                });
+                b.Navigation("User");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.HouseholdMember", b =>
-                {
-                    b.HasOne("Privatekonomi.Core.Models.Household", "Household")
-                        .WithMany("Members")
-                        .HasForeignKey("HouseholdId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+        modelBuilder.Entity("Privatekonomi.Core.Models.HouseholdMember", b =>
+            {
+                b.HasOne("Privatekonomi.Core.Models.Household", "Household")
+                    .WithMany("Members")
+                    .HasForeignKey("HouseholdId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.Navigation("Household");
-                });
+                b.Navigation("Household");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.HouseholdRole", b =>
-                {
-                    b.HasOne("Privatekonomi.Core.Models.HouseholdMember", "HouseholdMember")
-                        .WithMany("Roles")
-                        .HasForeignKey("HouseholdMemberId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+        modelBuilder.Entity("Privatekonomi.Core.Models.HouseholdRole", b =>
+            {
+                b.HasOne("Privatekonomi.Core.Models.HouseholdMember", "HouseholdMember")
+                    .WithMany("Roles")
+                    .HasForeignKey("HouseholdMemberId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.Navigation("HouseholdMember");
-                });
+                b.Navigation("HouseholdMember");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.Investment", b =>
-                {
-                    b.HasOne("Privatekonomi.Core.Models.BankSource", "BankSource")
-                        .WithMany()
-                        .HasForeignKey("BankSourceId")
-                        .OnDelete(DeleteBehavior.SetNull);
+        modelBuilder.Entity("Privatekonomi.Core.Models.Investment", b =>
+            {
+                b.HasOne("Privatekonomi.Core.Models.BankSource", "BankSource")
+                    .WithMany()
+                    .HasForeignKey("BankSourceId")
+                    .OnDelete(DeleteBehavior.SetNull);
 
-                    b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
+                    .WithMany()
+                    .HasForeignKey("UserId")
+                    .OnDelete(DeleteBehavior.Cascade);
 
-                    b.Navigation("BankSource");
+                b.Navigation("BankSource");
 
-                    b.Navigation("User");
-                });
+                b.Navigation("User");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.InvestmentTransaction", b =>
-                {
-                    b.HasOne("Privatekonomi.Core.Models.Investment", "Investment")
-                        .WithMany()
-                        .HasForeignKey("InvestmentId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+        modelBuilder.Entity("Privatekonomi.Core.Models.InvestmentTransaction", b =>
+            {
+                b.HasOne("Privatekonomi.Core.Models.Investment", "Investment")
+                    .WithMany()
+                    .HasForeignKey("InvestmentId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
+                    .WithMany()
+                    .HasForeignKey("UserId")
+                    .OnDelete(DeleteBehavior.Cascade);
 
-                    b.Navigation("Investment");
+                b.Navigation("Investment");
 
-                    b.Navigation("User");
-                });
+                b.Navigation("User");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.LifeTimelineMilestone", b =>
-                {
-                    b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity("Privatekonomi.Core.Models.LifeTimelineMilestone", b =>
+            {
+                b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
+                    .WithMany()
+                    .HasForeignKey("UserId")
+                    .OnDelete(DeleteBehavior.Cascade);
 
-                    b.Navigation("User");
-                });
+                b.Navigation("User");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.LifeTimelineScenario", b =>
-                {
-                    b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity("Privatekonomi.Core.Models.LifeTimelineScenario", b =>
+            {
+                b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
+                    .WithMany()
+                    .HasForeignKey("UserId")
+                    .OnDelete(DeleteBehavior.Cascade);
 
-                    b.Navigation("User");
-                });
+                b.Navigation("User");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.Loan", b =>
-                {
-                    b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity("Privatekonomi.Core.Models.Loan", b =>
+            {
+                b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
+                    .WithMany()
+                    .HasForeignKey("UserId")
+                    .OnDelete(DeleteBehavior.Cascade);
 
-                    b.Navigation("User");
-                });
+                b.Navigation("User");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.MLModel", b =>
-                {
-                    b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+        modelBuilder.Entity("Privatekonomi.Core.Models.MLModel", b =>
+            {
+                b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
+                    .WithMany()
+                    .HasForeignKey("UserId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.Navigation("User");
-                });
+                b.Navigation("User");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.NetWorthSnapshot", b =>
-                {
-                    b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity("Privatekonomi.Core.Models.NetWorthSnapshot", b =>
+            {
+                b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
+                    .WithMany()
+                    .HasForeignKey("UserId")
+                    .OnDelete(DeleteBehavior.Cascade);
 
-                    b.Navigation("User");
-                });
+                b.Navigation("User");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.Notification", b =>
-                {
-                    b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+        modelBuilder.Entity("Privatekonomi.Core.Models.Notification", b =>
+            {
+                b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
+                    .WithMany()
+                    .HasForeignKey("UserId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.Navigation("User");
-                });
+                b.Navigation("User");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.NotificationIntegration", b =>
-                {
-                    b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+        modelBuilder.Entity("Privatekonomi.Core.Models.NotificationIntegration", b =>
+            {
+                b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
+                    .WithMany()
+                    .HasForeignKey("UserId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.Navigation("User");
-                });
+                b.Navigation("User");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.NotificationPreference", b =>
-                {
-                    b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+        modelBuilder.Entity("Privatekonomi.Core.Models.NotificationPreference", b =>
+            {
+                b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
+                    .WithMany()
+                    .HasForeignKey("UserId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.Navigation("User");
-                });
+                b.Navigation("User");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.Pension", b =>
-                {
-                    b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity("Privatekonomi.Core.Models.Pension", b =>
+            {
+                b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
+                    .WithMany()
+                    .HasForeignKey("UserId")
+                    .OnDelete(DeleteBehavior.Cascade);
 
-                    b.Navigation("User");
-                });
+                b.Navigation("User");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.Pocket", b =>
-                {
-                    b.HasOne("Privatekonomi.Core.Models.BankSource", "BankSource")
-                        .WithMany()
-                        .HasForeignKey("BankSourceId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+        modelBuilder.Entity("Privatekonomi.Core.Models.Pocket", b =>
+            {
+                b.HasOne("Privatekonomi.Core.Models.BankSource", "BankSource")
+                    .WithMany()
+                    .HasForeignKey("BankSourceId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
+                    .WithMany()
+                    .HasForeignKey("UserId")
+                    .OnDelete(DeleteBehavior.Cascade);
 
-                    b.Navigation("BankSource");
+                b.Navigation("BankSource");
 
-                    b.Navigation("User");
-                });
+                b.Navigation("User");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.PocketTransaction", b =>
-                {
-                    b.HasOne("Privatekonomi.Core.Models.Pocket", "Pocket")
-                        .WithMany("PocketTransactions")
-                        .HasForeignKey("PocketId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+        modelBuilder.Entity("Privatekonomi.Core.Models.PocketTransaction", b =>
+            {
+                b.HasOne("Privatekonomi.Core.Models.Pocket", "Pocket")
+                    .WithMany("PocketTransactions")
+                    .HasForeignKey("PocketId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.HasOne("Privatekonomi.Core.Models.Pocket", "RelatedPocket")
-                        .WithMany()
-                        .HasForeignKey("RelatedPocketId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                b.HasOne("Privatekonomi.Core.Models.Pocket", "RelatedPocket")
+                    .WithMany()
+                    .HasForeignKey("RelatedPocketId")
+                    .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
+                    .WithMany()
+                    .HasForeignKey("UserId")
+                    .OnDelete(DeleteBehavior.Cascade);
 
-                    b.Navigation("Pocket");
+                b.Navigation("Pocket");
 
-                    b.Navigation("RelatedPocket");
+                b.Navigation("RelatedPocket");
 
-                    b.Navigation("User");
-                });
+                b.Navigation("User");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.PortfolioAllocation", b =>
-                {
-                    b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity("Privatekonomi.Core.Models.PortfolioAllocation", b =>
+            {
+                b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
+                    .WithMany()
+                    .HasForeignKey("UserId")
+                    .OnDelete(DeleteBehavior.Cascade);
 
-                    b.Navigation("User");
-                });
+                b.Navigation("User");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.Receipt", b =>
-                {
-                    b.HasOne("Privatekonomi.Core.Models.Transaction", "Transaction")
-                        .WithMany("Receipts")
-                        .HasForeignKey("TransactionId")
-                        .OnDelete(DeleteBehavior.SetNull);
+        modelBuilder.Entity("Privatekonomi.Core.Models.Receipt", b =>
+            {
+                b.HasOne("Privatekonomi.Core.Models.Transaction", "Transaction")
+                    .WithMany("Receipts")
+                    .HasForeignKey("TransactionId")
+                    .OnDelete(DeleteBehavior.SetNull);
 
-                    b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
+                    .WithMany()
+                    .HasForeignKey("UserId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.Navigation("Transaction");
+                b.Navigation("Transaction");
 
-                    b.Navigation("User");
-                });
+                b.Navigation("User");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.ReceiptLineItem", b =>
-                {
-                    b.HasOne("Privatekonomi.Core.Models.Category", "Category")
-                        .WithMany()
-                        .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.SetNull);
+        modelBuilder.Entity("Privatekonomi.Core.Models.ReceiptLineItem", b =>
+            {
+                b.HasOne("Privatekonomi.Core.Models.Category", "Category")
+                    .WithMany()
+                    .HasForeignKey("CategoryId")
+                    .OnDelete(DeleteBehavior.SetNull);
 
-                    b.HasOne("Privatekonomi.Core.Models.Receipt", "Receipt")
-                        .WithMany("ReceiptLineItems")
-                        .HasForeignKey("ReceiptId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                b.HasOne("Privatekonomi.Core.Models.Receipt", "Receipt")
+                    .WithMany("ReceiptLineItems")
+                    .HasForeignKey("ReceiptId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.Navigation("Category");
+                b.Navigation("Category");
 
-                    b.Navigation("Receipt");
-                });
+                b.Navigation("Receipt");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.Reminder", b =>
-                {
-                    b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+        modelBuilder.Entity("Privatekonomi.Core.Models.Reminder", b =>
+            {
+                b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
+                    .WithMany()
+                    .HasForeignKey("UserId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.Navigation("User");
-                });
+                b.Navigation("User");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.ReminderSettings", b =>
-                {
-                    b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+        modelBuilder.Entity("Privatekonomi.Core.Models.ReminderSettings", b =>
+            {
+                b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
+                    .WithMany()
+                    .HasForeignKey("UserId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.Navigation("User");
-                });
+                b.Navigation("User");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.RoundUpSettings", b =>
-                {
-                    b.HasOne("Privatekonomi.Core.Models.Goal", "TargetGoal")
-                        .WithMany()
-                        .HasForeignKey("TargetGoalId");
+        modelBuilder.Entity("Privatekonomi.Core.Models.RoundUpSettings", b =>
+            {
+                b.HasOne("Privatekonomi.Core.Models.Goal", "TargetGoal")
+                    .WithMany()
+                    .HasForeignKey("TargetGoalId");
 
-                    b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId");
+                b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
+                    .WithMany()
+                    .HasForeignKey("UserId");
 
-                    b.Navigation("TargetGoal");
+                b.Navigation("TargetGoal");
 
-                    b.Navigation("User");
-                });
+                b.Navigation("User");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.RoundUpTransaction", b =>
-                {
-                    b.HasOne("Privatekonomi.Core.Models.Goal", "Goal")
-                        .WithMany()
-                        .HasForeignKey("GoalId");
+        modelBuilder.Entity("Privatekonomi.Core.Models.RoundUpTransaction", b =>
+            {
+                b.HasOne("Privatekonomi.Core.Models.Goal", "Goal")
+                    .WithMany()
+                    .HasForeignKey("GoalId");
 
-                    b.HasOne("Privatekonomi.Core.Models.Transaction", "Transaction")
-                        .WithMany()
-                        .HasForeignKey("TransactionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                b.HasOne("Privatekonomi.Core.Models.Transaction", "Transaction")
+                    .WithMany()
+                    .HasForeignKey("TransactionId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId");
+                b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
+                    .WithMany()
+                    .HasForeignKey("UserId");
 
-                    b.Navigation("Goal");
+                b.Navigation("Goal");
 
-                    b.Navigation("Transaction");
+                b.Navigation("Transaction");
 
-                    b.Navigation("User");
-                });
+                b.Navigation("User");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.SalaryHistory", b =>
-                {
-                    b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity("Privatekonomi.Core.Models.SalaryHistory", b =>
+            {
+                b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
+                    .WithMany()
+                    .HasForeignKey("UserId")
+                    .OnDelete(DeleteBehavior.Cascade);
 
-                    b.Navigation("User");
-                });
+                b.Navigation("User");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.SavingsChallenge", b =>
-                {
-                    b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId");
+        modelBuilder.Entity("Privatekonomi.Core.Models.SavingsChallenge", b =>
+            {
+                b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
+                    .WithMany()
+                    .HasForeignKey("UserId");
 
-                    b.Navigation("User");
-                });
+                b.Navigation("User");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.SavingsChallengeProgress", b =>
-                {
-                    b.HasOne("Privatekonomi.Core.Models.SavingsChallenge", "SavingsChallenge")
-                        .WithMany("ProgressEntries")
-                        .HasForeignKey("SavingsChallengeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+        modelBuilder.Entity("Privatekonomi.Core.Models.SavingsChallengeProgress", b =>
+            {
+                b.HasOne("Privatekonomi.Core.Models.SavingsChallenge", "SavingsChallenge")
+                    .WithMany("ProgressEntries")
+                    .HasForeignKey("SavingsChallengeId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.Navigation("SavingsChallenge");
-                });
+                b.Navigation("SavingsChallenge");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.SavingsGroup", b =>
-                {
-                    b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "CreatedByUser")
-                        .WithMany()
-                        .HasForeignKey("CreatedByUserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+        modelBuilder.Entity("Privatekonomi.Core.Models.SavingsGroup", b =>
+            {
+                b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "CreatedByUser")
+                    .WithMany()
+                    .HasForeignKey("CreatedByUserId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.Navigation("CreatedByUser");
-                });
+                b.Navigation("CreatedByUser");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.SavingsGroupMember", b =>
-                {
-                    b.HasOne("Privatekonomi.Core.Models.SavingsGroup", "SavingsGroup")
-                        .WithMany("Members")
-                        .HasForeignKey("SavingsGroupId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+        modelBuilder.Entity("Privatekonomi.Core.Models.SavingsGroupMember", b =>
+            {
+                b.HasOne("Privatekonomi.Core.Models.SavingsGroup", "SavingsGroup")
+                    .WithMany("Members")
+                    .HasForeignKey("SavingsGroupId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
+                    .WithMany()
+                    .HasForeignKey("UserId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.Navigation("SavingsGroup");
+                b.Navigation("SavingsGroup");
 
-                    b.Navigation("User");
-                });
+                b.Navigation("User");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.SharedExpense", b =>
-                {
-                    b.HasOne("Privatekonomi.Core.Models.Household", "Household")
-                        .WithMany("SharedExpenses")
-                        .HasForeignKey("HouseholdId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+        modelBuilder.Entity("Privatekonomi.Core.Models.SharedExpense", b =>
+            {
+                b.HasOne("Privatekonomi.Core.Models.Household", "Household")
+                    .WithMany("SharedExpenses")
+                    .HasForeignKey("HouseholdId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.Navigation("Household");
-                });
+                b.Navigation("Household");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.SharedGoal", b =>
-                {
-                    b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "CreatedByUser")
-                        .WithMany()
-                        .HasForeignKey("CreatedByUserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+        modelBuilder.Entity("Privatekonomi.Core.Models.SharedGoal", b =>
+            {
+                b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "CreatedByUser")
+                    .WithMany()
+                    .HasForeignKey("CreatedByUserId")
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .IsRequired();
 
-                    b.Navigation("CreatedByUser");
-                });
+                b.Navigation("CreatedByUser");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.SharedGoalNotification", b =>
-                {
-                    b.HasOne("Privatekonomi.Core.Models.SharedGoal", "SharedGoal")
-                        .WithMany("Notifications")
-                        .HasForeignKey("SharedGoalId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+        modelBuilder.Entity("Privatekonomi.Core.Models.SharedGoalNotification", b =>
+            {
+                b.HasOne("Privatekonomi.Core.Models.SharedGoal", "SharedGoal")
+                    .WithMany("Notifications")
+                    .HasForeignKey("SharedGoalId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
+                    .WithMany()
+                    .HasForeignKey("UserId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.Navigation("SharedGoal");
+                b.Navigation("SharedGoal");
 
-                    b.Navigation("User");
-                });
+                b.Navigation("User");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.SharedGoalParticipant", b =>
-                {
-                    b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "InvitedByUser")
-                        .WithMany()
-                        .HasForeignKey("InvitedByUserId")
-                        .OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity("Privatekonomi.Core.Models.SharedGoalParticipant", b =>
+            {
+                b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "InvitedByUser")
+                    .WithMany()
+                    .HasForeignKey("InvitedByUserId")
+                    .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("Privatekonomi.Core.Models.SharedGoal", "SharedGoal")
-                        .WithMany("Participants")
-                        .HasForeignKey("SharedGoalId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                b.HasOne("Privatekonomi.Core.Models.SharedGoal", "SharedGoal")
+                    .WithMany("Participants")
+                    .HasForeignKey("SharedGoalId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
+                    .WithMany()
+                    .HasForeignKey("UserId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.Navigation("InvitedByUser");
+                b.Navigation("InvitedByUser");
 
-                    b.Navigation("SharedGoal");
+                b.Navigation("SharedGoal");
 
-                    b.Navigation("User");
-                });
+                b.Navigation("User");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.SharedGoalProposal", b =>
-                {
-                    b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "ProposedByUser")
-                        .WithMany()
-                        .HasForeignKey("ProposedByUserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+        modelBuilder.Entity("Privatekonomi.Core.Models.SharedGoalProposal", b =>
+            {
+                b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "ProposedByUser")
+                    .WithMany()
+                    .HasForeignKey("ProposedByUserId")
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .IsRequired();
 
-                    b.HasOne("Privatekonomi.Core.Models.SharedGoal", "SharedGoal")
-                        .WithMany("Proposals")
-                        .HasForeignKey("SharedGoalId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                b.HasOne("Privatekonomi.Core.Models.SharedGoal", "SharedGoal")
+                    .WithMany("Proposals")
+                    .HasForeignKey("SharedGoalId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.Navigation("ProposedByUser");
+                b.Navigation("ProposedByUser");
 
-                    b.Navigation("SharedGoal");
-                });
+                b.Navigation("SharedGoal");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.SharedGoalProposalVote", b =>
-                {
-                    b.HasOne("Privatekonomi.Core.Models.SharedGoalProposal", "SharedGoalProposal")
-                        .WithMany("Votes")
-                        .HasForeignKey("SharedGoalProposalId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+        modelBuilder.Entity("Privatekonomi.Core.Models.SharedGoalProposalVote", b =>
+            {
+                b.HasOne("Privatekonomi.Core.Models.SharedGoalProposal", "SharedGoalProposal")
+                    .WithMany("Votes")
+                    .HasForeignKey("SharedGoalProposalId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
+                    .WithMany()
+                    .HasForeignKey("UserId")
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .IsRequired();
 
-                    b.Navigation("SharedGoalProposal");
+                b.Navigation("SharedGoalProposal");
 
-                    b.Navigation("User");
-                });
+                b.Navigation("User");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.SharedGoalTransaction", b =>
-                {
-                    b.HasOne("Privatekonomi.Core.Models.SharedGoal", "SharedGoal")
-                        .WithMany("Transactions")
-                        .HasForeignKey("SharedGoalId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+        modelBuilder.Entity("Privatekonomi.Core.Models.SharedGoalTransaction", b =>
+            {
+                b.HasOne("Privatekonomi.Core.Models.SharedGoal", "SharedGoal")
+                    .WithMany("Transactions")
+                    .HasForeignKey("SharedGoalId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
+                    .WithMany()
+                    .HasForeignKey("UserId")
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .IsRequired();
 
-                    b.Navigation("SharedGoal");
+                b.Navigation("SharedGoal");
 
-                    b.Navigation("User");
-                });
+                b.Navigation("User");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.Subscription", b =>
-                {
-                    b.HasOne("Privatekonomi.Core.Models.Category", "Category")
-                        .WithMany()
-                        .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.SetNull);
+        modelBuilder.Entity("Privatekonomi.Core.Models.Subscription", b =>
+            {
+                b.HasOne("Privatekonomi.Core.Models.Category", "Category")
+                    .WithMany()
+                    .HasForeignKey("CategoryId")
+                    .OnDelete(DeleteBehavior.SetNull);
 
-                    b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
+                    .WithMany()
+                    .HasForeignKey("UserId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.Navigation("Category");
+                b.Navigation("Category");
 
-                    b.Navigation("User");
-                });
+                b.Navigation("User");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.SubscriptionPriceHistory", b =>
-                {
-                    b.HasOne("Privatekonomi.Core.Models.Subscription", "Subscription")
-                        .WithMany("PriceHistory")
-                        .HasForeignKey("SubscriptionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+        modelBuilder.Entity("Privatekonomi.Core.Models.SubscriptionPriceHistory", b =>
+            {
+                b.HasOne("Privatekonomi.Core.Models.Subscription", "Subscription")
+                    .WithMany("PriceHistory")
+                    .HasForeignKey("SubscriptionId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.Navigation("Subscription");
-                });
+                b.Navigation("Subscription");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.TaxDeduction", b =>
-                {
-                    b.HasOne("Privatekonomi.Core.Models.Transaction", "Transaction")
-                        .WithMany()
-                        .HasForeignKey("TransactionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+        modelBuilder.Entity("Privatekonomi.Core.Models.TaxDeduction", b =>
+            {
+                b.HasOne("Privatekonomi.Core.Models.Transaction", "Transaction")
+                    .WithMany()
+                    .HasForeignKey("TransactionId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.Navigation("Transaction");
-                });
+                b.Navigation("Transaction");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.Transaction", b =>
-                {
-                    b.HasOne("Privatekonomi.Core.Models.BankSource", "BankSource")
-                        .WithMany("Transactions")
-                        .HasForeignKey("BankSourceId")
-                        .OnDelete(DeleteBehavior.SetNull);
+        modelBuilder.Entity("Privatekonomi.Core.Models.Transaction", b =>
+            {
+                b.HasOne("Privatekonomi.Core.Models.BankSource", "BankSource")
+                    .WithMany("Transactions")
+                    .HasForeignKey("BankSourceId")
+                    .OnDelete(DeleteBehavior.SetNull);
 
-                    b.HasOne("Privatekonomi.Core.Models.Household", "Household")
-                        .WithMany()
-                        .HasForeignKey("HouseholdId")
-                        .OnDelete(DeleteBehavior.SetNull);
+                b.HasOne("Privatekonomi.Core.Models.Household", "Household")
+                    .WithMany()
+                    .HasForeignKey("HouseholdId")
+                    .OnDelete(DeleteBehavior.SetNull);
 
-                    b.HasOne("Privatekonomi.Core.Models.Pocket", "Pocket")
-                        .WithMany()
-                        .HasForeignKey("PocketId")
-                        .OnDelete(DeleteBehavior.SetNull);
+                b.HasOne("Privatekonomi.Core.Models.Pocket", "Pocket")
+                    .WithMany()
+                    .HasForeignKey("PocketId")
+                    .OnDelete(DeleteBehavior.SetNull);
 
-                    b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
+                    .WithMany()
+                    .HasForeignKey("UserId")
+                    .OnDelete(DeleteBehavior.Cascade);
 
-                    b.Navigation("BankSource");
+                b.Navigation("BankSource");
 
-                    b.Navigation("Household");
+                b.Navigation("Household");
 
-                    b.Navigation("Pocket");
+                b.Navigation("Pocket");
 
-                    b.Navigation("User");
-                });
+                b.Navigation("User");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.TransactionCategory", b =>
-                {
-                    b.HasOne("Privatekonomi.Core.Models.Category", "Category")
-                        .WithMany("TransactionCategories")
-                        .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+        modelBuilder.Entity("Privatekonomi.Core.Models.TransactionCategory", b =>
+            {
+                b.HasOne("Privatekonomi.Core.Models.Category", "Category")
+                    .WithMany("TransactionCategories")
+                    .HasForeignKey("CategoryId")
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .IsRequired();
 
-                    b.HasOne("Privatekonomi.Core.Models.Transaction", "Transaction")
-                        .WithMany("TransactionCategories")
-                        .HasForeignKey("TransactionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                b.HasOne("Privatekonomi.Core.Models.Transaction", "Transaction")
+                    .WithMany("TransactionCategories")
+                    .HasForeignKey("TransactionId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.Navigation("Category");
+                b.Navigation("Category");
 
-                    b.Navigation("Transaction");
-                });
+                b.Navigation("Transaction");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.UserFeedback", b =>
-                {
-                    b.HasOne("Privatekonomi.Core.Models.Transaction", "Transaction")
-                        .WithMany()
-                        .HasForeignKey("TransactionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+        modelBuilder.Entity("Privatekonomi.Core.Models.UserFeedback", b =>
+            {
+                b.HasOne("Privatekonomi.Core.Models.Transaction", "Transaction")
+                    .WithMany()
+                    .HasForeignKey("TransactionId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
+                    .WithMany()
+                    .HasForeignKey("UserId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.Navigation("Transaction");
+                b.Navigation("Transaction");
 
-                    b.Navigation("User");
-                });
+                b.Navigation("User");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.UserPrivacySettings", b =>
-                {
-                    b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+        modelBuilder.Entity("Privatekonomi.Core.Models.UserPrivacySettings", b =>
+            {
+                b.HasOne("Privatekonomi.Core.Models.ApplicationUser", "User")
+                    .WithMany()
+                    .HasForeignKey("UserId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.Navigation("User");
-                });
+                b.Navigation("User");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.AllowanceTask", b =>
-                {
-                    b.Navigation("AllowanceTransactions");
-                });
+        modelBuilder.Entity("Privatekonomi.Core.Models.AllowanceTask", b =>
+            {
+                b.Navigation("AllowanceTransactions");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.BankSource", b =>
-                {
-                    b.Navigation("Transactions");
-                });
+        modelBuilder.Entity("Privatekonomi.Core.Models.BankSource", b =>
+            {
+                b.Navigation("Transactions");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.Bill", b =>
-                {
-                    b.Navigation("Reminders");
-                });
+        modelBuilder.Entity("Privatekonomi.Core.Models.Bill", b =>
+            {
+                b.Navigation("Reminders");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.Budget", b =>
-                {
-                    b.Navigation("BudgetCategories");
-                });
+        modelBuilder.Entity("Privatekonomi.Core.Models.Budget", b =>
+            {
+                b.Navigation("BudgetCategories");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.Category", b =>
-                {
-                    b.Navigation("SubCategories");
+        modelBuilder.Entity("Privatekonomi.Core.Models.Category", b =>
+            {
+                b.Navigation("SubCategories");
 
-                    b.Navigation("TransactionCategories");
-                });
+                b.Navigation("TransactionCategories");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.ChildAllowance", b =>
-                {
-                    b.Navigation("AllowanceTasks");
+        modelBuilder.Entity("Privatekonomi.Core.Models.ChildAllowance", b =>
+            {
+                b.Navigation("AllowanceTasks");
 
-                    b.Navigation("AllowanceTransactions");
-                });
+                b.Navigation("AllowanceTransactions");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.GroupComment", b =>
-                {
-                    b.Navigation("Likes");
-                });
+        modelBuilder.Entity("Privatekonomi.Core.Models.GroupComment", b =>
+            {
+                b.Navigation("Likes");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.Household", b =>
-                {
-                    b.Navigation("Members");
+        modelBuilder.Entity("Privatekonomi.Core.Models.Household", b =>
+            {
+                b.Navigation("Members");
 
-                    b.Navigation("SharedExpenses");
-                });
+                b.Navigation("SharedExpenses");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.HouseholdMember", b =>
-                {
-                    b.Navigation("ExpenseShares");
+        modelBuilder.Entity("Privatekonomi.Core.Models.HouseholdMember", b =>
+            {
+                b.Navigation("ExpenseShares");
 
-                    b.Navigation("Roles");
+                b.Navigation("Roles");
 
-                    b.Navigation("User");
-                });
+                b.Navigation("User");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.Pocket", b =>
-                {
-                    b.Navigation("PocketTransactions");
-                });
+        modelBuilder.Entity("Privatekonomi.Core.Models.Pocket", b =>
+            {
+                b.Navigation("PocketTransactions");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.Receipt", b =>
-                {
-                    b.Navigation("ReceiptLineItems");
-                });
+        modelBuilder.Entity("Privatekonomi.Core.Models.Receipt", b =>
+            {
+                b.Navigation("ReceiptLineItems");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.SavingsChallenge", b =>
-                {
-                    b.Navigation("ProgressEntries");
-                });
+        modelBuilder.Entity("Privatekonomi.Core.Models.SavingsChallenge", b =>
+            {
+                b.Navigation("ProgressEntries");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.SavingsGroup", b =>
-                {
-                    b.Navigation("Comments");
+        modelBuilder.Entity("Privatekonomi.Core.Models.SavingsGroup", b =>
+            {
+                b.Navigation("Comments");
 
-                    b.Navigation("GroupGoals");
+                b.Navigation("GroupGoals");
 
-                    b.Navigation("Members");
-                });
+                b.Navigation("Members");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.SharedExpense", b =>
-                {
-                    b.Navigation("ExpenseShares");
-                });
+        modelBuilder.Entity("Privatekonomi.Core.Models.SharedExpense", b =>
+            {
+                b.Navigation("ExpenseShares");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.SharedGoal", b =>
-                {
-                    b.Navigation("Notifications");
+        modelBuilder.Entity("Privatekonomi.Core.Models.SharedGoal", b =>
+            {
+                b.Navigation("Notifications");
 
-                    b.Navigation("Participants");
+                b.Navigation("Participants");
 
-                    b.Navigation("Proposals");
+                b.Navigation("Proposals");
 
-                    b.Navigation("Transactions");
-                });
+                b.Navigation("Transactions");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.SharedGoalProposal", b =>
-                {
-                    b.Navigation("Votes");
-                });
+        modelBuilder.Entity("Privatekonomi.Core.Models.SharedGoalProposal", b =>
+            {
+                b.Navigation("Votes");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.Subscription", b =>
-                {
-                    b.Navigation("PriceHistory");
-                });
+        modelBuilder.Entity("Privatekonomi.Core.Models.Subscription", b =>
+            {
+                b.Navigation("PriceHistory");
+            });
 
-            modelBuilder.Entity("Privatekonomi.Core.Models.Transaction", b =>
-                {
-                    b.Navigation("Receipts");
+        modelBuilder.Entity("Privatekonomi.Core.Models.Transaction", b =>
+            {
+                b.Navigation("Receipts");
 
-                    b.Navigation("TransactionCategories");
-                });
+                b.Navigation("TransactionCategories");
+            });
 #pragma warning restore 612, 618
-        }
     }
 }

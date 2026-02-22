@@ -11,6 +11,8 @@ CSV (Comma/Semicolon Separated Values) files are supported from the following ba
 - ICA-banken
 - Swedbank (both CSN and old formats)
 
+> **Note:** Avanza CSV exports (transaktionshistorik) are imported as **Investeringstransaktioner** — see the [Avanza section](#avanza-csv--transaktionshistorik) below and use the **Investeringar** import flow.
+
 ### OFX/QFX Format
 OFX (Open Financial Exchange) is a standardized format supported by most banks worldwide. QFX is Quicken's variant of OFX.
 
@@ -20,6 +22,44 @@ OFX (Open Financial Exchange) is a standardized format supported by most banks w
 - Can include transaction types (debit/credit)
 
 ## Supported Banks
+
+### Avanza (CSV) — Transaktionshistorik
+**Importeras som:** Investeringstransaktioner (aktier/fonder)
+**Format:** Semicolon-separated (`;`) CSV file
+**Required columns:**
+- Datum (Date)
+- Typ av transaktion (Transaction type)
+- Belopp (Amount)
+
+**Optional columns parsed:**
+- Värdepapper/beskrivning (Security name, used to identify the investment)
+- ISIN (links transaction to a specific security)
+- Antal (Quantity)
+- Kurs (Price per share)
+- Courtage (Fees)
+- Valuta (Currency, defaults to SEK)
+- Konto (Account number)
+
+**Example format:**
+```csv
+Datum;Konto;Typ av transaktion;Värdepapper/beskrivning;Antal;Kurs;Belopp;Courtage;Valuta;ISIN;Resultat
+2025-01-15;ISK;Köp;Apple Inc;10;180,50;-1805,00;39,00;SEK;US0378331005;
+2025-01-10;ISK;Insättning;;;;5000,00;;SEK;;
+2025-01-05;ISK;Utdelning;Company XYZ;;;200,00;;SEK;;
+2025-01-03;ISK;Uttag;;;;-3000,00;;SEK;;
+```
+
+**How to export from Avanza:**
+1. Log in to Avanza and navigate to **Min ekonomi → Transaktioner**
+2. Filter to the desired date range
+3. Click **Exportera till CSV**
+
+**Notes:**
+- Rows with an ISIN or security name are imported as `InvestmentTransaction` records.
+- Rows without a security (e.g. Insättning, Uttag) are skipped — these are not investment activities.
+- For each unique security (ISIN), an `Investment` stub is created automatically if it does not already exist.
+- Duplicate detection: same date + type + amount on the same investment is treated as a duplicate.
+- Use the **Investeringar** import flow in the UI (not Transaktioner).
 
 ### ICA-banken (CSV)
 **Format:** Semicolon-separated (`;`) CSV file

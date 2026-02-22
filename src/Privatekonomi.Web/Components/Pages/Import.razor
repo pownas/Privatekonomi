@@ -63,7 +63,7 @@ else if (_currentStep == ImportStep.BankSelection)
                     <MudText>OFX/QFX (Allmänt bankformat)</MudText>
                 </MudRadio>
             </MudRadioGroup>
-            
+
             @if (_selectedBank == "OFX (Allmän)")
             {
                 <MudAlert Severity="Severity.Info" Class="mt-4">
@@ -109,12 +109,13 @@ else if (_currentStep == ImportStep.FileSelection)
         @if (_importType == ImportType.Investments && _selectedBankName == "Avanza")
         {
             <MudAlert Severity="Severity.Info" Class="mb-4">
-                Avanza tillhandahåller två CSV-format:
+                Avanza tillhandahåller tre CSV-format:
                 <ul>
                     <li><strong>Mitt innehav fördelat per konto</strong> - Visar innehav per konto med kontonummer</li>
                     <li><strong>Mitt sammanställda innehav</strong> - Visar sammanställt innehav över alla konton</li>
+                    <li><strong>Transaktionshistorik</strong> - Köp, sälj, utdelningar m.m. (Min ekonomi → Transaktioner → Exportera till CSV)</li>
                 </ul>
-                Båda formaten stöds!
+                Alla format stöds! Transaktioner importeras som investeringstransaktioner.
             </MudAlert>
         }
         

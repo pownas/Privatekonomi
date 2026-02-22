@@ -1,4 +1,4 @@
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using Microsoft.EntityFrameworkCore;
 using Privatekonomi.Core.Data;
@@ -10,20 +10,20 @@ namespace Privatekonomi.Core.Tests;
 [TestClass]
 public class BulkOperationTests
 {
-    private PrivatekonomyContext CreateInMemoryContext()
+    private static DbContextOptions<PrivatekonomyContext> CreateInMemoryOptions()
     {
-        var options = new DbContextOptionsBuilder<PrivatekonomyContext>()
+        return new DbContextOptionsBuilder<PrivatekonomyContext>()
             .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
             .Options;
-
-        return new PrivatekonomyContext(options);
     }
 
     [TestMethod]
     public async Task BulkDeleteTransactionsAsync_ShouldDeleteMultipleTransactions()
     {
         // Arrange
-        using var context = CreateInMemoryContext();
+        var options = CreateInMemoryOptions();
+        var contextFactory = new TestDbContextFactory(options);
+        await using var context = new PrivatekonomyContext(options);
         var mockCurrentUserService = new Mock<ICurrentUserService>();
         var mockCategoryRuleService = new Mock<ICategoryRuleService>();
         var mockAuditLogService = new Mock<IAuditLogService>();
@@ -38,7 +38,7 @@ public class BulkOperationTests
         context.Transactions.AddRange(transactions);
         await context.SaveChangesAsync();
 
-        var service = new TransactionService(context, mockCategoryRuleService.Object, 
+        var service = new TransactionService(contextFactory, mockCategoryRuleService.Object, 
             mockAuditLogService.Object, mockCurrentUserService.Object);
 
         // Act
@@ -48,14 +48,17 @@ public class BulkOperationTests
         Assert.AreEqual(2, result.SuccessCount);
         Assert.AreEqual(0, result.FailureCount);
         Assert.IsTrue(result.IsSuccess);
-        Assert.AreEqual(1, await context.Transactions.CountAsync());
+        await using var verifyContext = contextFactory.CreateDbContext();
+        Assert.AreEqual(1, await verifyContext.Transactions.CountAsync());
     }
 
     [TestMethod]
     public async Task BulkDeleteTransactionsAsync_ShouldNotDeleteLockedTransactions()
     {
         // Arrange
-        using var context = CreateInMemoryContext();
+        var options = CreateInMemoryOptions();
+        var contextFactory = new TestDbContextFactory(options);
+        await using var context = new PrivatekonomyContext(options);
         var mockCurrentUserService = new Mock<ICurrentUserService>();
         var mockCategoryRuleService = new Mock<ICategoryRuleService>();
         var mockAuditLogService = new Mock<IAuditLogService>();
@@ -69,7 +72,7 @@ public class BulkOperationTests
         context.Transactions.AddRange(transactions);
         await context.SaveChangesAsync();
 
-        var service = new TransactionService(context, mockCategoryRuleService.Object, 
+        var service = new TransactionService(contextFactory, mockCategoryRuleService.Object, 
             mockAuditLogService.Object, mockCurrentUserService.Object);
 
         // Act
@@ -80,14 +83,17 @@ public class BulkOperationTests
         Assert.AreEqual(1, result.FailureCount);
         Assert.IsTrue(result.IsPartialSuccess);
         StringAssert.Contains(result.Errors[0], "locked");
-        Assert.AreEqual(1, await context.Transactions.CountAsync());
+        await using var verifyContext = contextFactory.CreateDbContext();
+        Assert.AreEqual(1, await verifyContext.Transactions.CountAsync());
     }
 
     [TestMethod]
     public async Task BulkCategorizeTransactionsAsync_ShouldCategorizeMultipleTransactions()
     {
         // Arrange
-        using var context = CreateInMemoryContext();
+        var options = CreateInMemoryOptions();
+        var contextFactory = new TestDbContextFactory(options);
+        await using var context = new PrivatekonomyContext(options);
         var mockCurrentUserService = new Mock<ICurrentUserService>();
         var mockCategoryRuleService = new Mock<ICategoryRuleService>();
         var mockAuditLogService = new Mock<IAuditLogService>();
@@ -104,7 +110,7 @@ public class BulkOperationTests
         context.Transactions.AddRange(transactions);
         await context.SaveChangesAsync();
 
-        var service = new TransactionService(context, mockCategoryRuleService.Object, 
+        var service = new TransactionService(contextFactory, mockCategoryRuleService.Object, 
             mockAuditLogService.Object, mockCurrentUserService.Object);
 
         // Act
@@ -116,7 +122,8 @@ public class BulkOperationTests
         Assert.AreEqual(0, result.FailureCount);
         Assert.IsTrue(result.IsSuccess);
         
-        var tx1 = await context.Transactions.Include(t => t.TransactionCategories)
+        await using var verifyContext = contextFactory.CreateDbContext();
+        var tx1 = await verifyContext.Transactions.Include(t => t.TransactionCategories)
             .FirstAsync(t => t.TransactionId == 1);
         Assert.AreEqual(1, tx1.TransactionCategories.Count());
         Assert.AreEqual(1, tx1.TransactionCategories.First().CategoryId);
@@ -126,7 +133,9 @@ public class BulkOperationTests
     public async Task BulkCategorizeTransactionsAsync_ShouldFailWithInvalidCategory()
     {
         // Arrange
-        using var context = CreateInMemoryContext();
+        var options = CreateInMemoryOptions();
+        var contextFactory = new TestDbContextFactory(options);
+        await using var context = new PrivatekonomyContext(options);
         var mockCurrentUserService = new Mock<ICurrentUserService>();
         var mockCategoryRuleService = new Mock<ICategoryRuleService>();
         var mockAuditLogService = new Mock<IAuditLogService>();
@@ -139,7 +148,7 @@ public class BulkOperationTests
         context.Transactions.AddRange(transactions);
         await context.SaveChangesAsync();
 
-        var service = new TransactionService(context, mockCategoryRuleService.Object, 
+        var service = new TransactionService(contextFactory, mockCategoryRuleService.Object, 
             mockAuditLogService.Object, mockCurrentUserService.Object);
 
         // Act
@@ -156,7 +165,9 @@ public class BulkOperationTests
     public async Task BulkLinkToHouseholdAsync_ShouldLinkMultipleTransactions()
     {
         // Arrange
-        using var context = CreateInMemoryContext();
+        var options = CreateInMemoryOptions();
+        var contextFactory = new TestDbContextFactory(options);
+        await using var context = new PrivatekonomyContext(options);
         var mockCurrentUserService = new Mock<ICurrentUserService>();
         var mockCategoryRuleService = new Mock<ICategoryRuleService>();
         var mockAuditLogService = new Mock<IAuditLogService>();
@@ -173,7 +184,7 @@ public class BulkOperationTests
         context.Transactions.AddRange(transactions);
         await context.SaveChangesAsync();
 
-        var service = new TransactionService(context, mockCategoryRuleService.Object, 
+        var service = new TransactionService(contextFactory, mockCategoryRuleService.Object, 
             mockAuditLogService.Object, mockCurrentUserService.Object);
 
         // Act
@@ -184,7 +195,8 @@ public class BulkOperationTests
         Assert.AreEqual(0, result.FailureCount);
         Assert.IsTrue(result.IsSuccess);
         
-        var tx1 = await context.Transactions.FindAsync(1);
+        await using var verifyContext = contextFactory.CreateDbContext();
+        var tx1 = await verifyContext.Transactions.FindAsync(1);
         Assert.AreEqual(1, tx1!.HouseholdId);
     }
 
@@ -192,7 +204,9 @@ public class BulkOperationTests
     public async Task BulkLinkToHouseholdAsync_ShouldUnlinkWhenHouseholdIdIsNull()
     {
         // Arrange
-        using var context = CreateInMemoryContext();
+        var options = CreateInMemoryOptions();
+        var contextFactory = new TestDbContextFactory(options);
+        await using var context = new PrivatekonomyContext(options);
         var mockCurrentUserService = new Mock<ICurrentUserService>();
         var mockCategoryRuleService = new Mock<ICategoryRuleService>();
         var mockAuditLogService = new Mock<IAuditLogService>();
@@ -208,7 +222,7 @@ public class BulkOperationTests
         context.Transactions.AddRange(transactions);
         await context.SaveChangesAsync();
 
-        var service = new TransactionService(context, mockCategoryRuleService.Object, 
+        var service = new TransactionService(contextFactory, mockCategoryRuleService.Object, 
             mockAuditLogService.Object, mockCurrentUserService.Object);
 
         // Act
@@ -218,7 +232,8 @@ public class BulkOperationTests
         Assert.AreEqual(1, result.SuccessCount);
         Assert.IsTrue(result.IsSuccess);
         
-        var tx1 = await context.Transactions.FindAsync(1);
+        await using var verifyContext = contextFactory.CreateDbContext();
+        var tx1 = await verifyContext.Transactions.FindAsync(1);
         Assert.IsNull(tx1!.HouseholdId);
     }
 
@@ -226,7 +241,9 @@ public class BulkOperationTests
     public async Task CreateOperationSnapshotAsync_ShouldCreateSnapshot()
     {
         // Arrange
-        using var context = CreateInMemoryContext();
+        var options = CreateInMemoryOptions();
+        var contextFactory = new TestDbContextFactory(options);
+        await using var context = new PrivatekonomyContext(options);
         var mockCurrentUserService = new Mock<ICurrentUserService>();
         mockCurrentUserService.Setup(s => s.UserId).Returns("user123");
         var mockCategoryRuleService = new Mock<ICategoryRuleService>();
@@ -255,7 +272,7 @@ public class BulkOperationTests
         
         await context.SaveChangesAsync();
 
-        var service = new TransactionService(context, mockCategoryRuleService.Object, 
+        var service = new TransactionService(contextFactory, mockCategoryRuleService.Object, 
             mockAuditLogService.Object, mockCurrentUserService.Object);
 
         // Act
@@ -277,7 +294,9 @@ public class BulkOperationTests
     public async Task UndoBulkOperationAsync_ShouldRestoreCategorization()
     {
         // Arrange
-        using var context = CreateInMemoryContext();
+        var options = CreateInMemoryOptions();
+        var contextFactory = new TestDbContextFactory(options);
+        await using var context = new PrivatekonomyContext(options);
         var mockCurrentUserService = new Mock<ICurrentUserService>();
         var mockCategoryRuleService = new Mock<ICategoryRuleService>();
         var mockAuditLogService = new Mock<IAuditLogService>();
@@ -305,7 +324,7 @@ public class BulkOperationTests
         
         await context.SaveChangesAsync();
 
-        var service = new TransactionService(context, mockCategoryRuleService.Object, 
+        var service = new TransactionService(contextFactory, mockCategoryRuleService.Object, 
             mockAuditLogService.Object, mockCurrentUserService.Object);
 
         // Create snapshot before change
@@ -317,7 +336,8 @@ public class BulkOperationTests
             new List<(int CategoryId, decimal? Amount)> { (2, 100) });
 
         // Verify change
-        var txAfterChange = await context.Transactions.Include(t => t.TransactionCategories)
+        await using var verifyChangeContext = contextFactory.CreateDbContext();
+        var txAfterChange = await verifyChangeContext.Transactions.Include(t => t.TransactionCategories)
             .FirstAsync(t => t.TransactionId == 1);
         Assert.AreEqual(2, txAfterChange.TransactionCategories.First().CategoryId);
 
@@ -328,7 +348,8 @@ public class BulkOperationTests
         Assert.AreEqual(1, result.SuccessCount);
         Assert.IsTrue(result.IsSuccess);
         
-        var txAfterUndo = await context.Transactions.Include(t => t.TransactionCategories)
+        await using var verifyUndoContext = contextFactory.CreateDbContext();
+        var txAfterUndo = await verifyUndoContext.Transactions.Include(t => t.TransactionCategories)
             .FirstAsync(t => t.TransactionId == 1);
         Assert.AreEqual(1, txAfterUndo.TransactionCategories.First().CategoryId);
     }
@@ -337,12 +358,14 @@ public class BulkOperationTests
     public async Task UndoBulkOperationAsync_ShouldNotUndoDelete()
     {
         // Arrange
-        using var context = CreateInMemoryContext();
+        var options = CreateInMemoryOptions();
+        var contextFactory = new TestDbContextFactory(options);
+        await using var context = new PrivatekonomyContext(options);
         var mockCurrentUserService = new Mock<ICurrentUserService>();
         var mockCategoryRuleService = new Mock<ICategoryRuleService>();
         var mockAuditLogService = new Mock<IAuditLogService>();
 
-        var service = new TransactionService(context, mockCategoryRuleService.Object, 
+        var service = new TransactionService(contextFactory, mockCategoryRuleService.Object, 
             mockAuditLogService.Object, mockCurrentUserService.Object);
 
         var snapshot = new BulkOperationSnapshot
@@ -364,7 +387,9 @@ public class BulkOperationTests
     public async Task BulkDeleteTransactionsAsync_ShouldHandleLargeNumberOfTransactions()
     {
         // Arrange
-        using var context = CreateInMemoryContext();
+        var options = CreateInMemoryOptions();
+        var contextFactory = new TestDbContextFactory(options);
+        await using var context = new PrivatekonomyContext(options);
         var mockCurrentUserService = new Mock<ICurrentUserService>();
         var mockCategoryRuleService = new Mock<ICategoryRuleService>();
         var mockAuditLogService = new Mock<IAuditLogService>();
@@ -381,7 +406,7 @@ public class BulkOperationTests
         context.Transactions.AddRange(transactions);
         await context.SaveChangesAsync();
 
-        var service = new TransactionService(context, mockCategoryRuleService.Object, 
+        var service = new TransactionService(contextFactory, mockCategoryRuleService.Object, 
             mockAuditLogService.Object, mockCurrentUserService.Object);
 
         var transactionIds = Enumerable.Range(1, 150).ToList();
@@ -397,6 +422,7 @@ public class BulkOperationTests
         Assert.IsTrue(result.IsSuccess);
         Assert.IsTrue(stopwatch.ElapsedMilliseconds < 2000, 
             $"Bulk delete took {stopwatch.ElapsedMilliseconds}ms, should be < 2000ms");
-        Assert.AreEqual(0, await context.Transactions.CountAsync());
+        await using var verifyContext = contextFactory.CreateDbContext();
+        Assert.AreEqual(0, await verifyContext.Transactions.CountAsync());
     }
 }

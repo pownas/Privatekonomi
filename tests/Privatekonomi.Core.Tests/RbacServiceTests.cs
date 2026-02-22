@@ -8,7 +8,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace Privatekonomi.Core.Tests;
 
 [TestClass]
-public class RbacServiceTests : IDisposable
+public class RbacServiceTests
 {
     private readonly PrivatekonomyContext _context;
     private readonly Mock<IAuditLogService> _mockAuditService;
@@ -89,7 +89,7 @@ public class RbacServiceTests : IDisposable
     }
 
     [TestCleanup]
-    public void Dispose()
+    public void Cleanup()
     {
         _context.Database.EnsureDeleted();
         _context.Dispose();

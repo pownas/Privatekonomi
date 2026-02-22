@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 using Privatekonomi.Core.Data;
 using Privatekonomi.Core.Models;
 using Microsoft.EntityFrameworkCore;
@@ -131,9 +131,8 @@ public class SieExporter : ISieExporter
             {
                 foreach (var tc in transaction.TransactionCategories)
                 {
-                    if (tc.Category != null && categoryAccountMap.ContainsKey(tc.Category.CategoryId))
+                    if (tc.Category != null && categoryAccountMap.TryGetValue(tc.Category.CategoryId, out var categoryAccount))
                     {
-                        var categoryAccount = categoryAccountMap[tc.Category.CategoryId];
                         var categoryAmount = -bankAmount * (tc.Percentage / 100.0m);
                         sie.AppendLine($"   #TRANS {categoryAccount} {{}} {FormatAmount(categoryAmount)}");
                     }

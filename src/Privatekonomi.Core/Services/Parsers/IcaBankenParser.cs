@@ -98,10 +98,10 @@ public class IcaBankenParser : ICsvParser
     {
         for (int i = 0; i < header.Length; i++)
         {
-            var columnName = header[i].Trim().ToLower();
+            var columnName = header[i].Trim();
             foreach (var name in possibleNames)
             {
-                if (columnName.Contains(name.ToLower()))
+                if (columnName.Contains(name, StringComparison.OrdinalIgnoreCase))
                     return i;
             }
         }
