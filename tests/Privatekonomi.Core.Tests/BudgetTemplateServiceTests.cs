@@ -1,4 +1,4 @@
-using Privatekonomi.Core.Models;
+﻿using Privatekonomi.Core.Models;
 using Privatekonomi.Core.Services;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -159,10 +159,11 @@ public class BudgetTemplateServiceTests
     [DataRow(30000)]
     [DataRow(40000)]
     [DataRow(50000)]
-    public void ApplyTemplate_SwedishFamily_WorksWithVariousIncomes(decimal income)
+    public void ApplyTemplate_SwedishFamily_WorksWithVariousIncomes(int income)
     {
         // Act
-        var result = BudgetTemplateService.ApplyTemplate(BudgetTemplateType.SwedishFamily, income, _categories);
+        decimal totalIncome = income;
+        var result = BudgetTemplateService.ApplyTemplate(BudgetTemplateType.SwedishFamily, totalIncome, _categories);
 
         // Assert
         var total = result.Values.Sum();

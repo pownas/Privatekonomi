@@ -305,9 +305,9 @@ public class ExportServiceTests
         StringAssert.Contains(csv, "# Antal transaktioner: 2");
         
         // Verify financial summary
-        StringAssert.Contains(csv, "# Totala inkomster: 30000.00 SEK");
-        StringAssert.Contains(csv, "# Totala utgifter: 5000.00 SEK");
-        StringAssert.Contains(csv, "# Nettoresultat: 25000.00 SEK");
+        StringAssert.Contains(csv, "# Totala inkomster: 30000,00 SEK");
+        StringAssert.Contains(csv, "# Totala utgifter: 5000,00 SEK");
+        StringAssert.Contains(csv, "# Nettoresultat: 25000,00 SEK");
     }
 
     [TestMethod]
@@ -423,8 +423,8 @@ public class ExportServiceTests
         // Should have header with 0 transactions
         StringAssert.Contains(csv, "# Privatekonomi Export - År 2025");
         StringAssert.Contains(csv, "# Antal transaktioner: 0");
-        StringAssert.Contains(csv, "# Totala inkomster: 0.00 SEK");
-        StringAssert.Contains(csv, "# Totala utgifter: 0.00 SEK");
-        StringAssert.Contains(csv, "# Nettoresultat: 0.00 SEK");
+        StringAssert.Contains(csv, "# Totala inkomster: 0,00 SEK");
+        StringAssert.Contains(csv, "# Totala utgifter: 0,00 SEK");
+        StringAssert.Contains(csv, "# Nettoresultat: 0,00 SEK");
     }
 }

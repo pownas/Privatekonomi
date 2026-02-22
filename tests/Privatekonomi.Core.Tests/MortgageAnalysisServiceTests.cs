@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Privatekonomi.Core.Data;
 using Privatekonomi.Core.Models;
 using Privatekonomi.Core.Services;
@@ -217,13 +217,13 @@ public class MortgageAnalysisServiceTests
         
         // Check +1% scenario
         var scenario1 = result.Scenarios[1];
-        Assert.AreEqual("+1.0%", scenario1.ScenarioName);
+        Assert.AreEqual("+1,0%", scenario1.ScenarioName);
         Assert.AreEqual(5.0m, scenario1.InterestRate);
         Assert.IsTrue(scenario1.MonthlyIncrease > 0);
         
         // Check +2% scenario
         var scenario2 = result.Scenarios[2];
-        Assert.AreEqual("+2.0%", scenario2.ScenarioName);
+        Assert.AreEqual("+2,0%", scenario2.ScenarioName);
         Assert.AreEqual(6.0m, scenario2.InterestRate);
         Assert.IsTrue(scenario2.MonthlyIncrease > scenario1.MonthlyIncrease);
     }

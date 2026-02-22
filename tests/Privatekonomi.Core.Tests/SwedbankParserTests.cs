@@ -8,7 +8,8 @@ public class SwedbankParserTests
 {
     // Example from the issue - Swedish format with comma separator and quoted fields
     private const string SwedishFormatCommaSeparated = @"Radnummer,Clearingnummer,Kontonummer,Produkt,Valuta,Bokföringsdag,Transaktionsdag,Valutadag,Referens,Beskrivning,Belopp,Bokfört saldo
-1,84525,1234567891,""e-sparkonto"",SEK,2025-11-12,2025-11-12,2025-11-12,""50kr/onsda"",""50kr/onsda"",-50.00,9989.74
+1,84525,1234567891,""e-sparkonto"",SEK,2025-11-12,2025-11-12,2025-11-12,""50kr/onsda"",""50kr/onsda"",-5
+0,9989.74
 2,84525,1234567891,""e-sparkonto"",SEK,2025-11-12,2025-11-12,2025-11-12,""CSN Centrala stu"",""CSN Centrala stu"",-3277.00,10039.74
 3,84525,1234567891,""e-sparkonto"",SEK,2025-11-11,2025-11-11,2025-11-12,""CSN LÅN NOV"",""CSN LÅN NOV"",3280.00,13316.74";
 
