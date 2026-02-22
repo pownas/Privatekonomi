@@ -43,7 +43,7 @@ public class SwedbankParser : ICsvParser
             content = await reader.ReadToEndAsync();
         }
         // If we see replacement characters, try Windows-1252
-        if (content.Contains("\uFFFD") || content.Contains("?"))
+        if (content.Contains('\uFFFD') || content.Contains('?'))
         {
             try
             {
@@ -112,7 +112,7 @@ public class SwedbankParser : ICsvParser
                 if (currencyIndex != -1 && columns.Length > currencyIndex)
                 {
                     var currency = columns[currencyIndex].Trim();
-                    if (!string.IsNullOrEmpty(currency) && currency.ToUpper() != "SEK")
+                    if (!string.IsNullOrEmpty(currency) && !string.Equals(currency, "SEK", StringComparison.OrdinalIgnoreCase))
                         continue; // Skip non-SEK transactions
                 }
 

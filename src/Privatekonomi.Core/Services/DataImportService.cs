@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -236,7 +236,8 @@ public class DataImportService : IDataImportService
             if (mergeMode)
             {
                 // Get primary key property
-                var keyProperty = _context.Model.FindEntityType(typeof(T))?.FindPrimaryKey()?.Properties.FirstOrDefault();
+                var keyProperties = _context.Model.FindEntityType(typeof(T))?.FindPrimaryKey()?.Properties;
+                var keyProperty = keyProperties is { Count: > 0 } ? keyProperties[0] : null;
                 if (keyProperty != null)
                 {
                     var keyValue = keyProperty.PropertyInfo?.GetValue(entity);

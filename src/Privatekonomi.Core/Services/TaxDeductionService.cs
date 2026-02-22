@@ -1,4 +1,4 @@
-using Privatekonomi.Core.Data;
+﻿using Privatekonomi.Core.Data;
 using Privatekonomi.Core.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -53,11 +53,11 @@ public class TaxDeductionService : ITaxDeductionService
     public async Task<TaxDeduction> AddDeductionAsync(TaxDeduction deduction)
     {
         // Calculate deductible amount based on type
-        if (deduction.Type.ToUpper() == "ROT")
+        if (string.Equals(deduction.Type, "ROT", StringComparison.OrdinalIgnoreCase))
         {
             deduction.DeductibleAmount = CalculateRotDeduction(deduction.Amount);
         }
-        else if (deduction.Type.ToUpper() == "RUT")
+        else if (string.Equals(deduction.Type, "RUT", StringComparison.OrdinalIgnoreCase))
         {
             deduction.DeductibleAmount = CalculateRutDeduction(deduction.Amount);
         }

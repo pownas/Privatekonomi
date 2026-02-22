@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Text;
 using Privatekonomi.Core.Models;
 
@@ -124,10 +124,10 @@ public class AvanzaConsolidatedHoldingsParser : IInvestmentCsvParser
     {
         for (int i = 0; i < header.Length; i++)
         {
-            var columnName = header[i].Trim().ToLower();
+            var columnName = header[i].Trim();
             foreach (var name in possibleNames)
             {
-                if (columnName.Contains(name.ToLower()))
+                if (columnName.Contains(name, StringComparison.OrdinalIgnoreCase))
                     return i;
             }
         }
@@ -138,11 +138,11 @@ public class AvanzaConsolidatedHoldingsParser : IInvestmentCsvParser
     {
         for (int i = 0; i < header.Length; i++)
         {
-            var columnName = header[i].Trim().ToLower().Replace(" ", "").Replace("(", "").Replace(")", "");
+            var columnName = header[i].Trim().Replace(" ", "").Replace("(", "").Replace(")", "");
             foreach (var name in possibleNames)
             {
-                var searchName = name.ToLower().Replace(" ", "").Replace("(", "").Replace(")", "");
-                if (columnName == searchName)
+                var searchName = name.Replace(" ", "").Replace("(", "").Replace(")", "");
+                if (string.Equals(columnName, searchName, StringComparison.OrdinalIgnoreCase))
                     return i;
             }
         }

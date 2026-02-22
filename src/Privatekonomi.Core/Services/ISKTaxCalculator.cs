@@ -1,4 +1,4 @@
-using Privatekonomi.Core.Data;
+﻿using Privatekonomi.Core.Data;
 using Privatekonomi.Core.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -90,9 +90,9 @@ public class ISKTaxCalculator : IISKTaxCalculator
     
     public decimal GetGovernmentLendingRate(int taxYear)
     {
-        if (_governmentLendingRates.ContainsKey(taxYear))
+        if (_governmentLendingRates.TryGetValue(taxYear, out var rate))
         {
-            return _governmentLendingRates[taxYear];
+            return rate;
         }
         
         // Default to most recent year if not found

@@ -55,9 +55,9 @@ public class BulkOperationsControllerTests
         var result = await _controller.BulkDelete(request);
 
         // Assert
-        Assert.IsInstanceOfType(result.Result, typeof(OkObjectResult));
+        Assert.IsInstanceOfType<OkObjectResult>(result.Result);
         var okResult = (OkObjectResult)result.Result;
-        Assert.IsInstanceOfType(okResult.Value, typeof(BulkOperationResult));
+        Assert.IsInstanceOfType<BulkOperationResult>(okResult.Value);
         var bulkResult = (BulkOperationResult)okResult.Value;
         Assert.AreEqual(3, bulkResult.SuccessCount);
         Assert.AreEqual(0, bulkResult.FailureCount);
@@ -90,9 +90,9 @@ public class BulkOperationsControllerTests
         var result = await _controller.BulkCategorize(request);
 
         // Assert
-        Assert.IsInstanceOfType(result.Result, typeof(OkObjectResult));
+        Assert.IsInstanceOfType<OkObjectResult>(result.Result);
         var okResult = (OkObjectResult)result.Result;
-        Assert.IsInstanceOfType(okResult.Value, typeof(BulkOperationResult));
+        Assert.IsInstanceOfType<BulkOperationResult>(okResult.Value);
         var bulkResult = (BulkOperationResult)okResult.Value;
         Assert.AreEqual(2, bulkResult.SuccessCount);
     }
@@ -120,9 +120,9 @@ public class BulkOperationsControllerTests
         var result = await _controller.BulkLinkHousehold(request);
 
         // Assert
-        Assert.IsInstanceOfType(result.Result, typeof(OkObjectResult));
+        Assert.IsInstanceOfType<OkObjectResult>(result.Result);
         var okResult = (OkObjectResult)result.Result;
-        Assert.IsInstanceOfType(okResult.Value, typeof(BulkOperationResult));
+        Assert.IsInstanceOfType<BulkOperationResult>(okResult.Value);
         var bulkResult = (BulkOperationResult)okResult.Value;
         Assert.AreEqual(3, bulkResult.SuccessCount);
     }
@@ -150,9 +150,9 @@ public class BulkOperationsControllerTests
         var result = await _controller.BulkLinkHousehold(request);
 
         // Assert
-        Assert.IsInstanceOfType(result.Result, typeof(OkObjectResult));
+        Assert.IsInstanceOfType<OkObjectResult>(result.Result);
         var okResult = (OkObjectResult)result.Result;
-        Assert.IsInstanceOfType(okResult.Value, typeof(BulkOperationResult));
+        Assert.IsInstanceOfType<BulkOperationResult>(okResult.Value);
         var bulkResult = (BulkOperationResult)okResult.Value;
         Assert.AreEqual(2, bulkResult.SuccessCount);
 
@@ -181,7 +181,7 @@ public class BulkOperationsControllerTests
         var result = await _controller.BulkExport(request);
 
         // Assert
-        Assert.IsInstanceOfType(result, typeof(FileContentResult));
+        Assert.IsInstanceOfType<FileContentResult>(result);
         var fileResult = (FileContentResult)result;
         Assert.AreEqual("text/csv", fileResult.ContentType);
         StringAssert.Contains(fileResult.FileDownloadName, "transaktioner_");
@@ -206,7 +206,7 @@ public class BulkOperationsControllerTests
         var result = await _controller.BulkExport(request);
 
         // Assert
-        Assert.IsInstanceOfType(result, typeof(FileContentResult));
+        Assert.IsInstanceOfType<FileContentResult>(result);
         var fileResult = (FileContentResult)result;
         Assert.AreEqual("application/json", fileResult.ContentType);
         StringAssert.Contains(fileResult.FileDownloadName, "transaktioner_");
@@ -234,9 +234,9 @@ public class BulkOperationsControllerTests
         var result = await _controller.CreateSnapshot(operationType, transactionIds);
 
         // Assert
-        Assert.IsInstanceOfType(result.Result, typeof(OkObjectResult));
+        Assert.IsInstanceOfType<OkObjectResult>(result.Result);
         var okResult = (OkObjectResult)result.Result;
-        Assert.IsInstanceOfType(okResult.Value, typeof(BulkOperationSnapshot));
+        Assert.IsInstanceOfType<BulkOperationSnapshot>(okResult.Value);
         var snapshot = (BulkOperationSnapshot)okResult.Value;
         Assert.AreEqual(operationType, snapshot.OperationType);
         Assert.AreEqual(3, snapshot.AffectedTransactionIds.Count);

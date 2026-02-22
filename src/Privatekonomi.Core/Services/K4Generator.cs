@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 using Privatekonomi.Core.Data;
 using Privatekonomi.Core.Models;
 using Microsoft.EntityFrameworkCore;
@@ -128,7 +128,9 @@ public class K4Generator : IK4Generator
         
         foreach (var gain in report.Gains)
         {
-            var name = gain.SecurityName.Length > 24 ? gain.SecurityName.Substring(0, 21) + "..." : gain.SecurityName;
+            var name = gain.SecurityName.Length > 24
+                ? string.Concat(gain.SecurityName.AsSpan(0, 21), "...")
+                : gain.SecurityName;
             var isin = gain.ISIN ?? "N/A";
             
             sb.AppendLine($"{name,-25} {isin,-12} {gain.SaleDate:yyyy-MM-dd,-12} " +
