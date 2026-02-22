@@ -1,6 +1,7 @@
-@page "/investments/assets"
+﻿@page "/investments/assets"
 @page "/assets"
 @rendermode InteractiveServer
+@using Privatekonomi.Web.Components.Shared
 @inject IAssetService AssetService
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
@@ -124,7 +125,13 @@ else
     <MudPaper Class="pa-4">
         @if (!_assets.Any())
         {
-            <MudText>Inga tillgångar registrerade än.</MudText>
+            <EmptyState IconName="@Icons.Material.Filled.BusinessCenter"
+                        IconColor="Color.Secondary"
+                        Title="Inga tillgångar än"
+                        Description="Registrera saker som bil, bostad eller andra tillgångar för att få en bättre helhetsbild av din ekonomi."
+                        ActionText="Lägg till tillgång"
+                        ActionIcon="@Icons.Material.Filled.Add"
+                        OnActionClick="ToggleCreateForm" />
         }
         else
         {

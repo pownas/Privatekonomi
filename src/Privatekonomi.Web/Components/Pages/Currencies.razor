@@ -1,6 +1,7 @@
-@page "/investments/currencies"
+﻿@page "/investments/currencies"
 @page "/currencies"
 @rendermode InteractiveServer
+@using Privatekonomi.Web.Components.Shared
 @inject ICurrencyAccountService CurrencyAccountService
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
@@ -110,7 +111,13 @@ else
     <MudPaper Class="pa-4">
         @if (!_accounts.Any())
         {
-            <MudText>Inga valutakonton registrerade än.</MudText>
+            <EmptyState IconName="@Icons.Material.Filled.AttachMoney"
+                        IconColor="Color.Secondary"
+                        Title="Inga valutakonton än"
+                        Description="Lägg till kontanter eller valutor för att hålla koll på saldo och värde i SEK."
+                        ActionText="Lägg till valuta"
+                        ActionIcon="@Icons.Material.Filled.Add"
+                        OnActionClick="ToggleCreateForm" />
         }
         else
         {

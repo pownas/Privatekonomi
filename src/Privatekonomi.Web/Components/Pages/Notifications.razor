@@ -1,7 +1,8 @@
-@page "/settings/notifications"
+﻿@page "/settings/notifications"
 @page "/notifications"
 @using Privatekonomi.Core.Models
 @using Privatekonomi.Core.Services
+@using Privatekonomi.Web.Components.Shared
 @inject INotificationService NotificationService
 @inject ICurrentUserService CurrentUserService
 @inject NavigationManager NavigationManager
@@ -64,16 +65,23 @@
         }
         else if (!_notifications.Any())
         {
-            <MudAlert Severity="Severity.Info">
-                @if (_showUnreadOnly)
-                {
-                    <text>Du har inga olästa notifikationer.</text>
-                }
-                else
-                {
-                    <text>Du har inga notifikationer än.</text>
-                }
-            </MudAlert>
+            @if (_showUnreadOnly)
+            {
+                <EmptyState IconName="@Icons.Material.Filled.NotificationsNone"
+                            IconColor="Color.Secondary"
+                            Title="Inga olästa notifikationer"
+                            Description="Du är ikapp. Slå av filtret för att se alla notifikationer."
+                            ActionText="Visa alla"
+                            ActionIcon="@Icons.Material.Filled.DoneAll"
+                            OnActionClick="ToggleUnreadFilter" />
+            }
+            else
+            {
+                <EmptyState IconName="@Icons.Material.Filled.NotificationsNone"
+                            IconColor="Color.Secondary"
+                            Title="Inga notifikationer än"
+                            Description="När något viktigt händer i din ekonomi dyker det upp här." />
+            }
         }
         else
         {

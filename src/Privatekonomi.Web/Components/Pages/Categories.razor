@@ -1,5 +1,6 @@
-@page "/categories/manage"
+﻿@page "/categories/manage"
 @page "/categories"
+@using Privatekonomi.Web.Components.Shared
 @rendermode InteractiveServer
 @inject ICategoryService CategoryService
 @inject ISnackbar Snackbar
@@ -117,7 +118,13 @@
         
         @if (!_mainCategories.Any())
         {
-            <MudText>Inga kategorier tillgängliga.</MudText>
+            <EmptyState IconName="@Icons.Material.Filled.Label"
+                        IconColor="Color.Secondary"
+                        Title="Inga kategorier tillgängliga"
+                        Description="Skapa kategorier för att organisera dina transaktioner och få bättre överblick över din ekonomi."
+                        ActionText="Skapa Kategori"
+                        ActionIcon="@Icons.Material.Filled.Add"
+                        OnActionClick="OpenCreateDialog" />
         }
     }
 </MudPaper>

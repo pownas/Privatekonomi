@@ -1,7 +1,8 @@
-@page "/savings/goals"
+﻿@page "/savings/goals"
 @page "/goals"
 @rendermode InteractiveServer
 @using Privatekonomi.Core.Models
+@using Privatekonomi.Web.Components.Shared
 @inject IGoalService GoalService
 @inject IGoalMilestoneService GoalMilestoneService
 @inject IBankSourceService BankSourceService
@@ -346,13 +347,14 @@ else
 
     @if (!_goals.Any())
     {
-        <MudPaper Class="pa-6 mt-4" Elevation="0" Style="text-align: center;">
-            <MudIcon Icon="@Icons.Material.Filled.EmojiEvents" Size="Size.Large" Color="Color.Secondary" Class="mb-4" Style="font-size: 4rem;" />
-            <MudText Typo="Typo.h6" Class="mb-2">Inga sparmål än</MudText>
-            <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">
-                Sätt upp sparmål för att hålla dig motiverad och följa din ekonomiska framgång. Välj målbelopp, deadline och prioritet.
-            </MudText>
-        </MudPaper>
+        <EmptyState IconName="@Icons.Material.Filled.EmojiEvents"
+                    IconColor="Color.Secondary"
+                    Title="Inga sparmål än"
+                    Description="Sätt upp sparmål för att hålla dig motiverad och följa din ekonomiska framgång. Välj målbelopp, deadline och prioritet."
+                    ActionText="Skapa Ditt Första Sparmål"
+                    ActionIcon="@Icons.Material.Filled.Add"
+                    OnActionClick="ToggleCreateForm"
+                    Class="mt-4" />
     }
 }
 

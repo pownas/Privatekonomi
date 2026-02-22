@@ -1,7 +1,8 @@
-@page "/economy/reports/monthly"
+﻿@page "/economy/reports/monthly"
 @page "/reports/monthly"
 @rendermode InteractiveServer
 @using Privatekonomi.Core.Services
+@using Privatekonomi.Web.Components.Shared
 @inject IReportService ReportService
 @inject NavigationManager NavigationManager
 @inject ISnackbar Snackbar
@@ -56,7 +57,7 @@ else
         </div>
     </MudPaper>
 
-    @if (_report != null)
+    @if (_report != null && _report.TransactionCount > 0)
     {
         <!-- Report Header -->
         <MudPaper Class="pa-4 mb-4 primary-gradient" Elevation="2">
@@ -420,11 +421,28 @@ else
             </div>
         </MudPaper>
     }
+    else if (_report != null)
+    {
+        <MudPaper Class="pa-4" Elevation="0">
+            <EmptyState IconName="@Icons.Material.Filled.Summarize"
+                        IconColor="Color.Secondary"
+                        Title="Ingen data för vald månad"
+                        Description="När du har transaktioner för månaden kan vi skapa en sammanfattning med insikter och jämförelser."
+                        ActionText="Gå till transaktioner"
+                        ActionIcon="@Icons.Material.Filled.List"
+                        ActionHref="/transactions"
+                        SecondaryText="Importera transaktioner"
+                        SecondaryHref="/import" />
+        </MudPaper>
+    }
     else if (!_loading)
     {
-        <MudAlert Severity="Severity.Info" Class="mb-4">
-            Välj en månad ovan för att generera en rapport.
-        </MudAlert>
+        <MudPaper Class="pa-4" Elevation="0">
+            <EmptyState IconName="@Icons.Material.Filled.Summarize"
+                        IconColor="Color.Secondary"
+                        Title="Välj en månad"
+                        Description="Välj år och månad ovan och klicka på \"Visa rapport\" för att generera en månadsrapport." />
+        </MudPaper>
     }
 }
 

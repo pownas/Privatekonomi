@@ -1150,3 +1150,103 @@ html {
     }
 }
 
+/* ===================================================
+   Empty State Component
+   =================================================== */
+
+.empty-state {
+    text-align: center;
+    padding: 48px 32px;
+    background: var(--mud-palette-background-gray);
+    border-radius: 12px;
+    max-width: 500px;
+    margin: 0 auto;
+    animation: emptyStateFadeIn 0.5s ease-out;
+}
+
+.empty-state-image {
+    max-width: 280px;
+    width: 100%;
+    height: auto;
+    margin-bottom: 24px;
+    opacity: 0.85;
+}
+
+.empty-state-icon {
+    margin-bottom: 24px;
+    opacity: 0.6;
+}
+
+.empty-state-title {
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: var(--mud-palette-text-primary);
+}
+
+.empty-state-description {
+    color: var(--mud-palette-text-secondary);
+    margin-bottom: 24px;
+    line-height: 1.6;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.empty-state-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.empty-state-help {
+    color: var(--mud-palette-text-secondary);
+    margin-top: 16px;
+    display: block;
+}
+
+/* Dark mode */
+.mud-theme-dark .empty-state {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.mud-theme-dark .empty-state-image {
+    opacity: 0.75;
+    filter: brightness(0.9);
+}
+
+.mud-theme-dark .empty-state-icon {
+    opacity: 0.5;
+}
+
+/* Entrance animation */
+@keyframes emptyStateFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+    .empty-state {
+        padding: 32px 16px;
+    }
+
+    .empty-state-image {
+        max-width: 200px;
+    }
+}
+
+/* Respect prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+    .empty-state {
+        animation: none;
+    }
+}
+

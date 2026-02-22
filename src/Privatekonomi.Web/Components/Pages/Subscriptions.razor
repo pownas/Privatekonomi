@@ -1,8 +1,9 @@
-@page "/economy/subscriptions"
+﻿@page "/economy/subscriptions"
 @page "/subscriptions"
 @rendermode InteractiveServer
 @using Privatekonomi.Core.Models
 @using Privatekonomi.Core.Services
+@using Privatekonomi.Web.Components.Shared
 @inject ISubscriptionService SubscriptionService
 @inject ICategoryService CategoryService
 @inject IDialogService DialogService
@@ -323,7 +324,15 @@ else
                 }
                 else
                 {
-                    <MudText Typo="Typo.body2" Color="Color.Secondary">Inga aktiva abonnemang.</MudText>
+                    <EmptyState IconName="@Icons.Material.Filled.Autorenew"
+                                IconColor="Color.Secondary"
+                                Title="Inga aktiva abonnemang"
+                                Description="Lägg till abonnemang för att hålla koll på återkommande kostnader och uppsägningsfrister."
+                                ActionText="Lägg till abonnemang"
+                                ActionIcon="@Icons.Material.Filled.Add"
+                                OnActionClick="ToggleCreateForm"
+                                SecondaryText="Upptäck abonnemang"
+                                OnSecondaryClick="DetectSubscriptions" />
                 }
             </MudPaper>
         </MudTabPanel>
@@ -357,7 +366,13 @@ else
                 }
                 else
                 {
-                    <MudText Typo="Typo.body2" Color="Color.Secondary">Inga inaktiva abonnemang.</MudText>
+                    <EmptyState IconName="@Icons.Material.Filled.Cancel"
+                                IconColor="Color.Secondary"
+                                Title="Inga inaktiva abonnemang"
+                                Description="Här visas abonnemang du har avslutat eller pausat."
+                                ActionText="Lägg till abonnemang"
+                                ActionIcon="@Icons.Material.Filled.Add"
+                                OnActionClick="ToggleCreateForm" />
                 }
             </MudPaper>
         </MudTabPanel>

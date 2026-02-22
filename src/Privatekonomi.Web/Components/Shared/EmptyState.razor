@@ -1,0 +1,166 @@
+@* Återanvändbar komponent för tomma tillstånd *@
+
+<MudPaper Class="@($"empty-state {Class}")" Elevation="0">
+    @if (!string.IsNullOrEmpty(ImagePath))
+    {
+        <img src="@ImagePath"
+             alt="@Title"
+             class="empty-state-image" />
+    }
+    else if (!string.IsNullOrEmpty(IconName))
+    {
+        <div class="empty-state-icon">
+            <MudIcon Icon="@IconName" Color="@IconColor" Style="font-size: 80px;" />
+        </div>
+    }
+
+    <MudText Typo="Typo.h6" Class="empty-state-title">
+        @Title
+    </MudText>
+
+    @if (!string.IsNullOrEmpty(Description))
+    {
+        <MudText Typo="Typo.body2" Class="empty-state-description">
+            @Description
+        </MudText>
+    }
+
+    @if (!string.IsNullOrEmpty(ActionText))
+    {
+        <div class="empty-state-actions">
+            @if (OnActionClick.HasDelegate)
+            {
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           StartIcon="@ActionIcon"
+                           OnClick="OnActionClick"
+                           Size="Size.Large">
+                    @ActionText
+                </MudButton>
+            }
+            else if (!string.IsNullOrEmpty(ActionHref))
+            {
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           StartIcon="@ActionIcon"
+                           Href="@ActionHref"
+                           Size="Size.Large">
+                    @ActionText
+                </MudButton>
+            }
+
+            @if (!string.IsNullOrEmpty(SecondaryText))
+            {
+                @if (OnSecondaryClick.HasDelegate)
+                {
+                    <MudButton Variant="Variant.Text"
+                               Color="Color.Primary"
+                               OnClick="OnSecondaryClick"
+                               Class="mt-2">
+                        @SecondaryText
+                    </MudButton>
+                }
+                else if (!string.IsNullOrEmpty(SecondaryHref))
+                {
+                    <MudButton Variant="Variant.Text"
+                               Color="Color.Primary"
+                               Href="@SecondaryHref"
+                               Class="mt-2">
+                        @SecondaryText
+                    </MudButton>
+                }
+            }
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(HelpText))
+    {
+        <MudText Typo="Typo.caption" Class="empty-state-help">
+            @if (!string.IsNullOrEmpty(HelpHref))
+            {
+                <MudLink Href="@HelpHref">@HelpText</MudLink>
+            }
+            else
+            {
+                @HelpText
+            }
+        </MudText>
+    }
+</MudPaper>
+
+@code {
+    /// <summary>
+    /// Sökväg till illustration SVG (om ImagePath används, visas inte IconName)
+    /// </summary>
+    [Parameter] public string ImagePath { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Material Icon namn (används om ImagePath är tom)
+    /// </summary>
+    [Parameter] public string IconName { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Färg för ikon (om IconName används)
+    /// </summary>
+    [Parameter] public Color IconColor { get; set; } = Color.Default;
+
+    /// <summary>
+    /// Huvudrubrik för empty state
+    /// </summary>
+    [Parameter] public string Title { get; set; } = "Ingen data";
+
+    /// <summary>
+    /// Beskrivande text (max 2 meningar)
+    /// </summary>
+    [Parameter] public string Description { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Text för primär action-knapp
+    /// </summary>
+    [Parameter] public string ActionText { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Ikon för action-knapp
+    /// </summary>
+    [Parameter] public string ActionIcon { get; set; } = Icons.Material.Filled.Add;
+
+    /// <summary>
+    /// Href för action-knapp (alternativ till OnActionClick)
+    /// </summary>
+    [Parameter] public string ActionHref { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Callback för primär action-knapp
+    /// </summary>
+    [Parameter] public EventCallback OnActionClick { get; set; }
+
+    /// <summary>
+    /// Text för sekundär knapp/länk
+    /// </summary>
+    [Parameter] public string SecondaryText { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Href för sekundär länk
+    /// </summary>
+    [Parameter] public string SecondaryHref { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Callback för sekundär knapp
+    /// </summary>
+    [Parameter] public EventCallback OnSecondaryClick { get; set; }
+
+    /// <summary>
+    /// Hjälptext som visas längst ner
+    /// </summary>
+    [Parameter] public string HelpText { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Href för hjälplänk
+    /// </summary>
+    [Parameter] public string HelpHref { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Extra CSS-klass
+    /// </summary>
+    [Parameter] public string Class { get; set; } = string.Empty;
+}

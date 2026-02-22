@@ -1,6 +1,7 @@
-@page "/savings/life-timeline"
+﻿@page "/savings/life-timeline"
 @page "/lifetimeline"
 @rendermode InteractiveServer
+@using Privatekonomi.Web.Components.Shared
 @inject ILifeTimelinePlannerService TimelinePlannerService
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
@@ -99,7 +100,13 @@ else
         }
         else
         {
-            <MudAlert Severity="Severity.Info">Skapa ett scenario för att börja din livslinjeplanering</MudAlert>
+            <EmptyState IconName="@Icons.Material.Filled.Timeline"
+                        IconColor="Color.Secondary"
+                        Title="Skapa ditt första scenario"
+                        Description="Ett scenario innehåller antaganden om sparande, avkastning och pensionsålder för din långsiktiga plan."
+                        ActionText="Skapa scenario"
+                        ActionIcon="@Icons.Material.Filled.Add"
+                        OnActionClick="ToggleScenarioForm" />
         }
     </MudPaper>
 
@@ -379,12 +386,14 @@ else
     }
     else
     {
-        <MudPaper Class="pa-6 mt-4" Elevation="0" Style="text-align: center;">
-            <MudIcon Icon="@Icons.Material.Filled.Timeline" Size="Size.Large" Color="Color.Secondary" Class="mb-4" Style="font-size: 4rem;" />
-            <MudText Typo="Typo.h6" Class="mb-2">Inga milstolpar än</MudText>
-            <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">
-                Skapa milstolpar för att planera din ekonomiska framtid. Lägg till viktiga händelser som köp av bostad, barn, eller pension.
-            </MudText>
+        <MudPaper Class="pa-4 mt-4" Elevation="0">
+            <EmptyState IconName="@Icons.Material.Filled.Timeline"
+                        IconColor="Color.Secondary"
+                        Title="Inga milstolpar än"
+                        Description="Lägg till milstolpar som köp av bostad, barn eller pension för att planera din ekonomiska framtid."
+                        ActionText="Skapa milstolpe"
+                        ActionIcon="@Icons.Material.Filled.Add"
+                        OnActionClick="ToggleMilestoneForm" />
         </MudPaper>
     }
 }
