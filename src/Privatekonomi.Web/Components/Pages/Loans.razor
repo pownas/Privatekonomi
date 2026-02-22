@@ -229,7 +229,14 @@ else
 
             @if (!_loans.Any())
             {
-                <MudText>Inga lån eller krediter registrerade än.</MudText>
+                <EmptyState IconName="@Icons.Material.Filled.CreditCard"
+                            IconColor="Color.Secondary"
+                            Title="Inga lån eller krediter registrerade"
+                            Description="Lägg till dina lån och krediter för att få en samlad bild av din belåning och planera din amortering."
+                            ActionText="Lägg till Lån/Kredit"
+                            ActionIcon="@Icons.Material.Filled.Add"
+                            OnActionClick="ToggleCreateForm"
+                            Class="mt-4" />
             }
             else
             {

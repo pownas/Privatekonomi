@@ -175,7 +175,14 @@ else
 
         @if (!_investments.Any())
         {
-            <MudText>Inga investeringar ännu. Lägg till din första aktie eller fond!</MudText>
+            <EmptyState IconName="@Icons.Material.Filled.ShowChart"
+                        IconColor="Color.Secondary"
+                        Title="Inga investeringar ännu"
+                        Description="Lägg till din första aktie eller fond för att börja följa ditt investeringsportfölj och se din avkastning."
+                        ActionText="Lägg till Investering"
+                        ActionIcon="@Icons.Material.Filled.Add"
+                        OnActionClick="OpenAddDialog"
+                        Class="mt-4" />
         }
         else
         {

@@ -161,27 +161,15 @@
     }
     else if (!_transactions.Any())
     {
-        <MudPaper Class="pa-6" Elevation="0" Style="text-align: center;">
-            <MudIcon Icon="@Icons.Material.Filled.Receipt" Size="Size.Large" Color="Color.Secondary" Class="mb-4" Style="font-size: 4rem;" />
-            <MudText Typo="Typo.h6" Class="mb-2">Inga transaktioner än</MudText>
-            <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">
-                Kom igång genom att skapa din första transaktion eller importera transaktioner från din bank.
-            </MudText>
-            <div class="d-flex justify-center gap-2">
-                <MudButton Variant="Variant.Filled" 
-                           Color="Color.Primary" 
-                           StartIcon="@Icons.Material.Filled.Add"
-                           OnClick="@(() => Navigation.NavigateTo("/economy/transactions/new"))">
-                    Skapa Transaktion
-                </MudButton>
-                <MudButton Variant="Variant.Outlined" 
-                           Color="Color.Primary" 
-                           StartIcon="@Icons.Material.Filled.Upload"
-                           OnClick="@(() => Navigation.NavigateTo("/settings/import"))">
-                    Importera från Bank
-                </MudButton>
-            </div>
-        </MudPaper>
+        <EmptyState IconName="@Icons.Material.Filled.Receipt"
+                    IconColor="Color.Secondary"
+                    Title="Inga transaktioner än"
+                    Description="Kom igång genom att skapa din första transaktion eller importera transaktioner från din bank."
+                    ActionText="Skapa Transaktion"
+                    ActionIcon="@Icons.Material.Filled.Add"
+                    ActionHref="/economy/transactions/new"
+                    SecondaryText="Importera från Bank"
+                    SecondaryHref="/settings/import" />
     }
     else
     {
