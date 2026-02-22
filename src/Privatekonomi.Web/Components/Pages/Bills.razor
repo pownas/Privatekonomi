@@ -439,6 +439,7 @@ else
 
 
 @code {
+    private const int DefaultReminderDaysBeforeDue = 3;
     private bool _loading = true;
     private bool _showCreateForm = false;
     private List<Bill> _bills = new();
@@ -632,7 +633,7 @@ else
     private void ShowReminders(Bill bill)
     {
         _selectedBillForReminders = bill;
-        _newReminderDate = bill.DueDate.AddDays(-3);
+        _newReminderDate = bill.DueDate.AddDays(-DefaultReminderDaysBeforeDue);
         _newReminderMethod = "Notification";
     }
 
