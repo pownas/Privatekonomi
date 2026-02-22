@@ -1,0 +1,24 @@
+@* 
+    AnimatedNumber - displays a formatted decimal value with a CSS count-up animation.
+    The animation is triggered via @key whenever Value changes.
+    
+    Parameters:
+      Value   - The numeric value to display.
+      Format  - Optional .NET numeric format string (default "C0").
+      Culture - Optional CultureInfo for formatting (default sv-SE).
+*@
+<span class="amount-animated" @key="currentValue">@FormattedValue</span>
+
+@code {
+    [Parameter] public decimal Value { get; set; }
+    [Parameter] public string Format { get; set; } = "C0";
+    [Parameter] public System.Globalization.CultureInfo? Culture { get; set; }
+
+    private decimal currentValue;
+    private string FormattedValue => Value.ToString(Format, Culture ?? new System.Globalization.CultureInfo("sv-SE"));
+
+    protected override void OnParametersSet()
+    {
+        currentValue = Value;
+    }
+}

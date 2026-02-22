@@ -181,12 +181,20 @@ h1:focus {
 }
 
 /* Modern Card Styles */
+.mud-card,
 .mud-paper {
-    transition: box-shadow var(--transition-base);
+    transition: transform var(--transition-base), box-shadow var(--transition-base);
 }
 
+.mud-card:hover,
 .mud-paper:hover {
-    box-shadow: var(--shadow-lg) !important;
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12) !important;
+}
+
+.mud-theme-dark .mud-card:hover,
+.mud-theme-dark .mud-paper:hover {
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3) !important;
 }
 
 /* Enhanced Button Styles */
@@ -196,7 +204,11 @@ h1:focus {
 }
 
 .mud-button-root:active:not(:disabled) {
-    transform: translateY(0);
+    transform: scale(0.98);
+}
+
+.mud-button-root:not(:disabled):hover {
+    transform: translateY(-1px);
 }
 
 /* Chip Improvements */
@@ -224,11 +236,16 @@ h1:focus {
 /* Icon Buttons */
 .mud-icon-button {
     border-radius: var(--radius-md);
-    transition: all var(--transition-fast);
+    transition: transform var(--transition-base), background-color var(--transition-fast);
 }
 
 .mud-icon-button:hover:not(:disabled) {
     background-color: rgba(99, 102, 241, 0.08);
+    transform: scale(1.1);
+}
+
+.mud-icon-button:active:not(:disabled) {
+    transform: scale(0.95);
 }
 
 .mud-theme-dark .mud-icon-button:hover:not(:disabled) {
@@ -300,8 +317,10 @@ html {
     *::before,
     *::after {
         animation-duration: 0.01ms !important;
+        animation-delay: 0s !important;
         animation-iteration-count: 1 !important;
         transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
     }
 }
 
@@ -1125,6 +1144,220 @@ html {
     .login-page {
         margin: -16px -8px 0;
     }
+}
+
+/* ===== SIFFROR OCH DATA ===== */
+
+/* Fade in up för nya element */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in-up {
+    animation: fadeInUp 0.5s ease-out;
+}
+
+/* Pulse för viktiga/varningssvärden */
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.8;
+        transform: scale(1.05);
+    }
+}
+
+.pulse-warning {
+    animation: pulse 2s ease-in-out infinite;
+}
+
+/* Progress bar smooth fill */
+.mud-progress-linear .mud-progress-linear-bar {
+    transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ===== DIAGRAM OCH VISUALISERINGAR ===== */
+
+/* Diagram entrance animation */
+.chart-enter {
+    animation: fadeInUp 0.5s ease-out;
+}
+
+/* Staggered animation för tabellrader */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.table-row-enter {
+    animation: fadeIn 0.3s ease-out;
+    animation-fill-mode: both;
+}
+
+.table-row-enter:nth-child(1)  { animation-delay: 0.05s; }
+.table-row-enter:nth-child(2)  { animation-delay: 0.1s; }
+.table-row-enter:nth-child(3)  { animation-delay: 0.15s; }
+.table-row-enter:nth-child(4)  { animation-delay: 0.2s; }
+.table-row-enter:nth-child(5)  { animation-delay: 0.25s; }
+.table-row-enter:nth-child(6)  { animation-delay: 0.3s; }
+.table-row-enter:nth-child(7)  { animation-delay: 0.35s; }
+.table-row-enter:nth-child(8)  { animation-delay: 0.4s; }
+.table-row-enter:nth-child(9)  { animation-delay: 0.45s; }
+.table-row-enter:nth-child(10) { animation-delay: 0.5s; }
+
+/* Tooltip smooth fade */
+.mud-tooltip {
+    animation: tooltipFadeIn 0.2s ease-out;
+}
+
+@keyframes tooltipFadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* ===== FORMULÄR OCH INPUTS ===== */
+
+/* Focus ring animation */
+.mud-input-outlined,
+.mud-input-filled {
+    transition: box-shadow var(--transition-base), border-color var(--transition-base);
+}
+
+.mud-input-outlined:focus-within,
+.mud-input-filled:focus-within {
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+/* Checkmark animation */
+@keyframes checkmark {
+    0%   { transform: scale(0) rotate(-45deg); }
+    50%  { transform: scale(1.2) rotate(-45deg); }
+    100% { transform: scale(1) rotate(-45deg); }
+}
+
+.mud-checkbox-checked .mud-icon-root {
+    animation: checkmark 0.3s ease-out;
+}
+
+/* Error shake animation */
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+    20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
+
+.error-shake {
+    animation: shake 0.5s ease-in-out;
+}
+
+/* Switch toggle smooth animation */
+.mud-switch {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ===== NAVIGATION ===== */
+
+/* Nav link slide animation */
+.mud-nav-link {
+    transition: transform var(--transition-base), background-color var(--transition-base);
+}
+
+.mud-nav-link:hover {
+    transform: translateX(4px);
+}
+
+/* ===== LOADING OCH SKELETON ===== */
+
+/* Skeleton loading animation */
+@keyframes skeleton-loading {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+.skeleton-loading {
+    background: linear-gradient(
+        90deg,
+        rgba(0, 0, 0, 0.05) 25%,
+        rgba(0, 0, 0, 0.1) 50%,
+        rgba(0, 0, 0, 0.05) 75%
+    );
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s ease-in-out infinite;
+}
+
+.mud-theme-dark .skeleton-loading {
+    background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0.05) 25%,
+        rgba(255, 255, 255, 0.1) 50%,
+        rgba(255, 255, 255, 0.05) 75%
+    );
+    background-size: 200% 100%;
+}
+
+/* ===== SNACKBAR/TOAST ===== */
+
+/* Snackbar slide-in animation */
+@keyframes snackbarSlideIn {
+    from {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.mud-snackbar {
+    animation: snackbarSlideIn 0.3s ease-out;
+}
+
+/* ===== DIALOG ===== */
+
+/* Dialog fade and scale */
+@keyframes dialogEnter {
+    from {
+        opacity: 0;
+        transform: scale(0.95) translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.mud-dialog {
+    animation: dialogEnter 0.3s ease-out;
+}
+
+/* ===== UTILITY CLASSES ===== */
+
+.transition-fast {
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.transition-base {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.transition-slow {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Dashboard grid spacing improvements */

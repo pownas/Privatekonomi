@@ -74,8 +74,8 @@ else
                 </div>
                 <div class="card-content">
                     <MudText Class="summary-card-label">Inkomster</MudText>
-                    <MudText Typo="Typo.h3" Class="amount-animated my-2">
-                        @_totalIncome.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))
+                    <MudText Typo="Typo.h3" Class="my-2">
+                        <AnimatedNumber Value="_totalIncome" />
                     </MudText>
                     @if (_trendData != null)
                     {
@@ -97,8 +97,8 @@ else
                 </div>
                 <div class="card-content">
                     <MudText Class="summary-card-label">Utgifter</MudText>
-                    <MudText Typo="Typo.h3" Class="amount-animated my-2">
-                        @_totalExpenses.ToString("C0", new System.Globalization.CultureInfo("sv-SE"))
+                    <MudText Typo="Typo.h3" Class="my-2">
+                        <AnimatedNumber Value="_totalExpenses" />
                     </MudText>
                     @if (_trendData != null)
                     {
@@ -120,8 +120,8 @@ else
                 </div>
                 <div class="card-content">
                     <MudText Class="summary-card-label">Nettoresultat</MudText>
-                    <MudText Typo="Typo.h3" Class="amount-animated my-2">
-                        @((_totalIncome - _totalExpenses).ToString("C0", new System.Globalization.CultureInfo("sv-SE")))
+                    <MudText Typo="Typo.h3" Class="my-2">
+                        <AnimatedNumber Value="@(_totalIncome - _totalExpenses)" />
                     </MudText>
                     @if (_trendData != null)
                     {
