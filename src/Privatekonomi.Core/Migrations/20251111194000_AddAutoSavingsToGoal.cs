@@ -1,40 +1,39 @@
-using Microsoft.EntityFrameworkCore.Migrations;
+﻿using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace Privatekonomi.Core.Migrations
+namespace Privatekonomi.Core.Migrations;
+
+/// <inheritdoc />
+public partial class AddAutoSavingsToGoal : Migration
 {
     /// <inheritdoc />
-    public partial class AddAutoSavingsToGoal : Migration
+    protected override void Up(MigrationBuilder migrationBuilder)
     {
-        /// <inheritdoc />
-        protected override void Up(MigrationBuilder migrationBuilder)
-        {
-            migrationBuilder.AddColumn<int>(
-                name: "AutoSavingsType",
-                table: "Goals",
-                type: "INTEGER",
-                nullable: false,
-                defaultValue: 0);
+        migrationBuilder.AddColumn<int>(
+            name: "AutoSavingsType",
+            table: "Goals",
+            type: "INTEGER",
+            nullable: false,
+            defaultValue: 0);
 
-            migrationBuilder.AddColumn<decimal>(
-                name: "MonthlyAutoSavingsAmount",
-                table: "Goals",
-                type: "TEXT",
-                nullable: false,
-                defaultValue: 0m);
-        }
+        migrationBuilder.AddColumn<decimal>(
+            name: "MonthlyAutoSavingsAmount",
+            table: "Goals",
+            type: "TEXT",
+            nullable: false,
+            defaultValue: 0m);
+    }
 
-        /// <inheritdoc />
-        protected override void Down(MigrationBuilder migrationBuilder)
-        {
-            migrationBuilder.DropColumn(
-                name: "AutoSavingsType",
-                table: "Goals");
+    /// <inheritdoc />
+    protected override void Down(MigrationBuilder migrationBuilder)
+    {
+        migrationBuilder.DropColumn(
+            name: "AutoSavingsType",
+            table: "Goals");
 
-            migrationBuilder.DropColumn(
-                name: "MonthlyAutoSavingsAmount",
-                table: "Goals");
-        }
+        migrationBuilder.DropColumn(
+            name: "MonthlyAutoSavingsAmount",
+            table: "Goals");
     }
 }
