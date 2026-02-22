@@ -302,7 +302,10 @@ public class NotificationPreferenceServiceTests
         
         // Should not have duplicates - group by notification type and check count
         var grouped = preferences.GroupBy(p => p.NotificationType);
-        Assert.All(grouped, g => Assert.AreEqual(1, g.Count()));
+        foreach (var g in grouped)
+        {
+            Assert.AreEqual(1, g.Count());
+        }
     }
 
     [TestMethod]

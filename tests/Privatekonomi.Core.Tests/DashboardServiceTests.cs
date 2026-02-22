@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Moq;
 using Privatekonomi.Core.Data;
 using Privatekonomi.Core.Models;
@@ -326,7 +326,7 @@ public class DashboardServiceTests
         // Assert
         Assert.IsNotNull(result);
         Assert.AreEqual(1, result.OverspentCategories.Count());
-        StringAssert.Contains(result.OverspentCategories, "Food");
+        CollectionAssert.Contains(result.OverspentCategories.ToList(), "Food");
     }
 
     [TestMethod]
@@ -532,7 +532,7 @@ public class DashboardServiceTests
         Assert.AreEqual(3, result.Count);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetFinancialTrendsAsync_ReturnsEmptyForUnauthenticatedUser()
     {
         // Arrange
@@ -549,13 +549,13 @@ public class DashboardServiceTests
         var result = await service.GetFinancialTrendsAsync();
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Equal(0, result.CurrentIncome);
-        Assert.Equal(0, result.CurrentExpenses);
-        Assert.Equal(0, result.CurrentNet);
+        Assert.IsNotNull(result);
+        Assert.AreEqual(0, result.CurrentIncome);
+        Assert.AreEqual(0, result.CurrentExpenses);
+        Assert.AreEqual(0, result.CurrentNet);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetFinancialTrendsAsync_CalculatesCurrentAndPreviousMonthData()
     {
         // Arrange
@@ -605,16 +605,16 @@ public class DashboardServiceTests
         var result = await _service.GetFinancialTrendsAsync();
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Equal(50000, result.CurrentIncome);
-        Assert.Equal(45000, result.PreviousIncome);
-        Assert.Equal(20000, result.CurrentExpenses);
-        Assert.Equal(15000, result.PreviousExpenses);
-        Assert.Equal(30000, result.CurrentNet);
-        Assert.Equal(30000, result.PreviousNet);
+        Assert.IsNotNull(result);
+        Assert.AreEqual(50000, result.CurrentIncome);
+        Assert.AreEqual(45000, result.PreviousIncome);
+        Assert.AreEqual(20000, result.CurrentExpenses);
+        Assert.AreEqual(15000, result.PreviousExpenses);
+        Assert.AreEqual(30000, result.CurrentNet);
+        Assert.AreEqual(30000, result.PreviousNet);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetFinancialTrendsAsync_CalculatesPercentageChanges()
     {
         // Arrange
@@ -664,22 +664,22 @@ public class DashboardServiceTests
         var result = await _service.GetFinancialTrendsAsync();
 
         // Assert
-        Assert.NotNull(result);
+        Assert.IsNotNull(result);
         
         // Income change: (60000 - 50000) / 50000 * 100 = 20%
-        Assert.Equal(10000, result.IncomeChange);
-        Assert.Equal(20, result.IncomePercentageChange);
+        Assert.AreEqual(10000, result.IncomeChange);
+        Assert.AreEqual(20, result.IncomePercentageChange);
         
         // Expense change: (30000 - 20000) / 20000 * 100 = 50%
-        Assert.Equal(10000, result.ExpenseChange);
-        Assert.Equal(50, result.ExpensePercentageChange);
+        Assert.AreEqual(10000, result.ExpenseChange);
+        Assert.AreEqual(50, result.ExpensePercentageChange);
         
         // Net change: (30000 - 30000) / 30000 * 100 = 0%
-        Assert.Equal(0, result.NetChange);
-        Assert.Equal(0, result.NetPercentageChange);
+        Assert.AreEqual(0, result.NetChange);
+        Assert.AreEqual(0, result.NetPercentageChange);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GetFinancialTrendsAsync_HandlesNoPreviousData()
     {
         // Arrange
@@ -710,12 +710,12 @@ public class DashboardServiceTests
         var result = await _service.GetFinancialTrendsAsync();
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Equal(50000, result.CurrentIncome);
-        Assert.Equal(0, result.PreviousIncome);
-        Assert.Equal(20000, result.CurrentExpenses);
-        Assert.Equal(0, result.PreviousExpenses);
-        Assert.Equal(0, result.IncomePercentageChange); // No previous data means 0% change
-        Assert.Equal(0, result.ExpensePercentageChange);
+        Assert.IsNotNull(result);
+        Assert.AreEqual(50000, result.CurrentIncome);
+        Assert.AreEqual(0, result.PreviousIncome);
+        Assert.AreEqual(20000, result.CurrentExpenses);
+        Assert.AreEqual(0, result.PreviousExpenses);
+        Assert.AreEqual(0, result.IncomePercentageChange); // No previous data means 0% change
+        Assert.AreEqual(0, result.ExpensePercentageChange);
     }
 }

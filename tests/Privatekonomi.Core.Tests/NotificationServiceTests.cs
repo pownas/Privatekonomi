@@ -379,7 +379,15 @@ public class NotificationServiceTests
     public async Task SnoozeNotificationAsync_WithInvalidNotificationId_ThrowsException()
     {
         // Act & Assert
-        Assert.ThrowsException<InvalidOperationException>(() => _notificationService.SnoozeNotificationAsync(999, _testUserId, SnoozeDuration.OneHour.Result));
+        try
+        {
+            await _notificationService.SnoozeNotificationAsync(999, _testUserId, SnoozeDuration.OneHour);
+            Assert.Fail("Expected InvalidOperationException was not thrown");
+        }
+        catch (InvalidOperationException)
+        {
+            // Expected exception
+        }
     }
 
     [TestMethod]

@@ -196,7 +196,8 @@ public class StorageConfigurationTests
     public void SqlServerStorage_WithoutConnectionString_ShouldThrowException()
     {
         // Arrange & Act & Assert
-        var exception = Assert.ThrowsException<InvalidOperationException>(() =>
+        InvalidOperationException? exception = null;
+        try
         {
             var serviceProvider = CreateServiceProvider(new Dictionary<string, string?>
             {
@@ -205,8 +206,14 @@ public class StorageConfigurationTests
                 ["Storage:SeedTestData"] = "false"
             });
             // Exception is thrown during AddDbContext configuration
-        });
+            Assert.Fail("Expected InvalidOperationException was not thrown");
+        }
+        catch (InvalidOperationException ex)
+        {
+            exception = ex;
+        }
 
+        Assert.IsNotNull(exception);
         StringAssert.Contains(exception.Message, "ConnectionString is required for SqlServer provider");
     }
 

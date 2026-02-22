@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Text;
 using Privatekonomi.Core.Models;
 
@@ -14,7 +14,8 @@ public class IcaBankenParser : ICsvParser
         if (lines.Length < 2) return false;
 
         var header = lines[0].ToLower();
-        return header.Contains("datum") && header.Contains("belopp") && header.Contains("beskrivning");
+        // Accept both 'beskrivning' and 'text' as description column
+        return header.Contains("datum") && header.Contains("belopp") && (header.Contains("beskrivning") || header.Contains("text"));
     }
 
     public async Task<List<Transaction>> ParseAsync(Stream csvStream)
@@ -29,7 +30,7 @@ public class IcaBankenParser : ICsvParser
 
         // Detect separator (semicolon or comma)
         var separator = lines[0].Contains(';') ? ';' : ',';
-        
+
         // Parse header to find column indices
         var header = lines[0].Split(separator);
         var dateIndex = FindColumnIndex(header, new[] { "datum", "date" });
@@ -51,7 +52,14 @@ public class IcaBankenParser : ICsvParser
                     continue;
 
                 var dateStr = columns[dateIndex].Trim();
-                var amountStr = columns[amountIndex].Trim().Replace(",", ".");
+                var rawAmount = columns[amountIndex].Trim();
+                // Remove currency (kr), spaces (thousand separator), and handle decimal comma
+                var amountStr = rawAmount
+                    .Replace("kr", "", StringComparison.OrdinalIgnoreCase)
+                    .Replace(" ", "")
+                    .Replace(".", "") // Remove thousand separator if dot
+                    .Replace(",", "."); // Convert decimal comma to dot
+
                 var description = columns[descriptionIndex].Trim();
 
                 if (string.IsNullOrWhiteSpace(description))

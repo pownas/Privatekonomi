@@ -103,7 +103,15 @@ public class SharedEconomyServiceTests : IDisposable
         };
 
         // Act & Assert
-        Assert.ThrowsException<InvalidOperationException>(() => _householdService.CreateSharedBudgetAsync(budget, contributions.Result));
+        try
+        {
+            await _householdService.CreateSharedBudgetAsync(budget, contributions);
+            Assert.Fail("Expected InvalidOperationException was not thrown");
+        }
+        catch (InvalidOperationException)
+        {
+            // Expected exception
+        }
     }
 
     [TestMethod]
@@ -233,11 +241,19 @@ public class SharedEconomyServiceTests : IDisposable
         await _context.SaveChangesAsync();
 
         // Act & Assert
-        Assert.ThrowsException<InvalidOperationException>(() => _householdService.CreateDebtAsync(
+        try
+        {
+            await _householdService.CreateDebtAsync(
                 household.HouseholdId,
                 member.HouseholdMemberId,
                 member.HouseholdMemberId,
-                100m.Result));
+                100m);
+            Assert.Fail("Expected InvalidOperationException was not thrown");
+        }
+        catch (InvalidOperationException)
+        {
+            // Expected exception
+        }
     }
 
     [TestMethod]
@@ -254,11 +270,19 @@ public class SharedEconomyServiceTests : IDisposable
         await _context.SaveChangesAsync();
 
         // Act & Assert
-        Assert.ThrowsException<InvalidOperationException>(() => _householdService.CreateDebtAsync(
+        try
+        {
+            await _householdService.CreateDebtAsync(
                 household.HouseholdId,
                 debtor.HouseholdMemberId,
                 creditor.HouseholdMemberId,
-                0m.Result));
+                0m);
+            Assert.Fail("Expected InvalidOperationException was not thrown");
+        }
+        catch (InvalidOperationException)
+        {
+            // Expected exception
+        }
     }
 
     [TestMethod]

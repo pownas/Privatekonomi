@@ -742,8 +742,18 @@ public class HouseholdServiceTests : IDisposable
         };
 
         // Act & Assert
-        var exception = Assert.ThrowsException<InvalidOperationException>(() => _householdService.CreateSharedBudgetAsync(budget, contributions.Result)
-        );
+        InvalidOperationException? exception = null;
+        try
+        {
+            await _householdService.CreateSharedBudgetAsync(budget, contributions);
+            Assert.Fail("Expected InvalidOperationException was not thrown");
+        }
+        catch (InvalidOperationException ex)
+        {
+            exception = ex;
+        }
+
+        Assert.IsNotNull(exception);
         StringAssert.Contains(exception.Message, "must sum to 100%");
     }
 
@@ -764,8 +774,18 @@ public class HouseholdServiceTests : IDisposable
         var contributions = new Dictionary<int, decimal>();
 
         // Act & Assert
-        var exception = Assert.ThrowsException<InvalidOperationException>(() => _householdService.CreateSharedBudgetAsync(budget, contributions.Result)
-        );
+        InvalidOperationException? exception = null;
+        try
+        {
+            await _householdService.CreateSharedBudgetAsync(budget, contributions);
+            Assert.Fail("Expected InvalidOperationException was not thrown");
+        }
+        catch (InvalidOperationException ex)
+        {
+            exception = ex;
+        }
+
+        Assert.IsNotNull(exception);
         StringAssert.Contains(exception.Message, "must be associated with a household");
     }
 
