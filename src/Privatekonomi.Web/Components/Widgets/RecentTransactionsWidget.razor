@@ -1,5 +1,6 @@
-@using Privatekonomi.Core.Services
+﻿@using Privatekonomi.Core.Services
 @using Privatekonomi.Core.Models
+@using Privatekonomi.Web.Components.Shared
 @inject ITransactionService TransactionService
 @inject ISnackbar Snackbar
 @inject NavigationManager Navigation
@@ -62,17 +63,14 @@
         }
         else
         {
-            <div class="d-flex flex-column align-center justify-center" style="min-height: 150px;">
-                <MudIcon Icon="@Icons.Material.Filled.Receipt" Size="Size.Large" Color="Color.Secondary" />
-                <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-2">
-                    Inga transaktioner ännu
-                </MudText>
-                <MudButton Variant="Variant.Text" 
-                           Color="Color.Primary" 
-                           OnClick="@(() => Navigation.NavigateTo("/transactions/new"))"
-                           Class="mt-2">
-                    Skapa transaktion
-                </MudButton>
+            <div style="min-height: 150px;">
+                <EmptyState IconName="@Icons.Material.Filled.Receipt"
+                            IconColor="Color.Secondary"
+                            Title="Inga transaktioner ännu"
+                            Description="Lägg till din första transaktion för att börja följa din ekonomi."
+                            ActionText="Skapa transaktion"
+                            ActionIcon="@Icons.Material.Filled.Add"
+                            ActionHref="/transactions/new" />
             </div>
         }
     </ChildContent>

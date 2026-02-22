@@ -1,8 +1,9 @@
-@page "/savings/shared-goals"
+﻿@page "/savings/shared-goals"
 @page "/sharedgoals"
 @rendermode InteractiveServer
 @using Microsoft.AspNetCore.Components.Authorization
 @using System.Linq
+@using Privatekonomi.Web.Components.Shared
 @inject ISharedGoalService SharedGoalService
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
@@ -127,9 +128,13 @@ else
             }
             else
             {
-                <MudAlert Severity="Severity.Info">
-                    Inga aktiva gemensamma sparmål. Skapa ett nytt för att komma igång!
-                </MudAlert>
+                <EmptyState IconName="@Icons.Material.Filled.Groups"
+                            IconColor="Color.Secondary"
+                            Title="Inga aktiva gemensamma sparmål"
+                            Description="Skapa ett gemensamt sparmål och bjud in andra för att spara tillsammans."
+                            ActionText="Skapa gemensamt sparmål"
+                            ActionIcon="@Icons.Material.Filled.Add"
+                            OnActionClick="OpenCreateDialog" />
             }
         </MudTabPanel>
 
@@ -157,9 +162,13 @@ else
             }
             else
             {
-                <MudAlert Severity="Severity.Info">
-                    Inga avslutade sparmål än.
-                </MudAlert>
+                <EmptyState IconName="@Icons.Material.Filled.CheckCircle"
+                            IconColor="Color.Secondary"
+                            Title="Inga avslutade sparmål än"
+                            Description="När ni når ett mål kommer det att visas här som avslutat."
+                            ActionText="Skapa nytt sparmål"
+                            ActionIcon="@Icons.Material.Filled.Add"
+                            OnActionClick="OpenCreateDialog" />
             }
         </MudTabPanel>
 
@@ -182,9 +191,13 @@ else
             }
             else
             {
-                <MudAlert Severity="Severity.Info">
-                    Inga arkiverade sparmål.
-                </MudAlert>
+                <EmptyState IconName="@Icons.Material.Filled.Archive"
+                            IconColor="Color.Secondary"
+                            Title="Inga arkiverade sparmål"
+                            Description="Arkivera mål du vill gömma från listan utan att ta bort dem."
+                            ActionText="Skapa nytt sparmål"
+                            ActionIcon="@Icons.Material.Filled.Add"
+                            OnActionClick="OpenCreateDialog" />
             }
         </MudTabPanel>
     </MudTabs>

@@ -1,5 +1,6 @@
-@using Privatekonomi.Core.Services
+﻿@using Privatekonomi.Core.Services
 @using Privatekonomi.Core.Models
+@using Privatekonomi.Web.Components.Shared
 @inject IGoalService GoalService
 @inject ISnackbar Snackbar
 @inject NavigationManager Navigation
@@ -60,17 +61,14 @@
         }
         else
         {
-            <div class="d-flex flex-column align-center justify-center" style="min-height: 150px;">
-                <MudIcon Icon="@Icons.Material.Filled.Flag" Size="Size.Large" Color="Color.Secondary" />
-                <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-2">
-                    Inga aktiva sparmål
-                </MudText>
-                <MudButton Variant="Variant.Text" 
-                           Color="Color.Primary" 
-                           OnClick="@(() => Navigation.NavigateTo("/goals"))"
-                           Class="mt-2">
-                    Skapa sparmål
-                </MudButton>
+            <div style="min-height: 150px;">
+                <EmptyState IconName="@Icons.Material.Filled.Flag"
+                            IconColor="Color.Secondary"
+                            Title="Inga aktiva sparmål"
+                            Description="Skapa ett sparmål för att följa ditt sparande över tid."
+                            ActionText="Skapa sparmål"
+                            ActionIcon="@Icons.Material.Filled.Add"
+                            ActionHref="/goals" />
             </div>
         }
     </ChildContent>

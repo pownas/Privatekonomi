@@ -1,5 +1,6 @@
-@using Privatekonomi.Core.Services
+﻿@using Privatekonomi.Core.Services
 @using Privatekonomi.Core.Models
+@using Privatekonomi.Web.Components.Shared
 @inject IDashboardService DashboardService
 @inject ISnackbar Snackbar
 @inject NavigationManager Navigation
@@ -62,14 +63,11 @@
         }
         else
         {
-            <div class="d-flex flex-column align-center justify-center" style="min-height: 150px;">
-                <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Large" Color="Color.Success" />
-                <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-2 text-center">
-                    Inga nya insikter
-                </MudText>
-                <MudText Typo="Typo.caption" Color="Color.Secondary" Class="text-center">
-                    Din ekonomi ser bra ut!
-                </MudText>
+            <div style="min-height: 150px;">
+                <EmptyState IconName="@Icons.Material.Filled.CheckCircle"
+                            IconColor="Color.Success"
+                            Title="Inga nya insikter"
+                            Description="Din ekonomi ser bra ut just nu." />
             </div>
         }
     </ChildContent>

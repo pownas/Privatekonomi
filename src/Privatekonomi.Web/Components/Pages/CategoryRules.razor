@@ -1,7 +1,8 @@
-@page "/categories/rules"
+﻿@page "/categories/rules"
 @page "/category-rules"
 @rendermode InteractiveServer
 @using Privatekonomi.Core.Models
+@using Privatekonomi.Web.Components.Shared
 @inject ICategoryRuleService CategoryRuleService
 @inject ICategoryService CategoryService
 @inject ISnackbar Snackbar
@@ -246,9 +247,13 @@
         
         @if (!_rules.Any())
         {
-            <MudAlert Severity="Severity.Info" Class="mt-4">
-                Inga kategoriseringsregler finns ännu. Skapa en regel för att automatiskt kategorisera transaktioner.
-            </MudAlert>
+            <EmptyState IconName="@Icons.Material.Filled.AutoAwesome"
+                        IconColor="Color.Secondary"
+                        Title="Inga kategoriseringsregler än"
+                        Description="Skapa regler för att automatiskt kategorisera transaktioner baserat på text i beskrivning eller betalningsmottagare."
+                        ActionText="Skapa regel"
+                        ActionIcon="@Icons.Material.Filled.Add"
+                        OnActionClick="ToggleCreateForm" />
         }
     }
 </MudPaper>

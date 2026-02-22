@@ -1,8 +1,9 @@
-@page "/savings/challenges"
+﻿@page "/savings/challenges"
 @page "/savingschallenges"
 @rendermode InteractiveServer
 @using Privatekonomi.Core.Models
 @using Privatekonomi.Core.Services
+@using Privatekonomi.Web.Components.Shared
 @inject ISavingsChallengeService ChallengeService
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
@@ -303,18 +304,16 @@ else
 
     @if (!_activeChallenges.Any() && !_completedChallenges.Any())
     {
-        <MudPaper Class="pa-6 mt-4" Elevation="0" Style="text-align: center;">
-            <MudIcon Icon="@Icons.Material.Filled.EmojiEvents" Size="Size.Large" Color="Color.Secondary" Class="mb-4" Style="font-size: 4rem;" />
-            <MudText Typo="Typo.h6" Class="mb-2">Inga utmaningar än</MudText>
-            <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">
-                Skapa din första sparutmaning för att motivera ditt sparande! Välj från fördefinierade utmaningar eller skapa din egen.
-            </MudText>
-            <MudText Typo="Typo.body2" Color="Color.Secondary">
-                <strong>Exempel på utmaningar:</strong><br />
-                ☕ Ingen kaffe på uteställe (14 dgr)<br />
-                🍕 Ingen takeaway (30 dgr)<br />
-                💰 Spara 10% av lön (90 dgr)
-            </MudText>
+        <MudPaper Class="pa-4 mt-4" Elevation="0">
+            <EmptyState IconName="@Icons.Material.Filled.EmojiEvents"
+                        IconColor="Color.Secondary"
+                        Title="Inga utmaningar än"
+                        Description="Skapa en sparutmaning för att motivera ditt sparande, eller välj en färdig från biblioteket."
+                        ActionText="Skapa egen utmaning"
+                        ActionIcon="@Icons.Material.Filled.Add"
+                        OnActionClick="ToggleCreateForm"
+                        SecondaryText="Öppna utmaningsbibliotek"
+                        OnSecondaryClick="ToggleTemplateLibrary" />
         </MudPaper>
     }
 }
