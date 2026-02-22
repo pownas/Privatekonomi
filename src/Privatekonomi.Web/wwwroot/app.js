@@ -261,6 +261,7 @@ window.pwaManager = {
     deferredPrompt: null,
     isOnline: navigator.onLine,
     pendingTransactions: [],
+    _isReloading: false,
     
     // Initialize PWA features
     init: function() {
@@ -273,41 +274,66 @@ window.pwaManager = {
     
     // Register service worker
     register: function() {
-        // Disable service worker in development/debug mode
+        if (!('serviceWorker' in navigator)) {
+            return;
+        }
+
         const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
         const isDevMode = document.documentElement.hasAttribute('data-development-mode');
+
+        // In development/debug mode, unregister any stale service workers to prevent
+        // cached workers from interfering with local changes, then exit.
         if (isLocalhost || isDevMode) {
+            navigator.serviceWorker.getRegistrations().then(registrations => {
+                registrations.forEach(registration => {
+                    registration.unregister();
+                    console.log('[PWA] Stale Service Worker unregistered in development mode');
+                });
+            }).catch(err => {
+                console.error('[PWA] Failed to unregister Service Worker:', err);
+            });
             console.log('[PWA] Service Worker disabled in development/debug mode');
             return;
         }
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/service-worker.js')
-                .then((registration) => {
-                    console.log('[PWA] Service Worker registered:', registration);
+
+        // Reload the page whenever a new service worker takes control (e.g. after update).
+        // The _isReloading flag prevents multiple reloads if the event fires more than once.
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+            if (!this._isReloading) {
+                this._isReloading = true;
+                console.log('[PWA] Service Worker controller changed, reloading...');
+                window.location.reload();
+            }
+        });
+
+        // Use updateViaCache: 'none' so the browser never serves the SW script from
+        // HTTP cache, ensuring the latest version is always fetched on every check.
+        navigator.serviceWorker.register('/service-worker.js', { updateViaCache: 'none' })
+            .then((registration) => {
+                console.log('[PWA] Service Worker registered:', registration);
+                
+                // Check for updates
+                registration.addEventListener('updatefound', () => {
+                    const newWorker = registration.installing;
+                    console.log('[PWA] New service worker found');
                     
-                    // Check for updates
-                    registration.addEventListener('updatefound', () => {
-                        const newWorker = registration.installing;
-                        console.log('[PWA] New service worker found');
-                        
-                        newWorker.addEventListener('statechange', () => {
-                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                // New service worker available
-                                console.log('[PWA] New version available');
-                                this.showUpdateNotification();
-                            }
-                        });
+                    newWorker.addEventListener('statechange', () => {
+                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                            // New service worker available
+                            console.log('[PWA] New version available');
+                            this.showUpdateNotification();
+                        }
                     });
-                    
-                    // Periodic update check (every hour)
-                    setInterval(() => {
-                        registration.update();
-                    }, 60 * 60 * 1000);
-                })
-                .catch((error) => {
-                    console.error('[PWA] Service Worker registration failed:', error);
                 });
-        }
+                
+                // Periodic update check (every hour)
+                setInterval(() => {
+                    registration.update();
+                }, 60 * 60 * 1000);
+            })
+            .catch((error) => {
+                console.error('[PWA] Service Worker registration failed:', error);
+            });
     },
     
     // Setup install prompt capture
@@ -407,6 +433,14 @@ window.pwaManager = {
                     if (window.blazorPwaCallbacks && window.blazorPwaCallbacks.onTransactionSynced) {
                         window.blazorPwaCallbacks.onTransactionSynced(event.data.transactionId);
                     }
+                }
+
+                if (event.data && event.data.type === 'SW_ACTIVATED') {
+                    console.log('[PWA] Service Worker activated, version:', event.data.version);
+                }
+
+                if (event.data && event.data.type === 'SW_VERSION') {
+                    console.log('[PWA] Service Worker version:', event.data.version);
                 }
             });
         }
@@ -508,7 +542,7 @@ window.pwaManager = {
         }
     },
     
-    // Apply update (reload page with new service worker)
+    // Apply update (activate waiting service worker; page reload is handled by controllerchange)
     applyUpdate: function() {
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.ready.then(registration => {
@@ -516,11 +550,6 @@ window.pwaManager = {
                     registration.waiting.postMessage({ type: 'SKIP_WAITING' });
                 }
             });
-            
-            // Reload page after a short delay
-            setTimeout(() => {
-                window.location.reload();
-            }, 100);
         }
     },
     
