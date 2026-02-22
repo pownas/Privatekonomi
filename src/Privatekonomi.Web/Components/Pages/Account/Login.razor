@@ -3,60 +3,110 @@
 @using System.ComponentModel.DataAnnotations
 @using Microsoft.AspNetCore.Authorization
 
-<PageTitle>Logga in</PageTitle>
+<PageTitle>Logga in - Privatekonomi</PageTitle>
 
-<MudContainer MaxWidth="MaxWidth.Small" Class="mt-8">
-    <MudPaper Elevation="3" Class="pa-6">
-        <MudText Typo="Typo.h4" Align="Align.Center" GutterBottom="true">
-            Logga in
-        </MudText>
-        
-        @if (!string.IsNullOrEmpty(ErrorMessage))
-        {
-            <MudAlert Severity="Severity.Error" Class="mb-4">@ErrorMessage</MudAlert>
-        }
-        
-        <form method="post" action="/Account/PerformLogin">
-            <input type="hidden" name="ReturnUrl" value="@ReturnUrl" />
-            
-            <MudTextField Label="E-post" 
-                          Name="Email"
-                          @bind-Value="Email"
-                          Variant="Variant.Outlined"
-                          Margin="Margin.Dense"
-                          Class="mb-4"
-                          autocomplete="username"
-                          Required="true" />
-            
-            <MudTextField Label="Lösenord" 
-                          Name="Password"
-                          @bind-Value="Password"
-                          InputType="InputType.Password"
-                          Variant="Variant.Outlined"
-                          Margin="Margin.Dense"
-                          Class="mb-4"
-                          autocomplete="current-password"
-                          Required="true" />
-            
-            <div class="mb-4">
-                <input type="hidden" name="RememberMe" value="@(RememberMe ? "true" : "false")" />
-                <MudCheckBox @bind-Value="RememberMe" Label="Kom ihåg mig" />
+<div class="login-page">
+    <!-- Illustration Section (desktop only) -->
+    <div class="login-illustration">
+        <div class="illustration-content">
+            <img src="/images/login-illustration.svg"
+                 alt="Ta kontroll över din ekonomi"
+                 class="illustration-image" />
+            <p class="illustration-title">Ta kontroll över din ekonomi</p>
+            <p class="illustration-subtitle">
+                Spara tid, pengar och få bättre koll med Privatekonomi.
+                Din personliga ekonomiassistent som hjälper dig att nå dina mål.
+            </p>
+            <div class="illustration-features">
+                <div class="feature-item">
+                    <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Style="color: #86efac;" />
+                    <span>Automatisk kategorisering</span>
+                </div>
+                <div class="feature-item">
+                    <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Style="color: #86efac;" />
+                    <span>Budgetplanering</span>
+                </div>
+                <div class="feature-item">
+                    <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Style="color: #86efac;" />
+                    <span>Sparmål &amp; investeringar</span>
+                </div>
             </div>
-            
-            <MudButton ButtonType="ButtonType.Submit" 
-                       Variant="Variant.Filled" 
-                       Color="Color.Primary" 
-                       FullWidth="true"
-                       Class="mb-4">
-                Logga in
-            </MudButton>
-        </form>
-        
-        <MudText Align="Align.Center">
-            Har du inget konto? <MudLink Href="/Account/Register">Registrera dig</MudLink>
-        </MudText>
-    </MudPaper>
-</MudContainer>
+        </div>
+    </div>
+
+    <!-- Form Section -->
+    <div class="login-form-container">
+        <div class="login-form">
+            <!-- Logo -->
+            <div class="login-logo">
+                <img src="/images/logo.svg" alt="Privatekonomi" width="56" height="56" />
+                <p class="login-app-name">Privatekonomi</p>
+            </div>
+
+            <p class="login-welcome">Välkommen tillbaka</p>
+            <p class="login-subtitle">Logga in på ditt konto för att fortsätta</p>
+
+            @if (!string.IsNullOrEmpty(ErrorMessage))
+            {
+                <MudAlert Severity="Severity.Error" Class="mb-4">@ErrorMessage</MudAlert>
+            }
+
+            <form method="post" action="/Account/PerformLogin">
+                <input type="hidden" name="ReturnUrl" value="@ReturnUrl" />
+
+                <MudTextField Label="E-postadress"
+                              Name="Email"
+                              @bind-Value="Email"
+                              Variant="Variant.Outlined"
+                              Class="mb-4"
+                              Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Filled.Email"
+                              AdornmentColor="Color.Primary"
+                              autocomplete="username"
+                              FullWidth="true"
+                              Required="true" />
+
+                <MudTextField Label="Lösenord"
+                              Name="Password"
+                              @bind-Value="Password"
+                              InputType="InputType.Password"
+                              Variant="Variant.Outlined"
+                              Class="mb-4"
+                              Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Filled.Lock"
+                              AdornmentColor="Color.Primary"
+                              autocomplete="current-password"
+                              FullWidth="true"
+                              Required="true" />
+
+                <div class="login-options mb-4">
+                    <div>
+                        <input type="hidden" name="RememberMe" value="@(RememberMe ? "true" : "false")" />
+                        <MudCheckBox @bind-Value="RememberMe" Label="Kom ihåg mig" Color="Color.Primary" />
+                    </div>
+                </div>
+
+                <MudButton ButtonType="ButtonType.Submit"
+                           Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           FullWidth="true"
+                           Size="Size.Large"
+                           Class="login-button mb-4">
+                    Logga in
+                </MudButton>
+            </form>
+
+            <MudDivider Class="my-4" />
+
+            <MudText Typo="Typo.body2" Align="Align.Center" Class="text-muted">
+                Har du inget konto?
+                <MudLink Href="/Account/Register" Typo="Typo.body2" Color="Color.Primary">
+                    <strong>Registrera dig här</strong>
+                </MudLink>
+            </MudText>
+        </div>
+    </div>
+</div>
 
 @code {
     [SupplyParameterFromQuery]
