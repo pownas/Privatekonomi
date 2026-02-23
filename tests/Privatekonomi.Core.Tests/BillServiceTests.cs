@@ -320,4 +320,266 @@ public class BillServiceTests
         Assert.AreEqual(1, result.Count);
         Assert.AreEqual(householdId, result[0].HouseholdId);
     }
+
+    [TestMethod]
+    public async Task CreateScheduleAsync_ValidSchedule_ReturnsScheduleWithId()
+    {
+        // Arrange
+        var bill = new Bill { UserId = UserId, Name = "Hyra", Amount = 8000m, Currency = "SEK", IssueDate = DateTime.UtcNow, DueDate = DateTime.UtcNow.AddDays(30), Status = "Pending", IsRecurring = true };
+        _context.Bills.Add(bill);
+        await _context.SaveChangesAsync();
+
+        var schedule = new BillSchedule
+        {
+            BillId = bill.BillId,
+            Frequency = "Monthly",
+            StartDate = DateTime.UtcNow.Date,
+            NextOccurrenceDate = DateTime.UtcNow.Date.AddMonths(1),
+            IsActive = true,
+            ReminderDaysBefore = 3
+        };
+
+        // Act
+        var result = await _service.CreateScheduleAsync(schedule);
+
+        // Assert
+        Assert.IsNotNull(result);
+        Assert.IsTrue(result.BillScheduleId > 0);
+        Assert.AreEqual("Monthly", result.Frequency);
+    }
+
+    [TestMethod]
+    public async Task GetScheduleByBillIdAsync_ExistingSchedule_ReturnsSchedule()
+    {
+        // Arrange
+        var bill = new Bill { UserId = UserId, Name = "Hyra", Amount = 8000m, Currency = "SEK", IssueDate = DateTime.UtcNow, DueDate = DateTime.UtcNow.AddDays(30), Status = "Pending", IsRecurring = true };
+        _context.Bills.Add(bill);
+        await _context.SaveChangesAsync();
+
+        var schedule = new BillSchedule
+        {
+            BillId = bill.BillId,
+            Frequency = "Monthly",
+            StartDate = DateTime.UtcNow.Date,
+            NextOccurrenceDate = DateTime.UtcNow.Date.AddMonths(1),
+            IsActive = true
+        };
+        _context.BillSchedules.Add(schedule);
+        await _context.SaveChangesAsync();
+
+        // Act
+        var result = await _service.GetScheduleByBillIdAsync(bill.BillId);
+
+        // Assert
+        Assert.IsNotNull(result);
+        Assert.AreEqual(bill.BillId, result.BillId);
+        Assert.AreEqual("Monthly", result.Frequency);
+    }
+
+    [TestMethod]
+    public async Task GetScheduleByBillIdAsync_NoSchedule_ReturnsNull()
+    {
+        // Act
+        var result = await _service.GetScheduleByBillIdAsync(9999);
+
+        // Assert
+        Assert.IsNull(result);
+    }
+
+    [TestMethod]
+    public async Task GetDueSchedulesAsync_ReturnsOnlyDueActiveSchedules()
+    {
+        // Arrange
+        var bill = new Bill { UserId = UserId, Name = "Hyra", Amount = 8000m, Currency = "SEK", IssueDate = DateTime.UtcNow, DueDate = DateTime.UtcNow.AddDays(30), Status = "Pending", IsRecurring = true };
+        _context.Bills.Add(bill);
+        await _context.SaveChangesAsync();
+
+        var dueSchedule = new BillSchedule
+        {
+            BillId = bill.BillId,
+            Frequency = "Monthly",
+            StartDate = DateTime.UtcNow.Date.AddMonths(-1),
+            NextOccurrenceDate = DateTime.UtcNow.Date.AddDays(-1), // due yesterday
+            IsActive = true
+        };
+        var futureSchedule = new BillSchedule
+        {
+            BillId = bill.BillId,
+            Frequency = "Monthly",
+            StartDate = DateTime.UtcNow.Date,
+            NextOccurrenceDate = DateTime.UtcNow.Date.AddDays(15), // not due yet
+            IsActive = true
+        };
+        var inactiveSchedule = new BillSchedule
+        {
+            BillId = bill.BillId,
+            Frequency = "Monthly",
+            StartDate = DateTime.UtcNow.Date.AddMonths(-2),
+            NextOccurrenceDate = DateTime.UtcNow.Date.AddDays(-2),
+            IsActive = false // inactive
+        };
+
+        _context.BillSchedules.AddRange(dueSchedule, futureSchedule, inactiveSchedule);
+        await _context.SaveChangesAsync();
+
+        // Act
+        var result = await _service.GetDueSchedulesAsync();
+
+        // Assert
+        Assert.AreEqual(1, result.Count);
+        Assert.AreEqual(dueSchedule.BillScheduleId, result[0].BillScheduleId);
+    }
+
+    [TestMethod]
+    public async Task GenerateNextOccurrenceAsync_MonthlySchedule_CreatesNewBillAndAdvancesSchedule()
+    {
+        // Arrange
+        var bill = new Bill
+        {
+            UserId = UserId,
+            Name = "Hyra",
+            Amount = 8000m,
+            Currency = "SEK",
+            IssueDate = DateTime.UtcNow.Date.AddMonths(-1),
+            DueDate = DateTime.UtcNow.Date.AddDays(-1),
+            Status = "Paid",
+            IsRecurring = true,
+            RecurringFrequency = "Monthly",
+            Payee = "Hyresvärden"
+        };
+        _context.Bills.Add(bill);
+        await _context.SaveChangesAsync();
+
+        var occurrenceDate = DateTime.UtcNow.Date;
+        var schedule = new BillSchedule
+        {
+            BillId = bill.BillId,
+            Frequency = "Monthly",
+            StartDate = DateTime.UtcNow.Date.AddMonths(-1),
+            NextOccurrenceDate = occurrenceDate,
+            IsActive = true,
+            ReminderDaysBefore = 0 // no reminder so we don't need to track that
+        };
+        _context.BillSchedules.Add(schedule);
+        await _context.SaveChangesAsync();
+
+        // Act
+        var newBill = await _service.GenerateNextOccurrenceAsync(schedule);
+
+        // Assert
+        Assert.IsNotNull(newBill);
+        Assert.IsTrue(newBill.BillId > 0);
+        Assert.AreEqual("Hyra", newBill.Name);
+        Assert.AreEqual(8000m, newBill.Amount);
+        Assert.AreEqual("Pending", newBill.Status);
+        Assert.AreEqual(occurrenceDate, newBill.DueDate);
+
+        // Verify schedule was advanced
+        var updatedSchedule = await _context.BillSchedules.FindAsync(schedule.BillScheduleId);
+        Assert.IsNotNull(updatedSchedule);
+        Assert.AreEqual(occurrenceDate.AddMonths(1), updatedSchedule.NextOccurrenceDate);
+    }
+
+    [TestMethod]
+    public async Task UpdateScheduleAsync_ValidUpdate_UpdatesFields()
+    {
+        // Arrange
+        var bill = new Bill { UserId = UserId, Name = "El", Amount = 500m, Currency = "SEK", IssueDate = DateTime.UtcNow, DueDate = DateTime.UtcNow.AddDays(30), Status = "Pending", IsRecurring = true };
+        _context.Bills.Add(bill);
+        await _context.SaveChangesAsync();
+
+        var schedule = new BillSchedule
+        {
+            BillId = bill.BillId,
+            Frequency = "Monthly",
+            StartDate = DateTime.UtcNow.Date,
+            NextOccurrenceDate = DateTime.UtcNow.Date.AddMonths(1),
+            IsActive = true,
+            ReminderDaysBefore = 3
+        };
+        _context.BillSchedules.Add(schedule);
+        await _context.SaveChangesAsync();
+
+        // Act
+        schedule.ReminderDaysBefore = 5;
+        schedule.Frequency = "Quarterly";
+        var result = await _service.UpdateScheduleAsync(schedule);
+
+        // Assert
+        Assert.AreEqual(5, result.ReminderDaysBefore);
+        Assert.AreEqual("Quarterly", result.Frequency);
+        Assert.IsNotNull(result.UpdatedAt);
+    }
+
+    [TestMethod]
+    public async Task DeleteScheduleAsync_ExistingSchedule_RemovesSchedule()
+    {
+        // Arrange
+        var bill = new Bill { UserId = UserId, Name = "El", Amount = 500m, Currency = "SEK", IssueDate = DateTime.UtcNow, DueDate = DateTime.UtcNow.AddDays(30), Status = "Pending", IsRecurring = true };
+        _context.Bills.Add(bill);
+        await _context.SaveChangesAsync();
+
+        var schedule = new BillSchedule
+        {
+            BillId = bill.BillId,
+            Frequency = "Monthly",
+            StartDate = DateTime.UtcNow.Date,
+            NextOccurrenceDate = DateTime.UtcNow.Date.AddMonths(1),
+            IsActive = true
+        };
+        _context.BillSchedules.Add(schedule);
+        await _context.SaveChangesAsync();
+        var scheduleId = schedule.BillScheduleId;
+
+        // Act
+        await _service.DeleteScheduleAsync(scheduleId);
+
+        // Assert
+        var deleted = await _context.BillSchedules.FindAsync(scheduleId);
+        Assert.IsNull(deleted);
+    }
+
+    [TestMethod]
+    public async Task GenerateNextOccurrenceAsync_WithReminderDaysBefore_CreatesReminder()
+    {
+        // Arrange
+        var futureDueDate = DateTime.UtcNow.Date.AddDays(10);
+        var bill = new Bill
+        {
+            UserId = UserId,
+            Name = "Internet",
+            Amount = 300m,
+            Currency = "SEK",
+            IssueDate = DateTime.UtcNow.Date,
+            DueDate = futureDueDate,
+            Status = "Pending",
+            IsRecurring = true,
+            RecurringFrequency = "Monthly"
+        };
+        _context.Bills.Add(bill);
+        await _context.SaveChangesAsync();
+
+        var schedule = new BillSchedule
+        {
+            BillId = bill.BillId,
+            Frequency = "Monthly",
+            StartDate = DateTime.UtcNow.Date,
+            NextOccurrenceDate = futureDueDate,
+            IsActive = true,
+            ReminderDaysBefore = 3
+        };
+        _context.BillSchedules.Add(schedule);
+        await _context.SaveChangesAsync();
+
+        // Act
+        var newBill = await _service.GenerateNextOccurrenceAsync(schedule);
+
+        // Assert - reminder should be created 3 days before due date
+        var reminders = await _context.BillReminders
+            .Where(r => r.BillId == newBill.BillId)
+            .ToListAsync();
+        Assert.AreEqual(1, reminders.Count);
+        Assert.AreEqual(futureDueDate.AddDays(-3), reminders[0].ReminderDate);
+        Assert.IsFalse(reminders[0].IsSent);
+    }
 }

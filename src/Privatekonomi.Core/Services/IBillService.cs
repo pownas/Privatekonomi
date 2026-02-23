@@ -17,4 +17,12 @@ public interface IBillService
     Task<List<BillReminder>> GetPendingRemindersAsync();
     Task AddReminderAsync(int billId, DateTime reminderDate, string reminderMethod = "Notification");
     Task MarkReminderAsSentAsync(int reminderId);
+
+    // Schedule management
+    Task<BillSchedule> CreateScheduleAsync(BillSchedule schedule);
+    Task<BillSchedule?> GetScheduleByBillIdAsync(int billId);
+    Task<BillSchedule> UpdateScheduleAsync(BillSchedule schedule);
+    Task DeleteScheduleAsync(int billScheduleId);
+    Task<List<BillSchedule>> GetDueSchedulesAsync();
+    Task<Bill> GenerateNextOccurrenceAsync(BillSchedule schedule);
 }
