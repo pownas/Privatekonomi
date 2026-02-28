@@ -523,7 +523,7 @@ else
 
     private async Task DeleteSubscription(Subscription subscription)
     {
-        bool? confirm = await DialogService.ShowMessageBox(
+        bool? confirm = await DialogService.ShowMessageBoxAsync(
             "Bekräfta borttagning",
             $"Är du säker på att du vill ta bort abonnemanget '{subscription.Name}'?",
             yesText: "Ta bort", cancelText: "Avbryt");

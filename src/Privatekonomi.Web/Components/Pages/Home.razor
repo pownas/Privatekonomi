@@ -276,13 +276,13 @@ else
                     @if (_expensePieData.Any())
                     {
                         <div role="img" aria-label="Cirkeldiagram som visar utgiftsfördelning per kategori">
-                            <MudChart ChartType="ChartType.Pie" 
-                                      InputData="@_expensePieData" 
-                                      InputLabels="@_expensePieLabels"
-                                      Width="100%" 
-                                      Height="300px"
-                                      LegendPosition="Position.Bottom"
-                                      Class="chart-responsive chart-height-md" />
+                        <MudChart T="double" ChartType="ChartType.Pie" 
+                                  InputData="@_expensePieData" 
+                                  InputLabels="@_expensePieLabels"
+                                  Width="100%" 
+                                  Height="300px"
+                                  LegendPosition="Position.Bottom"
+                                  Class="chart-responsive chart-height-md" />
                         </div>
                         <p class="chart-sr-only">
                             Cirkeldiagram visar utgifter fördelade på kategorier: @string.Join(", ", _expensePieLabels).
@@ -312,13 +312,13 @@ else
                     @if (_incomePieData.Any())
                     {
                         <div role="img" aria-label="Cirkeldiagram som visar inkomstfördelning per kategori">
-                            <MudChart ChartType="ChartType.Pie" 
-                                      InputData="@_incomePieData" 
-                                      InputLabels="@_incomePieLabels"
-                                      Width="100%" 
-                                      Height="300px"
-                                      LegendPosition="Position.Bottom"
-                                      Class="chart-responsive chart-height-md" />
+                        <MudChart T="double" ChartType="ChartType.Pie" 
+                                  InputData="@_incomePieData" 
+                                  InputLabels="@_incomePieLabels"
+                                  Width="100%" 
+                                  Height="300px"
+                                  LegendPosition="Position.Bottom"
+                                  Class="chart-responsive chart-height-md" />
                         </div>
                         <p class="chart-sr-only">
                             Cirkeldiagram visar inkomster fördelade på kategorier: @string.Join(", ", _incomePieLabels).
@@ -583,19 +583,15 @@ else
     private string[] _expensePieLabels = Array.Empty<string>();
     private double[] _incomePieData = Array.Empty<double>();
     private string[] _incomePieLabels = Array.Empty<string>();
-    private List<ChartSeries> _barChartSeries = new();
+    private List<ChartSeries<double>> _barChartSeries = new();
     private string[] _barChartLabels = Array.Empty<string>();
-    private List<ChartSeries> _cashFlowSeries = new();
+    private List<ChartSeries<double>> _cashFlowSeries = new();
     private string[] _cashFlowLabels = Array.Empty<string>();
-    private ChartOptions _chartOptions = new ChartOptions
-    {
-        YAxisTicks = 1000,
-        YAxisFormat = "C0"
-    };
+    private ChartOptions _chartOptions = new ChartOptions();
 
     // Net Worth data
     private NetWorthReport? _netWorthReport = null;
-    private List<ChartSeries> _netWorthSeries = new();
+    private List<ChartSeries<double>> _netWorthSeries = new();
     private string[] _netWorthLabels = Array.Empty<string>();
 
     protected override async Task OnInitializedAsync()
@@ -747,7 +743,7 @@ else
         // Only create chart series if we have data
         if (monthlyData.Any() && topCategories.Any())
         {
-            _barChartSeries = topCategories.Select(category => new ChartSeries
+            _barChartSeries = topCategories.Select(category => new ChartSeries<double>
             {
                 Name = category,
                 Data = monthlyData.Select(m => m.Categories.ContainsKey(category) ? (double)m.Categories[category] : 0).ToArray()
@@ -755,7 +751,7 @@ else
         }
         else
         {
-            _barChartSeries = new List<ChartSeries>();
+            _barChartSeries = new List<ChartSeries<double>>();
         }
 
         // Cash flow chart
@@ -773,29 +769,29 @@ else
                 
                 _cashFlowLabels = GenerateChartLabels(cashFlowDates, _selectedMonths);
                 
-                _cashFlowSeries = new List<ChartSeries>
+            _cashFlowSeries = new List<ChartSeries<double>>
+            {
+                new ChartSeries<double>
                 {
-                    new ChartSeries
-                    {
-                        Name = "Inkomster",
-                        Data = cashFlowReport.Periods.Select(p => (double)p.Income).ToArray()
-                    },
-                    new ChartSeries
-                    {
-                        Name = "Utgifter",
-                        Data = cashFlowReport.Periods.Select(p => (double)p.Expenses).ToArray()
-                    },
-                    new ChartSeries
-                    {
-                        Name = "Netto",
-                        Data = cashFlowReport.Periods.Select(p => (double)p.NetFlow).ToArray()
-                    }
-                };
+                    Name = "Inkomster",
+                    Data = cashFlowReport.Periods.Select(p => (double)p.Income).ToArray()
+                },
+                new ChartSeries<double>
+                {
+                    Name = "Utgifter",
+                    Data = cashFlowReport.Periods.Select(p => (double)p.Expenses).ToArray()
+                },
+                new ChartSeries<double>
+                {
+                    Name = "Netto",
+                    Data = cashFlowReport.Periods.Select(p => (double)p.NetFlow).ToArray()
+                }
+            };
             }
             else
             {
                 // Not enough data for chart - clear series and show message
-                _cashFlowSeries = new List<ChartSeries>();
+                _cashFlowSeries = new List<ChartSeries<double>>();
                 _cashFlowLabels = Array.Empty<string>();
                 
                 if (cashFlowReport.Periods.Count == 0)
@@ -811,7 +807,7 @@ else
         catch (Exception ex)
         {
             Snackbar.Add($"Kunde inte ladda kassaflöde: {ex.Message}", Severity.Warning);
-            _cashFlowSeries = new List<ChartSeries>();
+            _cashFlowSeries = new List<ChartSeries<double>>();
             _cashFlowLabels = Array.Empty<string>();
         }
     }
@@ -899,9 +895,9 @@ else
                     .Select(h => h.Date.ToString("MMM yyyy", culture))
                     .ToArray();
                 
-                _netWorthSeries = new List<ChartSeries>
+                _netWorthSeries = new List<ChartSeries<double>>
                 {
-                    new ChartSeries
+                    new ChartSeries<double>
                     {
                         Name = "Nettoförmögenhet",
                         Data = _netWorthReport.History.Select(h => (double)h.NetWorth).ToArray()

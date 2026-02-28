@@ -1,4 +1,4 @@
-@using Privatekonomi.Core.Services
+﻿@using Privatekonomi.Core.Services
 @using Privatekonomi.Core.Models
 @inject IReportService ReportService
 @inject ISnackbar Snackbar
@@ -37,12 +37,11 @@
     public WidgetConfiguration? Configuration { get; set; }
 
     private bool _loading = true;
-    private List<ChartSeries> _cashFlowSeries = new();
+    private List<ChartSeries<double>> _cashFlowSeries = new();
     private string[] _cashFlowLabels = Array.Empty<string>();
     private ChartOptions _chartOptions = new ChartOptions
     {
-        YAxisTicks = 1000,
-        YAxisFormat = "C0"
+        ChartPalette = new[] { "#4caf50", "#f44336", "#2196f3" },
     };
 
     protected override async Task OnInitializedAsync()
@@ -67,24 +66,24 @@
                 
                 _cashFlowLabels = GenerateChartLabels(cashFlowDates);
                 
-                _cashFlowSeries = new List<ChartSeries>
-                {
-                    new ChartSeries
-                    {
-                        Name = "Inkomster",
-                        Data = cashFlowReport.Periods.Select(p => (double)p.Income).ToArray()
-                    },
-                    new ChartSeries
-                    {
-                        Name = "Utgifter",
-                        Data = cashFlowReport.Periods.Select(p => (double)p.Expenses).ToArray()
-                    },
-                    new ChartSeries
-                    {
-                        Name = "Netto",
-                        Data = cashFlowReport.Periods.Select(p => (double)p.NetFlow).ToArray()
-                    }
-                };
+        _cashFlowSeries = new List<ChartSeries<double>>
+        {
+            new ChartSeries<double>
+            {
+                Name = "Inkomster",
+                Data = cashFlowReport.Periods.Select(p => (double)p.Income).ToArray()
+            },
+            new ChartSeries<double>
+            {
+                Name = "Utgifter",
+                Data = cashFlowReport.Periods.Select(p => (double)p.Expenses).ToArray()
+            },
+            new ChartSeries<double>
+            {
+                Name = "Netto",
+                Data = cashFlowReport.Periods.Select(p => (double)p.NetFlow).ToArray()
+            }
+        };
             }
         }
         catch (Exception ex)

@@ -298,7 +298,7 @@ else
 
     private async Task DeleteAsset(int id)
     {
-        var result = await DialogService.ShowMessageBox(
+        var result = await DialogService.ShowMessageBoxAsync(
             "Bekräfta borttagning",
             "Är du säker på att du vill ta bort denna tillgång?",
             yesText: "Ja", cancelText: "Avbryt");

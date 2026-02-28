@@ -277,7 +277,7 @@ else
 
     private async Task DeleteAccount(int id)
     {
-        var result = await DialogService.ShowMessageBox(
+        var result = await DialogService.ShowMessageBoxAsync(
             "Bekräfta borttagning",
             "Är du säker på att du vill ta bort detta valutakonto?",
             yesText: "Ja", cancelText: "Avbryt");

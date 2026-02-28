@@ -1,4 +1,4 @@
-@page "/categories/summary"
+﻿@page "/categories/summary"
 @page "/categories-summary"
 @rendermode InteractiveServer
 @inject ICategoryService CategoryService
@@ -182,15 +182,9 @@ else
     private List<CategoryStatistics> _allStatistics = new();
     private List<MonthlyTotalData> _allMonthlyData = new();
     
-    private List<ChartSeries> _monthlyChartSeries = new();
+    private List<ChartSeries<double>> _monthlyChartSeries = new();
     private string[] _monthlyChartLabels = Array.Empty<string>();
-    private ChartOptions _chartOptions = new ChartOptions
-    {
-        YAxisTicks = 1000,
-        MaxNumYAxisTicks = 10,
-        YAxisFormat = "C0",
-        InterpolationOption = InterpolationOption.Straight
-    };
+    private ChartOptions _chartOptions = new ChartOptions();
 
     protected override async Task OnInitializedAsync()
     {
@@ -229,7 +223,7 @@ else
     {
         if (!_allStatistics.Any())
         {
-            _monthlyChartSeries = new List<ChartSeries>();
+            _monthlyChartSeries = new List<ChartSeries<double>>();
             _monthlyChartLabels = Array.Empty<string>();
             return;
         }
@@ -245,7 +239,7 @@ else
         _monthlyChartLabels = allMonths.ToArray();
 
         // Create a series for each category
-        _monthlyChartSeries = _allStatistics.Select(stats => new ChartSeries
+        _monthlyChartSeries = _allStatistics.Select(stats => new ChartSeries<double>
         {
             Name = stats.CategoryName,
             Data = allMonths.Select(month =>

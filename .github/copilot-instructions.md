@@ -1,16 +1,16 @@
-# Copilot Instructions for Privatekonomi
+﻿# Copilot Instructions for Privatekonomi
 
 ## Project Overview
 
-Privatekonomi is a personal finance application built with .NET 9, Blazor Server, and MudBlazor. The application helps users manage their personal finances with features for transaction tracking, budgeting, savings goals, investments, pension tracking, and more.
+Privatekonomi is a personal finance application built with .NET 10, Blazor Server, and MudBlazor. The application helps users manage their personal finances with features for transaction tracking, budgeting, savings goals, investments, pension tracking, and more.
 
 **Primary Language:** Swedish (for documentation, UI text, and comments in Swedish-facing components)
 **Code Language:** English (for code, variable names, and technical documentation)
 
 ## Technology Stack
 
-- **Framework:** .NET 9 SDK
-- **Frontend:** Blazor Server with MudBlazor 8.13.0
+- **Framework:** .NET 10 SDK
+- **Frontend:** Blazor Server with MudBlazor 9.0.0
 - **Backend:** ASP.NET Core Web API
 - **Database:** Entity Framework Core with multiple providers:
   - InMemory (development/testing)

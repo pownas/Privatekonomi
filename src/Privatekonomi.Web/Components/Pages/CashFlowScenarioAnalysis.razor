@@ -1,4 +1,4 @@
-@page "/savings/scenario-analysis"
+﻿@page "/savings/scenario-analysis"
 @page "/scenario-analysis"
 @rendermode InteractiveServer
 @inject ICashFlowScenarioService ScenarioService
@@ -466,18 +466,11 @@ else
     private int _yearsSlider;
 
     // Chart data
-    private List<ChartSeries> _chartSeries = new();
+    private List<ChartSeries<double>> _chartSeries = new();
     private string[] _xAxisLabels = Array.Empty<string>();
-    private List<ChartSeries> _comparisonChartSeries = new();
+    private List<ChartSeries<double>> _comparisonChartSeries = new();
     private string[] _comparisonXAxisLabels = Array.Empty<string>();
-    
-    private ChartOptions _chartOptions = new ChartOptions
-    {
-        YAxisFormat = "C0",
-        InterpolationOption = InterpolationOption.NaturalSpline,
-        LineStrokeWidth = 2,
-        MaxNumYAxisTicks = 10
-    };
+    private ChartOptions _chartOptions = new ChartOptions();
 
     private List<YearlyBreakdown> _yearlyBreakdown = new();
 
@@ -537,19 +530,19 @@ else
             .Select(d => d.Date.ToString("MMM yyyy", SwedishCulture))
             .ToArray();
 
-        _chartSeries = new List<ChartSeries>
+        _chartSeries = new List<ChartSeries<double>>
         {
-            new ChartSeries
+            new ChartSeries<double>
             {
                 Name = "Totalt saldo",
                 Data = sampledData.Select(d => (double)d.Balance).ToArray()
             },
-            new ChartSeries
+            new ChartSeries<double>
             {
                 Name = "Insättningar",
                 Data = sampledData.Select(d => (double)d.CumulativeContributions).ToArray()
             },
-            new ChartSeries
+            new ChartSeries<double>
             {
                 Name = "Ränta",
                 Data = sampledData.Select(d => (double)d.CumulativeInterest).ToArray()
@@ -558,7 +551,7 @@ else
 
         if (_scenario.InflationRate.HasValue && sampledData.All(d => d.RealValue.HasValue))
         {
-            _chartSeries.Add(new ChartSeries
+            _chartSeries.Add(new ChartSeries<double>
             {
                 Name = "Reellt värde",
                 Data = sampledData.Select(d => (double)d.RealValue!.Value).ToArray()
@@ -682,9 +675,9 @@ else
             .Select(i => dataSource[i].Date.ToString("MMM yyyy", SwedishCulture))
             .ToArray();
 
-        _comparisonChartSeries = new List<ChartSeries>
+        _comparisonChartSeries = new List<ChartSeries<double>>
         {
-            new ChartSeries
+            new ChartSeries<double>
             {
                 Name = "Nuvarande scenario",
                 Data = sampledIndices
@@ -697,7 +690,7 @@ else
 
         foreach (var comp in _comparisonScenarios)
         {
-            _comparisonChartSeries.Add(new ChartSeries
+            _comparisonChartSeries.Add(new ChartSeries<double>
             {
                 Name = comp.ScenarioName,
                 Data = sampledIndices

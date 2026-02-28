@@ -910,11 +910,10 @@ else
 
     private async Task DeleteLoan(int id)
     {
-        var result = await DialogService.ShowMessageBox(
+        var result = await DialogService.ShowMessageBoxAsync(
             "Bekräfta borttagning",
             "Är du säker på att du vill ta bort detta lån/kredit?",
             yesText: "Ja", cancelText: "Avbryt");
-
         if (result == true)
         {
             await LoanService.DeleteLoanAsync(id);

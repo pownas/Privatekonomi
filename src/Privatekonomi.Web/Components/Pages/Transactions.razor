@@ -619,11 +619,10 @@
 
     private async Task DeleteTransaction(int id)
     {
-        var result = await DialogService.ShowMessageBox(
+        var result = await DialogService.ShowMessageBoxAsync(
             "Bekräfta borttagning",
             "Är du säker på att du vill ta bort denna transaktion?",
             yesText: "Ja", cancelText: "Avbryt");
-
         if (result == true)
         {
             await TransactionService.DeleteTransactionAsync(id);
@@ -921,7 +920,7 @@
             FullWidth = true
         };
 
-        var dialog = await DialogService.ShowMessageBox(
+        var dialog = await DialogService.ShowMessageBoxAsync(
             "Exportera transaktioner",
             new MarkupString($"Välj format för export av <strong>{_selectedTransactions.Count}</strong> transaktioner:"),
             "CSV", "JSON", "Avbryt",
@@ -980,7 +979,8 @@
         }
 
         var transactionText = _selectedTransactions.Count == 1 ? "transaktion" : "transaktioner";
-        var result = await DialogService.ShowMessageBox(
+        
+        var result = await DialogService.ShowMessageBoxAsync(
             "Bekräfta borttagning",
             new MarkupString($"Är du säker på att du vill ta bort <strong>{_selectedTransactions.Count}</strong> {transactionText}?<br/><br/><em>OBS: Denna åtgärd kan inte ångras!</em>"),
             yesText: "Ja, ta bort", cancelText: "Avbryt");
@@ -990,9 +990,7 @@
             try
             {
                 var transactionIds = _selectedTransactions.Select(t => t.TransactionId).ToList();
-
                 var bulkResult = await TransactionService.BulkDeleteTransactionsAsync(transactionIds);
-
                 if (bulkResult.IsSuccess)
                 {
                     Snackbar.Add($"{bulkResult.SuccessCount} transaktioner borttagna", Severity.Success);

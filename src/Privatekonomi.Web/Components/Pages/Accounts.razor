@@ -1,4 +1,4 @@
-@page "/settings/accounts"
+﻿@page "/settings/accounts"
 @page "/accounts"
 @rendermode InteractiveServer
 @inject IBankSourceService BankSourceService
@@ -215,12 +215,11 @@ else
 
     private async Task DeleteAccount(BankSource account)
     {
-        var result = await DialogService.ShowMessageBox(
+        var result = await DialogService.ShowMessageBoxAsync(
             "Bekräfta borttagning",
             $"Är du säker på att du vill ta bort kontot '{account.Name}'? Alla transaktioner kommer att behållas men kopplingen till kontot tas bort.",
             yesText: "Ta bort", 
             cancelText: "Avbryt");
-
         if (result == true)
         {
             try

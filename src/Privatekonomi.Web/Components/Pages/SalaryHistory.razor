@@ -1,4 +1,4 @@
-@page "/family/salary-history"
+﻿@page "/family/salary-history"
 @page "/salary-history"
 @rendermode InteractiveServer
 @using Privatekonomi.Core.Models
@@ -259,15 +259,11 @@ else
     private decimal _growth12 = 0;
 
     // Chart data
-    private List<ChartSeries> _chartSeries = new();
+    private List<ChartSeries<double>> _chartSeries = new();
     private string[] _chartLabels = Array.Empty<string>();
     private ChartOptions _chartOptions = new ChartOptions
     {
-        YAxisTicks = 5000,
-        YAxisLines = true,
-        XAxisLines = false,
-        InterpolationOption = InterpolationOption.NaturalSpline,
-        LineStrokeWidth = 3
+        ChartPalette = new[] { "#3f51b5" },
     };
 
     protected override async Task OnInitializedAsync()
@@ -309,7 +305,7 @@ else
     {
         if (!_salaries.Any())
         {
-            _chartSeries = new List<ChartSeries>();
+            _chartSeries = new List<ChartSeries<double>>();
             _chartLabels = Array.Empty<string>();
             return;
         }
@@ -317,7 +313,7 @@ else
         // Check if we have enough data points for line charts (minimum 4 required for MudChart Line)
         if (_salaries.Count() < 4)
         {
-            _chartSeries = new List<ChartSeries>();
+            _chartSeries = new List<ChartSeries<double>>();
             _chartLabels = Array.Empty<string>();
             return;
         }
@@ -328,9 +324,9 @@ else
         
         var salaryData = orderedSalaries.Select(s => (double)s.MonthlySalary).ToArray();
         
-        _chartSeries = new List<ChartSeries>
+        _chartSeries = new List<ChartSeries<double>>
         {
-            new ChartSeries
+            new ChartSeries<double>
             {
                 Name = "Månadslön (kr)",
                 Data = salaryData
@@ -407,7 +403,7 @@ else
 
     private async Task DeleteSalary(Core.Models.SalaryHistory salary)
     {
-        var result = await DialogService.ShowMessageBox(
+        var result = await DialogService.ShowMessageBoxAsync(
             "Bekräfta borttagning",
             $"Är du säker på att du vill ta bort löneposten för {salary.Period:yyyy-MM}?",
             yesText: "Ta bort", cancelText: "Avbryt");

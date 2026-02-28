@@ -1,0 +1,23 @@
+﻿@using MudBlazor
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudText Typo="Typo.body1">@ContentText</MudText>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="@Color" OnClick="Confirm">@ButtonText</MudButton>
+        <MudButton OnClick="Cancel">Avbryt</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IDialogReference MudDialog { get; set; } = default!;
+    [Parameter] public string ContentText { get; set; } = "Är du säker?";
+    [Parameter] public string ButtonText { get; set; } = "Ja";
+    [Parameter] public Color Color { get; set; } = Color.Error;
+
+    private void Confirm() => MudDialog.Close(DialogResult.Ok(true));
+    private void Cancel() => MudDialog.Close(DialogResult.Cancel());
+}

@@ -1,4 +1,4 @@
-@page "/economy/budgets"
+﻿@page "/economy/budgets"
 @page "/budgets"
 @rendermode InteractiveServer
 @using Privatekonomi.Web.Components.Shared
@@ -707,11 +707,10 @@
 
     private async Task DeleteBudget(Budget budget)
     {
-        var result = await DialogService.ShowMessageBox(
+        var result = await DialogService.ShowMessageBoxAsync(
             "Bekräfta borttagning",
             $"Är du säker på att du vill ta bort budgeten '{budget.Name}'?",
             yesText: "Ta bort", cancelText: "Avbryt");
-
         if (result == true)
         {
             try
