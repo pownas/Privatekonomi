@@ -1,4 +1,4 @@
-@page "/categories/overview"
+﻿@page "/categories/overview"
 @page "/category-overview"
 @rendermode InteractiveServer
 @using Privatekonomi.Web.Components.Shared
@@ -298,15 +298,9 @@ else
     private decimal _plannedBudgetAmount = 0m;
     private string? _currentBudgetInfo = null;
     
-    private List<ChartSeries> _monthlyChartSeries = new();
+    private List<ChartSeries<double>> _monthlyChartSeries = new();
     private string[] _monthlyChartLabels = Array.Empty<string>();
-    private ChartOptions _chartOptions = new ChartOptions
-    {
-        YAxisTicks = 1000,
-        MaxNumYAxisTicks = 10,
-        YAxisFormat = "C0",
-        InterpolationOption = InterpolationOption.Straight
-    };
+    private ChartOptions _chartOptions = new ChartOptions();
 
     [SupplyParameterFromQuery(Name = "categoryId")]
     public int? QueryCategoryId { get; set; }
@@ -386,7 +380,7 @@ else
     {
         if (_statistics == null || !_statistics.MonthlyBreakdown.Any())
         {
-            _monthlyChartSeries = new List<ChartSeries>();
+            _monthlyChartSeries = new List<ChartSeries<double>>();
             _monthlyChartLabels = Array.Empty<string>();
             return;
         }
@@ -399,14 +393,14 @@ else
 
         _monthlyChartLabels = monthsWithData.Select(m => m.MonthLabel).ToArray();
 
-        _monthlyChartSeries = new List<ChartSeries>
+        _monthlyChartSeries = new List<ChartSeries<double>>
         {
-            new ChartSeries
+            new ChartSeries<double>
             {
                 Name = "Inkomster",
                 Data = monthsWithData.Select(m => (double)m.Income).ToArray()
             },
-            new ChartSeries
+            new ChartSeries<double>
             {
                 Name = "Utgifter",
                 Data = monthsWithData.Select(m => (double)m.Expenses).ToArray()

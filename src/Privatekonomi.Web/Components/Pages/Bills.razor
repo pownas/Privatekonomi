@@ -1,4 +1,4 @@
-@page "/economy/bills"
+﻿@page "/economy/bills"
 @page "/bills"
 @rendermode InteractiveServer
 @using Privatekonomi.Core.Models
@@ -586,11 +586,10 @@ else
 
     private async Task DeleteBill(Bill bill)
     {
-        bool? confirm = await DialogService.ShowMessageBox(
+        bool? confirm = await DialogService.ShowMessageBoxAsync(
             "Bekräfta borttagning",
             $"Är du säker på att du vill ta bort räkningen '{bill.Name}'?",
             yesText: "Ta bort", cancelText: "Avbryt");
-
         if (confirm == true)
         {
             try

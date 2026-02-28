@@ -1,4 +1,4 @@
-@page "/economy/budgets/konsumentverket-comparison"
+﻿@page "/economy/budgets/konsumentverket-comparison"
 @page "/budgets/konsumentverket-comparison"
 @rendermode InteractiveServer
 @inject IKonsumentverketComparisonService ComparisonService
@@ -42,7 +42,7 @@
                         </div>
                         <MudGrid>
                             <MudItem xs="12" sm="6">
-                                <MudNumericField @bind-Value="member.Age" 
+                                <MudNumericField T="int" @bind-Value="member.Age" 
                                                Label="Ålder" 
                                                Variant="Variant.Outlined"
                                                Min="0"
@@ -50,7 +50,7 @@
                                                HelperText="Ålder i år" />
                             </MudItem>
                             <MudItem xs="12" sm="6">
-                                <MudCheckBox @bind-Value="member.HasLunchOutOnWeekdays" 
+                                <MudCheckBox T="bool" @bind-Value="member.HasLunchOutOnWeekdays" 
                                            Label="Lunch ute på vardagar"
                                            Color="Color.Primary" />
                             </MudItem>
@@ -76,7 +76,7 @@
             
             <MudExpansionPanels MultiExpansion="true">
                 <MudExpansionPanel Text="Livsmedelskostnader" isexpanded="true">
-                    <MudNumericField @bind-Value="_userCosts.FoodCosts" 
+                    <MudNumericField T="decimal" @bind-Value="_userCosts.FoodCosts" 
                                    Label="Livsmedel totalt" 
                                    Variant="Variant.Outlined"
                                    Format="N0"
@@ -88,7 +88,7 @@
                 </MudExpansionPanel>
                 
                 <MudExpansionPanel Text="Individuella kostnader">
-                    <MudNumericField @bind-Value="_userCosts.ClothesCosts" 
+                    <MudNumericField T="decimal" @bind-Value="_userCosts.ClothesCosts" 
                                    Label="Kläder och skor" 
                                    Variant="Variant.Outlined"
                                    Format="N0"
@@ -98,7 +98,7 @@
                                    Min="0"
                                    Class="mb-3" />
                     
-                    <MudNumericField @bind-Value="_userCosts.LeisureCosts" 
+                    <MudNumericField T="decimal" @bind-Value="_userCosts.LeisureCosts" 
                                    Label="Fritid och lek" 
                                    Variant="Variant.Outlined"
                                    Format="N0"
@@ -108,7 +108,7 @@
                                    Min="0"
                                    Class="mb-3" />
                     
-                    <MudNumericField @bind-Value="_userCosts.MobileCosts" 
+                    <MudNumericField T="decimal" @bind-Value="_userCosts.MobileCosts" 
                                    Label="Mobiltelefon" 
                                    Variant="Variant.Outlined"
                                    Format="N0"
@@ -118,7 +118,7 @@
                                    Min="0"
                                    Class="mb-3" />
                     
-                    <MudNumericField @bind-Value="_userCosts.HygieneCosts" 
+                    <MudNumericField T="decimal" @bind-Value="_userCosts.HygieneCosts" 
                                    Label="Personlig hygien" 
                                    Variant="Variant.Outlined"
                                    Format="N0"
@@ -128,7 +128,7 @@
                                    Min="0"
                                    Class="mb-3" />
                     
-                    <MudNumericField @bind-Value="_userCosts.InsuranceCosts" 
+                    <MudNumericField T="decimal" @bind-Value="_userCosts.InsuranceCosts" 
                                    Label="Barn- och ungdomsförsäkring" 
                                    Variant="Variant.Outlined"
                                    Format="N0"
@@ -138,7 +138,7 @@
                                    Min="0"
                                    Class="mb-3" />
                     
-                    <MudNumericField @bind-Value="_userCosts.ChildEquipmentCosts" 
+                    <MudNumericField T="decimal" @bind-Value="_userCosts.ChildEquipmentCosts" 
                                    Label="Övrig barnutrustning" 
                                    Variant="Variant.Outlined"
                                    Format="N0"
@@ -150,7 +150,7 @@
                 </MudExpansionPanel>
                 
                 <MudExpansionPanel Text="Hushållsgemensamma kostnader">
-                    <MudNumericField @bind-Value="_userCosts.ConsumablesCosts" 
+                    <MudNumericField T="decimal" @bind-Value="_userCosts.ConsumablesCosts" 
                                    Label="Förbrukningsvaror" 
                                    Variant="Variant.Outlined"
                                    Format="N0"
@@ -160,7 +160,7 @@
                                    Min="0"
                                    Class="mb-3" />
                     
-                    <MudNumericField @bind-Value="_userCosts.HomeEquipmentCosts" 
+                    <MudNumericField T="decimal" @bind-Value="_userCosts.HomeEquipmentCosts" 
                                    Label="Hemutrustning" 
                                    Variant="Variant.Outlined"
                                    Format="N0"
@@ -170,7 +170,7 @@
                                    Min="0"
                                    Class="mb-3" />
                     
-                    <MudNumericField @bind-Value="_userCosts.InternetMobileCosts" 
+                    <MudNumericField T="decimal" @bind-Value="_userCosts.InternetMobileCosts" 
                                    Label="Internet- och mobilabonnemang" 
                                    Variant="Variant.Outlined"
                                    Format="N0"
@@ -180,7 +180,7 @@
                                    Min="0"
                                    Class="mb-3" />
                     
-                    <MudNumericField @bind-Value="_userCosts.OtherMediaCosts" 
+                    <MudNumericField T="decimal" @bind-Value="_userCosts.OtherMediaCosts" 
                                    Label="Övriga medietjänster" 
                                    Variant="Variant.Outlined"
                                    Format="N0"
@@ -190,7 +190,7 @@
                                    Min="0"
                                    Class="mb-3" />
                     
-                    <MudNumericField @bind-Value="_userCosts.ElectricityCosts" 
+                    <MudNumericField T="decimal" @bind-Value="_userCosts.ElectricityCosts" 
                                    Label="Hushållsel" 
                                    Variant="Variant.Outlined"
                                    Format="N0"
@@ -200,7 +200,7 @@
                                    Min="0"
                                    Class="mb-3" />
                     
-                    <MudNumericField @bind-Value="_userCosts.WaterDrainageCosts" 
+                    <MudNumericField T="decimal" @bind-Value="_userCosts.WaterDrainageCosts" 
                                    Label="Vatten och avlopp" 
                                    Variant="Variant.Outlined"
                                    Format="N0"
@@ -210,7 +210,7 @@
                                    Min="0"
                                    Class="mb-3" />
                     
-                    <MudNumericField @bind-Value="_userCosts.HomeInsuranceCosts" 
+                    <MudNumericField T="decimal" @bind-Value="_userCosts.HomeInsuranceCosts" 
                                    Label="Hemförsäkring" 
                                    Variant="Variant.Outlined"
                                    Format="N0"
@@ -384,14 +384,28 @@
     private UserHouseholdCosts _userCosts = new();
     private KonsumentverketComparisonResult? _comparisonResult;
     
-    private List<ChartSeries> _chartSeries = new();
+    private List<ChartSeries<double>> _chartSeries = new();
     private string[] _chartLabels = Array.Empty<string>();
     private ChartOptions _chartOptions = new()
     {
-        YAxisTicks = 1000,
-        YAxisFormat = "N0",
-        ChartPalette = new[] { "#2196F3", "#4CAF50" }
+        ChartPalette = GetChartPalette()
     };
+
+    private static string[] GetChartPalette()
+    {
+        // WCAG AA compliant colors for both light and dark mode
+        // In real implementation, check theme state
+        return new[]
+        {
+            "#1976D2", // Primary Blue
+            "#388E3C", // Success Green
+            "#F57C00", // Warning Orange
+            "#7B1FA2", // Secondary Purple
+            "#0097A7", // Info Cyan
+            "#C2185B"  // Pink
+        };
+    }
+
     private static readonly System.Globalization.CultureInfo SwedishCulture = System.Globalization.CultureInfo.GetCultureInfo("sv-SE");
     private const int MaxChartCategories = 6;
 
@@ -432,14 +446,14 @@
         
         _chartLabels = topCategories.Select(c => c.CategoryName).ToArray();
         
-        _chartSeries = new List<ChartSeries>
+        _chartSeries = new List<ChartSeries<double>>
         {
-            new ChartSeries
+            new ChartSeries<double>
             {
                 Name = "Dina kostnader",
                 Data = topCategories.Select(c => (double)c.UserCost).ToArray()
             },
-            new ChartSeries
+            new ChartSeries<double>
             {
                 Name = "Konsumentverket",
                 Data = topCategories.Select(c => (double)c.ReferenceCost).ToArray()

@@ -1,4 +1,4 @@
-@using Privatekonomi.Core.Services
+﻿@using Privatekonomi.Core.Services
 @using Privatekonomi.Core.Models
 @inject IReportService ReportService
 @inject ISnackbar Snackbar
@@ -71,12 +71,11 @@
 
     private bool _loading = true;
     private NetWorthReport? _netWorthReport = null;
-    private List<ChartSeries> _netWorthSeries = new();
+    private List<ChartSeries<double>> _netWorthSeries = new();
     private string[] _netWorthLabels = Array.Empty<string>();
     private ChartOptions _chartOptions = new ChartOptions
     {
-        YAxisTicks = 1000,
-        YAxisFormat = "C0"
+        ChartPalette = new[] { "#4caf50", "#f44336", "#2196f3" },
     };
 
     protected override async Task OnInitializedAsync()
@@ -98,14 +97,14 @@
                     .Select(h => h.Date.ToString("MMM yyyy", culture))
                     .ToArray();
                 
-                _netWorthSeries = new List<ChartSeries>
-                {
-                    new ChartSeries
-                    {
-                        Name = "Nettoförmögenhet",
-                        Data = _netWorthReport.History.Select(h => (double)h.NetWorth).ToArray()
-                    }
-                };
+        _netWorthSeries = new List<ChartSeries<double>>
+        {
+            new ChartSeries<double>
+            {
+                Name = "Nettoförmögenhet",
+                Data = _netWorthReport.History.Select(h => (double)h.NetWorth).ToArray()
+            }
+        };
             }
         }
         catch (Exception ex)

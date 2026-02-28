@@ -1,4 +1,4 @@
-@page "/admin/metrics"
+﻿@page "/admin/metrics"
 @using Privatekonomi.Core.Models
 @using Privatekonomi.Core.Services
 @using Microsoft.AspNetCore.Identity
@@ -348,7 +348,7 @@
                 <MudItem xs="12" md="6">
                     <MudPaper Class="pa-4">
                         <MudText Typo="Typo.h6" Class="mb-2">MAU Trend</MudText>
-                        <MudChart ChartType="ChartType.Line" 
+                        <MudChart T="double" ChartType="ChartType.Line" 
                                   ChartSeries="@_mauChartSeries" 
                                   XAxisLabels="@_chartLabels" 
                                   Width="100%" 
@@ -360,7 +360,7 @@
                 <MudItem xs="12" md="6">
                     <MudPaper Class="pa-4">
                         <MudText Typo="Typo.h6" Class="mb-2">Transaktioner per användare</MudText>
-                        <MudChart ChartType="ChartType.Line" 
+                        <MudChart T="double" ChartType="ChartType.Line" 
                                   ChartSeries="@_transactionsChartSeries" 
                                   XAxisLabels="@_chartLabels" 
                                   Width="100%" 
@@ -384,8 +384,8 @@
     private MetricsPeriodType _selectedPeriodType = MetricsPeriodType.Monthly;
     private int _periodCount = 12;
 
-    private List<ChartSeries> _mauChartSeries = new();
-    private List<ChartSeries> _transactionsChartSeries = new();
+    private List<ChartSeries<double>> _mauChartSeries = new List<ChartSeries<double>>();
+    private List<ChartSeries<double>> _transactionsChartSeries = new List<ChartSeries<double>>();
     private string[] _chartLabels = Array.Empty<string>();
 
     protected override async Task OnInitializedAsync()
@@ -462,14 +462,14 @@
                 }
             }
             
-            _mauChartSeries = new List<ChartSeries>
+            _mauChartSeries = new List<ChartSeries<double>>
             {
-                new ChartSeries { Name = "MAU", Data = mauData }
+                new ChartSeries<double> { Name = "MAU", Data = mauData }
             };
             
-            _transactionsChartSeries = new List<ChartSeries>
+            _transactionsChartSeries = new List<ChartSeries<double>>
             {
-                new ChartSeries { Name = "Transaktioner/användare", Data = transactionsData }
+                new ChartSeries<double> { Name = "Transaktioner/användare", Data = transactionsData }
             };
         }
         catch (Exception ex)

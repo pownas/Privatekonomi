@@ -1,4 +1,4 @@
-@page "/savings/shared-goals/{SharedGoalId:int}"
+﻿@page "/savings/shared-goals/{SharedGoalId:int}"
 @page "/sharedgoals/{SharedGoalId:int}"
 @rendermode InteractiveServer
 @inject ISharedGoalService SharedGoalService
@@ -324,7 +324,7 @@ else
 
     private async Task OpenInviteDialog()
     {
-        var email = await DialogService.ShowMessageBox(
+        var email = await DialogService.ShowMessageBoxAsync(
             "Bjud in deltagare",
             "Ange e-postadress för användaren du vill bjuda in:",
             "Skicka inbjudan", "Avbryt");
@@ -335,7 +335,7 @@ else
 
     private async Task RemoveParticipant(string userId)
     {
-        bool? confirm = await DialogService.ShowMessageBox(
+        bool? confirm = await DialogService.ShowMessageBoxAsync(
             "Bekräfta borttagning",
             "Är du säker på att du vill ta bort denna deltagare?",
             yesText: "Ja", cancelText: "Avbryt");
@@ -357,7 +357,7 @@ else
 
     private async Task LeaveGoal()
     {
-        bool? confirm = await DialogService.ShowMessageBox(
+        bool? confirm = await DialogService.ShowMessageBoxAsync(
             "Lämna sparmål",
             "Är du säker på att du vill lämna detta gemensamma sparmål?",
             yesText: "Ja", cancelText: "Avbryt");

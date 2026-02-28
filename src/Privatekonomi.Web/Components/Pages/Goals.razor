@@ -514,7 +514,7 @@ else
 
     private async Task DeleteGoal(int goalId)
     {
-        bool? result = await DialogService.ShowMessageBox(
+        bool? result = await DialogService.ShowMessageBoxAsync(
             "Bekräfta borttagning",
             "Är du säker på att du vill ta bort detta sparmål?",
             yesText: "Ja", cancelText: "Avbryt");

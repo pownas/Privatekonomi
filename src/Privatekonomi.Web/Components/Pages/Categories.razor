@@ -203,11 +203,10 @@
 
     private async Task ResetSystemCategory(Category category)
     {
-        var result = await DialogService.ShowMessageBox(
+        var result = await DialogService.ShowMessageBoxAsync(
             "Återställ Systemkategori",
             $"Är du säker på att du vill återställa kategorin '{category.Name}' till sitt ursprungliga värde?",
             yesText: "Återställ", cancelText: "Avbryt");
-
         if (result == true)
         {
             try
@@ -225,11 +224,10 @@
 
     private async Task DeleteCategory(Category category)
     {
-        var result = await DialogService.ShowMessageBox(
+        var result = await DialogService.ShowMessageBoxAsync(
             "Bekräfta borttagning",
             $"Är du säker på att du vill ta bort kategorin '{category.Name}'?",
             yesText: "Ta bort", cancelText: "Avbryt");
-
         if (result == true)
         {
             try

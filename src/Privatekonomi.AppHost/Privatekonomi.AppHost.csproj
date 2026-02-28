@@ -1,5 +1,5 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <Sdk Name="Aspire.AppHost.Sdk" Version="13.1.1" />
+  <Sdk Name="Aspire.AppHost.Sdk" Version="13.1.2" />
 
   <PropertyGroup Label="General">
     <OutputType>Exe</OutputType>
@@ -8,7 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup Label="Packages">
-    <PackageReference Include="Aspire.Hosting.AppHost" Version="13.1.1" />
+    <PackageReference Include="Aspire.Hosting.AppHost" Version="13.1.2" />
   </ItemGroup>
 
   <ItemGroup Label="Projects">

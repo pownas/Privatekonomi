@@ -1,4 +1,4 @@
-@page "/investments/pensions"
+﻿@page "/investments/pensions"
 @page "/pensions"
 @rendermode InteractiveServer
 @inject IPensionService PensionService
@@ -556,11 +556,10 @@ else
 
     private async Task DeletePension(Pension pension)
     {
-        bool? result = await DialogService.ShowMessageBox(
+        bool? result = await DialogService.ShowMessageBoxAsync(
             "Bekräfta borttagning",
             $"Är du säker på att du vill ta bort pensionen '{pension.Name}'?",
             yesText: "Ja", cancelText: "Avbryt");
-
         if (result == true)
         {
             try

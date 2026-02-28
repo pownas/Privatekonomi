@@ -1,4 +1,4 @@
-@page "/reminders"
+﻿@page "/reminders"
 @rendermode InteractiveServer
 @using Privatekonomi.Core.Models
 @using Privatekonomi.Core.Services
@@ -398,7 +398,7 @@
 
     private async Task DeleteReminder(Reminder reminder)
     {
-        bool? confirm = await DialogService.ShowMessageBox(
+        bool? confirm = await DialogService.ShowMessageBoxAsync(
             "Bekräfta borttagning",
             "Är du säker på att du vill ta bort denna påminnelse?",
             yesText: "Ta bort", cancelText: "Avbryt");

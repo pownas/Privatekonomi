@@ -1,4 +1,4 @@
-@page "/economy/networth-chart"
+﻿@page "/economy/networth-chart"
 @page "/networth-chart"
 @rendermode InteractiveServer
 @inject IReportService ReportService
@@ -335,20 +335,16 @@ else
     private string _selectedGroupBy = "month";
     
     // Chart data
-    private List<ChartSeries> _chartSeries = new();
-    private List<ChartSeries> _assetChartSeries = new();
-    private List<ChartSeries> _liabilityChartSeries = new();
+    private List<ChartSeries<double>> _chartSeries = new();
+    private List<ChartSeries<double>> _assetChartSeries = new();
+    private List<ChartSeries<double>> _liabilityChartSeries = new();
     private string[] _xAxisLabels = Array.Empty<string>();
     private ChartOptions _chartOptions = new ChartOptions
     {
-        YAxisTicks = 100000,
-        YAxisFormat = "C0",
-        InterpolationOption = InterpolationOption.NaturalSpline,
-        LineStrokeWidth = 2, // Standard width, increases on hover via CSS
-        MaxNumYAxisTicks = 8 // Limit ticks for better readability
+        ChartPalette = GetChartPalette()
     };
 
-    private string[] GetChartPalette()
+    private static string[] GetChartPalette()
     {
         // WCAG AA compliant colors for both light and dark mode
         // In real implementation, check theme state
@@ -409,9 +405,9 @@ else
     {
         if (!_report.Periods.Any())
         {
-            _chartSeries = new List<ChartSeries>();
-            _assetChartSeries = new List<ChartSeries>();
-            _liabilityChartSeries = new List<ChartSeries>();
+        _chartSeries = new List<ChartSeries<double>>();
+        _assetChartSeries = new List<ChartSeries<double>>();
+        _liabilityChartSeries = new List<ChartSeries<double>>();
             _xAxisLabels = Array.Empty<string>();
             return;
         }
@@ -419,9 +415,9 @@ else
         // Check if we have enough data points for line charts (minimum 4 required for MudChart Line)
         if (_report.Periods.Count < 4)
         {
-            _chartSeries = new List<ChartSeries>();
-            _assetChartSeries = new List<ChartSeries>();
-            _liabilityChartSeries = new List<ChartSeries>();
+            _chartSeries = new List<ChartSeries<double>>();
+            _assetChartSeries = new List<ChartSeries<double>>();
+            _liabilityChartSeries = new List<ChartSeries<double>>();
             _xAxisLabels = Array.Empty<string>();
             return;
         }
@@ -429,9 +425,9 @@ else
         _xAxisLabels = _report.Periods.Select(p => p.Period).ToArray();
 
         // Net worth line chart
-        _chartSeries = new List<ChartSeries>
+        _chartSeries = new List<ChartSeries<double>>
         {
-            new ChartSeries
+            new ChartSeries<double>
             {
                 Name = "Nettoförmögenhet",
                 Data = _report.Periods.Select(p => (double)p.NetWorth).ToArray()
@@ -439,11 +435,11 @@ else
         };
 
         // Asset breakdown stacked area chart
-        _assetChartSeries = new List<ChartSeries>();
+        _assetChartSeries = new List<ChartSeries<double>>();
         
         if (_report.Periods.Any(p => p.BankBalance.HasValue && p.BankBalance > 0))
         {
-            _assetChartSeries.Add(new ChartSeries
+            _assetChartSeries.Add(new ChartSeries<double>
             {
                 Name = "Bankkonton",
                 Data = _report.Periods.Select(p => (double)(p.BankBalance ?? 0)).ToArray()
@@ -452,7 +448,7 @@ else
 
         if (_report.Periods.Any(p => p.InvestmentValue.HasValue && p.InvestmentValue > 0))
         {
-            _assetChartSeries.Add(new ChartSeries
+            _assetChartSeries.Add(new ChartSeries<double>
             {
                 Name = "Investeringar",
                 Data = _report.Periods.Select(p => (double)(p.InvestmentValue ?? 0)).ToArray()
@@ -461,7 +457,7 @@ else
 
         if (_report.Periods.Any(p => p.PhysicalAssetValue.HasValue && p.PhysicalAssetValue > 0))
         {
-            _assetChartSeries.Add(new ChartSeries
+            _assetChartSeries.Add(new ChartSeries<double>
             {
                 Name = "Fysiska tillgångar",
                 Data = _report.Periods.Select(p => (double)(p.PhysicalAssetValue ?? 0)).ToArray()
@@ -469,11 +465,11 @@ else
         }
 
         // Liability line chart
-        _liabilityChartSeries = new List<ChartSeries>();
+        _liabilityChartSeries = new List<ChartSeries<double>>();
         
         if (_report.Periods.Any(p => p.LoanBalance.HasValue && p.LoanBalance > 0))
         {
-            _liabilityChartSeries.Add(new ChartSeries
+            _liabilityChartSeries.Add(new ChartSeries<double>
             {
                 Name = "Lån & Krediter",
                 Data = _report.Periods.Select(p => (double)(p.LoanBalance ?? 0)).ToArray()

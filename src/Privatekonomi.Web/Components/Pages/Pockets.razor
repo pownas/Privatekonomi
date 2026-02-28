@@ -333,11 +333,10 @@ else
 
     private async Task DeletePocket(int pocketId)
     {
-        bool? result = await DialogService.ShowMessageBox(
+        var result = await DialogService.ShowMessageBoxAsync(
             "Bekräfta borttagning",
             "Är du säker på att du vill ta bort denna sparficka?",
             yesText: "Ja", cancelText: "Avbryt");
-
         if (result == true)
         {
             await PocketService.DeletePocketAsync(pocketId);

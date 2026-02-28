@@ -319,7 +319,7 @@ else
 
     private async Task RejectInvitation(int participantId)
     {
-        bool? confirm = await DialogService.ShowMessageBox(
+        bool? confirm = await DialogService.ShowMessageBoxAsync(
             "Bekräfta",
             "Är du säker på att du vill avvisa denna inbjudan?",
             yesText: "Ja", cancelText: "Avbryt");

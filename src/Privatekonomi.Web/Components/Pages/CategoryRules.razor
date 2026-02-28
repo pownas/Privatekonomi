@@ -392,7 +392,7 @@
 
     private async Task DeleteRule(CategoryRule rule)
     {
-        var result = await DialogService.ShowMessageBox(
+        var result = await DialogService.ShowMessageBoxAsync(
             "Bekräfta borttagning",
             $"Är du säker på att du vill ta bort regeln för '{rule.Pattern}'?",
             yesText: "Ta bort", cancelText: "Avbryt");
@@ -437,7 +437,7 @@
             return;
         }
 
-        var result = await DialogService.ShowMessageBox(
+        var result = await DialogService.ShowMessageBoxAsync(
             "Återställ systemregel",
             $"Är du säker på att du vill återställa systemregeln? Din användarändring kommer att tas bort.",
             yesText: "Återställ", cancelText: "Avbryt");

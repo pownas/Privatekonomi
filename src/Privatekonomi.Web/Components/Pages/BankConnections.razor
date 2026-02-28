@@ -1,4 +1,4 @@
-@page "/settings/bank-connections"
+﻿@page "/settings/bank-connections"
 @page "/bank-connections"
 @rendermode InteractiveServer
 @inject ISnackbar Snackbar
@@ -321,7 +321,7 @@ else
 
     private async Task DeleteConnection(BankConnection connection)
     {
-        var result = await DialogService.ShowMessageBox(
+        var result = await DialogService.ShowMessageBoxAsync(
             "Bekräfta borttagning",
             $"Är du säker på att du vill ta bort kopplingen till {connection.BankSource?.Name}? Denna åtgärd kan inte ångras.",
             yesText: "Ta bort", 

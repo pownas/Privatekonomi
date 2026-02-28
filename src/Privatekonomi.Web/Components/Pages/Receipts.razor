@@ -504,7 +504,7 @@ else
 
     private async Task DeleteReceipt(Receipt receipt)
     {
-        bool? confirm = await DialogService.ShowMessageBox(
+        bool? confirm = await DialogService.ShowMessageBoxAsync(
             "Bekräfta borttagning",
             $"Är du säker på att du vill ta bort kvittot från '{receipt.Merchant}'?",
             yesText: "Ta bort", cancelText: "Avbryt");
@@ -681,7 +681,7 @@ else
 
     private async Task UnlinkReceiptFromTransaction(Receipt receipt)
     {
-        bool? confirm = await DialogService.ShowMessageBox(
+        bool? confirm = await DialogService.ShowMessageBoxAsync(
             "Bekräfta avlänkning",
             $"Vill du avlänka kvittot från transaktionen '{receipt.Transaction?.Description}'?",
             yesText: "Avlänka", cancelText: "Avbryt");
