@@ -122,7 +122,7 @@ public class BudgetService : IBudgetService
             .Include(b => b.BudgetCategories)
             .ThenInclude(bc => bc.Category)
             .Where(b => b.StartDate <= now && b.EndDate >= now)
-            .ToListAsync();
+            .ToListAsync() ?? new List<Budget>();
     }
 
     public async Task<Dictionary<int, decimal>> GetActualAmountsByCategoryAsync(int budgetId)
