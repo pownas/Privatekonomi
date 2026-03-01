@@ -1,4 +1,4 @@
-#!/bin/bash
+﻿#!/bin/bash
 
 # ============================================================================
 # Privatekonomi Raspberry Pi Installation Script
@@ -35,7 +35,7 @@ NC='\033[0m' # No Color
 
 # Configuration
 REPO_URL="https://github.com/pownas/Privatekonomi.git"
-INSTALL_DIR="$HOME/Privatekonomi"
+INSTALL_DIR="$HOME/privatekonomi"
 DATA_DIR="$HOME/privatekonomi-data"
 BACKUP_DIR="$HOME/privatekonomi-backups"
 SERVICE_NAME="privatekonomi"
@@ -195,7 +195,7 @@ install_dotnet_10() {
 
 # Setup project
 setup_project() {
-    log_section "Konfigurerar Privatekonomi-projekt"
+    log_section "Konfigurerar privatekonomi-projekt"
     
     if [ -d "$INSTALL_DIR" ]; then
         log_info "Katalogen $INSTALL_DIR finns redan"
@@ -211,7 +211,7 @@ setup_project() {
             cd "$INSTALL_DIR"
         fi
     else
-        log_info "Klonar Privatekonomi repository..."
+        log_info "Klonar privatekonomi repository..."
         git clone "$REPO_URL" "$INSTALL_DIR"
         cd "$INSTALL_DIR"
     fi
@@ -259,7 +259,7 @@ publish_application() {
     cd "$INSTALL_DIR"
     
     # Publish Web
-    log_info "Publicerar Privatekonomi.Web..."
+    log_info "Publicerar privatekonomi.Web..."
     if ! dotnet publish src/Privatekonomi.Web/Privatekonomi.Web.csproj \
         --runtime linux-arm64 \
         --self-contained \
@@ -1147,7 +1147,7 @@ create_systemd_service() {
             return 0
         fi
     else
-        read -p "Vill du skapa systemd-tjänster för att starta Privatekonomi automatiskt? (y/n): " -n 1 -r
+        read -p "Vill du skapa systemd-tjänster för att starta 'privatekonomi' automatiskt? (y/n): " -n 1 -r
         echo
         if [[ ! $REPLY =~ ^[Yy]$ ]]; then
             return 0
