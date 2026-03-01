@@ -1,12 +1,12 @@
 # ============================================================================
 # Privatekonomi Local Application Startup Script (PowerShell)
 # ============================================================================
-# 
+#
 # This script starts the Privatekonomi application using .NET Aspire Dashboard.
-# 
+#
 # Prerequisites:
 # - Run .\local-app-install.ps1 first to set up the development environment
-# 
+#
 # What this script does:
 # 1. Check prerequisites are installed
 # 2. Navigate to AppHost directory
@@ -96,14 +96,14 @@ function Test-Prerequisites {
         throw "Missing .NET SDK"
     }
     
-    # Check if .NET 9 is available
+    # Check if .NET 10 is available
     $sdks = dotnet --list-sdks | Out-String
     if (-not ($sdks -match "9\.")) {
-        Write-LogError ".NET 9 SDK is not installed"
-        Write-LogWarning "Please run '.\local-app-install.ps1' first to install .NET 9"
-        throw "Missing .NET 9 SDK"
+        Write-LogError ".NET 10 SDK is not installed"
+        Write-LogWarning "Please run '.\local-app-install.ps1' first to install .NET 10"
+        throw "Missing .NET 10 SDK"
     }
-    Write-LogInfo "✅ .NET 9 SDK is available"
+    Write-LogInfo "✅ .NET 10 SDK is available"
     
     # Check if solution exists
     if (-not (Test-Path "Privatekonomi.sln")) {
@@ -176,7 +176,7 @@ function Start-Application {
         Write-Host "  • " -NoNewline
         Write-Host "Aspire Dashboard:" -NoNewline -ForegroundColor Green
         Write-Host " View logs, traces, and metrics"
-        Write-Host "  • " -NoNewline  
+        Write-Host "  • " -NoNewline
         Write-Host "Web Application:" -NoNewline -ForegroundColor Green
         Write-Host " Blazor Server UI"
         Write-Host "  • " -NoNewline
@@ -251,7 +251,7 @@ function Show-Help {
     Write-Host " first to set up the development environment"
     Write-Host ""
     Write-Host "What this script does:" -ForegroundColor Yellow
-    Write-Host "  1. Checks that prerequisites are installed (.NET 9)"
+    Write-Host "  1. Checks that prerequisites are installed (.NET 10)"
     Write-Host "  2. Verifies the project builds successfully"
     Write-Host "  3. Starts the Aspire Dashboard with all services"
     Write-Host "     - Default: dotnet watch run (hot reload)"
@@ -292,7 +292,7 @@ function Main {
         Write-Host "Common solutions:" -ForegroundColor Yellow
         Write-Host "  • Run '.\local-app-install.ps1' first"
         Write-Host "  • Check that you're in the project root directory"
-    Write-Host "  • Ensure .NET 9 is installed"
+    Write-Host "  • Ensure .NET 10 is installed"
         Write-Host "  • Try running PowerShell as Administrator"
         Write-Host "  • Check for any build errors in the output above"
         exit 1

@@ -3,7 +3,7 @@
 # ============================================================================
 # Privatekonomi Raspberry Pi Installation Script
 # ============================================================================
-# 
+#
 # This script automates the complete setup of the Privatekonomi application
 # on Raspberry Pi OS.
 #
@@ -11,7 +11,7 @@
 # 1. Check system requirements and dependencies
 # 2. Install/verify .NET 10 SDK
 # 3. Configure PATH for .NET tools
-# 4. Clone or update Privatekonomi repository 
+# 4. Clone or update Privatekonomi repository
 # 5. Install Entity Framework CLI tools
 # 6. Configure HTTPS development certificates
 # 7. Build and prepare the application

@@ -1,7 +1,7 @@
 # ============================================================================
 # Privatekonomi Local Environment Setup Script (PowerShell)
 # ============================================================================
-# 
+#
 # This script automates the complete setup of the development environment
 # for the Privatekonomi project on Windows/PowerShell.
 #

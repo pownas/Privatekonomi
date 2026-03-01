@@ -316,7 +316,7 @@ cd Privatekonomi
 .\app-start.ps1
 ```
 
-Skriptet säkerställer att .NET 9 finns installerat och startar Aspire Dashboard som visar alla tjänster, logs, traces och metrics.
+Skriptet säkerställer att .NET 10 finns installerat och startar Aspire Dashboard som visar alla tjänster, logs, traces och metrics.
 
 #### Alternativ 1: Kör med .NET Aspire Orchestrator (Manuellt)
 
@@ -351,7 +351,7 @@ cd Privatekonomi
 3. Installera .Net SDK
 ```bash
 # install .Net
-bash <(curl -sSL https://dot.net/v1/dotnet-install.sh) --channel 9.0 --install-dir "$HOME/.dotnet"
+bash <(curl -sSL https://dot.net/v1/dotnet-install.sh) --channel 10.0 --install-dir "$HOME/.dotnet"
 
 # add to current session (and add these lines to ~/.bashrc or ~/.profile to persist)
 export DOTNET_ROOT="$HOME/.dotnet"
@@ -536,7 +536,7 @@ Hantering av utgifts- och inkomstkategorier med färgkodning för enkel överbli
 - **Backend**: ASP.NET Core Web API
 - **Databas**: Entity Framework Core med flera providers (InMemory, SQLite, SQL Server, JsonFile)
 - **UI-komponenter**: MudBlazor
-- **Språk**: C# (.NET 9)
+- **Språk**: C# (.NET 10)
 - **Orchestration**: .NET Aspire
 
 ## 📁 Projektstruktur

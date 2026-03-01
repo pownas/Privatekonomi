@@ -47,7 +47,7 @@ För att lägga till en ny tjänst:
 ## Krav
 
 - Docker Desktop måste köra (krävs för Aspire DCP)
-- .NET 9 SDK
+- .NET 10 SDK
 - Aspire workload installerat (`dotnet workload install aspire`)
 
 ## Mer information
