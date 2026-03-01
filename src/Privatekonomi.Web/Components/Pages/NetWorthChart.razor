@@ -341,7 +341,12 @@ else
     private string[] _xAxisLabels = Array.Empty<string>();
     private ChartOptions _chartOptions = new ChartOptions
     {
-        ChartPalette = GetChartPalette()
+        ChartPalette = GetChartPalette(),
+        ShowLegend = true,
+        ShowToolTips = true,
+        TooltipSubtitleFormat = "Period: {0}",
+        TooltipTitleFormat = "{0}: {1:C0}",
+        // MaxNumYAxisTicks = 8 // Limit ticks for better readability
     };
 
     private static string[] GetChartPalette()

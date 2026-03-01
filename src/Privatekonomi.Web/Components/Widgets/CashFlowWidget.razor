@@ -42,6 +42,10 @@
     private ChartOptions _chartOptions = new ChartOptions
     {
         ChartPalette = new[] { "#4caf50", "#f44336", "#2196f3" },
+        TooltipSubtitleFormat = "MMM yyyy",
+        TooltipTitleFormat = "{0}: {1:C0}",
+        ShowToolTips = true,
+        ShowLegend = true,
     };
 
     protected override async Task OnInitializedAsync()
