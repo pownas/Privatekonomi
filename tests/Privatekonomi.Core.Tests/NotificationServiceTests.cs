@@ -223,7 +223,7 @@ public class NotificationServiceTests
             UserId = _testUserId,
             NotificationType = SystemNotificationType.BudgetExceeded,
             IsEnabled = false,
-            EnabledChannels = NotificationChannelFlags.InApp
+            EnabledChannels = NotificationChannels.InApp
         };
 
         await _preferenceService.SavePreferenceAsync(preference);
@@ -250,7 +250,7 @@ public class NotificationServiceTests
             UserId = _testUserId,
             NotificationType = SystemNotificationType.BudgetExceeded,
             IsEnabled = false,
-            EnabledChannels = NotificationChannelFlags.InApp
+            EnabledChannels = NotificationChannels.InApp
         };
 
         await _preferenceService.SavePreferenceAsync(preference);

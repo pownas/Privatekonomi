@@ -51,7 +51,7 @@ public class AvanzaApiService : BankApiServiceBase
         };
 
         var content = new StringContent(JsonSerializer.Serialize(loginData), Encoding.UTF8, "application/json");
-        var response = await _httpClient.PostAsync($"{BaseUrl}{ApiVersion}/authentication/sessions/usercredentials", content);
+        var response = await HttpClient.PostAsync($"{BaseUrl}{ApiVersion}/authentication/sessions/usercredentials", content);
         
         if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
         {
@@ -92,7 +92,7 @@ public class AvanzaApiService : BankApiServiceBase
         var request = new HttpRequestMessage(HttpMethod.Get, $"{BaseUrl}{ApiVersion}/customer/all");
         AddAuthHeaders(request, connection);
 
-        var response = await _httpClient.SendAsync(request);
+        var response = await HttpClient.SendAsync(request);
         
         if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
         {
@@ -112,7 +112,7 @@ public class AvanzaApiService : BankApiServiceBase
         var request = new HttpRequestMessage(HttpMethod.Get, $"{BaseUrl}{ApiVersion}/account-overview/overview/accountlist");
         AddAuthHeaders(request, connection);
 
-        var response = await _httpClient.SendAsync(request);
+        var response = await HttpClient.SendAsync(request);
         response.EnsureSuccessStatusCode();
 
         var jsonResponse = await response.Content.ReadAsStringAsync();
@@ -147,7 +147,7 @@ public class AvanzaApiService : BankApiServiceBase
         var request = new HttpRequestMessage(HttpMethod.Get, url);
         AddAuthHeaders(request, connection);
 
-        var response = await _httpClient.SendAsync(request);
+        var response = await HttpClient.SendAsync(request);
         response.EnsureSuccessStatusCode();
 
         var jsonResponse = await response.Content.ReadAsStringAsync();
@@ -174,8 +174,8 @@ public class AvanzaApiService : BankApiServiceBase
         if (connection.TokenExpiresAt.HasValue && connection.TokenExpiresAt.Value <= DateTime.UtcNow.AddMinutes(5))
         {
             await RefreshTokenAsync(connection);
-            _context.BankConnections.Update(connection);
-            await _context.SaveChangesAsync();
+            Context.BankConnections.Update(connection);
+            await Context.SaveChangesAsync();
         }
     }
 

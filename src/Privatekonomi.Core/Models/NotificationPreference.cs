@@ -19,7 +19,7 @@ public class NotificationPreference
     /// <summary>
     /// Enabled channels for this notification type (flags)
     /// </summary>
-    public NotificationChannelFlags EnabledChannels { get; set; } = NotificationChannelFlags.InApp;
+    public NotificationChannels EnabledChannels { get; set; } = NotificationChannels.InApp;
     
     /// <summary>
     /// Priority threshold - only send if notification priority meets or exceeds this
@@ -49,7 +49,7 @@ public class NotificationPreference
 /// Notification channel flags for multi-selection
 /// </summary>
 [Flags]
-public enum NotificationChannelFlags
+public enum NotificationChannels
 {
     None = 0,
     InApp = 1 << 0,      // 1

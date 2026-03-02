@@ -25,19 +25,19 @@ public class OfxParser : ICsvParser
 
     public string BankName => "OFX (Allmän)";
 
-    public bool CanParse(string content)
+    public bool CanParse(string csvContent)
     {
         // OFX files typically start with OFXHEADER or <?OFX or <OFX>
-        return content.Contains("OFXHEADER:") || 
-               content.Contains("<OFX>") || 
-               content.Contains("<?OFX");
+        return csvContent.Contains("OFXHEADER:") || 
+               csvContent.Contains("<OFX>") || 
+               csvContent.Contains("<?OFX");
     }
 
-    public async Task<List<Transaction>> ParseAsync(Stream stream)
+    public async Task<List<Transaction>> ParseAsync(Stream csvStream)
     {
         var transactions = new List<Transaction>();
         
-        using var reader = new StreamReader(stream, Encoding.UTF8);
+        using var reader = new StreamReader(csvStream, Encoding.UTF8);
         var content = await reader.ReadToEndAsync();
         
         // Convert SGML-style OFX to XML-style OFX
@@ -163,7 +163,7 @@ public class OfxParser : ICsvParser
             if (string.IsNullOrEmpty(trimmed)) continue;
             
             // Check if it's a closing tag
-            if (trimmed.StartsWith("</"))
+            if (trimmed.StartsWith("</", StringComparison.Ordinal))
             {
                 result.AppendLine(trimmed);
                 if (tagStack.Count > 0)

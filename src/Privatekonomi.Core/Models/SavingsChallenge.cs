@@ -23,7 +23,7 @@ public class SavingsChallenge
     public ChallengeCategory Category { get; set; } = ChallengeCategory.Individual;
     public decimal? EstimatedSavingsMin { get; set; }
     public decimal? EstimatedSavingsMax { get; set; }
-    public bool IsTemplate { get; set; } = false; // True for predefined challenge templates
+    public bool IsTemplate { get; set; } // True for predefined challenge templates
     
     // User ownership
     public string? UserId { get; set; }

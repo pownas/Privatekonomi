@@ -55,7 +55,7 @@ public class SwedbankApiService : BankApiServiceBase
         };
 
         var content = new FormUrlEncodedContent(requestData);
-        var response = await _httpClient.PostAsync($"{AuthUrl}/oauth2/token", content);
+        var response = await HttpClient.PostAsync($"{AuthUrl}/oauth2/token", content);
         response.EnsureSuccessStatusCode();
 
         var jsonResponse = await response.Content.ReadAsStringAsync();
@@ -89,7 +89,7 @@ public class SwedbankApiService : BankApiServiceBase
         };
 
         var content = new FormUrlEncodedContent(requestData);
-        var response = await _httpClient.PostAsync($"{AuthUrl}/oauth2/token", content);
+        var response = await HttpClient.PostAsync($"{AuthUrl}/oauth2/token", content);
         response.EnsureSuccessStatusCode();
 
         var jsonResponse = await response.Content.ReadAsStringAsync();
@@ -114,7 +114,7 @@ public class SwedbankApiService : BankApiServiceBase
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", connection.AccessToken);
         request.Headers.Add("X-Request-ID", Guid.NewGuid().ToString());
 
-        var response = await _httpClient.SendAsync(request);
+        var response = await HttpClient.SendAsync(request);
         response.EnsureSuccessStatusCode();
 
         var jsonResponse = await response.Content.ReadAsStringAsync();
@@ -150,7 +150,7 @@ public class SwedbankApiService : BankApiServiceBase
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", connection.AccessToken);
         request.Headers.Add("X-Request-ID", Guid.NewGuid().ToString());
 
-        var response = await _httpClient.SendAsync(request);
+        var response = await HttpClient.SendAsync(request);
         response.EnsureSuccessStatusCode();
 
         var jsonResponse = await response.Content.ReadAsStringAsync();
@@ -180,8 +180,8 @@ public class SwedbankApiService : BankApiServiceBase
         if (connection.TokenExpiresAt.HasValue && connection.TokenExpiresAt.Value <= DateTime.UtcNow.AddMinutes(5))
         {
             await RefreshTokenAsync(connection);
-            _context.BankConnections.Update(connection);
-            await _context.SaveChangesAsync();
+            Context.BankConnections.Update(connection);
+            await Context.SaveChangesAsync();
         }
     }
 

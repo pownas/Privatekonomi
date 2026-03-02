@@ -56,7 +56,7 @@ public class IcaBankenApiService : BankApiServiceBase
         };
 
         var content = new FormUrlEncodedContent(requestData);
-        var response = await _httpClient.PostAsync($"{AuthUrl}/oauth2/token", content);
+        var response = await HttpClient.PostAsync($"{AuthUrl}/oauth2/token", content);
         response.EnsureSuccessStatusCode();
 
         var jsonResponse = await response.Content.ReadAsStringAsync();
@@ -90,7 +90,7 @@ public class IcaBankenApiService : BankApiServiceBase
         };
 
         var content = new FormUrlEncodedContent(requestData);
-        var response = await _httpClient.PostAsync($"{AuthUrl}/oauth2/token", content);
+        var response = await HttpClient.PostAsync($"{AuthUrl}/oauth2/token", content);
         response.EnsureSuccessStatusCode();
 
         var jsonResponse = await response.Content.ReadAsStringAsync();
@@ -116,7 +116,7 @@ public class IcaBankenApiService : BankApiServiceBase
         request.Headers.Add("X-Request-ID", Guid.NewGuid().ToString());
         request.Headers.Add("PSU-IP-Address", "127.0.0.1"); // Required by PSD2
 
-        var response = await _httpClient.SendAsync(request);
+        var response = await HttpClient.SendAsync(request);
         response.EnsureSuccessStatusCode();
 
         var jsonResponse = await response.Content.ReadAsStringAsync();
@@ -155,7 +155,7 @@ public class IcaBankenApiService : BankApiServiceBase
         request.Headers.Add("X-Request-ID", Guid.NewGuid().ToString());
         request.Headers.Add("PSU-IP-Address", "127.0.0.1");
 
-        var response = await _httpClient.SendAsync(request);
+        var response = await HttpClient.SendAsync(request);
         response.EnsureSuccessStatusCode();
 
         var jsonResponse = await response.Content.ReadAsStringAsync();
@@ -185,8 +185,8 @@ public class IcaBankenApiService : BankApiServiceBase
         if (connection.TokenExpiresAt.HasValue && connection.TokenExpiresAt.Value <= DateTime.UtcNow.AddMinutes(5))
         {
             await RefreshTokenAsync(connection);
-            _context.BankConnections.Update(connection);
-            await _context.SaveChangesAsync();
+            Context.BankConnections.Update(connection);
+            await Context.SaveChangesAsync();
         }
     }
 

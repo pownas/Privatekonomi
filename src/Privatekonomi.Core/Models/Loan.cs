@@ -94,7 +94,7 @@ public class Loan : ITemporalEntity
     public decimal? ExtraMonthlyPayment { get; set; } // Extra amortering per månad
     
     // Priority for debt payoff strategies
-    public int Priority { get; set; } = 0; // 0 = ingen prioritet, högre nummer = högre prioritet
+    public int Priority { get; set; } // 0 = ingen prioritet, högre nummer = högre prioritet
     
     // User ownership
     public string? UserId { get; set; }
