@@ -38,25 +38,12 @@
         if (firstRender && !_hasRendered)
         {
             _hasRendered = true;
-            objRef = DotNetObjectReference.Create(this);
             
             try
             {
                 // Register callbacks with JavaScript
-                await JSRuntime.InvokeVoidAsync("eval", @"
-                    window.blazorPwaCallbacks = window.blazorPwaCallbacks || {};
-                    window.blazorPwaCallbacks.onInstallAvailable = () => {
-                        if (window.blazorPwaCallbacks.installPromptRef) {
-                            window.blazorPwaCallbacks.installPromptRef.invokeMethodAsync('OnInstallAvailable');
-                        }
-                    };
-                    window.blazorPwaCallbacks.onInstalled = () => {
-                        if (window.blazorPwaCallbacks.installPromptRef) {
-                            window.blazorPwaCallbacks.installPromptRef.invokeMethodAsync('OnInstalled');
-                        }
-                    };
-                    window.blazorPwaCallbacks.installPromptRef = arguments[0];
-                ", objRef);
+                objRef = DotNetObjectReference.Create(this);
+                await JSRuntime.InvokeVoidAsync("pwaManager.registerInstallPrompt", objRef);
                 
                 // Check if running as PWA
                 try
@@ -144,13 +131,7 @@
         {
             try
             {
-                await JSRuntime.InvokeVoidAsync("eval", @"
-                    if (window.blazorPwaCallbacks) {
-                        delete window.blazorPwaCallbacks.onInstallAvailable;
-                        delete window.blazorPwaCallbacks.onInstalled;
-                        delete window.blazorPwaCallbacks.installPromptRef;
-                    }
-                ");
+                await JSRuntime.InvokeVoidAsync("pwaManager.unregisterInstallPrompt");
             }
             catch
             {
