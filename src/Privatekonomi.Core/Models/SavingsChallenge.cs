@@ -12,8 +12,8 @@ public class SavingsChallenge
     public DateTime StartDate { get; set; }
     public DateTime? EndDate { get; set; }
     public ChallengeStatus Status { get; set; } = ChallengeStatus.Active;
-    public int CurrentStreak { get; set; } = 0;
-    public int BestStreak { get; set; } = 0;
+    public int CurrentStreak { get; set; }
+    public int BestStreak { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
     

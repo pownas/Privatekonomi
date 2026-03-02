@@ -34,7 +34,7 @@ public class NotificationPreference
     /// <summary>
     /// Enable digest mode - group notifications instead of sending immediately
     /// </summary>
-    public bool DigestMode { get; set; } = false;
+    public bool DigestMode { get; set; }
     
     /// <summary>
     /// How often to send digest (in hours)

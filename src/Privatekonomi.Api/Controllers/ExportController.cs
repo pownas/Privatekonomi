@@ -193,7 +193,7 @@ public class ExportController : ControllerBase
         /// <summary>
         /// If true, merges with existing data; if false, replaces all data
         /// </summary>
-        public bool MergeMode { get; set; } = false;
+        public bool MergeMode { get; set; }
     }
 
     /// <summary>
