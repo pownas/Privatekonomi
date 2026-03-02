@@ -13,7 +13,7 @@ namespace Privatekonomi.Core.Tests;
 public class NotificationServiceTests
 {
     private readonly PrivatekonomyContext _context;
-    private readonly INotificationPreferenceService _preferenceService;
+    private readonly NotificationPreferenceService _preferenceService;
     private readonly NotificationService _notificationService;
     private readonly string _testUserId = "test-user-id";
 

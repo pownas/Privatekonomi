@@ -357,7 +357,7 @@ public class TransactionMLService : ITransactionMLService
         };
     }
 
-    private IEstimator<ITransformer> BuildTrainingPipeline()
+    private Microsoft.ML.Data.EstimatorChain<Microsoft.ML.Transforms.KeyToValueMappingTransformer> BuildTrainingPipeline()
     {
         // Convert boolean features to float
         var pipeline = _mlContext.Transforms.Conversion.ConvertType(
