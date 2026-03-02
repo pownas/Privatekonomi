@@ -1477,7 +1477,7 @@ verify_installation() {
     fi
     
     # Check project
-    if [ -f "$INSTALL_DIR/Privatekonomi.sln" ]; then
+    if [ -f "$INSTALL_DIR/Privatekonomi.slnx" ]; then
         log_success "Privatekonomi-projekt: Installerat i $INSTALL_DIR"
     else
         log_error "Privatekonomi-projekt inte funnet"

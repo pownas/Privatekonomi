@@ -1,4 +1,4 @@
-# Implementation Summary: .NET Aspire Orchestrator
+﻿# Implementation Summary: .NET Aspire Orchestrator
 
 ## Overview
 This document summarizes the implementation of .NET Aspire Orchestrator for the Privatekonomi project.
@@ -175,7 +175,7 @@ The implementation is complete and tested. To use Aspire:
 
 ## Files Changed
 
-- ✅ Privatekonomi.sln
+- ✅ Privatekonomi.slnx
 - ✅ README.md
 - ✅ src/Privatekonomi.Api/Privatekonomi.Api.csproj
 - ✅ src/Privatekonomi.Api/Program.cs

@@ -1,4 +1,4 @@
-#!/bin/bash
+﻿#!/bin/bash
 
 # ============================================================================
 # Privatekonomi Raspberry Pi Update Script
@@ -73,7 +73,7 @@ check_installation() {
         exit 1
     fi
     
-    if [ ! -f "$INSTALL_DIR/Privatekonomi.sln" ]; then
+    if [ ! -f "$INSTALL_DIR/Privatekonomi.slnx" ]; then
         log_error "Ogiltig installation i $INSTALL_DIR"
         exit 1
     fi

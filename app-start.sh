@@ -1,4 +1,4 @@
-#!/bin/bash
+﻿#!/bin/bash
 
 # ============================================================================
 # Privatekonomi Application Startup Script
@@ -122,8 +122,8 @@ check_prerequisites() {
     fi
     
     # Check if solution exists and can be built
-    if [[ ! -f "Privatekonomi.sln" ]]; then
-        log_error "Privatekonomi.sln not found"
+    if [[ ! -f "Privatekonomi.slnx" ]]; then
+        log_error "Privatekonomi.slnx not found"
         log_warning "Make sure you're in the project root directory"
         exit 1
     fi
@@ -145,12 +145,12 @@ quick_build_check() {
     log_section "Quick Build Check"
     
     log_info "Performing quick build verification..."
-    if dotnet build Privatekonomi.sln --verbosity minimal --no-restore; then
+    if dotnet build Privatekonomi.slnx --verbosity minimal --no-restore; then
         log_success "Project builds successfully"
     else
         log_warning "Build issues detected - attempting to restore and rebuild..."
-        dotnet restore Privatekonomi.sln
-        dotnet build Privatekonomi.sln
+        dotnet restore Privatekonomi.slnx
+        dotnet build Privatekonomi.slnx
         log_success "Project restored and built successfully"
     fi
 }

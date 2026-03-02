@@ -1,4 +1,4 @@
-#!/bin/bash
+﻿#!/bin/bash
 
 # ============================================================================
 # Privatekonomi Codespace Environment Setup Script
@@ -98,13 +98,13 @@ setup_project() {
     log_section "Setting up Project Dependencies"
     
     log_info "Restoring project dependencies..."
-    dotnet restore Privatekonomi.sln
+    dotnet restore Privatekonomi.slnx
     
     log_info "Cleaning previous build artifacts..."
-    dotnet clean Privatekonomi.sln
+    dotnet clean Privatekonomi.slnx
     
     log_info "Building solution..."
-    dotnet build Privatekonomi.sln
+    dotnet build Privatekonomi.slnx
     
     log_success "Project setup completed"
 }
@@ -202,7 +202,7 @@ verify_installation() {
     fi
     
     log_info "Checking project build status..."
-    dotnet build Privatekonomi.sln --verbosity quiet
+    dotnet build Privatekonomi.slnx --verbosity quiet
     
     log_success "All verifications completed successfully!"
 }
@@ -224,7 +224,7 @@ show_usage_info() {
     echo -e "    dotnet ef database update"
     echo -e ""
     echo -e "  ${YELLOW}Build and Test:${NC}"
-    echo -e "    dotnet build Privatekonomi.sln"
+    echo -e "    dotnet build Privatekonomi.slnx"
     echo -e "    dotnet test"
     echo -e ""
     echo -e "${BLUE}Project Structure:${NC}"

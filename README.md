@@ -1,4 +1,4 @@
-# Privatekonomi
+﻿# Privatekonomi
 
 En privatekonomi-applikation byggd med .NET 10 LTS, Blazor Server och MudBlazor för att hjälpa användare att få koll och kontroll över sin ekonomi.
 
@@ -558,7 +558,7 @@ Privatekonomi/
 │       ├── Data/                     # DbContext och dataåtkomst
 │       ├── Models/                   # Datamodeller
 │       └── Services/                 # Business logic
-└── Privatekonomi.sln
+└── Privatekonomi.slnx
 ```
 
 ## 🔧 Konfiguration

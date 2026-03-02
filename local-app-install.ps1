@@ -1,4 +1,4 @@
-# ============================================================================
+﻿# ============================================================================
 # Privatekonomi Local Environment Setup Script (PowerShell)
 # ============================================================================
 #
@@ -143,21 +143,21 @@ function Install-DotNet10 {
 function Setup-Project {
     Write-LogSection "Setting up Project Dependencies"
     
-    if (-not (Test-Path "Privatekonomi.sln")) {
-        Write-LogError "Privatekonomi.sln not found in current directory"
+    if (-not (Test-Path "Privatekonomi.slnx")) {
+        Write-LogError "Privatekonomi.slnx not found in current directory"
         Write-LogError "Please run this script from the project root directory"
         throw "Solution file not found"
     }
     
     Write-LogInfo "Restoring project dependencies..."
     try {
-        dotnet restore Privatekonomi.sln
+        dotnet restore Privatekonomi.slnx
         
         Write-LogInfo "Cleaning previous build artifacts..."
-        dotnet clean Privatekonomi.sln
+        dotnet clean Privatekonomi.slnx
         
         Write-LogInfo "Building solution..."
-        dotnet build Privatekonomi.sln
+        dotnet build Privatekonomi.slnx
         
         Write-LogSuccess "Project setup completed"
     }
@@ -339,7 +339,7 @@ function Test-Installation {
         }
         
         Write-LogInfo "Checking project build status..."
-        dotnet build Privatekonomi.sln --verbosity quiet
+        dotnet build Privatekonomi.slnx --verbosity quiet
         
         Write-LogSuccess "All verifications completed successfully!"
     }
@@ -367,7 +367,7 @@ function Show-UsageInfo {
     Write-Host "    dotnet ef database update"
     Write-Host ""
     Write-Host "  Build and Test:" -ForegroundColor Yellow
-    Write-Host "    dotnet build Privatekonomi.sln"
+    Write-Host "    dotnet build Privatekonomi.slnx"
     Write-Host "    dotnet test"
     Write-Host ""
     Write-Host "Project Structure:" -ForegroundColor Blue

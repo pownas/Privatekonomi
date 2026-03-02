@@ -1,4 +1,4 @@
-# ============================================================================
+﻿# ============================================================================
 # Privatekonomi Local Application Startup Script (PowerShell)
 # ============================================================================
 #
@@ -106,8 +106,8 @@ function Test-Prerequisites {
     Write-LogInfo "✅ .NET 10 SDK is available"
     
     # Check if solution exists
-    if (-not (Test-Path "Privatekonomi.sln")) {
-        Write-LogError "Privatekonomi.sln not found"
+    if (-not (Test-Path "Privatekonomi.slnx")) {
+        Write-LogError "Privatekonomi.slnx not found"
         Write-LogWarning "Make sure you're in the project root directory"
         throw "Solution file not found"
     }
@@ -129,22 +129,22 @@ function Test-QuickBuild {
     
     Write-LogInfo "Performing quick build verification..."
     try {
-        $buildResult = dotnet build Privatekonomi.sln --verbosity minimal --no-restore 2>&1
+        $buildResult = dotnet build Privatekonomi.slnx --verbosity minimal --no-restore 2>&1
         if ($LASTEXITCODE -eq 0) {
             Write-LogSuccess "Project builds successfully"
         }
         else {
             Write-LogWarning "Build issues detected - attempting to restore and rebuild..."
-            dotnet restore Privatekonomi.sln
-            dotnet build Privatekonomi.sln
+            dotnet restore Privatekonomi.slnx
+            dotnet build Privatekonomi.slnx
             Write-LogSuccess "Project restored and built successfully"
         }
     }
     catch {
         Write-LogWarning "Build issues detected - attempting to restore and rebuild..."
         try {
-            dotnet restore Privatekonomi.sln
-            dotnet build Privatekonomi.sln
+            dotnet restore Privatekonomi.slnx
+            dotnet build Privatekonomi.slnx
             Write-LogSuccess "Project restored and built successfully"
         }
         catch {
