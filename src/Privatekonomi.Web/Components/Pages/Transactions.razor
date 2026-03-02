@@ -12,7 +12,6 @@
 @inject ISnackbar Snackbar
 @inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime
-@inject DashboardPreferencesService PreferencesService
 @implements IDisposable
 
 <PageTitle>Transaktioner - Privatekonomi</PageTitle>
@@ -154,6 +153,34 @@
         </MudExpansionPanel>
     </MudExpansionPanels>
 
+    <!-- Month navigation -->
+    <MudPaper Class="pa-3 mb-4" Elevation="1">
+        <div class="d-flex align-center justify-space-between flex-wrap gap-2">
+            <MudIconButton Icon="@Icons.Material.Filled.ChevronLeft"
+                           Color="Color.Primary"
+                           Variant="Variant.Outlined"
+                           OnClick="NavigateToPreviousMonth"
+                           aria-label="Föregående månad" />
+            <div class="d-flex align-center gap-2">
+                <MudText Typo="Typo.h6" Class="text-capitalize">
+                    @_currentMonth.ToString("MMMM yyyy", new System.Globalization.CultureInfo("sv-SE"))
+                </MudText>
+                @if (_currentMonth.Year != DateTime.Now.Year || _currentMonth.Month != DateTime.Now.Month)
+                {
+                    <MudButton Variant="Variant.Text" Color="Color.Secondary" Size="Size.Small" OnClick="NavigateToCurrentMonth">
+                        Idag
+                    </MudButton>
+                }
+            </div>
+            <MudIconButton Icon="@Icons.Material.Filled.ChevronRight"
+                           Color="Color.Primary"
+                           Variant="Variant.Outlined"
+                           OnClick="NavigateToNextMonth"
+                           Disabled="@(_currentMonth.Year == DateTime.Now.Year && _currentMonth.Month == DateTime.Now.Month)"
+                           aria-label="Nästa månad" />
+        </div>
+    </MudPaper>
+
     @if (_loading)
     {
         <div class="d-flex flex-column align-center pa-6">
@@ -242,8 +269,8 @@
                      Hover="true" 
                      Striped="true"
                      Dense="@_dense"
-                     RowsPerPage="@_pageSize"
-                     RowsPerPageChanged="@OnPageSizeChanged"
+                     FixedHeader="true"
+                     Height="600px"
                      SortMode="SortMode.Multiple">
             <ToolBarContent>
                 <MudText Typo="Typo.subtitle1" Class="mr-4">@_filteredTransactions.Count() transaktioner</MudText>
@@ -360,20 +387,16 @@
                     </CellTemplate>
                 </TemplateColumn>
             </Columns>
-            <PagerContent>
-                <MudDataGridPager T="Transaction" PageSizeOptions="@_pageSizeOptions" />
-            </PagerContent>
         </MudDataGrid>
     }
 </MudPaper>
 
 @code {
     private const int MaxNotePreviewLength = 50;
-    private static readonly int[] _pageSizeOptions = [20, 50, 100, 200];
     
     private bool _loading = true;
     private bool _dense = false;
-    private int _pageSize = 50;
+    private DateTime _currentMonth = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
     private IEnumerable<Transaction> _transactions = new List<Transaction>();
     private IEnumerable<Transaction> _filteredTransactions = new List<Transaction>();
     private HashSet<Transaction> _selectedTransactions = new();
@@ -404,19 +427,6 @@
             _dotNetHelper = DotNetObjectReference.Create(this);
             await JSRuntime.InvokeVoidAsync("mobileGestureHandler.init", _dotNetHelper);
             await AttachGestureListeners();
-            
-            // Load page size preference from localStorage
-            try
-            {
-                var json = await JSRuntime.InvokeAsync<string>("localStorage.getItem", DashboardPreferencesService.StorageKey);
-                PreferencesService.LoadPreferences(json);
-                _pageSize = PreferencesService.Preferences.TransactionPageSize;
-                StateHasChanged();
-            }
-            catch
-            {
-                // Use default page size if loading fails
-            }
         }
     }
 
@@ -476,7 +486,9 @@
             _households = households.ToList();
             var categories = await CategoryService.GetAllCategoriesAsync();
             _categories = categories.ToList();
-            _transactions = await TransactionService.GetAllTransactionsAsync();
+            var monthStart = _currentMonth;
+            var monthEnd = _currentMonth.AddMonths(1).AddTicks(-1);
+            _transactions = await TransactionService.GetTransactionsByDateRangeAsync(monthStart, monthEnd);
             ApplyFilter();
         }
         catch (Exception ex)
@@ -582,21 +594,25 @@
         ApplyFilter();
     }
 
-    private async Task OnPageSizeChanged(int newPageSize)
+    private async Task NavigateToPreviousMonth()
     {
-        _pageSize = newPageSize;
-        try
-        {
-            var prefs = PreferencesService.Preferences;
-            prefs.TransactionPageSize = newPageSize;
-            PreferencesService.UpdatePreferences(prefs);
-            var json = PreferencesService.SavePreferences();
-            await JSRuntime.InvokeVoidAsync("localStorage.setItem", DashboardPreferencesService.StorageKey, json);
-        }
-        catch
-        {
-            // Ignore storage errors
-        }
+        _currentMonth = _currentMonth.AddMonths(-1);
+        ClearFilters();
+        await LoadData();
+    }
+
+    private async Task NavigateToNextMonth()
+    {
+        _currentMonth = _currentMonth.AddMonths(1);
+        ClearFilters();
+        await LoadData();
+    }
+
+    private async Task NavigateToCurrentMonth()
+    {
+        _currentMonth = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+        ClearFilters();
+        await LoadData();
     }
 
     private async Task ViewTransactionDetails(Transaction transaction)
