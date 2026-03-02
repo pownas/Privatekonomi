@@ -173,7 +173,7 @@ public class TransactionService : ITransactionService
     public async Task<Transaction> UpdateTransactionWithAuditAsync(
         int id,
         decimal amount,
-        DateTime date,
+        DateTime transactionDate,
         string description,
         string? payee,
         string? notes,
@@ -238,7 +238,7 @@ public class TransactionService : ITransactionService
 
         // Update transaction fields
         transaction.Amount = amount;
-        transaction.Date = date;
+        transaction.Date = transactionDate;
         transaction.Description = description;
         transaction.Payee = payee;
         transaction.Notes = notes;
