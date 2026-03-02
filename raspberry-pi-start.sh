@@ -1,4 +1,4 @@
-#!/bin/bash
+﻿#!/bin/bash
 
 # Raspberry Pi Startup Script
 # Kör Privatekonomi Web och API direkt på Raspberry Pi (utan Aspire)
@@ -97,7 +97,7 @@ export PRIVATEKONOMI_ENVIRONMENT=RaspberryPi
 export PRIVATEKONOMI_STORAGE_PROVIDER=Sqlite
 
 # Check if using published binaries or source
-INSTALL_DIR="$HOME/Privatekonomi"
+INSTALL_DIR="$HOME/privatekonomi"
 WEB_PUBLISH_DIR="$INSTALL_DIR/publish/Web"
 API_PUBLISH_DIR="$INSTALL_DIR/publish/Api"
 
