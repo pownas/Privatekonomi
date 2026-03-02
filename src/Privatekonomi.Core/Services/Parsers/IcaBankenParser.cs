@@ -129,15 +129,16 @@ public class IcaBankenParser : ICsvParser
             {
                 var potential1 = parts[1].Trim();
                 var potential2 = parts[2].Trim();
-                // If both look numeric, treat first as clearing and second as account
-                if (potential1.All(char.IsDigit) && potential2.All(char.IsDigit))
+                // If both look numeric (and non-empty), treat first as clearing and second as account
+                if (potential1.Length > 0 && potential1.All(char.IsDigit) &&
+                    potential2.Length > 0 && potential2.All(char.IsDigit))
                 {
                     clearingNumber = potential1;
                     accountNumber = potential2;
                     return;
                 }
-                // If only second is numeric and longer, treat as full account number
-                if (potential2.All(char.IsDigit) && potential2.Length >= 4)
+                // If only second is numeric, non-empty, and long enough, treat as full account number
+                if (potential2.Length >= 4 && potential2.All(char.IsDigit))
                 {
                     accountNumber = potential2;
                     return;
@@ -159,7 +160,7 @@ public class IcaBankenParser : ICsvParser
                     clearingNumber = value.Substring(0, dashIndex);
                     accountNumber = value.Substring(dashIndex + 1);
                 }
-                else if (value.All(char.IsDigit) && value.Length >= 4)
+                else if (value.Length >= 4 && value.All(char.IsDigit))
                 {
                     accountNumber = value;
                 }

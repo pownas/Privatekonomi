@@ -412,7 +412,7 @@ public class CsvImportService : ICsvImportService
         // Build query to find matching BankSource
         var query = _context.BankSources
             .Where(b => b.Name.Equals(bankName, StringComparison.OrdinalIgnoreCase) ||
-                        b.Institution != null && b.Institution.Equals(bankName, StringComparison.OrdinalIgnoreCase));
+                        (b.Institution != null && b.Institution.Equals(bankName, StringComparison.OrdinalIgnoreCase)));
 
         if (userId != null)
         {
