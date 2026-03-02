@@ -335,6 +335,7 @@ else if (_currentStep == ImportStep.Complete)
     // Transaction import fields
     private string _selectedBank = string.Empty;
     private IBrowserFile? _selectedFile;
+    private byte[]? _fileBytes; // Buffered file content to avoid re-reading the browser file
     private bool _uploading = false;
     private bool _confirming = false;
     private CsvImportResult? _previewResult;
@@ -375,6 +376,7 @@ else if (_currentStep == ImportStep.Complete)
         _selectedBank = string.Empty;
         _selectedBankId = 0;
         _selectedFile = null;
+        _fileBytes = null;
     }
 
     private void NextToFileSelection()
@@ -390,6 +392,7 @@ else if (_currentStep == ImportStep.Complete)
     {
         _currentStep = ImportStep.BankSelection;
         _selectedFile = null;
+        _fileBytes = null;
     }
 
     private void BackToFileSelection()
@@ -403,6 +406,7 @@ else if (_currentStep == ImportStep.Complete)
     private void OnFileSelected(IBrowserFile file)
     {
         _selectedFile = file;
+        _fileBytes = null; // Clear buffered content when a new file is selected
     }
 
     private async Task ImportInvestmentFile()
@@ -458,8 +462,15 @@ else if (_currentStep == ImportStep.Complete)
                 return;
             }
 
+            // Buffer the file content so it can be reused in ConfirmImport
+            // (IBrowserFile references expire after the initial read in Blazor)
+            using var originalStream = _selectedFile.OpenReadStream(MaxFileSize);
+            using var ms = new MemoryStream();
+            await originalStream.CopyToAsync(ms);
+            _fileBytes = ms.ToArray();
+
             // Use CsvImportService directly instead of HTTP API call
-            using var stream = _selectedFile.OpenReadStream(MaxFileSize);
+            using var stream = new MemoryStream(_fileBytes);
             _previewResult = await CsvImportService.PreviewCsvAsync(stream, _selectedBank);
             
             if (_previewResult.Success)
@@ -504,7 +515,7 @@ else if (_currentStep == ImportStep.Complete)
 
     private async Task ConfirmImport()
     {
-        if (_selectedFile is null) return;
+        if (_selectedFile is null || _fileBytes is null) return;
         
         _confirming = true;
 
@@ -513,8 +524,9 @@ else if (_currentStep == ImportStep.Complete)
             // Get current user ID
             var userId = CurrentUserService.UserId;
             
-            // Re-read the file and import using CsvImportService directly
-            using var stream = _selectedFile.OpenReadStream(MaxFileSize);
+            // Use the buffered file content to avoid re-reading the browser file
+            // (IBrowserFile references expire after the initial read in Blazor)
+            using var stream = new MemoryStream(_fileBytes);
             (CsvImportResult result, ImportJob importJob) = await CsvImportService.ImportWithJobAsync(
                 stream, 
                 _selectedBank, 
@@ -561,6 +573,7 @@ else if (_currentStep == ImportStep.Complete)
         _selectedBankId = 0;
         _selectedBankName = "";
         _selectedFile = null;
+        _fileBytes = null;
         _previewData = null;
         _summary = null;
         _importResult = null;
