@@ -12,6 +12,7 @@
 @inject ISnackbar Snackbar
 @inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime
+@inject DashboardPreferencesService PreferencesService
 @implements IDisposable
 
 <PageTitle>Transaktioner - Privatekonomi</PageTitle>
@@ -241,8 +242,8 @@
                      Hover="true" 
                      Striped="true"
                      Dense="@_dense"
-                     FixedHeader="true"
-                     Height="600px"
+                     RowsPerPage="@_pageSize"
+                     RowsPerPageChanged="@OnPageSizeChanged"
                      SortMode="SortMode.Multiple">
             <ToolBarContent>
                 <MudText Typo="Typo.subtitle1" Class="mr-4">@_filteredTransactions.Count() transaktioner</MudText>
@@ -359,15 +360,20 @@
                     </CellTemplate>
                 </TemplateColumn>
             </Columns>
+            <PagerContent>
+                <MudDataGridPager T="Transaction" PageSizeOptions="@_pageSizeOptions" />
+            </PagerContent>
         </MudDataGrid>
     }
 </MudPaper>
 
 @code {
     private const int MaxNotePreviewLength = 50;
+    private static readonly int[] _pageSizeOptions = [20, 50, 100, 200];
     
     private bool _loading = true;
     private bool _dense = false;
+    private int _pageSize = 50;
     private IEnumerable<Transaction> _transactions = new List<Transaction>();
     private IEnumerable<Transaction> _filteredTransactions = new List<Transaction>();
     private HashSet<Transaction> _selectedTransactions = new();
@@ -398,6 +404,19 @@
             _dotNetHelper = DotNetObjectReference.Create(this);
             await JSRuntime.InvokeVoidAsync("mobileGestureHandler.init", _dotNetHelper);
             await AttachGestureListeners();
+            
+            // Load page size preference from localStorage
+            try
+            {
+                var json = await JSRuntime.InvokeAsync<string>("localStorage.getItem", DashboardPreferencesService.StorageKey);
+                PreferencesService.LoadPreferences(json);
+                _pageSize = PreferencesService.Preferences.TransactionPageSize;
+                StateHasChanged();
+            }
+            catch
+            {
+                // Use default page size if loading fails
+            }
         }
     }
 
@@ -561,6 +580,23 @@
         _dateTo = null;
         _transactionTypeFilter = null;
         ApplyFilter();
+    }
+
+    private async Task OnPageSizeChanged(int newPageSize)
+    {
+        _pageSize = newPageSize;
+        try
+        {
+            var prefs = PreferencesService.Preferences;
+            prefs.TransactionPageSize = newPageSize;
+            PreferencesService.UpdatePreferences(prefs);
+            var json = PreferencesService.SavePreferences();
+            await JSRuntime.InvokeVoidAsync("localStorage.setItem", DashboardPreferencesService.StorageKey, json);
+        }
+        catch
+        {
+            // Ignore storage errors
+        }
     }
 
     private async Task ViewTransactionDetails(Transaction transaction)

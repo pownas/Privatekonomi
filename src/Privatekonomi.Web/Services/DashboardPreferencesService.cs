@@ -55,6 +55,7 @@ public class DashboardPreferences
     public bool ShowRecentTransactions { get; set; } = true;
     public int RecentTransactionsCount { get; set; } = 10;
     public int DefaultPeriodMonths { get; set; } = 12;
+    public int TransactionPageSize { get; set; } = 50;
     
     public DashboardPreferences Clone()
     {
@@ -70,7 +71,8 @@ public class DashboardPreferences
             ShowUnmappedTransactions = this.ShowUnmappedTransactions,
             ShowRecentTransactions = this.ShowRecentTransactions,
             RecentTransactionsCount = this.RecentTransactionsCount,
-            DefaultPeriodMonths = this.DefaultPeriodMonths
+            DefaultPeriodMonths = this.DefaultPeriodMonths,
+            TransactionPageSize = this.TransactionPageSize
         };
     }
 }
