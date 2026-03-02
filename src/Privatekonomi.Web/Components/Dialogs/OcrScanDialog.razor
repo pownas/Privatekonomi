@@ -124,7 +124,7 @@
                 </MudText>
 
                 <MudFileUpload T="IBrowserFile" FilesChanged="OnFileSelected" Accept="image/*" MaximumFileCount="1">
-                    <ActivatorContent>
+                    <CustomContent>
                         <MudPaper Outlined="true" Class="pa-6 d-flex flex-column align-center justify-center" 
                                 Style="min-height: 200px; cursor: pointer; border: 2px dashed var(--mud-palette-primary);">
                             <MudIcon Icon="@Icons.Material.Filled.CloudUpload" Size="Size.Large" Color="Color.Primary" Class="mb-3" />
@@ -134,7 +134,7 @@
                                 JPEG, PNG, GIF, WebP (Max 10 MB)
                             </MudChip>
                         </MudPaper>
-                    </ActivatorContent>
+                    </CustomContent>
                 </MudFileUpload>
 
                 @if (_selectedFile != null)
