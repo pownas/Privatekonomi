@@ -223,6 +223,20 @@ else if (_currentStep == ImportStep.Preview)
                 <MudText Class="red-text">Utgifter: -@_summary.ExpenseAmount.ToString("N2") kr</MudText>
             </MudAlert>
         }
+
+        @if (_detectedAccounts != null && _detectedAccounts.Any())
+        {
+            <MudAlert Severity="Severity.Success" Class="mb-4">
+                <MudText><strong>Identifierade konton:</strong></MudText>
+                @foreach (var account in _detectedAccounts)
+                {
+                    <MudText>• @account</MudText>
+                }
+                <MudText Typo="Typo.caption" Class="mt-1">
+                    Konton som inte finns i systemet skapas automatiskt vid import.
+                </MudText>
+            </MudAlert>
+        }
         
         <MudDivider Class="my-4" />
         
@@ -342,6 +356,7 @@ else if (_currentStep == ImportStep.Complete)
     private List<PreviewTransaction>? _previewData;
     private SummaryData? _summary;
     private ImportResultData? _importResult;
+    private List<string>? _detectedAccounts;
     
     // Investment import fields
     private List<BankSource> _investmentBanks = new();
@@ -401,6 +416,7 @@ else if (_currentStep == ImportStep.Complete)
         _previewData = null;
         _summary = null;
         _previewResult = null;
+        _detectedAccounts = null;
     }
 
     private void OnFileSelected(IBrowserFile file)
@@ -493,6 +509,20 @@ else if (_currentStep == ImportStep.Complete)
                     IncomeAmount = _previewResult.Summary.IncomeAmount,
                     ExpenseAmount = _previewResult.Summary.ExpenseAmount
                 };
+
+                // Collect detected account numbers from parsed transactions
+                _detectedAccounts = _previewResult.Transactions
+                    .Where(t => !string.IsNullOrWhiteSpace(t.AccountNumber))
+                    .GroupBy(t => (t.ClearingNumber, t.AccountNumber))
+                    .Select(g =>
+                    {
+                        var label = string.IsNullOrWhiteSpace(g.Key.ClearingNumber)
+                            ? $"{_selectedBank}: {g.Key.AccountNumber}"
+                            : $"{_selectedBank}: {g.Key.ClearingNumber}-{g.Key.AccountNumber}";
+                        return $"{label} ({g.Count()} transaktioner)";
+                    })
+                    .ToList();
+
                 _currentStep = ImportStep.Preview;
             }
             else
@@ -579,6 +609,7 @@ else if (_currentStep == ImportStep.Complete)
         _importResult = null;
         _investmentImportResult = null;
         _previewResult = null;
+        _detectedAccounts = null;
     }
 
     private void GoToTransactions()

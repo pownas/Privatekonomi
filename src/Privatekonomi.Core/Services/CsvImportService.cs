@@ -104,23 +104,32 @@ public class CsvImportService : ICsvImportService
 
         try
         {
-            // Get BankSource by name
-            var bankSource = await _context.BankSources
-                .FirstOrDefaultAsync(b => b.Name.Equals(bankName, StringComparison.OrdinalIgnoreCase));
-
             // Determine file type based on bank/parser
             var fileType = bankName.Contains("OFX", StringComparison.OrdinalIgnoreCase) ? "OFX" : "CSV";
             var importSource = $"{bankName} {fileType} (manuell)";
 
-            // Import transactions with source set to 'manual'
-            foreach (var transaction in result.Transactions)
+            // Group transactions by account (clearing + account number) so each gets the correct BankSource
+            var transactionsByAccount = result.Transactions
+                .GroupBy(t => (ClearingNumber: t.ClearingNumber, AccountNumber: t.AccountNumber))
+                .ToList();
+
+            foreach (var accountGroup in transactionsByAccount)
             {
-                transaction.BankSourceId = bankSource?.BankSourceId;
-                transaction.Imported = true;
-                transaction.ImportSource = importSource;
-                transaction.CreatedAt = DateTime.UtcNow;
-                transaction.ValidFrom = DateTime.UtcNow;
-                _context.Transactions.Add(transaction);
+                var bankSource = await FindOrCreateBankSourceAsync(
+                    bankName,
+                    accountGroup.Key.ClearingNumber,
+                    accountGroup.Key.AccountNumber,
+                    userId: null);
+
+                foreach (var transaction in accountGroup)
+                {
+                    transaction.BankSourceId = bankSource?.BankSourceId;
+                    transaction.Imported = true;
+                    transaction.ImportSource = importSource;
+                    transaction.CreatedAt = DateTime.UtcNow;
+                    transaction.ValidFrom = DateTime.UtcNow;
+                    _context.Transactions.Add(transaction);
+                }
             }
 
             await _context.SaveChangesAsync();
@@ -187,22 +196,32 @@ public class CsvImportService : ICsvImportService
                 return (result, importJob);
             }
 
-            // Get BankSource by name
-            var bankSource = await _context.BankSources
-                .FirstOrDefaultAsync(b => b.Name.Equals(bankName, StringComparison.OrdinalIgnoreCase));
-
+            // Get BankSource by name or by account info (clearing + account number)
             var importSource = $"{bankName} {importJob.FileType} (manuell)";
 
-            // Import transactions with source set to 'manual'
-            foreach (var transaction in result.Transactions)
+            // Group transactions by account (clearing + account number) so each gets the correct BankSource
+            var transactionsByAccount = result.Transactions
+                .GroupBy(t => (ClearingNumber: t.ClearingNumber, AccountNumber: t.AccountNumber))
+                .ToList();
+
+            foreach (var accountGroup in transactionsByAccount)
             {
-                transaction.BankSourceId = bankSource?.BankSourceId;
-                transaction.Imported = true;
-                transaction.ImportSource = importSource;
-                transaction.UserId = userId;
-                transaction.CreatedAt = DateTime.UtcNow;
-                transaction.ValidFrom = DateTime.UtcNow;
-                _context.Transactions.Add(transaction);
+                var bankSource = await FindOrCreateBankSourceAsync(
+                    bankName,
+                    accountGroup.Key.ClearingNumber,
+                    accountGroup.Key.AccountNumber,
+                    userId);
+
+                foreach (var transaction in accountGroup)
+                {
+                    transaction.BankSourceId = bankSource?.BankSourceId;
+                    transaction.Imported = true;
+                    transaction.ImportSource = importSource;
+                    transaction.UserId = userId;
+                    transaction.CreatedAt = DateTime.UtcNow;
+                    transaction.ValidFrom = DateTime.UtcNow;
+                    _context.Transactions.Add(transaction);
+                }
             }
 
             await _context.SaveChangesAsync();
@@ -377,5 +396,58 @@ public class CsvImportService : ICsvImportService
         summary.TotalAmount = summary.IncomeAmount - summary.ExpenseAmount;
 
         return summary;
+    }
+
+    /// <summary>
+    /// Finds an existing BankSource matching the given bank name, clearing number and account number,
+    /// or creates a new one if no match is found. This enables automatic linking of transactions
+    /// to individual bank accounts when clearing/account numbers are present in the import file.
+    /// </summary>
+    private async Task<BankSource?> FindOrCreateBankSourceAsync(
+        string bankName,
+        string? clearingNumber,
+        string? accountNumber,
+        string? userId)
+    {
+        // Build query to find matching BankSource
+        var query = _context.BankSources
+            .Where(b => b.Name.Equals(bankName, StringComparison.OrdinalIgnoreCase) ||
+                        b.Institution != null && b.Institution.Equals(bankName, StringComparison.OrdinalIgnoreCase));
+
+        if (userId != null)
+        {
+            query = query.Where(b => b.UserId == userId);
+        }
+
+        // If we have account number info, try to find by clearing + account
+        if (!string.IsNullOrWhiteSpace(accountNumber))
+        {
+            var byAccount = await query
+                .Where(b => b.AccountNumber == accountNumber &&
+                            (clearingNumber == null || b.ClearingNumber == clearingNumber))
+                .FirstOrDefaultAsync();
+
+            if (byAccount != null)
+                return byAccount;
+
+            // No matching account found - create a new BankSource for this account
+            var newBankSource = new BankSource
+            {
+                Name = bankName,
+                Institution = bankName,
+                ClearingNumber = clearingNumber,
+                AccountNumber = accountNumber,
+                UserId = userId,
+                CreatedAt = DateTime.UtcNow,
+                ValidFrom = DateTime.UtcNow
+            };
+
+            _context.BankSources.Add(newBankSource);
+            await _context.SaveChangesAsync();
+            return newBankSource;
+        }
+
+        // No account number in import data - fall back to matching by bank name only
+        return await query.FirstOrDefaultAsync();
     }
 }

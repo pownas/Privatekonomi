@@ -409,4 +409,82 @@ Radnummer,Clearingnummer,Kontonummer,Produkt,Valuta,Bokföringsdag,Transaktionsd
         Assert.AreEqual(25000.00m, transactions[1].Amount);
         Assert.IsTrue(transactions[1].IsIncome);
     }
+
+    [TestMethod]
+    public async Task SwedbankParser_ParseAsync_ExtractsClearingAndAccountNumberFromSwedishFormat()
+    {
+        // Arrange
+        var parser = new SwedbankParser();
+        var stream = new MemoryStream(Encoding.UTF8.GetBytes(SwedishFormatCommaSeparated));
+
+        // Act
+        var transactions = await parser.ParseAsync(stream);
+
+        // Assert
+        Assert.AreEqual(3, transactions.Count);
+        foreach (var transaction in transactions)
+        {
+            Assert.AreEqual("84525", transaction.ClearingNumber);
+            Assert.AreEqual("1234567891", transaction.AccountNumber);
+        }
+    }
+
+    [TestMethod]
+    public async Task SwedbankParser_ParseAsync_ExtractsClearingAndAccountNumberFromTabSeparatedFormat()
+    {
+        // Arrange
+        var parser = new SwedbankParser();
+        var stream = new MemoryStream(Encoding.UTF8.GetBytes(SwedishFormatTabSeparated));
+
+        // Act
+        var transactions = await parser.ParseAsync(stream);
+
+        // Assert
+        Assert.AreEqual(3, transactions.Count);
+        foreach (var transaction in transactions)
+        {
+            Assert.AreEqual("84525", transaction.ClearingNumber);
+            Assert.AreEqual("1234567891", transaction.AccountNumber);
+        }
+    }
+
+    [TestMethod]
+    public async Task SwedbankParser_ParseAsync_ExtractsAccountNumberFromEnglishFormat()
+    {
+        // Arrange
+        var parser = new SwedbankParser();
+        var stream = new MemoryStream(Encoding.UTF8.GetBytes(EnglishFormatSemicolonSeparated));
+
+        // Act
+        var transactions = await parser.ParseAsync(stream);
+
+        // Assert
+        Assert.AreEqual(2, transactions.Count);
+        foreach (var transaction in transactions)
+        {
+            Assert.AreEqual("1111222333", transaction.AccountNumber);
+            Assert.IsNull(transaction.ClearingNumber); // Old format has no separate clearing number column
+        }
+    }
+
+    [TestMethod]
+    public async Task SwedbankParser_ParseAsync_HandlesMultipleAccountsInSameFile()
+    {
+        // Arrange - CSV with transactions for two different accounts
+        var parser = new SwedbankParser();
+        var csvWithMultipleAccounts = @"Radnummer,Clearingnummer,Kontonummer,Produkt,Valuta,Bokföringsdag,Transaktionsdag,Valutadag,Referens,Beskrivning,Belopp,Bokfört saldo
+1,84525,1234567891,""lönekonto"",SEK,2025-11-12,2025-11-12,2025-11-12,""Lön"",""Lön"",25000.00,25000.00
+2,84525,9876543210,""sparkonto"",SEK,2025-11-12,2025-11-12,2025-11-12,""Överföring"",""Överföring"",-5000.00,20000.00";
+        var stream = new MemoryStream(Encoding.UTF8.GetBytes(csvWithMultipleAccounts));
+
+        // Act
+        var transactions = await parser.ParseAsync(stream);
+
+        // Assert
+        Assert.AreEqual(2, transactions.Count);
+        Assert.AreEqual("1234567891", transactions[0].AccountNumber);
+        Assert.AreEqual("84525", transactions[0].ClearingNumber);
+        Assert.AreEqual("9876543210", transactions[1].AccountNumber);
+        Assert.AreEqual("84525", transactions[1].ClearingNumber);
+    }
 }

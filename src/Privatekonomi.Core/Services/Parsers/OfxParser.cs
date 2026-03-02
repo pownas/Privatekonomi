@@ -47,6 +47,14 @@ public class OfxParser : ICsvParser
         {
             var doc = XDocument.Parse(xmlContent);
             
+            // Extract account info from BANKACCTFROM or CCACCTFROM elements
+            var bankId = doc.Descendants("BANKID").FirstOrDefault()?.Value?.Trim();
+            var branchId = doc.Descendants("BRANCHID").FirstOrDefault()?.Value?.Trim();
+            var acctId = doc.Descendants("ACCTID").FirstOrDefault()?.Value?.Trim();
+            // Clearing number is BANKID or BRANCHID in Swedish OFX
+            var clearingNumber = !string.IsNullOrWhiteSpace(branchId) ? branchId : bankId;
+            var accountNumber = acctId;
+            
             // Find all STMTTRN elements (bank transactions)
             var stmtTransactions = doc.Descendants("STMTTRN");
             
@@ -57,6 +65,8 @@ public class OfxParser : ICsvParser
                     var transaction = ParseTransaction(stmtTrn);
                     if (transaction != null)
                     {
+                        transaction.ClearingNumber = string.IsNullOrWhiteSpace(clearingNumber) ? null : clearingNumber;
+                        transaction.AccountNumber = string.IsNullOrWhiteSpace(accountNumber) ? null : accountNumber;
                         transactions.Add(transaction);
                     }
                 }
@@ -76,6 +86,8 @@ public class OfxParser : ICsvParser
                     var transaction = ParseTransaction(ccTrn);
                     if (transaction != null)
                     {
+                        transaction.ClearingNumber = string.IsNullOrWhiteSpace(clearingNumber) ? null : clearingNumber;
+                        transaction.AccountNumber = string.IsNullOrWhiteSpace(accountNumber) ? null : accountNumber;
                         transactions.Add(transaction);
                     }
                 }

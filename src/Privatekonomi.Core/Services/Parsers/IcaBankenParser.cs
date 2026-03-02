@@ -28,11 +28,28 @@ public class IcaBankenParser : ICsvParser
         var lines = content.Split('\n', StringSplitOptions.RemoveEmptyEntries);
         if (lines.Length < 2) return transactions;
 
+        // Look for account number in metadata lines before the header
+        // ICA-banken sometimes includes "Kontonummer: XXXXXXXX" or similar in header lines
+        string? accountNumber = null;
+        string? clearingNumber = null;
+        int headerLineIndex = 0;
+        for (int i = 0; i < Math.Min(lines.Length, 5); i++)
+        {
+            var lower = lines[i].ToLowerInvariant();
+            if (lower.Contains("datum") && (lower.Contains("belopp") || lower.Contains("amount")))
+            {
+                headerLineIndex = i;
+                break;
+            }
+            // Try to extract account info from metadata lines
+            ExtractAccountFromMetadataLine(lines[i], ref clearingNumber, ref accountNumber);
+        }
+
         // Detect separator (semicolon or comma)
-        var separator = lines[0].Contains(';') ? ';' : ',';
+        var separator = lines[headerLineIndex].Contains(';') ? ';' : ',';
 
         // Parse header to find column indices
-        var header = lines[0].Split(separator);
+        var header = lines[headerLineIndex].Split(separator);
         var dateIndex = FindColumnIndex(header, new[] { "datum", "date" });
         var amountIndex = FindColumnIndex(header, new[] { "belopp", "amount" });
         var descriptionIndex = FindColumnIndex(header, new[] { "beskrivning", "text", "beskrivning / text", "description" });
@@ -43,7 +60,7 @@ public class IcaBankenParser : ICsvParser
         }
 
         // Parse data rows
-        for (int i = 1; i < lines.Length; i++)
+        for (int i = headerLineIndex + 1; i < lines.Length; i++)
         {
             try
             {
@@ -79,7 +96,9 @@ public class IcaBankenParser : ICsvParser
                     Date = date,
                     Amount = Math.Abs(amount),
                     IsIncome = amount > 0,
-                    Description = description.Length > 500 ? description.Substring(0, 500) : description
+                    Description = description.Length > 500 ? description.Substring(0, 500) : description,
+                    ClearingNumber = clearingNumber,
+                    AccountNumber = accountNumber
                 };
 
                 transactions.Add(transaction);
@@ -92,6 +111,60 @@ public class IcaBankenParser : ICsvParser
         }
 
         return transactions;
+    }
+
+    /// <summary>
+    /// Tries to extract clearing number and account number from a metadata line.
+    /// ICA-banken may export lines like "Kontonummer;9270;1234567" or "Konto: 9270-1234567".
+    /// </summary>
+    private static void ExtractAccountFromMetadataLine(string line, ref string? clearingNumber, ref string? accountNumber)
+    {
+        // Pattern: "Kontonummer;9270;1234567" (semicolon-separated)
+        var parts = line.Split(new[] { ';', ',' }, StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length >= 3)
+        {
+            var label = parts[0].Trim();
+            if (label.Contains("kontonummer", StringComparison.OrdinalIgnoreCase) ||
+                label.Contains("konto", StringComparison.OrdinalIgnoreCase))
+            {
+                var potential1 = parts[1].Trim();
+                var potential2 = parts[2].Trim();
+                // If both look numeric, treat first as clearing and second as account
+                if (potential1.All(char.IsDigit) && potential2.All(char.IsDigit))
+                {
+                    clearingNumber = potential1;
+                    accountNumber = potential2;
+                    return;
+                }
+                // If only second is numeric and longer, treat as full account number
+                if (potential2.All(char.IsDigit) && potential2.Length >= 4)
+                {
+                    accountNumber = potential2;
+                    return;
+                }
+            }
+        }
+
+        // Pattern: "Kontonummer: 9270-1234567" or "Konto: 12345678"
+        if (parts.Length >= 2)
+        {
+            var label = parts[0].Trim();
+            if (label.Contains("kontonummer", StringComparison.OrdinalIgnoreCase) ||
+                label.Contains("konto", StringComparison.OrdinalIgnoreCase))
+            {
+                var value = parts[1].Trim().Replace(" ", "");
+                var dashIndex = value.IndexOf('-');
+                if (dashIndex > 0)
+                {
+                    clearingNumber = value.Substring(0, dashIndex);
+                    accountNumber = value.Substring(dashIndex + 1);
+                }
+                else if (value.All(char.IsDigit) && value.Length >= 4)
+                {
+                    accountNumber = value;
+                }
+            }
+        }
     }
 
     private int FindColumnIndex(string[] header, string[] possibleNames)
