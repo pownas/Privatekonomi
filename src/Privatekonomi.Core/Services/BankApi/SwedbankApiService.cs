@@ -62,7 +62,7 @@ public class SwedbankApiService : BankApiServiceBase
         var tokenResponse = JsonSerializer.Deserialize<TokenResponse>(jsonResponse);
 
         if (tokenResponse == null || string.IsNullOrEmpty(tokenResponse.AccessToken))
-            throw new Exception("Failed to obtain access token");
+            throw new InvalidOperationException("Failed to obtain access token");
 
         return new BankConnection
         {
@@ -78,7 +78,7 @@ public class SwedbankApiService : BankApiServiceBase
     public override async Task<BankConnection> RefreshTokenAsync(BankConnection connection)
     {
         if (string.IsNullOrEmpty(connection.RefreshToken))
-            throw new Exception("No refresh token available");
+            throw new InvalidOperationException("No refresh token available");
 
         var requestData = new Dictionary<string, string>
         {
@@ -96,7 +96,7 @@ public class SwedbankApiService : BankApiServiceBase
         var tokenResponse = JsonSerializer.Deserialize<TokenResponse>(jsonResponse);
 
         if (tokenResponse == null || string.IsNullOrEmpty(tokenResponse.AccessToken))
-            throw new Exception("Failed to refresh access token");
+            throw new InvalidOperationException("Failed to refresh access token");
 
         connection.AccessToken = tokenResponse.AccessToken;
         connection.RefreshToken = tokenResponse.RefreshToken ?? connection.RefreshToken;
@@ -197,7 +197,7 @@ public class SwedbankApiService : BankApiServiceBase
     }
 
     // DTOs for JSON serialization
-    private class TokenResponse
+    private sealed class TokenResponse
     {
         public string AccessToken { get; set; } = string.Empty;
         public string? RefreshToken { get; set; }
@@ -205,12 +205,12 @@ public class SwedbankApiService : BankApiServiceBase
         public string TokenType { get; set; } = string.Empty;
     }
 
-    private class AccountsResponse
+    private sealed class AccountsResponse
     {
         public List<AccountDto> Accounts { get; set; } = new();
     }
 
-    private class AccountDto
+    private sealed class AccountDto
     {
         public string? ResourceId { get; set; }
         public string? Iban { get; set; }
@@ -219,17 +219,17 @@ public class SwedbankApiService : BankApiServiceBase
         public string? CashAccountType { get; set; }
     }
 
-    private class TransactionsResponse
+    private sealed class TransactionsResponse
     {
         public TransactionsContainer? Transactions { get; set; }
     }
 
-    private class TransactionsContainer
+    private sealed class TransactionsContainer
     {
         public List<TransactionDto> Booked { get; set; } = new();
     }
 
-    private class TransactionDto
+    private sealed class TransactionDto
     {
         public string? TransactionId { get; set; }
         public string? BookingDate { get; set; }
@@ -242,7 +242,7 @@ public class SwedbankApiService : BankApiServiceBase
         public string? EntryReference { get; set; }
     }
 
-    private class AmountDto
+    private sealed class AmountDto
     {
         public string Amount { get; set; } = "0";
         public string Currency { get; set; } = "SEK";

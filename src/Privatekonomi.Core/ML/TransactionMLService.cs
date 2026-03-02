@@ -476,7 +476,7 @@ public class TransactionMLService : ITransactionMLService
     }
 
     // Internal class for ML.NET prediction
-    private class CategoryPredictionInternal
+    private sealed class CategoryPredictionInternal
     {
         public string PredictedCategory { get; set; } = string.Empty;
         

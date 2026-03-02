@@ -475,7 +475,7 @@ public class DebtStrategyService : IDebtStrategyService
         return detailedStrategy;
     }
 
-    private class LoanSimulation
+    private sealed class LoanSimulation
     {
         public Loan Loan { get; set; } = null!;
         public decimal Balance { get; set; }

@@ -915,9 +915,9 @@ public class PrivatekonomyContext : IdentityDbContext<ApplicationUser>
             entity.Property(e => e.PropertyAddress).HasMaxLength(200);
             entity.Property(e => e.PropertyValue).HasPrecision(18, 2);
             entity.Property(e => e.LoanProvider).HasMaxLength(100);
-            entity.Property(e => e.CSN_LoanType).HasMaxLength(50);
-            entity.Property(e => e.CSN_MonthlyPayment).HasPrecision(18, 2);
-            entity.Property(e => e.CSN_RemainingAmount).HasPrecision(18, 2);
+            entity.Property(e => e.CsnLoanType).HasMaxLength(50);
+            entity.Property(e => e.CsnMonthlyPayment).HasPrecision(18, 2);
+            entity.Property(e => e.CsnRemainingAmount).HasPrecision(18, 2);
             
             entity.HasIndex(e => e.Type);
             entity.Ignore(e => e.LTV);

@@ -60,27 +60,27 @@ public class Loan : ITemporalEntity
     /// <summary>
     /// CSN loan type: "Studiemedel", "Studiemedelsränta"
     /// </summary>
-    public string? CSN_LoanType { get; set; }
+    public string? CsnLoanType { get; set; }
     
     /// <summary>
     /// Study year when loan was taken
     /// </summary>
-    public int? CSN_StudyYear { get; set; }
+    public int? CsnStudyYear { get; set; }
     
     /// <summary>
     /// Monthly payment to CSN
     /// </summary>
-    public decimal? CSN_MonthlyPayment { get; set; }
+    public decimal? CsnMonthlyPayment { get; set; }
     
     /// <summary>
     /// Remaining amount owed to CSN
     /// </summary>
-    public decimal? CSN_RemainingAmount { get; set; }
+    public decimal? CsnRemainingAmount { get; set; }
     
     /// <summary>
     /// Last date CSN information was updated
     /// </summary>
-    public DateTime? CSN_LastUpdate { get; set; }
+    public DateTime? CsnLastUpdate { get; set; }
   
     // Credit card specific fields
     public decimal? CreditLimit { get; set; } // Kreditgräns för kreditkort
