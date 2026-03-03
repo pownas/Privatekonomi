@@ -1,8 +1,10 @@
+﻿using Privatekonomi.Core.Models;
 using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
-using Privatekonomi.Core.Models;
+
+#pragma warning disable CA1305 // Specify IFormatProvider
 
 namespace Privatekonomi.Core.Services.Parsers;
 
@@ -127,7 +129,7 @@ public class OfxParser : ICsvParser
         var description = BuildDescription(name, memo);
         
         // Determine if income based on amount sign and transaction type
-        var trnType = trnTypeElement?.Value?.Trim().ToUpper() ?? string.Empty;
+        var trnType = trnTypeElement?.Value?.Trim().ToUpper(CultureInfo.CurrentCulture) ?? string.Empty;
         var isIncome = DetermineIsIncome(amount, trnType);
         
         return CreateTransaction(date, Math.Abs(amount), isIncome, description);
@@ -312,7 +314,7 @@ public class OfxParser : ICsvParser
         }
         
         var description = BuildDescription(name ?? string.Empty, memo ?? string.Empty);
-        var isIncome = DetermineIsIncome(parsedAmount, trnType?.ToUpper() ?? string.Empty);
+        var isIncome = DetermineIsIncome(parsedAmount, trnType?.ToUpper(CultureInfo.InvariantCulture) ?? string.Empty);
         
         return CreateTransaction(parsedDate, Math.Abs(parsedAmount), isIncome, description);
     }
@@ -361,14 +363,14 @@ public class OfxParser : ICsvParser
         
         foreach (var format in formats)
         {
-            if (DateTime.TryParseExact(dateStr, format, CultureInfo.InvariantCulture, DateTimeStyles.None, out date))
+            if (DateTime.TryParseExact(dateStr, format, CultureInfo.CurrentCulture, DateTimeStyles.None, out date))
             {
                 return true;
             }
         }
         
         // Try generic parsing
-        return DateTime.TryParse(dateStr, CultureInfo.InvariantCulture, DateTimeStyles.None, out date);
+        return DateTime.TryParse(dateStr, CultureInfo.CurrentCulture, DateTimeStyles.None, out date);
     }
 
     private string BuildDescription(string name, string memo)

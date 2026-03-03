@@ -1,8 +1,9 @@
+﻿using Privatekonomi.Core.Data;
+using Privatekonomi.Core.Models;
+using System.Globalization;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
-using Privatekonomi.Core.Data;
-using Privatekonomi.Core.Models;
 
 namespace Privatekonomi.Core.Services.BankApi;
 
@@ -159,7 +160,7 @@ public class AvanzaApiService : BankApiServiceBase
         return transactionsResponse.Transactions.Select(t => new BankApiTransaction
         {
             TransactionId = t.TransactionId ?? Guid.NewGuid().ToString(),
-            Date = DateTime.Parse(t.TransactionDate),
+            Date = DateTime.Parse(t.TransactionDate, CultureInfo.CurrentCulture),
             Amount = t.Amount,
             Currency = t.Currency ?? "SEK",
             Description = t.Description ?? t.TransactionType ?? "Transaction",
@@ -194,7 +195,7 @@ public class AvanzaApiService : BankApiServiceBase
 
     private string MapAccountType(string? accountType)
     {
-        return accountType?.ToLower() switch
+        return accountType?.ToLower(CultureInfo.CurrentCulture) switch
         {
             "depå" => "investment",
             "sparkonto" => "savings",

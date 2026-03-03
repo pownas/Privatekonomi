@@ -2,6 +2,7 @@
 @using Privatekonomi.Core.Models
 @using Privatekonomi.Core.Services
 @using Microsoft.AspNetCore.Identity
+@using System.Globalization
 @inject IMetricsService MetricsService
 @inject UserManager<ApplicationUser> UserManager
 @inject ISnackbar Snackbar
@@ -519,6 +520,6 @@
 
     private string GetChangeText(decimal value)
     {
-        return value >= 0 ? $"+{value:F1}" : value.ToString("F1");
+        return value >= 0 ? $"+{value.ToString("F1", CultureInfo.CurrentCulture)}" : value.ToString("F1", CultureInfo.CurrentCulture);
     }
 }

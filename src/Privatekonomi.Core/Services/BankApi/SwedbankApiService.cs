@@ -1,8 +1,9 @@
+﻿using Privatekonomi.Core.Data;
+using Privatekonomi.Core.Models;
+using System.Globalization;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
-using Privatekonomi.Core.Data;
-using Privatekonomi.Core.Models;
 
 namespace Privatekonomi.Core.Services.BankApi;
 
@@ -141,8 +142,8 @@ public class SwedbankApiService : BankApiServiceBase
     {
         await EnsureValidTokenAsync(connection);
 
-        var dateFrom = fromDate.ToString("yyyy-MM-dd");
-        var dateTo = toDate.ToString("yyyy-MM-dd");
+        var dateFrom = fromDate.ToString("yyyy-MM-dd", CultureInfo.CurrentCulture);
+        var dateTo = toDate.ToString("yyyy-MM-dd", CultureInfo.CurrentCulture);
         
         var url = $"{BaseUrl}/v1/accounts/{accountId}/transactions?dateFrom={dateFrom}&dateTo={dateTo}&bookingStatus=booked";
         
@@ -162,15 +163,15 @@ public class SwedbankApiService : BankApiServiceBase
         return transactionsResponse.Transactions.Booked.Select(t => new BankApiTransaction
         {
             TransactionId = t.TransactionId ?? Guid.NewGuid().ToString(),
-            Date = DateTime.Parse(t.ValueDate ?? t.BookingDate ?? DateTime.Now.ToString("yyyy-MM-dd")),
+            Date = DateTime.Parse(t.ValueDate ?? t.BookingDate ?? DateTime.Now.ToString("yyyy-MM-dd", CultureInfo.CurrentCulture), CultureInfo.CurrentCulture),
             BookingDate = DateTime.TryParse(t.BookingDate, out var bookingDate) ? bookingDate : null,
-            Amount = decimal.Parse(t.TransactionAmount?.Amount ?? "0"),
+            Amount = decimal.Parse(t.TransactionAmount?.Amount ?? "0", CultureInfo.CurrentCulture),
             Currency = t.TransactionAmount?.Currency ?? "SEK",
             Description = t.RemittanceInformationUnstructured ?? t.AdditionalInformation ?? "Transaction",
             Creditor = t.CreditorName,
             Debtor = t.DebtorName,
             Reference = t.EntryReference,
-            IsIncome = decimal.Parse(t.TransactionAmount?.Amount ?? "0") > 0,
+            IsIncome = decimal.Parse(t.TransactionAmount?.Amount ?? "0", CultureInfo.CurrentCulture) > 0,
             AccountId = accountId
         }).ToList();
     }
@@ -187,7 +188,7 @@ public class SwedbankApiService : BankApiServiceBase
 
     private string MapAccountType(string? cashAccountType)
     {
-        return cashAccountType?.ToLower() switch
+        return cashAccountType?.ToLower(CultureInfo.CurrentCulture) switch
         {
             "cacc" => "checking",
             "svgs" => "savings",

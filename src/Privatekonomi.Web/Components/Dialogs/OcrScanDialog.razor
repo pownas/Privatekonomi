@@ -1,4 +1,4 @@
-@using Privatekonomi.Core.Models
+﻿@using Privatekonomi.Core.Models
 @using Privatekonomi.Core.Services
 @using Microsoft.AspNetCore.Components.Forms
 @using MudBlazor
@@ -83,7 +83,7 @@
                                 {
                                     <tr>
                                         <td>@item.Description</td>
-                                        <td>@item.Quantity?.ToString("N2")</td>
+                                        <td>@item.Quantity?.ToString("N2", System.Globalization.CultureInfo.CurrentCulture)</td>
                                         <td>@item.UnitPrice?.ToString("C", new System.Globalization.CultureInfo("sv-SE"))</td>
                                         <td>@item.TotalPrice?.ToString("C", new System.Globalization.CultureInfo("sv-SE"))</td>
                                     </tr>
