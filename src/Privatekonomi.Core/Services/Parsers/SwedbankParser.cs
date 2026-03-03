@@ -93,6 +93,8 @@ public class SwedbankParser : ICsvParser
         var descriptionIndex = FindColumnIndex(header, new[] { "beskrivning" });
         var referenceIndex = FindColumnIndex(header, new[] { "referens" });
         var currencyIndex = FindColumnIndex(header, new[] { "valuta" });
+        var clearingIndex = FindColumnIndex(header, new[] { "clearingnummer" });
+        var accountIndex = FindColumnIndex(header, new[] { "kontonummer" });
 
         if (dateIndex == -1 || amountIndex == -1)
         {
@@ -144,12 +146,22 @@ public class SwedbankParser : ICsvParser
                 // Determine if income based on sign (negative = expense, positive = income)
                 var isIncome = amount > 0;
 
+                // Extract account info
+                var clearingNumber = clearingIndex != -1 && columns.Length > clearingIndex
+                    ? columns[clearingIndex].Trim()
+                    : null;
+                var accountNumber = accountIndex != -1 && columns.Length > accountIndex
+                    ? columns[accountIndex].Trim()
+                    : null;
+
                 var transaction = new Transaction
                 {
                     Date = date,
                     Amount = Math.Abs(amount),
                     IsIncome = isIncome,
-                    Description = description.Length > 500 ? description.Substring(0, 500) : description
+                    Description = description.Length > 500 ? description.Substring(0, 500) : description,
+                    ClearingNumber = string.IsNullOrWhiteSpace(clearingNumber) ? null : clearingNumber,
+                    AccountNumber = string.IsNullOrWhiteSpace(accountNumber) ? null : accountNumber
                 };
 
                 transactions.Add(transaction);
@@ -180,6 +192,7 @@ public class SwedbankParser : ICsvParser
         var detailsIndex = FindColumnIndex(header, new[] { "details" });
         var beneficiaryIndex = FindColumnIndex(header, new[] { "beneficiary/payer" });
         var currencyIndex = FindColumnIndex(header, new[] { "currency" });
+        var clientAccountIndex = FindColumnIndex(header, new[] { "client account" });
 
         if (rowTypeIndex == -1 || dateIndex == -1 || amountIndex == -1 || debitCreditIndex == -1 || detailsIndex == -1)
         {
@@ -233,12 +246,18 @@ public class SwedbankParser : ICsvParser
                 if (string.IsNullOrWhiteSpace(description))
                     continue;
 
+                // Extract account number from Client Account column
+                var accountNumber = clientAccountIndex != -1 && columns.Length > clientAccountIndex
+                    ? columns[clientAccountIndex].Trim()
+                    : null;
+
                 var transaction = new Transaction
                 {
                     Date = date,
                     Amount = Math.Abs(amount),
                     IsIncome = isIncome,
-                    Description = description.Length > 500 ? description.Substring(0, 500) : description
+                    Description = description.Length > 500 ? description.Substring(0, 500) : description,
+                    AccountNumber = string.IsNullOrWhiteSpace(accountNumber) ? null : accountNumber
                 };
 
                 transactions.Add(transaction);
