@@ -740,10 +740,9 @@ else
 
             var bytes = System.Text.Encoding.UTF8.GetBytes(csv.ToString());
             var base64 = Convert.ToBase64String(bytes);
-            var dataUrl = $"data:text/csv;base64,{base64}";
-            
-            await JSRuntime.InvokeVoidAsync("eval", 
-                $"(function(){{var link=document.createElement('a');link.download='scenarioanalys_{DateTime.Now:yyyyMMdd}.csv';link.href='{dataUrl}';link.click();}})()");
+            var fileName = $"scenarioanalys_{DateTime.Now:yyyyMMdd}.csv";
+
+            await JSRuntime.InvokeVoidAsync("downloadFile", fileName, "text/csv", base64);
             
             Snackbar.Add("CSV-fil exporterad", Severity.Success);
         }
