@@ -13,7 +13,7 @@ namespace Privatekonomi.Core.Tests;
 public class NotificationServiceTests
 {
     private readonly PrivatekonomyContext _context;
-    private readonly INotificationPreferenceService _preferenceService;
+    private readonly NotificationPreferenceService _preferenceService;
     private readonly NotificationService _notificationService;
     private readonly string _testUserId = "test-user-id";
 
@@ -223,7 +223,7 @@ public class NotificationServiceTests
             UserId = _testUserId,
             NotificationType = SystemNotificationType.BudgetExceeded,
             IsEnabled = false,
-            EnabledChannels = NotificationChannelFlags.InApp
+            EnabledChannels = NotificationChannels.InApp
         };
 
         await _preferenceService.SavePreferenceAsync(preference);
@@ -250,7 +250,7 @@ public class NotificationServiceTests
             UserId = _testUserId,
             NotificationType = SystemNotificationType.BudgetExceeded,
             IsEnabled = false,
-            EnabledChannels = NotificationChannelFlags.InApp
+            EnabledChannels = NotificationChannels.InApp
         };
 
         await _preferenceService.SavePreferenceAsync(preference);

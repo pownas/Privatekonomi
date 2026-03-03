@@ -12,7 +12,7 @@ namespace Privatekonomi.Core.Tests;
 public class TransactionServiceTests
 {
     private readonly PrivatekonomyContext _context;
-    private readonly IDbContextFactory<PrivatekonomyContext> _contextFactory;
+    private readonly TestDbContextFactory _contextFactory;
     private readonly Mock<IAuditLogService> _mockAuditLogService;
     private readonly Mock<ICategoryRuleService> _mockCategoryRuleService;
     private readonly TransactionService _transactionService;

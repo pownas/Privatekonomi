@@ -278,7 +278,7 @@ else
             <div role="img" aria-label="Graf som visar kapitalutveckling över tid">
                 <MudChart ChartType="ChartType.Line"
                           ChartSeries="@_chartSeries"
-                          XAxisLabels="@_xAxisLabels"
+                          ChartLabels="@_xAxisLabels"
                           Width="100%"
                           Height="450px"
                           ChartOptions="@_chartOptions" />
@@ -364,7 +364,7 @@ else
                 
                 <MudChart ChartType="ChartType.Line"
                           ChartSeries="@_comparisonChartSeries"
-                          XAxisLabels="@_comparisonXAxisLabels"
+                          ChartLabels="@_comparisonXAxisLabels"
                           Width="100%"
                           Height="400px"
                           ChartOptions="@_chartOptions"

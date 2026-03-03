@@ -12,7 +12,7 @@ public class KalpServiceTests
 {
     private readonly PrivatekonomyContext _context;
     private readonly Mock<IKonsumentverketComparisonService> _mockKonsumentverketService;
-    private readonly IKalpService _service;
+    private readonly KalpService _service;
 
     public KalpServiceTests()
     {

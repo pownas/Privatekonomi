@@ -1,6 +1,6 @@
-﻿using System.Globalization;
+﻿using Privatekonomi.Core.Models;
+using System.Globalization;
 using System.Text;
-using Privatekonomi.Core.Models;
 
 namespace Privatekonomi.Core.Services.Parsers;
 
@@ -13,7 +13,7 @@ public class IcaBankenParser : ICsvParser
         var lines = csvContent.Split('\n', StringSplitOptions.RemoveEmptyEntries);
         if (lines.Length < 2) return false;
 
-        var header = lines[0].ToLower();
+        var header = lines[0].ToLower(CultureInfo.InvariantCulture);
         // Accept both 'beskrivning' and 'text' as description column
         return header.Contains("datum") && header.Contains("belopp") && (header.Contains("beskrivning") || header.Contains("text"));
     }
@@ -71,7 +71,7 @@ public class IcaBankenParser : ICsvParser
                     continue;
 
                 // Parse amount
-                if (!decimal.TryParse(amountStr, NumberStyles.Any, CultureInfo.InvariantCulture, out var amount))
+                if (!decimal.TryParse(amountStr, NumberStyles.Any, CultureInfo.CurrentCulture, out var amount))
                     continue;
 
                 var transaction = new Transaction
@@ -120,7 +120,7 @@ public class IcaBankenParser : ICsvParser
 
         foreach (var format in formats)
         {
-            if (DateTime.TryParseExact(dateStr, format, CultureInfo.InvariantCulture, DateTimeStyles.None, out date))
+            if (DateTime.TryParseExact(dateStr, format, CultureInfo.CurrentCulture, DateTimeStyles.None, out date))
                 return true;
         }
 

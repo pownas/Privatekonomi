@@ -266,9 +266,9 @@ public class BulkOperationsControllerTests
         var result = await _controller.Undo(snapshot);
 
         // Assert
-        Assert.IsInstanceOfType(result.Result, typeof(OkObjectResult));
+        Assert.IsInstanceOfType<OkObjectResult>(result.Result);
         var okResult = (OkObjectResult)result.Result;
-        Assert.IsInstanceOfType(okResult.Value, typeof(BulkOperationResult));
+        Assert.IsInstanceOfType<BulkOperationResult>(okResult.Value);
         var undoResult = (BulkOperationResult)okResult.Value;
         Assert.AreEqual(2, undoResult.SuccessCount);
     }

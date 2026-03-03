@@ -41,7 +41,7 @@ public class NotificationPreferenceServiceTests
         {
             UserId = _testUserId,
             NotificationType = SystemNotificationType.BudgetExceeded,
-            EnabledChannels = NotificationChannelFlags.InApp | NotificationChannelFlags.Email,
+            EnabledChannels = NotificationChannels.InApp | NotificationChannels.Email,
             MinimumPriority = NotificationPriority.Normal,
             IsEnabled = true
         };
@@ -64,7 +64,7 @@ public class NotificationPreferenceServiceTests
         {
             UserId = _testUserId,
             NotificationType = SystemNotificationType.BudgetExceeded,
-            EnabledChannels = NotificationChannelFlags.InApp,
+            EnabledChannels = NotificationChannels.InApp,
             MinimumPriority = NotificationPriority.Normal,
             IsEnabled = true
         };
@@ -72,13 +72,13 @@ public class NotificationPreferenceServiceTests
         var created = await _preferenceService.SavePreferenceAsync(preference);
 
         // Act - Update
-        created.EnabledChannels = NotificationChannelFlags.Email | NotificationChannelFlags.SMS;
+        created.EnabledChannels = NotificationChannels.Email | NotificationChannels.SMS;
         created.IsEnabled = false;
         var updated = await _preferenceService.SavePreferenceAsync(created);
 
         // Assert
         Assert.AreEqual(created.NotificationPreferenceId, updated.NotificationPreferenceId);
-        Assert.AreEqual(NotificationChannelFlags.Email | NotificationChannelFlags.SMS, updated.EnabledChannels);
+        Assert.AreEqual(NotificationChannels.Email | NotificationChannels.SMS, updated.EnabledChannels);
         Assert.IsFalse(updated.IsEnabled);
     }
 
@@ -90,7 +90,7 @@ public class NotificationPreferenceServiceTests
         {
             UserId = _testUserId,
             NotificationType = SystemNotificationType.LowBalance,
-            EnabledChannels = NotificationChannelFlags.InApp | NotificationChannelFlags.SMS,
+            EnabledChannels = NotificationChannels.InApp | NotificationChannels.SMS,
             MinimumPriority = NotificationPriority.High,
             IsEnabled = true
         };
@@ -103,7 +103,7 @@ public class NotificationPreferenceServiceTests
         // Assert
         Assert.IsNotNull(retrieved);
         Assert.AreEqual(SystemNotificationType.LowBalance, retrieved.NotificationType);
-        Assert.AreEqual(NotificationChannelFlags.InApp | NotificationChannelFlags.SMS, retrieved.EnabledChannels);
+        Assert.AreEqual(NotificationChannels.InApp | NotificationChannels.SMS, retrieved.EnabledChannels);
     }
 
     [TestMethod]
@@ -287,7 +287,7 @@ public class NotificationPreferenceServiceTests
         // Check that critical notifications have email enabled
         var lowBalancePref = preferences.FirstOrDefault(p => p.NotificationType == SystemNotificationType.LowBalance);
         Assert.IsNotNull(lowBalancePref);
-        Assert.IsTrue(lowBalancePref.EnabledChannels.HasFlag(NotificationChannelFlags.Email));
+        Assert.IsTrue(lowBalancePref.EnabledChannels.HasFlag(NotificationChannels.Email));
     }
 
     [TestMethod]
@@ -316,7 +316,7 @@ public class NotificationPreferenceServiceTests
         {
             UserId = _testUserId,
             NotificationType = SystemNotificationType.GoalMilestone,
-            EnabledChannels = NotificationChannelFlags.InApp,
+            EnabledChannels = NotificationChannels.InApp,
             MinimumPriority = NotificationPriority.Low,
             IsEnabled = true,
             DigestMode = true,

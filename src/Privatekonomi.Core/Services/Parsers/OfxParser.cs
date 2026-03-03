@@ -1,8 +1,10 @@
+﻿using Privatekonomi.Core.Models;
 using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
-using Privatekonomi.Core.Models;
+
+#pragma warning disable CA1305 // Specify IFormatProvider
 
 namespace Privatekonomi.Core.Services.Parsers;
 
@@ -25,19 +27,19 @@ public class OfxParser : ICsvParser
 
     public string BankName => "OFX (Allmän)";
 
-    public bool CanParse(string content)
+    public bool CanParse(string csvContent)
     {
         // OFX files typically start with OFXHEADER or <?OFX or <OFX>
-        return content.Contains("OFXHEADER:") || 
-               content.Contains("<OFX>") || 
-               content.Contains("<?OFX");
+        return csvContent.Contains("OFXHEADER:") || 
+               csvContent.Contains("<OFX>") || 
+               csvContent.Contains("<?OFX");
     }
 
-    public async Task<List<Transaction>> ParseAsync(Stream stream)
+    public async Task<List<Transaction>> ParseAsync(Stream csvStream)
     {
         var transactions = new List<Transaction>();
         
-        using var reader = new StreamReader(stream, Encoding.UTF8);
+        using var reader = new StreamReader(csvStream, Encoding.UTF8);
         var content = await reader.ReadToEndAsync();
         
         // Convert SGML-style OFX to XML-style OFX
@@ -127,7 +129,7 @@ public class OfxParser : ICsvParser
         var description = BuildDescription(name, memo);
         
         // Determine if income based on amount sign and transaction type
-        var trnType = trnTypeElement?.Value?.Trim().ToUpper() ?? string.Empty;
+        var trnType = trnTypeElement?.Value?.Trim().ToUpper(CultureInfo.CurrentCulture) ?? string.Empty;
         var isIncome = DetermineIsIncome(amount, trnType);
         
         return CreateTransaction(date, Math.Abs(amount), isIncome, description);
@@ -163,7 +165,7 @@ public class OfxParser : ICsvParser
             if (string.IsNullOrEmpty(trimmed)) continue;
             
             // Check if it's a closing tag
-            if (trimmed.StartsWith("</"))
+            if (trimmed.StartsWith("</", StringComparison.Ordinal))
             {
                 result.AppendLine(trimmed);
                 if (tagStack.Count > 0)
@@ -312,7 +314,7 @@ public class OfxParser : ICsvParser
         }
         
         var description = BuildDescription(name ?? string.Empty, memo ?? string.Empty);
-        var isIncome = DetermineIsIncome(parsedAmount, trnType?.ToUpper() ?? string.Empty);
+        var isIncome = DetermineIsIncome(parsedAmount, trnType?.ToUpper(CultureInfo.InvariantCulture) ?? string.Empty);
         
         return CreateTransaction(parsedDate, Math.Abs(parsedAmount), isIncome, description);
     }
@@ -361,14 +363,14 @@ public class OfxParser : ICsvParser
         
         foreach (var format in formats)
         {
-            if (DateTime.TryParseExact(dateStr, format, CultureInfo.InvariantCulture, DateTimeStyles.None, out date))
+            if (DateTime.TryParseExact(dateStr, format, CultureInfo.CurrentCulture, DateTimeStyles.None, out date))
             {
                 return true;
             }
         }
         
         // Try generic parsing
-        return DateTime.TryParse(dateStr, CultureInfo.InvariantCulture, DateTimeStyles.None, out date);
+        return DateTime.TryParse(dateStr, CultureInfo.CurrentCulture, DateTimeStyles.None, out date);
     }
 
     private string BuildDescription(string name, string memo)

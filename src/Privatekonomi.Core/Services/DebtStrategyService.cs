@@ -315,17 +315,17 @@ public class DebtStrategyService : IDebtStrategyService
         return result;
     }
 
-    public async Task<DetailedDebtPayoffStrategy> GenerateDetailedStrategy(string strategyType, decimal availableMonthlyPayment)
+    public async Task<DetailedDebtPayoffStrategy> GenerateDetailedStrategy(string strategy, decimal availableMonthlyPayment)
     {
         // Get loans ordered by strategy
-        var loans = string.Equals(strategyType, "snowball", StringComparison.OrdinalIgnoreCase)
+        var loans = string.Equals(strategy, "snowball", StringComparison.OrdinalIgnoreCase)
             ? await _context.Loans.OrderBy(l => l.Amount).ToListAsync()
             : await _context.Loans.OrderByDescending(l => l.InterestRate).ToListAsync();
 
         var detailedStrategy = new DetailedDebtPayoffStrategy
         {
-            StrategyName = strategyType,
-            Description = string.Equals(strategyType, "snowball", StringComparison.OrdinalIgnoreCase)
+            StrategyName = strategy,
+            Description = string.Equals(strategy, "snowball", StringComparison.OrdinalIgnoreCase)
                 ? "Betala av minsta skulden först för psykologiska vinster och momentum"
                 : "Betala av skulden med högst ränta först för att minimera totala räntekostnader"
         };
@@ -475,7 +475,7 @@ public class DebtStrategyService : IDebtStrategyService
         return detailedStrategy;
     }
 
-    private class LoanSimulation
+    private sealed class LoanSimulation
     {
         public Loan Loan { get; set; } = null!;
         public decimal Balance { get; set; }
